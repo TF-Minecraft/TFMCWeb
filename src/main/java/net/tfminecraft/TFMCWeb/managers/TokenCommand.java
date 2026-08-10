@@ -136,7 +136,7 @@ public final class TokenCommand implements CommandExecutor, TabCompleter {
 					);
 					ChatMessages.info(
 						player,
-						"Character creator redeem is not available yet — keep this code."
+						"Redeem on the website /character page (optional Remember me keeps you signed in 30 days)."
 					);
 				} else {
 					ChatMessages.sendCopyableCode(
