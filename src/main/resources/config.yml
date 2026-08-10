@@ -1,0 +1,4 @@
+# ProvinceSystem API (plugin key). Do not commit real production secrets.
+api:
+  base-url: "http://127.0.0.1:18001"
+  plugin-key: "dev-plugin-key"

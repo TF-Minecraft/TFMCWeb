@@ -1,0 +1,49 @@
+main: net.tfminecraft.TFMCWeb.TFMCWeb
+api-version: 1.20
+name: TFMCWeb
+version: 1.0
+author: TFMC
+
+depend: [TLibs]
+softdepend: [RPCharacters, Essentials]
+
+commands:
+  linkdiscord:
+    usage: /linkdiscord
+    description: Get a code to link your Discord account
+    permission: tfmcweb.linkdiscord
+    permission-message: You do not have permission to link Discord.
+  unlinkdiscord:
+    usage: /unlinkdiscord
+    description: Unlink Discord from this Minecraft account
+    permission: tfmcweb.linkdiscord
+    permission-message: You do not have permission to unlink Discord.
+  web:
+    usage: /web status|reload|lookup|unlink|reconcile
+    description: TFMCWeb admin tools
+    permission: tfmcweb.admin
+    permission-message: You do not have permission to use /web.
+  token:
+    usage: /token create <skin|character>
+    description: Create a scoped website code (skins or character)
+    permission: tfmcweb.token.create
+    permission-message: You do not have permission to create a token.
+  warning:
+    usage: /warning <player> <reason>
+    description: Warn a player in-game and mirror to Discord if linked
+    permission: tfmcweb.warning
+    permission-message: You do not have permission to use /warning.
+
+permissions:
+  tfmcweb.linkdiscord:
+    description: Use /linkdiscord and /unlinkdiscord
+    default: true
+  tfmcweb.admin:
+    description: Admin /web commands
+    default: op
+  tfmcweb.token.create:
+    description: Create scoped feature codes via /token create
+    default: false
+  tfmcweb.warning:
+    description: Issue in-game warnings via /warning
+    default: false
