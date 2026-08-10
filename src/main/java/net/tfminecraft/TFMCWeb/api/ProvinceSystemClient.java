@@ -259,8 +259,8 @@ public final class ProvinceSystemClient {
 		if (uuid.isEmpty()) {
 			return FeatureCodeResult.fail("player_uuid is required");
 		}
-		if (!"skin".equals(sc) && !"character".equals(sc)) {
-			return FeatureCodeResult.fail("scope must be skin or character");
+		if (!"skin".equals(sc) && !"character".equals(sc) && !"skin_staff".equals(sc)) {
+			return FeatureCodeResult.fail("scope must be skin, skin_staff, or character");
 		}
 		String body = "{"
 			+ "\"player_uuid\":\"" + escapeJson(uuid) + "\","

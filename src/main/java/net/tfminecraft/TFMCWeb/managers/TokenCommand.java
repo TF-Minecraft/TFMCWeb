@@ -1,11 +1,9 @@
 package net.tfminecraft.TFMCWeb.managers;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
-import java.util.stream.Collectors;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -22,11 +20,13 @@ import net.tfminecraft.TFMCWeb.utils.ChatMessages;
 import net.tfminecraft.TFMCWeb.utils.ExpiryFormat;
 
 /**
- * /token create skin|character — scoped feature codes.
+ * /token create skin|character|skin staff — scoped feature codes.
  */
 public final class TokenCommand implements CommandExecutor, TabCompleter {
 
-	private static final List<String> SCOPES = Arrays.asList("skin", "character");
+	private static final String PERM_CREATE = "tfmcweb.token.create";
+	private static final String PERM_CREATE_STAFF = "tfmcweb.token.create.staff";
+	private static final String USAGE = "/token create <skin|character|skin staff>";
 
 	private final JavaPlugin plugin;
 
@@ -41,32 +41,69 @@ public final class TokenCommand implements CommandExecutor, TabCompleter {
 			return true;
 		}
 		Player player = (Player) sender;
-		if (!player.hasPermission("tfmcweb.token.create")) {
+		boolean canCreate = player.hasPermission(PERM_CREATE);
+		boolean canStaff = player.hasPermission(PERM_CREATE_STAFF);
+		if (!canCreate && !canStaff) {
 			ChatMessages.error(player, "You do not have permission to create a token.");
 			return true;
 		}
 		if (args.length == 0) {
-			ChatMessages.info(
-				player,
-				"Usage: " + ChatColor.AQUA + "/token create <skin|character>"
-			);
+			ChatMessages.info(player, "Usage: " + ChatColor.AQUA + USAGE);
 			return true;
 		}
 		if (!"create".equalsIgnoreCase(args[0])) {
-			ChatMessages.error(player, "Usage: /token create <skin|character>");
+			ChatMessages.error(player, "Usage: " + USAGE);
 			return true;
 		}
 		if (args.length < 2) {
-			ChatMessages.error(player, "Usage: /token create <skin|character>");
+			ChatMessages.error(player, "Usage: " + USAGE);
 			return true;
 		}
-		String scope = args[1].trim().toLowerCase(Locale.ROOT);
-		if (!"skin".equals(scope) && !"character".equals(scope)) {
-			ChatMessages.error(player, "Scope must be skin or character.");
+
+		String kind = args[1].trim().toLowerCase(Locale.ROOT);
+		String apiScope;
+		boolean staffMint = false;
+
+		if ("character".equals(kind)) {
+			if (args.length != 2) {
+				ChatMessages.error(player, "Usage: " + USAGE);
+				return true;
+			}
+			if (!canCreate) {
+				ChatMessages.error(player, "You do not have permission to create a token.");
+				return true;
+			}
+			apiScope = "character";
+		} else if ("skin".equals(kind)) {
+			if (args.length == 2) {
+				if (!canCreate) {
+					ChatMessages.error(player, "You do not have permission to create a token.");
+					return true;
+				}
+				apiScope = "skin";
+			} else if (args.length == 3
+				&& "staff".equalsIgnoreCase(args[2].trim())) {
+				if (!canStaff) {
+					ChatMessages.error(
+						player,
+						"You do not have permission to create a staff skins token."
+					);
+					return true;
+				}
+				apiScope = "skin_staff";
+				staffMint = true;
+			} else {
+				ChatMessages.error(player, "Usage: " + USAGE);
+				return true;
+			}
+		} else {
+			ChatMessages.error(player, "Usage: " + USAGE);
 			return true;
 		}
 
 		String uuid = player.getUniqueId().toString();
+		final boolean staff = staffMint;
+		final String scope = apiScope;
 		Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
 			FeatureCodeResult result = ProvinceSystemClient.issueFeatureCode(uuid, scope);
 			Bukkit.getScheduler().runTask(plugin, () -> {
@@ -80,7 +117,18 @@ public final class TokenCommand implements CommandExecutor, TabCompleter {
 					);
 					return;
 				}
-				if ("character".equals(scope)) {
+				if (staff) {
+					ChatMessages.sendCopyableCode(
+						player,
+						"Your staff skins code (click to copy):",
+						result.code
+					);
+					ChatMessages.info(
+						player,
+						"Redeem on the skins website — choose category and scroll; "
+							+ "applies to the curated pack (no Discord review)."
+					);
+				} else if ("character".equals(scope)) {
 					ChatMessages.sendCopyableCode(
 						player,
 						"Your character code (click to copy):",
@@ -114,7 +162,9 @@ public final class TokenCommand implements CommandExecutor, TabCompleter {
 		String alias,
 		String[] args
 	) {
-		if (!sender.hasPermission("tfmcweb.token.create")) {
+		boolean canCreate = sender.hasPermission(PERM_CREATE);
+		boolean canStaff = sender.hasPermission(PERM_CREATE_STAFF);
+		if (!canCreate && !canStaff) {
 			return Collections.emptyList();
 		}
 		if (args.length == 1) {
@@ -127,7 +177,27 @@ public final class TokenCommand implements CommandExecutor, TabCompleter {
 		}
 		if (args.length == 2 && "create".equalsIgnoreCase(args[0])) {
 			String p = args[1].toLowerCase(Locale.ROOT);
-			return SCOPES.stream().filter(s -> s.startsWith(p)).collect(Collectors.toList());
+			List<String> out = new ArrayList<>();
+			if (canCreate) {
+				if ("skin".startsWith(p)) {
+					out.add("skin");
+				}
+				if ("character".startsWith(p)) {
+					out.add("character");
+				}
+			} else if (canStaff && "skin".startsWith(p)) {
+				out.add("skin");
+			}
+			return out;
+		}
+		if (args.length == 3
+			&& "create".equalsIgnoreCase(args[0])
+			&& "skin".equalsIgnoreCase(args[1])
+			&& canStaff) {
+			String p = args[2].toLowerCase(Locale.ROOT);
+			if ("staff".startsWith(p)) {
+				return Collections.singletonList("staff");
+			}
 		}
 		return Collections.emptyList();
 	}
