@@ -31,13 +31,48 @@ public final class TokenCommand implements CommandExecutor, TabCompleter {
 	private static final String PERM_CREATE = "tfmcweb.token.create";
 	private static final String PERM_CREATE_STAFF = "tfmcweb.token.create.staff";
 	private static final String PERM_RESET = "tfmcweb.token.resetcooldowns";
-	private static final String USAGE_CREATE = "/token create <skin|drink|character|skin staff>";
 	private static final String USAGE_RESET = "/token resetcooldowns <player>";
 
 	private final JavaPlugin plugin;
 
 	public TokenCommand(JavaPlugin plugin) {
 		this.plugin = plugin;
+	}
+
+	private static String usageCreate() {
+		List<String> parts = new ArrayList<>();
+		if (Cache.isTokenScopeEnabled("skin")) {
+			parts.add("skin");
+		}
+		if (Cache.isTokenScopeEnabled("drink")) {
+			parts.add("drink");
+		}
+		if (Cache.isTokenScopeEnabled("character")) {
+			parts.add("character");
+		}
+		if (Cache.isTokenScopeEnabled("skin_staff")) {
+			parts.add("skin staff");
+		}
+		if (parts.isEmpty()) {
+			return "/token create (disabled on this server)";
+		}
+		return "/token create <" + String.join("|", parts) + ">";
+	}
+
+	private static boolean rejectIfScopeDisabled(Player player, String apiScope) {
+		if (Cache.isTokenScopeEnabled(apiScope)) {
+			return false;
+		}
+		if (Cache.tokenEnabledScopes.isEmpty()) {
+			ChatMessages.error(player, "Token minting is disabled on this server.");
+		} else {
+			ChatMessages.error(
+				player,
+				"This token type is not available on this server. "
+					+ "Usage: " + usageCreate()
+			);
+		}
+		return true;
 	}
 
 	@Override
@@ -56,7 +91,7 @@ public final class TokenCommand implements CommandExecutor, TabCompleter {
 		}
 
 		if (sender instanceof Player) {
-			ChatMessages.error((Player) sender, "Usage: " + USAGE_CREATE + " or " + USAGE_RESET);
+			ChatMessages.error((Player) sender, "Usage: " + usageCreate() + " or " + USAGE_RESET);
 		} else {
 			sender.sendMessage(ChatColor.RED + "Usage: " + USAGE_RESET);
 		}
@@ -69,7 +104,7 @@ public final class TokenCommand implements CommandExecutor, TabCompleter {
 		if (sender instanceof Player) {
 			Player player = (Player) sender;
 			if (canCreate) {
-				ChatMessages.info(player, "Usage: " + ChatColor.AQUA + USAGE_CREATE);
+				ChatMessages.info(player, "Usage: " + ChatColor.AQUA + usageCreate());
 			}
 			if (canReset) {
 				ChatMessages.info(player, "Usage: " + ChatColor.AQUA + USAGE_RESET);
@@ -163,7 +198,7 @@ public final class TokenCommand implements CommandExecutor, TabCompleter {
 			return true;
 		}
 		if (args.length < 2) {
-			ChatMessages.error(player, "Usage: " + USAGE_CREATE);
+			ChatMessages.error(player, "Usage: " + usageCreate());
 			return true;
 		}
 
@@ -173,7 +208,7 @@ public final class TokenCommand implements CommandExecutor, TabCompleter {
 
 		if ("character".equals(kind)) {
 			if (args.length != 2) {
-				ChatMessages.error(player, "Usage: " + USAGE_CREATE);
+				ChatMessages.error(player, "Usage: " + usageCreate());
 				return true;
 			}
 			if (!canCreate) {
@@ -183,7 +218,7 @@ public final class TokenCommand implements CommandExecutor, TabCompleter {
 			apiScope = "character";
 		} else if ("drink".equals(kind)) {
 			if (args.length != 2) {
-				ChatMessages.error(player, "Usage: " + USAGE_CREATE);
+				ChatMessages.error(player, "Usage: " + usageCreate());
 				return true;
 			}
 			if (!canCreate) {
@@ -210,11 +245,15 @@ public final class TokenCommand implements CommandExecutor, TabCompleter {
 				apiScope = "skin_staff";
 				staffMint = true;
 			} else {
-				ChatMessages.error(player, "Usage: " + USAGE_CREATE);
+				ChatMessages.error(player, "Usage: " + usageCreate());
 				return true;
 			}
 		} else {
-			ChatMessages.error(player, "Usage: " + USAGE_CREATE);
+			ChatMessages.error(player, "Usage: " + usageCreate());
+			return true;
+		}
+
+		if (rejectIfScopeDisabled(player, apiScope)) {
 			return true;
 		}
 
@@ -330,16 +369,18 @@ public final class TokenCommand implements CommandExecutor, TabCompleter {
 			String p = args[1].toLowerCase(Locale.ROOT);
 			List<String> out = new ArrayList<>();
 			if (canCreate) {
-				if ("skin".startsWith(p)) {
+				if (Cache.isTokenScopeEnabled("skin") && "skin".startsWith(p)) {
 					out.add("skin");
 				}
-				if ("drink".startsWith(p)) {
+				if (Cache.isTokenScopeEnabled("drink") && "drink".startsWith(p)) {
 					out.add("drink");
 				}
-				if ("character".startsWith(p)) {
+				if (Cache.isTokenScopeEnabled("character") && "character".startsWith(p)) {
 					out.add("character");
 				}
-			} else if (canStaff && "skin".startsWith(p)) {
+			} else if (canStaff
+				&& Cache.isTokenScopeEnabled("skin_staff")
+				&& "skin".startsWith(p)) {
 				out.add("skin");
 			}
 			return out;
@@ -347,7 +388,8 @@ public final class TokenCommand implements CommandExecutor, TabCompleter {
 		if (args.length == 3
 			&& "create".equalsIgnoreCase(args[0])
 			&& "skin".equalsIgnoreCase(args[1])
-			&& canStaff) {
+			&& canStaff
+			&& Cache.isTokenScopeEnabled("skin_staff")) {
 			String p = args[2].toLowerCase(Locale.ROOT);
 			if ("staff".startsWith(p)) {
 				return Collections.singletonList("staff");

@@ -24,15 +24,16 @@ import net.tfminecraft.TFMCWeb.api.ProvinceSystemClient;
 import net.tfminecraft.TFMCWeb.api.ProvinceSystemClient.IdentityStatus;
 import net.tfminecraft.TFMCWeb.api.ProvinceSystemClient.SimpleResult;
 import net.tfminecraft.TFMCWeb.cache.LinkCache;
+import net.tfminecraft.TFMCWeb.entitlements.PlayerMetaSyncService;
 import net.tfminecraft.TFMCWeb.gate.DiscordGateService;
 
 /**
- * Admin /web status|reload|lookup|unlink|reconcile.
+ * Admin /web status|reload|lookup|unlink|reconcile|syncmeta.
  */
 public final class WebCommand implements CommandExecutor, TabCompleter {
 
 	private static final List<String> SUBS = Arrays.asList(
-		"status", "reload", "lookup", "unlink", "reconcile"
+		"status", "reload", "lookup", "unlink", "reconcile", "syncmeta"
 	);
 
 	private final JavaPlugin plugin;
@@ -52,7 +53,8 @@ public final class WebCommand implements CommandExecutor, TabCompleter {
 			return true;
 		}
 		if (args.length == 0) {
-			sender.sendMessage(ChatColor.YELLOW + "Usage: /web <status|reload|lookup|unlink|reconcile>");
+			sender.sendMessage(ChatColor.YELLOW
+				+ "Usage: /web <status|reload|lookup|unlink|reconcile|syncmeta>");
 			return true;
 		}
 		String sub = args[0].toLowerCase(Locale.ROOT);
@@ -67,8 +69,11 @@ public final class WebCommand implements CommandExecutor, TabCompleter {
 				return cmdUnlink(sender, args);
 			case "reconcile":
 				return cmdReconcile(sender);
+			case "syncmeta":
+				return cmdSyncMeta(sender, args);
 			default:
-				sender.sendMessage(ChatColor.RED + "Unknown subcommand. Use status|reload|lookup|unlink|reconcile");
+				sender.sendMessage(ChatColor.RED
+					+ "Unknown subcommand. Use status|reload|lookup|unlink|reconcile|syncmeta");
 				return true;
 		}
 	}
@@ -105,6 +110,29 @@ public final class WebCommand implements CommandExecutor, TabCompleter {
 		sender.sendMessage(ChatColor.GREEN + "[TFMCWeb] Config reloaded.");
 		sender.sendMessage(ChatColor.GRAY + "api.base-url="
 			+ (Cache.apiBaseUrl.isEmpty() ? "(unset)" : Cache.apiBaseUrl));
+		sender.sendMessage(ChatColor.GRAY + "Pushing player-meta for online players…");
+		return true;
+	}
+
+	private boolean cmdSyncMeta(CommandSender sender, String[] args) {
+		if (args.length >= 2) {
+			OfflinePlayer target = resolvePlayer(args[1]);
+			if (target == null || target.getUniqueId() == null) {
+				sender.sendMessage(ChatColor.RED + "Unknown player.");
+				return true;
+			}
+			Player online = Bukkit.getPlayer(target.getUniqueId());
+			if (online == null || !online.isOnline()) {
+				sender.sendMessage(ChatColor.RED + "Player must be online to sync meta.");
+				return true;
+			}
+			PlayerMetaSyncService.pushForPlayer(online);
+			sender.sendMessage(ChatColor.GREEN + "[TFMCWeb] Queued player-meta sync for "
+				+ online.getName() + ".");
+			return true;
+		}
+		PlayerMetaSyncService.pushAllOnlineAsync();
+		sender.sendMessage(ChatColor.GREEN + "[TFMCWeb] Queued player-meta sync for all online players.");
 		return true;
 	}
 
@@ -258,7 +286,9 @@ public final class WebCommand implements CommandExecutor, TabCompleter {
 			return SUBS.stream().filter(s -> s.startsWith(p)).collect(Collectors.toList());
 		}
 		if (args.length == 2
-			&& ("lookup".equalsIgnoreCase(args[0]) || "unlink".equalsIgnoreCase(args[0]))) {
+			&& ("lookup".equalsIgnoreCase(args[0])
+				|| "unlink".equalsIgnoreCase(args[0])
+				|| "syncmeta".equalsIgnoreCase(args[0]))) {
 			String p = args[1].toLowerCase(Locale.ROOT);
 			return Bukkit.getOnlinePlayers().stream()
 				.map(Player::getName)

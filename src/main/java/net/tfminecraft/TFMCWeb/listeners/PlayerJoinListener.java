@@ -12,6 +12,7 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import net.tfminecraft.TFMCWeb.api.ProvinceSystemClient.IdentityStatus;
+import net.tfminecraft.TFMCWeb.entitlements.PlayerMetaSyncService;
 import net.tfminecraft.TFMCWeb.gate.DiscordGateService;
 
 public final class PlayerJoinListener implements Listener {
@@ -28,6 +29,7 @@ public final class PlayerJoinListener implements Listener {
 	public void onJoin(PlayerJoinEvent event) {
 		Player player = event.getPlayer();
 		UUID uuid = player.getUniqueId();
+		PlayerMetaSyncService.pushForPlayer(player);
 		Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
 			try {
 				IdentityStatus status = gateService.fetchAndCache(uuid);

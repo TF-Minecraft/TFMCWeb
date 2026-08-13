@@ -287,9 +287,13 @@ public final class ProvinceSystemClient {
 			&& !"skin_staff".equals(sc)) {
 			return FeatureCodeResult.fail("scope must be skin, drink, skin_staff, or character");
 		}
+		String realm = Cache.realmId == null || Cache.realmId.isBlank()
+			? "main"
+			: Cache.realmId.trim().toLowerCase();
 		String body = "{"
 			+ "\"player_uuid\":\"" + escapeJson(uuid) + "\","
-			+ "\"scope\":\"" + escapeJson(sc) + "\""
+			+ "\"scope\":\"" + escapeJson(sc) + "\","
+			+ "\"realm_id\":\"" + escapeJson(realm) + "\""
 			+ "}";
 		return postForFeatureCode(
 			"/skins/codes",
@@ -582,7 +586,27 @@ public final class ProvinceSystemClient {
 		return postSimple("/skins/plugin/notices/ack", sb.toString());
 	}
 
+	/** Upsert web entitlements for a player (TFMCWeb join sync). */
+	public static SimpleResult putRpcPlayerMeta(String jsonBody) {
+		if (jsonBody == null || jsonBody.isBlank()) {
+			return SimpleResult.fail("body is required");
+		}
+		ProvinceSystemGateway.GatewayResult raw = ProvinceSystemGateway.request(
+			"PUT",
+			"/characters/plugin/rpc-player-meta",
+			jsonBody
+		);
+		if (raw.ok) {
+			return SimpleResult.success();
+		}
+		return SimpleResult.fail(raw.error);
+	}
+
 	private static SimpleResult postSimple(String path, String jsonBody) {
+		return writeSimple("POST", path, jsonBody);
+	}
+
+	private static SimpleResult writeSimple(String method, String path, String jsonBody) {
 		String base = Cache.apiBaseUrl;
 		String key = Cache.pluginKey;
 		if (base == null || base.isEmpty() || key == null || key.isEmpty()) {
@@ -594,7 +618,7 @@ public final class ProvinceSystemClient {
 			@SuppressWarnings("deprecation")
 			URL url = new URL(base + path);
 			connection = (HttpURLConnection) url.openConnection();
-			connection.setRequestMethod("POST");
+			connection.setRequestMethod(method);
 			connection.setConnectTimeout(TIMEOUT_MS);
 			connection.setReadTimeout(TIMEOUT_MS);
 			connection.setDoOutput(true);
@@ -615,7 +639,7 @@ public final class ProvinceSystemClient {
 					: connection.getErrorStream()
 			);
 
-			if (status == 200) {
+			if (status >= 200 && status < 300) {
 				return SimpleResult.success();
 			}
 			return SimpleResult.fail(detailOrHttp(response, status));

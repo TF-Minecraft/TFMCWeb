@@ -37,7 +37,49 @@ public final class ConfigLoader {
 		String key = config.getString("api.plugin-key", "");
 		Cache.pluginKey = key == null ? "" : key.trim();
 
+		loadRealmAndTokens(config);
 		loadTokenCooldowns(config);
+		PlayerMetaConfigLoader.load(config);
+	}
+
+	private void loadRealmAndTokens(FileConfiguration config) {
+		String realm = config.getString("realm.id", "main");
+		if (realm == null || realm.isBlank()) {
+			realm = "main";
+		} else {
+			realm = realm.trim().toLowerCase(Locale.ROOT);
+		}
+		Cache.realmId = realm;
+
+		List<String> enabled = Cache.newStringList();
+		List<?> rawEnabled = config.getList("tokens.enabled-scopes");
+		if (rawEnabled != null) {
+			for (Object item : rawEnabled) {
+				if (item == null) {
+					continue;
+				}
+				String scope = String.valueOf(item).trim().toLowerCase(Locale.ROOT);
+				if (scope.isEmpty()) {
+					continue;
+				}
+				if (!scope.equals("skin")
+					&& !scope.equals("drink")
+					&& !scope.equals("character")
+					&& !scope.equals("skin_staff")) {
+					continue;
+				}
+				if (!enabled.contains(scope)) {
+					enabled.add(scope);
+				}
+			}
+		} else {
+			// Missing key → keep full default (backward compatible).
+			enabled.add("skin");
+			enabled.add("drink");
+			enabled.add("character");
+			enabled.add("skin_staff");
+		}
+		Cache.tokenEnabledScopes = List.copyOf(enabled);
 	}
 
 	private void loadTokenCooldowns(FileConfiguration config) {

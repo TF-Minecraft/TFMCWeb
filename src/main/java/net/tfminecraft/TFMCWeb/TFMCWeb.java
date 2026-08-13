@@ -11,6 +11,7 @@ import net.tfminecraft.TFMCWeb.gate.DiscordGateService;
 import net.tfminecraft.TFMCWeb.listeners.EssentialsBanListener;
 import net.tfminecraft.TFMCWeb.listeners.PlayerJoinListener;
 import net.tfminecraft.TFMCWeb.loaders.ConfigLoader;
+import net.tfminecraft.TFMCWeb.entitlements.PlayerMetaSyncService;
 import net.tfminecraft.TFMCWeb.managers.LinkDiscordCommand;
 import net.tfminecraft.TFMCWeb.managers.PluginNoticePoller;
 import net.tfminecraft.TFMCWeb.managers.TokenCommand;
@@ -110,6 +111,7 @@ public class TFMCWeb extends JavaPlugin {
 
 	public void reloadLocalConfig() {
 		configLoader.load(new File(getDataFolder(), "config.yml"));
+		PlayerMetaSyncService.pushAllOnlineAsync();
 	}
 
 	private void saveDefaultConfigFile() {
@@ -123,5 +125,20 @@ public class TFMCWeb extends JavaPlugin {
 	public static boolean isPresent() {
 		Plugin p = Bukkit.getPluginManager().getPlugin("TFMCWeb");
 		return p != null && p.isEnabled();
+	}
+
+	/**
+	 * Realm id for this box (from config {@code realm.id}).
+	 * Soft-depend callers: use {@link #isPresent()} then this; if TFMCWeb is
+	 * absent, fall back to {@code "main"} locally.
+	 * Prefer {@link net.tfminecraft.TFMCWeb.api.ProvinceSystemGateway} for HTTP —
+	 * it injects realm_id on allowlisted routes.
+	 */
+	public static String getRealmId() {
+		String realm = Cache.realmId;
+		if (realm == null || realm.isBlank()) {
+			return "main";
+		}
+		return realm.trim().toLowerCase();
 	}
 }
