@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -87,6 +88,27 @@ public final class ProvinceSystemClient {
 
 		public static FeatureCodeResult fail(String error) {
 			return new FeatureCodeResult(false, null, null, null, error);
+		}
+	}
+
+	/** Last shared cosmetic mint (skin + drink) for cooldown checks. */
+	public static final class CosmeticMintStatus {
+		public final boolean ok;
+		public final String lastMintAt;
+		public final String error;
+
+		private CosmeticMintStatus(boolean ok, String lastMintAt, String error) {
+			this.ok = ok;
+			this.lastMintAt = lastMintAt;
+			this.error = error;
+		}
+
+		public static CosmeticMintStatus success(String lastMintAt) {
+			return new CosmeticMintStatus(true, lastMintAt, null);
+		}
+
+		public static CosmeticMintStatus fail(String error) {
+			return new CosmeticMintStatus(false, null, error);
 		}
 	}
 
@@ -259,8 +281,11 @@ public final class ProvinceSystemClient {
 		if (uuid.isEmpty()) {
 			return FeatureCodeResult.fail("player_uuid is required");
 		}
-		if (!"skin".equals(sc) && !"character".equals(sc) && !"skin_staff".equals(sc)) {
-			return FeatureCodeResult.fail("scope must be skin, skin_staff, or character");
+		if (!"skin".equals(sc)
+			&& !"drink".equals(sc)
+			&& !"character".equals(sc)
+			&& !"skin_staff".equals(sc)) {
+			return FeatureCodeResult.fail("scope must be skin, drink, skin_staff, or character");
 		}
 		String body = "{"
 			+ "\"player_uuid\":\"" + escapeJson(uuid) + "\","
@@ -272,6 +297,53 @@ public final class ProvinceSystemClient {
 			"API returned OK but no feature code.",
 			sc
 		);
+	}
+
+	/**
+	 * Last mint timestamp across shared cosmetic scopes (skin + drink).
+	 * {@code lastMintAt} may be null when the player has never minted.
+	 */
+	public static CosmeticMintStatus getCosmeticMintStatus(String playerUuid) {
+		String uuid = playerUuid == null ? "" : playerUuid.trim();
+		if (uuid.isEmpty()) {
+			return CosmeticMintStatus.fail("player_uuid is required");
+		}
+		String base = Cache.apiBaseUrl;
+		String key = Cache.pluginKey;
+		if (base == null || base.isEmpty() || key == null || key.isEmpty()) {
+			return CosmeticMintStatus.fail(notConfiguredMessage());
+		}
+
+		HttpURLConnection connection = null;
+		try {
+			String encoded = URLEncoder.encode(uuid, StandardCharsets.UTF_8);
+			@SuppressWarnings("deprecation")
+			URL url = new URL(base + "/skins/plugin/cosmetic-mint-status?player_uuid=" + encoded);
+			connection = (HttpURLConnection) url.openConnection();
+			connection.setRequestMethod("GET");
+			connection.setConnectTimeout(TIMEOUT_MS);
+			connection.setReadTimeout(TIMEOUT_MS);
+			connection.setRequestProperty("X-Plugin-Key", key);
+			connection.setRequestProperty("Accept", "application/json");
+
+			int status = connection.getResponseCode();
+			String response = readBody(
+				status >= 200 && status < 300
+					? connection.getInputStream()
+					: connection.getErrorStream()
+			);
+
+			if (status == 200) {
+				return CosmeticMintStatus.success(jsonString(response, "last_mint_at"));
+			}
+			return CosmeticMintStatus.fail(detailOrHttp(response, status));
+		} catch (Exception e) {
+			return CosmeticMintStatus.fail("Could not reach API: " + e.getMessage());
+		} finally {
+			if (connection != null) {
+				connection.disconnect();
+			}
+		}
 	}
 
 	public static SimpleResult unlinkDiscord(String playerUuid) {

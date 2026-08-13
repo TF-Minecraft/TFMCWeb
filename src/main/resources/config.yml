@@ -2,3 +2,22 @@
 api:
   base-url: "http://127.0.0.1:18001"
   plugin-key: "dev-plugin-key"
+
+# Shared mint cooldown for skin + drink (/token create). Character is excluded.
+# cooldown-days: -1 = cannot mint; 0 = no wait; >0 = days between mints.
+# Groups are listed low→high tier; highest matching LP permission wins.
+token-cooldowns:
+  shared-scopes:
+    - skin
+    - drink
+  defaults:
+    cooldown-days: -1
+  groups:
+    - permission: rpchar.group.noble
+      cooldown-days: 28
+    - permission: rpchar.group.gilded
+      cooldown-days: 21
+    - permission: rpchar.group.ascended
+      cooldown-days: 14
+    - permission: rpchar.group.legacy
+      cooldown-days: 7

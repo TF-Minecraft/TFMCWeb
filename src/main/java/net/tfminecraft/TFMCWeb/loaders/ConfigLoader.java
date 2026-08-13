@@ -2,12 +2,16 @@ package net.tfminecraft.TFMCWeb.loaders;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
+import java.util.Locale;
 
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import net.tfminecraft.TFMCWeb.Cache;
+import net.tfminecraft.TFMCWeb.Cache.TokenCooldownGroup;
 
 public final class ConfigLoader {
 
@@ -32,5 +36,70 @@ public final class ConfigLoader {
 
 		String key = config.getString("api.plugin-key", "");
 		Cache.pluginKey = key == null ? "" : key.trim();
+
+		loadTokenCooldowns(config);
+	}
+
+	private void loadTokenCooldowns(FileConfiguration config) {
+		List<String> shared = Cache.newSharedScopeList();
+		List<?> rawShared = config.getList("token-cooldowns.shared-scopes");
+		if (rawShared != null) {
+			for (Object item : rawShared) {
+				if (item == null) {
+					continue;
+				}
+				String scope = String.valueOf(item).trim().toLowerCase(Locale.ROOT);
+				if (!scope.isEmpty()) {
+					shared.add(scope);
+				}
+			}
+		}
+		if (shared.isEmpty()) {
+			shared.add("skin");
+			shared.add("drink");
+		}
+		Cache.tokenCooldownSharedScopes = List.copyOf(shared);
+
+		Cache.tokenCooldownDefaultDays = config.getInt(
+			"token-cooldowns.defaults.cooldown-days",
+			-1
+		);
+
+		List<TokenCooldownGroup> groups = Cache.newGroupList();
+		List<?> rawGroups = config.getList("token-cooldowns.groups");
+		if (rawGroups != null) {
+			for (Object item : rawGroups) {
+				if (!(item instanceof ConfigurationSection)
+					&& !(item instanceof java.util.Map)) {
+					continue;
+				}
+				String permission;
+				int days;
+				if (item instanceof ConfigurationSection section) {
+					permission = section.getString("permission", "");
+					days = section.getInt("cooldown-days", -1);
+				} else {
+					@SuppressWarnings("unchecked")
+					java.util.Map<String, Object> map = (java.util.Map<String, Object>) item;
+					Object permObj = map.get("permission");
+					permission = permObj == null ? "" : String.valueOf(permObj);
+					Object daysObj = map.get("cooldown-days");
+					if (daysObj instanceof Number) {
+						days = ((Number) daysObj).intValue();
+					} else {
+						try {
+							days = Integer.parseInt(String.valueOf(daysObj));
+						} catch (NumberFormatException e) {
+							days = -1;
+						}
+					}
+				}
+				if (permission == null || permission.isBlank()) {
+					continue;
+				}
+				groups.add(new TokenCooldownGroup(permission.trim(), days));
+			}
+		}
+		Cache.tokenCooldownGroups = List.copyOf(groups);
 	}
 }

@@ -14,19 +14,20 @@ import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import net.tfminecraft.TFMCWeb.Cache;
 import net.tfminecraft.TFMCWeb.api.ProvinceSystemClient;
 import net.tfminecraft.TFMCWeb.api.ProvinceSystemClient.FeatureCodeResult;
 import net.tfminecraft.TFMCWeb.utils.ChatMessages;
 import net.tfminecraft.TFMCWeb.utils.ExpiryFormat;
 
 /**
- * /token create skin|character|skin staff — scoped feature codes.
+ * /token create skin|drink|character|skin staff — scoped feature codes.
  */
 public final class TokenCommand implements CommandExecutor, TabCompleter {
 
 	private static final String PERM_CREATE = "tfmcweb.token.create";
 	private static final String PERM_CREATE_STAFF = "tfmcweb.token.create.staff";
-	private static final String USAGE = "/token create <skin|character|skin staff>";
+	private static final String USAGE = "/token create <skin|drink|character|skin staff>";
 
 	private final JavaPlugin plugin;
 
@@ -74,6 +75,16 @@ public final class TokenCommand implements CommandExecutor, TabCompleter {
 				return true;
 			}
 			apiScope = "character";
+		} else if ("drink".equals(kind)) {
+			if (args.length != 2) {
+				ChatMessages.error(player, "Usage: " + USAGE);
+				return true;
+			}
+			if (!canCreate) {
+				ChatMessages.error(player, "You do not have permission to create a token.");
+				return true;
+			}
+			apiScope = "drink";
 		} else if ("skin".equals(kind)) {
 			if (args.length == 2) {
 				if (!canCreate) {
@@ -105,6 +116,18 @@ public final class TokenCommand implements CommandExecutor, TabCompleter {
 		final boolean staff = staffMint;
 		final String scope = apiScope;
 		Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+			if (Cache.isSharedMintScope(scope)) {
+				String cooldownError = TokenCooldownService.checkSharedMint(player, scope);
+				if (cooldownError != null) {
+					Bukkit.getScheduler().runTask(plugin, () -> {
+						if (player.isOnline()) {
+							ChatMessages.error(player, cooldownError);
+						}
+					});
+					return;
+				}
+			}
+
 			FeatureCodeResult result = ProvinceSystemClient.issueFeatureCode(uuid, scope);
 			Bukkit.getScheduler().runTask(plugin, () -> {
 				if (!player.isOnline()) {
@@ -138,6 +161,13 @@ public final class TokenCommand implements CommandExecutor, TabCompleter {
 						player,
 						"Redeem on the website /character page (optional Remember me keeps you signed in 30 days)."
 					);
+				} else if ("drink".equals(scope)) {
+					ChatMessages.sendCopyableCode(
+						player,
+						"Your drink code (click to copy):",
+						result.code
+					);
+					ChatMessages.info(player, "Redeem on the website /drinks page.");
 				} else {
 					ChatMessages.sendCopyableCode(
 						player,
@@ -181,6 +211,9 @@ public final class TokenCommand implements CommandExecutor, TabCompleter {
 			if (canCreate) {
 				if ("skin".startsWith(p)) {
 					out.add("skin");
+				}
+				if ("drink".startsWith(p)) {
+					out.add("drink");
 				}
 				if ("character".startsWith(p)) {
 					out.add("character");
