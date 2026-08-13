@@ -7,6 +7,7 @@ import java.util.Locale;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -17,17 +18,21 @@ import org.bukkit.plugin.java.JavaPlugin;
 import net.tfminecraft.TFMCWeb.Cache;
 import net.tfminecraft.TFMCWeb.api.ProvinceSystemClient;
 import net.tfminecraft.TFMCWeb.api.ProvinceSystemClient.FeatureCodeResult;
+import net.tfminecraft.TFMCWeb.api.ProvinceSystemClient.SimpleResult;
 import net.tfminecraft.TFMCWeb.utils.ChatMessages;
 import net.tfminecraft.TFMCWeb.utils.ExpiryFormat;
 
 /**
- * /token create skin|drink|character|skin staff — scoped feature codes.
+ * /token create … — scoped feature codes.
+ * /token resetcooldowns &lt;player&gt; — staff clear of shared skin+drink cooldown.
  */
 public final class TokenCommand implements CommandExecutor, TabCompleter {
 
 	private static final String PERM_CREATE = "tfmcweb.token.create";
 	private static final String PERM_CREATE_STAFF = "tfmcweb.token.create.staff";
-	private static final String USAGE = "/token create <skin|drink|character|skin staff>";
+	private static final String PERM_RESET = "tfmcweb.token.resetcooldowns";
+	private static final String USAGE_CREATE = "/token create <skin|drink|character|skin staff>";
+	private static final String USAGE_RESET = "/token resetcooldowns <player>";
 
 	private final JavaPlugin plugin;
 
@@ -37,6 +42,115 @@ public final class TokenCommand implements CommandExecutor, TabCompleter {
 
 	@Override
 	public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+		if (args.length == 0) {
+			sendUsage(sender);
+			return true;
+		}
+
+		String sub = args[0].trim().toLowerCase(Locale.ROOT);
+		if ("resetcooldowns".equals(sub)) {
+			return handleResetCooldowns(sender, args);
+		}
+		if ("create".equals(sub)) {
+			return handleCreate(sender, args);
+		}
+
+		if (sender instanceof Player) {
+			ChatMessages.error((Player) sender, "Usage: " + USAGE_CREATE + " or " + USAGE_RESET);
+		} else {
+			sender.sendMessage(ChatColor.RED + "Usage: " + USAGE_RESET);
+		}
+		return true;
+	}
+
+	private void sendUsage(CommandSender sender) {
+		boolean canCreate = sender.hasPermission(PERM_CREATE) || sender.hasPermission(PERM_CREATE_STAFF);
+		boolean canReset = sender.hasPermission(PERM_RESET);
+		if (sender instanceof Player) {
+			Player player = (Player) sender;
+			if (canCreate) {
+				ChatMessages.info(player, "Usage: " + ChatColor.AQUA + USAGE_CREATE);
+			}
+			if (canReset) {
+				ChatMessages.info(player, "Usage: " + ChatColor.AQUA + USAGE_RESET);
+			}
+			if (!canCreate && !canReset) {
+				ChatMessages.error(player, "You do not have permission to use /token.");
+			}
+			return;
+		}
+		if (canReset) {
+			sender.sendMessage(ChatColor.YELLOW + "Usage: " + USAGE_RESET);
+		} else {
+			sender.sendMessage(ChatColor.RED + "No permission.");
+		}
+	}
+
+	private boolean handleResetCooldowns(CommandSender sender, String[] args) {
+		if (!sender.hasPermission(PERM_RESET)) {
+			if (sender instanceof Player) {
+				ChatMessages.error((Player) sender, "You do not have permission to reset cooldowns.");
+			} else {
+				sender.sendMessage(ChatColor.RED + "No permission.");
+			}
+			return true;
+		}
+		if (args.length != 2) {
+			if (sender instanceof Player) {
+				ChatMessages.error((Player) sender, "Usage: " + USAGE_RESET);
+			} else {
+				sender.sendMessage(ChatColor.YELLOW + "Usage: " + USAGE_RESET);
+			}
+			return true;
+		}
+
+		OfflinePlayer target = resolvePlayer(args[1]);
+		if (target == null || target.getUniqueId() == null
+			|| (!target.hasPlayedBefore() && !target.isOnline())) {
+			if (sender instanceof Player) {
+				ChatMessages.error((Player) sender, "Unknown player.");
+			} else {
+				sender.sendMessage(ChatColor.RED + "Unknown player.");
+			}
+			return true;
+		}
+
+		String uuid = target.getUniqueId().toString();
+		String name = target.getName() != null ? target.getName() : uuid;
+		String staffUuid = sender instanceof Player
+			? ((Player) sender).getUniqueId().toString()
+			: null;
+
+		Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+			SimpleResult result = ProvinceSystemClient.resetCosmeticMintCooldowns(uuid, staffUuid);
+			Bukkit.getScheduler().runTask(plugin, () -> {
+				if (!result.ok) {
+					String err = result.error != null ? result.error : "Could not reset cooldowns.";
+					if (sender instanceof Player) {
+						Player p = (Player) sender;
+						if (p.isOnline()) {
+							ChatMessages.error(p, err);
+						}
+					} else {
+						sender.sendMessage(ChatColor.RED + err);
+					}
+					return;
+				}
+				String msg = "Reset shared skin/drink mint cooldown for " + name + ".";
+				if (sender instanceof Player) {
+					Player p = (Player) sender;
+					if (p.isOnline()) {
+						ChatMessages.info(p, msg);
+					}
+				} else {
+					sender.sendMessage(ChatColor.GREEN + msg);
+				}
+			});
+		});
+		return true;
+	}
+
+	private boolean handleCreate(CommandSender sender, String[] args) {
 		if (!(sender instanceof Player)) {
 			sender.sendMessage(ChatColor.RED + "Players only.");
 			return true;
@@ -48,16 +162,8 @@ public final class TokenCommand implements CommandExecutor, TabCompleter {
 			ChatMessages.error(player, "You do not have permission to create a token.");
 			return true;
 		}
-		if (args.length == 0) {
-			ChatMessages.info(player, "Usage: " + ChatColor.AQUA + USAGE);
-			return true;
-		}
-		if (!"create".equalsIgnoreCase(args[0])) {
-			ChatMessages.error(player, "Usage: " + USAGE);
-			return true;
-		}
 		if (args.length < 2) {
-			ChatMessages.error(player, "Usage: " + USAGE);
+			ChatMessages.error(player, "Usage: " + USAGE_CREATE);
 			return true;
 		}
 
@@ -67,7 +173,7 @@ public final class TokenCommand implements CommandExecutor, TabCompleter {
 
 		if ("character".equals(kind)) {
 			if (args.length != 2) {
-				ChatMessages.error(player, "Usage: " + USAGE);
+				ChatMessages.error(player, "Usage: " + USAGE_CREATE);
 				return true;
 			}
 			if (!canCreate) {
@@ -77,7 +183,7 @@ public final class TokenCommand implements CommandExecutor, TabCompleter {
 			apiScope = "character";
 		} else if ("drink".equals(kind)) {
 			if (args.length != 2) {
-				ChatMessages.error(player, "Usage: " + USAGE);
+				ChatMessages.error(player, "Usage: " + USAGE_CREATE);
 				return true;
 			}
 			if (!canCreate) {
@@ -104,11 +210,11 @@ public final class TokenCommand implements CommandExecutor, TabCompleter {
 				apiScope = "skin_staff";
 				staffMint = true;
 			} else {
-				ChatMessages.error(player, "Usage: " + USAGE);
+				ChatMessages.error(player, "Usage: " + USAGE_CREATE);
 				return true;
 			}
 		} else {
-			ChatMessages.error(player, "Usage: " + USAGE);
+			ChatMessages.error(player, "Usage: " + USAGE_CREATE);
 			return true;
 		}
 
@@ -194,14 +300,29 @@ public final class TokenCommand implements CommandExecutor, TabCompleter {
 	) {
 		boolean canCreate = sender.hasPermission(PERM_CREATE);
 		boolean canStaff = sender.hasPermission(PERM_CREATE_STAFF);
-		if (!canCreate && !canStaff) {
+		boolean canReset = sender.hasPermission(PERM_RESET);
+		if (!canCreate && !canStaff && !canReset) {
 			return Collections.emptyList();
 		}
 		if (args.length == 1) {
 			String p = args[0].toLowerCase(Locale.ROOT);
 			List<String> out = new ArrayList<>();
-			if ("create".startsWith(p)) {
+			if ((canCreate || canStaff) && "create".startsWith(p)) {
 				out.add("create");
+			}
+			if (canReset && "resetcooldowns".startsWith(p)) {
+				out.add("resetcooldowns");
+			}
+			return out;
+		}
+		if (args.length == 2 && "resetcooldowns".equalsIgnoreCase(args[0]) && canReset) {
+			String p = args[1].toLowerCase(Locale.ROOT);
+			List<String> out = new ArrayList<>();
+			for (Player online : Bukkit.getOnlinePlayers()) {
+				String name = online.getName();
+				if (name != null && name.toLowerCase(Locale.ROOT).startsWith(p)) {
+					out.add(name);
+				}
 			}
 			return out;
 		}
@@ -233,5 +354,18 @@ public final class TokenCommand implements CommandExecutor, TabCompleter {
 			}
 		}
 		return Collections.emptyList();
+	}
+
+	private static OfflinePlayer resolvePlayer(String name) {
+		if (name == null || name.isBlank()) {
+			return null;
+		}
+		Player online = Bukkit.getPlayerExact(name);
+		if (online != null) {
+			return online;
+		}
+		@SuppressWarnings("deprecation")
+		OfflinePlayer offline = Bukkit.getOfflinePlayer(name);
+		return offline;
 	}
 }

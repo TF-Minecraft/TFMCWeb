@@ -346,6 +346,21 @@ public final class ProvinceSystemClient {
 		}
 	}
 
+	/**
+	 * Staff clear of shared skin+drink mint cooldown for a player.
+	 */
+	public static SimpleResult resetCosmeticMintCooldowns(String playerUuid, String staffUuid) {
+		String uuid = playerUuid == null ? "" : playerUuid.trim();
+		if (uuid.isEmpty()) {
+			return SimpleResult.fail("player_uuid is required");
+		}
+		StringBuilder sb = new StringBuilder("{");
+		sb.append("\"player_uuid\":\"").append(escapeJson(uuid)).append("\"");
+		appendOptionalJson(sb, "staff_uuid", staffUuid);
+		sb.append("}");
+		return postSimple("/skins/plugin/cosmetic-mint-reset", sb.toString());
+	}
+
 	public static SimpleResult unlinkDiscord(String playerUuid) {
 		String uuid = playerUuid == null ? "" : playerUuid.trim();
 		if (uuid.isEmpty()) {
