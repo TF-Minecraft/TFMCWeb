@@ -28,6 +28,7 @@ public final class EntitlementResolver {
 	public static final class ResolvedMeta {
 		public final int nameColourStops;
 		public final boolean allowDrinkTexture;
+		public final boolean allowDrinkMessage;
 		public final Integer maxAliveCharacters;
 		public final int wardrobeSkinSlots;
 		public final int max3dPairBytes;
@@ -39,6 +40,7 @@ public final class EntitlementResolver {
 		public ResolvedMeta(
 			int nameColourStops,
 			boolean allowDrinkTexture,
+			boolean allowDrinkMessage,
 			Integer maxAliveCharacters,
 			int wardrobeSkinSlots,
 			int max3dPairBytes,
@@ -49,6 +51,7 @@ public final class EntitlementResolver {
 		) {
 			this.nameColourStops = nameColourStops;
 			this.allowDrinkTexture = allowDrinkTexture;
+			this.allowDrinkMessage = allowDrinkMessage;
 			this.maxAliveCharacters = maxAliveCharacters;
 			this.wardrobeSkinSlots = wardrobeSkinSlots;
 			this.max3dPairBytes = max3dPairBytes;
@@ -79,6 +82,7 @@ public final class EntitlementResolver {
 		List<String> kinds = skinKinds(player);
 		boolean helmet = allowArmor3dHelmet(player);
 		boolean drinkTexture = allowDrinkTexture(player);
+		boolean drinkMessage = allowDrinkMessage(player);
 
 		Map<String, Boolean> flags = new LinkedHashMap<>();
 		if (player != null) {
@@ -94,6 +98,7 @@ public final class EntitlementResolver {
 		return new ResolvedMeta(
 			nameColourStops,
 			drinkTexture,
+			drinkMessage,
 			Integer.valueOf(Math.max(1, maxAlive)),
 			wardrobeSlots,
 			pairBytes,
@@ -235,6 +240,25 @@ public final class EntitlementResolver {
 				continue;
 			}
 			if (group.hasAllowDrinkTexture() && group.getAllowDrinkTexture(false)) {
+				return true;
+			}
+		}
+		return value;
+	}
+
+	private static boolean allowDrinkMessage(Player player) {
+		boolean value = Cache.drinksMetaDefaultAllowMessage;
+		if (player == null) {
+			return value;
+		}
+		for (MetaGroupDefinition group : Cache.drinksMetaGroups) {
+			if (group == null || group.getPermission().isEmpty()) {
+				continue;
+			}
+			if (!player.hasPermission(group.getPermission())) {
+				continue;
+			}
+			if (group.hasAllowDrinkMessage() && group.getAllowDrinkMessage(false)) {
 				return true;
 			}
 		}

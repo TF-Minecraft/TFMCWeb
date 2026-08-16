@@ -75,6 +75,8 @@ public final class PlayerMetaConfigLoader {
 		);
 		Cache.drinksMetaDefaultAllowTexture = drinksDefaults != null
 			&& drinksDefaults.getBoolean("allow-drink-texture", false);
+		Cache.drinksMetaDefaultAllowMessage = drinksDefaults != null
+			&& drinksDefaults.getBoolean("allow-drink-message", false);
 		Cache.drinksMetaGroups = MetaGroupDefinition.copyList(
 			loadGroups(config.getList("player-meta.drinks.groups"), false, true)
 		);
@@ -141,6 +143,10 @@ public final class PlayerMetaConfigLoader {
 					"allow-drink-texture",
 					Cache.drinksMetaDefaultAllowTexture
 				);
+				Cache.drinksMetaDefaultAllowMessage = drinksDefaults.getBoolean(
+					"allow-drink-message",
+					Cache.drinksMetaDefaultAllowMessage
+				);
 			}
 			if (root.getList("drinks.groups") != null) {
 				Cache.drinksMetaGroups = MetaGroupDefinition.copyList(
@@ -161,7 +167,8 @@ public final class PlayerMetaConfigLoader {
 		for (String key : section.getKeys(false)) {
 			if ("skin-kinds".equals(key)
 				|| "allow-armor-3d-helmet".equals(key)
-				|| "allow-drink-texture".equals(key)) {
+				|| "allow-drink-texture".equals(key)
+				|| "allow-drink-message".equals(key)) {
 				continue;
 			}
 			out.put(key, Integer.valueOf(section.getInt(key, out.getOrDefault(key, 0))));
@@ -214,8 +221,12 @@ public final class PlayerMetaConfigLoader {
 			if (parseDrinkFields && section.contains("allow-drink-texture")) {
 				drinkTex = Boolean.valueOf(section.getBoolean("allow-drink-texture"));
 			}
+			Boolean drinkMsg = null;
+			if (parseDrinkFields && section.contains("allow-drink-message")) {
+				drinkMsg = Boolean.valueOf(section.getBoolean("allow-drink-message"));
+			}
 			return new MetaGroupDefinition(
-				permission, tier, perks, kinds, helmet, drinkTex
+				permission, tier, perks, kinds, helmet, drinkTex, drinkMsg
 			);
 		}
 		if (item instanceof Map<?, ?> mapRaw) {
@@ -240,8 +251,12 @@ public final class PlayerMetaConfigLoader {
 			if (parseDrinkFields && map.containsKey("allow-drink-texture")) {
 				drinkTex = Boolean.valueOf(asBool(map.get("allow-drink-texture"), false));
 			}
+			Boolean drinkMsg = null;
+			if (parseDrinkFields && map.containsKey("allow-drink-message")) {
+				drinkMsg = Boolean.valueOf(asBool(map.get("allow-drink-message"), false));
+			}
 			return new MetaGroupDefinition(
-				permission, tier, perks, kinds, helmet, drinkTex
+				permission, tier, perks, kinds, helmet, drinkTex, drinkMsg
 			);
 		}
 		return null;

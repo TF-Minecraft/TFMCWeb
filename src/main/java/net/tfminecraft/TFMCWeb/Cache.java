@@ -59,6 +59,7 @@ public final class Cache {
 		"name-colour-stops", 0
 	);
 	public static boolean drinksMetaDefaultAllowTexture = false;
+	public static boolean drinksMetaDefaultAllowMessage = false;
 	public static List<MetaGroupDefinition> drinksMetaGroups = MetaGroupDefinition.emptyList();
 
 	private Cache() {}

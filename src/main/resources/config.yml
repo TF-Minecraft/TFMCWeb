@@ -50,6 +50,7 @@ player-meta:
   # Boolean LP snapshots stored in permission_flags (keys = perm nodes).
   sync-permissions:
     - rulequiz.completed
+    - tfmc.map.staff
 
   # by-realm:
   #   tutorial:
@@ -122,6 +123,7 @@ player-meta:
     defaults:
       name-colour-stops: 0
       allow-drink-texture: false
+      allow-drink-message: false
     groups:
       - permission: rpchar.group.noble
         tier: 1
@@ -135,7 +137,9 @@ player-meta:
         tier: 3
         name-colour-stops: 8
         allow-drink-texture: true
+        allow-drink-message: true
       - permission: rpchar.group.legacy
         tier: 4
         name-colour-stops: 8
         allow-drink-texture: true
+        allow-drink-message: true

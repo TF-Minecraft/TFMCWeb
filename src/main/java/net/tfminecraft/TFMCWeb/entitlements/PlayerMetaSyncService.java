@@ -70,6 +70,7 @@ public final class PlayerMetaSyncService {
 		sb.append(",\"realm_id\":\"").append(escape(TFMCWeb.getRealmId())).append('"');
 		sb.append(",\"name_colour_stops\":").append(meta.nameColourStops);
 		sb.append(",\"allow_drink_texture\":").append(meta.allowDrinkTexture);
+		sb.append(",\"allow_drink_message\":").append(meta.allowDrinkMessage);
 		if (meta.maxAliveCharacters != null) {
 			sb.append(",\"max_alive_characters\":").append(meta.maxAliveCharacters.intValue());
 		}

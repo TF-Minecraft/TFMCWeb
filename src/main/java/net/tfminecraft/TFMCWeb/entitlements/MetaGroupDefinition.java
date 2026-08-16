@@ -18,6 +18,7 @@ public final class MetaGroupDefinition {
 	private final List<String> skinKinds;
 	private final Boolean allowArmor3dHelmet;
 	private final Boolean allowDrinkTexture;
+	private final Boolean allowDrinkMessage;
 
 	public MetaGroupDefinition(
 		String permission,
@@ -25,7 +26,8 @@ public final class MetaGroupDefinition {
 		Map<String, Integer> intPerks,
 		List<String> skinKinds,
 		Boolean allowArmor3dHelmet,
-		Boolean allowDrinkTexture
+		Boolean allowDrinkTexture,
+		Boolean allowDrinkMessage
 	) {
 		this.permission = permission == null ? "" : permission.trim();
 		this.tier = tier;
@@ -44,6 +46,7 @@ public final class MetaGroupDefinition {
 		}
 		this.allowArmor3dHelmet = allowArmor3dHelmet;
 		this.allowDrinkTexture = allowDrinkTexture;
+		this.allowDrinkMessage = allowDrinkMessage;
 	}
 
 	public String getPermission() {
@@ -81,6 +84,14 @@ public final class MetaGroupDefinition {
 
 	public boolean getAllowDrinkTexture(boolean fallback) {
 		return allowDrinkTexture == null ? fallback : allowDrinkTexture.booleanValue();
+	}
+
+	public boolean hasAllowDrinkMessage() {
+		return allowDrinkMessage != null;
+	}
+
+	public boolean getAllowDrinkMessage(boolean fallback) {
+		return allowDrinkMessage == null ? fallback : allowDrinkMessage.booleanValue();
 	}
 
 	public static List<MetaGroupDefinition> copyList(List<MetaGroupDefinition> in) {
