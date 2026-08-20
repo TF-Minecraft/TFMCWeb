@@ -268,7 +268,7 @@ public final class WebCommand implements CommandExecutor, TabCompleter {
 	}
 
 	private static String nullSafe(String s) {
-		return s == null || s.isBlank() ? "—" : s;
+		return s == null || s.isBlank() ? "-" : s;
 	}
 
 	@Override

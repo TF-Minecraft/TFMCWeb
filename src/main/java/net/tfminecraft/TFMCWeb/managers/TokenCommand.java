@@ -293,7 +293,7 @@ public final class TokenCommand implements CommandExecutor, TabCompleter {
 					);
 					ChatMessages.info(
 						player,
-						"Redeem on the skins website — choose category and scroll; "
+						"Redeem on the skins website - choose category and scroll; "
 							+ "applies to the curated pack (no Discord review)."
 					);
 				} else if ("character".equals(scope)) {

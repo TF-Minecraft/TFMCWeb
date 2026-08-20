@@ -12,6 +12,9 @@
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <tfmc.refs>D:/Dokumenter/My Plugins/Reference Libs</tfmc.refs>
+        <tfmc.builds>D:/Dokumenter/My Plugins/TFMC/TFMCWeb</tfmc.builds>
+        <tfmc.tlibs>D:/Dokumenter/My Plugins/TFMC/TLibs</tfmc.tlibs>
     </properties>
 
     <dependencies>
@@ -20,7 +23,7 @@
             <artifactId>spigot-api</artifactId>
             <version>1.21.8</version>
             <scope>system</scope>
-            <systemPath>D:/Documents/TFMC/ReferenceLibs/spigot-api.jar</systemPath>
+            <systemPath>${tfmc.refs}/spigot-api.jar</systemPath>
         </dependency>
 
         <dependency>
@@ -28,7 +31,7 @@
             <artifactId>bungeecord-chat</artifactId>
             <version>1.20-R0.1</version>
             <scope>system</scope>
-            <systemPath>D:/Documents/TFMC/ReferenceLibs/BungeeCord.jar</systemPath>
+            <systemPath>${tfmc.refs}/BungeeCord.jar</systemPath>
         </dependency>
 
         <dependency>
@@ -36,7 +39,7 @@
             <artifactId>tlibs</artifactId>
             <version>1.0</version>
             <scope>system</scope>
-            <systemPath>D:/Documents/TFMC/Builds/TLibs/TLibs.jar</systemPath>
+            <systemPath>${tfmc.tlibs}/TLibs.jar</systemPath>
         </dependency>
         <!-- RPCharacters is softdepend; DiscordGateService uses reflection at runtime. -->
     </dependencies>
@@ -53,9 +56,9 @@
                         <goals><goal>run</goal></goals>
                         <configuration>
                             <target>
-                                <mkdir dir="D:/Documents/TFMC/Builds/TFMCWeb"/>
+                                <mkdir dir="${tfmc.builds}"/>
                                 <copy file="${project.build.directory}/${project.build.finalName}.jar"
-                                    tofile="D:/Documents/TFMC/Builds/TFMCWeb/${project.build.finalName}.jar"/>
+                                    tofile="${tfmc.builds}/${project.build.finalName}.jar"/>
                             </target>
                         </configuration>
                     </execution>
