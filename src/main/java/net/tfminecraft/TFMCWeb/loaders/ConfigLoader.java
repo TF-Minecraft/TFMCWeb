@@ -64,7 +64,7 @@ public final class ConfigLoader {
 				}
 				if (!scope.equals("skin")
 					&& !scope.equals("drink")
-					&& !scope.equals("character")
+					&& !scope.equals("profile")
 					&& !scope.equals("skin_staff")) {
 					continue;
 				}
@@ -76,7 +76,7 @@ public final class ConfigLoader {
 			// Missing key → keep full default (backward compatible).
 			enabled.add("skin");
 			enabled.add("drink");
-			enabled.add("character");
+			enabled.add("profile");
 			enabled.add("skin_staff");
 		}
 		Cache.tokenEnabledScopes = List.copyOf(enabled);

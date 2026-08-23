@@ -23,10 +23,10 @@ public final class Cache {
 	public static String realmId = "main";
 	/**
 	 * Scopes allowed by /token create on this server.
-	 * Empty = tokens disabled. Known: skin, drink, character, skin_staff.
+	 * Empty = tokens disabled. Known: skin, drink, profile, skin_staff.
 	 */
 	public static List<String> tokenEnabledScopes = List.of(
-		"skin", "drink", "character", "skin_staff"
+		"skin", "drink", "profile", "skin_staff"
 	);
 
 	/** Scopes that share one mint clock (skin + drink). */

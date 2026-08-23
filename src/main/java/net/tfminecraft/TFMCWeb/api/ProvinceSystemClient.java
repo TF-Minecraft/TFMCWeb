@@ -283,9 +283,9 @@ public final class ProvinceSystemClient {
 		}
 		if (!"skin".equals(sc)
 			&& !"drink".equals(sc)
-			&& !"character".equals(sc)
+			&& !"profile".equals(sc)
 			&& !"skin_staff".equals(sc)) {
-			return FeatureCodeResult.fail("scope must be skin, drink, skin_staff, or character");
+			return FeatureCodeResult.fail("scope must be skin, drink, skin_staff, or profile");
 		}
 		String realm = Cache.realmId == null || Cache.realmId.isBlank()
 			? "main"

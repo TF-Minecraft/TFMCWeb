@@ -47,8 +47,8 @@ public final class TokenCommand implements CommandExecutor, TabCompleter {
 		if (Cache.isTokenScopeEnabled("drink")) {
 			parts.add("drink");
 		}
-		if (Cache.isTokenScopeEnabled("character")) {
-			parts.add("character");
+		if (Cache.isTokenScopeEnabled("profile")) {
+			parts.add("profile");
 		}
 		if (Cache.isTokenScopeEnabled("skin_staff")) {
 			parts.add("skin staff");
@@ -206,7 +206,7 @@ public final class TokenCommand implements CommandExecutor, TabCompleter {
 		String apiScope;
 		boolean staffMint = false;
 
-		if ("character".equals(kind)) {
+		if ("profile".equals(kind)) {
 			if (args.length != 2) {
 				ChatMessages.error(player, "Usage: " + usageCreate());
 				return true;
@@ -215,7 +215,7 @@ public final class TokenCommand implements CommandExecutor, TabCompleter {
 				ChatMessages.error(player, "You do not have permission to create a token.");
 				return true;
 			}
-			apiScope = "character";
+			apiScope = "profile";
 		} else if ("drink".equals(kind)) {
 			if (args.length != 2) {
 				ChatMessages.error(player, "Usage: " + usageCreate());
@@ -296,15 +296,15 @@ public final class TokenCommand implements CommandExecutor, TabCompleter {
 						"Redeem on the skins website - choose category and scroll; "
 							+ "applies to the curated pack (no Discord review)."
 					);
-				} else if ("character".equals(scope)) {
+				} else if ("profile".equals(scope)) {
 					ChatMessages.sendCopyableCode(
 						player,
-						"Your character code (click to copy):",
+						"Your profile code (click to copy):",
 						result.code
 					);
 					ChatMessages.info(
 						player,
-						"Redeem on the website /character page (optional Remember me keeps you signed in 30 days)."
+						"Redeem on the website /profile page (optional Remember me keeps you signed in 30 days)."
 					);
 				} else if ("drink".equals(scope)) {
 					ChatMessages.sendCopyableCode(
@@ -375,8 +375,8 @@ public final class TokenCommand implements CommandExecutor, TabCompleter {
 				if (Cache.isTokenScopeEnabled("drink") && "drink".startsWith(p)) {
 					out.add("drink");
 				}
-				if (Cache.isTokenScopeEnabled("character") && "character".startsWith(p)) {
-					out.add("character");
+				if (Cache.isTokenScopeEnabled("profile") && "profile".startsWith(p)) {
+					out.add("profile");
 				}
 			} else if (canStaff
 				&& Cache.isTokenScopeEnabled("skin_staff")

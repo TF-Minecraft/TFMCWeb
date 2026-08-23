@@ -24,7 +24,7 @@ commands:
     permission: tfmcweb.admin
     permission-message: You do not have permission to use /web.
   token:
-    usage: /token create <skin|drink|character|skin staff> | /token resetcooldowns <player>
+    usage: /token create <skin|drink|profile|skin staff> | /token resetcooldowns <player>
     description: Create a scoped website code, or staff-reset shared skin/drink mint cooldown
   warning:
     usage: /warning <player> <reason>

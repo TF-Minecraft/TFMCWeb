@@ -11,12 +11,12 @@ realm:
   id: main
 
 # Which /token create scopes this box allows. Empty list = tokens disabled.
-# Lobby example: [character] only. Tutorial: [].
+# Lobby example: [profile] only. Tutorial: [].
 tokens:
   enabled-scopes:
     - skin
     - drink
-    - character
+    - profile
     - skin_staff
 
 # Shared mint cooldown for skin + drink (/token create). Character is excluded.
