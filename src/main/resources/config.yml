@@ -1,6 +1,6 @@
 # ProvinceSystem API (plugin key). Do not commit real production secrets.
 api:
-  base-url: "http://127.0.0.1:18001"
+  base-url: "http://127.0.0.1:8000"
   plugin-key: "dev-plugin-key"
 
 # Multi-server identity for minted codes (Plan 2) and plugin ingest/apply
