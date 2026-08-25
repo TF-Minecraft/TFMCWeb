@@ -426,6 +426,32 @@ public final class ProvinceSystemClient {
 		return postMirror("/skins/moderation/ban-events", sb.toString());
 	}
 
+	public static MirrorResult postBirdMail(
+		String playerUuid,
+		String discordUserId,
+		String addresseeCharacter,
+		String senderMinecraftName,
+		String contentsPreview
+	) {
+		String uuid = playerUuid == null ? "" : playerUuid.trim();
+		String discordId = discordUserId == null ? "" : discordUserId.trim();
+		String character = addresseeCharacter == null ? "" : addresseeCharacter.trim();
+		if (discordId.isEmpty()) {
+			return MirrorResult.success(false);
+		}
+		if (character.isEmpty()) {
+			return MirrorResult.fail("addressee_character is required");
+		}
+		StringBuilder sb = new StringBuilder("{");
+		sb.append("\"addressee_character\":\"").append(escapeJson(character)).append('"');
+		appendOptionalJson(sb, "player_uuid", uuid);
+		appendOptionalJson(sb, "discord_user_id", discordId);
+		appendOptionalJson(sb, "sender_minecraft_name", senderMinecraftName);
+		appendOptionalJson(sb, "contents_preview", contentsPreview);
+		sb.append('}');
+		return postMirror("/skins/moderation/bird-mail", sb.toString());
+	}
+
 	private static void appendOptionalJson(StringBuilder sb, String key, String value) {
 		if (value == null) {
 			return;
