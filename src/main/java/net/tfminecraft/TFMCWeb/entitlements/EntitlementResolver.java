@@ -36,6 +36,7 @@ public final class EntitlementResolver {
 		public final List<String> skinKinds;
 		public final boolean allowArmor3dHelmet;
 		public final Map<String, Boolean> permissionFlags;
+		public final int donatorTier;
 
 		public ResolvedMeta(
 			int nameColourStops,
@@ -47,7 +48,8 @@ public final class EntitlementResolver {
 			int skinTokenCooldownDays,
 			List<String> skinKinds,
 			boolean allowArmor3dHelmet,
-			Map<String, Boolean> permissionFlags
+			Map<String, Boolean> permissionFlags,
+			int donatorTier
 		) {
 			this.nameColourStops = nameColourStops;
 			this.allowDrinkTexture = allowDrinkTexture;
@@ -59,6 +61,7 @@ public final class EntitlementResolver {
 			this.skinKinds = List.copyOf(skinKinds);
 			this.allowArmor3dHelmet = allowArmor3dHelmet;
 			this.permissionFlags = Map.copyOf(permissionFlags);
+			this.donatorTier = Math.max(0, donatorTier);
 		}
 	}
 
@@ -105,8 +108,15 @@ public final class EntitlementResolver {
 			cooldown,
 			kinds,
 			helmet,
-			flags
+			flags,
+			highestRpcTier(player)
 		);
+	}
+
+	/** Highest matching tier from player-meta.rpc.groups (0 = default). */
+	public static int highestRpcTier(Player player) {
+		MetaGroupDefinition highest = highestMatching(player, Cache.rpcMetaGroups);
+		return highest == null ? 0 : Math.max(0, highest.getTier());
 	}
 
 	private static int maxInt(
