@@ -16,22 +16,22 @@ public final class BirdMailGateway {
 
 	private BirdMailGateway() {}
 
-	public static void enqueueArrival(
+	public static boolean enqueueArrival(
 		UUID ownerUuid,
 		String addresseeCharacter,
 		String senderMinecraftName,
 		String contentsPreview
 	) {
 		if (ownerUuid == null || addresseeCharacter == null || addresseeCharacter.isBlank()) {
-			return;
+			return false;
 		}
 		TFMCWeb plugin = TFMCWeb.plugin;
 		if (plugin == null || !plugin.isEnabled()) {
-			return;
+			return false;
 		}
 		String discordId = resolveDiscordId(plugin, ownerUuid);
 		if (discordId == null || discordId.isBlank()) {
-			return;
+			return false;
 		}
 		MirrorResult result = ProvinceSystemClient.postBirdMail(
 			ownerUuid.toString(),
@@ -45,7 +45,9 @@ public final class BirdMailGateway {
 				Level.FINE,
 				"Bird mail enqueue failed for " + ownerUuid + ": " + result.error
 			);
+			return false;
 		}
+		return result.mirrored;
 	}
 
 	private static String resolveDiscordId(TFMCWeb plugin, UUID uuid) {

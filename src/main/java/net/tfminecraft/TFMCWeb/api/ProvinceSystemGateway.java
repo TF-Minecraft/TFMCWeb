@@ -269,7 +269,7 @@ public final class ProvinceSystemGateway {
 			@SuppressWarnings("deprecation")
 			URL url = new URL(root + path);
 			connection = (HttpURLConnection) url.openConnection();
-			connection.setRequestMethod(method);
+			applyRequestMethod(connection, method);
 			connection.setConnectTimeout(TIMEOUT_MS);
 			connection.setReadTimeout(readTimeoutMs);
 			connection.setRequestProperty("X-Plugin-Key", key);
@@ -311,6 +311,28 @@ public final class ProvinceSystemGateway {
 			return "";
 		}
 		return base.endsWith("/") ? base.substring(0, base.length() - 1) : base;
+	}
+
+	/**
+	 * {@link HttpURLConnection} rejects PATCH on many JVMs ({@code Invalid HTTP method: PATCH}).
+	 */
+	private static void applyRequestMethod(HttpURLConnection connection, String method)
+			throws java.net.ProtocolException {
+		String m = method == null || method.isBlank() ? "GET" : method.trim().toUpperCase(Locale.ROOT);
+		try {
+			connection.setRequestMethod(m);
+		} catch (java.net.ProtocolException ex) {
+			if (!"PATCH".equals(m)) {
+				throw ex;
+			}
+			try {
+				var field = HttpURLConnection.class.getDeclaredField("method");
+				field.setAccessible(true);
+				field.set(connection, "PATCH");
+			} catch (ReflectiveOperationException roe) {
+				throw ex;
+			}
+		}
 	}
 
 	private static String notConfiguredMessage() {
