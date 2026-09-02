@@ -181,7 +181,7 @@ public final class ProvinceSystemGateway {
 	}
 
 	static String injectRealmBody(String method, String path, String jsonBody) {
-		if (!"PUT".equals(method) || jsonBody == null || jsonBody.isBlank()) {
+		if (path == null || jsonBody == null || jsonBody.isBlank()) {
 			return jsonBody;
 		}
 		String bare = path;
@@ -189,7 +189,7 @@ public final class ProvinceSystemGateway {
 		if (q >= 0) {
 			bare = path.substring(0, q);
 		}
-		if (!needsRealmBody(bare)) {
+		if (!needsRealmBody(method, bare)) {
 			return jsonBody;
 		}
 		if (REALM_IN_BODY.matcher(jsonBody).find()) {
@@ -217,9 +217,19 @@ public final class ProvinceSystemGateway {
 			|| equalsPath(barePath, "/characters/plugin/lore-items/pending");
 	}
 
-	private static boolean needsRealmBody(String barePath) {
-		return equalsPath(barePath, "/characters/plugin/roster")
-			|| equalsPath(barePath, "/characters/plugin/rpc-player-meta");
+	private static boolean needsRealmBody(String method, String barePath) {
+		if ("PUT".equals(method)) {
+			return equalsPath(barePath, "/characters/plugin/roster")
+				|| equalsPath(barePath, "/characters/plugin/rpc-player-meta");
+		}
+		// War declare codes are realm-scoped, but SimpleFactions has no realm id of
+		// its own: only TFMCWeb knows it. Injecting here is what keeps a dev-realm
+		// code from being spent on the live realm without a new plugin config key.
+		if ("POST".equals(method)) {
+			return equalsPath(barePath, "/wars/declare-codes/validate")
+				|| equalsPath(barePath, "/wars/declare-codes/redeem");
+		}
+		return false;
 	}
 
 	private static boolean equalsPath(String bare, String expected) {
