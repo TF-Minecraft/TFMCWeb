@@ -1,7 +1,7 @@
 main: net.tfminecraft.TFMCWeb.TFMCWeb
 api-version: 1.20
 name: TFMCWeb
-version: 1.0
+version: ${project.version}
 author: TFMC
 
 depend: [TLibs]

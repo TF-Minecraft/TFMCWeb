@@ -45,3 +45,6 @@ Desktop.ini
 
 # Logs
 *.log
+
+# Downloaded build dependencies
+/libs/*.jar
