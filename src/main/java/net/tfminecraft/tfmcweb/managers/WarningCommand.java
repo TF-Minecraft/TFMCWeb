@@ -31,6 +31,8 @@ public final class WarningCommand implements CommandExecutor {
 		this.linkCache = linkCache;
 	}
 
+	// Keep the existing legacy text representation, formatting, and exact-string comparisons.
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
 		if (!sender.hasPermission("tfmcweb.warning")) {

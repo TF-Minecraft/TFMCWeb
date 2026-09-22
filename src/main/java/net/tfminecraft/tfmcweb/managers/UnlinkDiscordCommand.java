@@ -32,6 +32,8 @@ public final class UnlinkDiscordCommand implements CommandExecutor {
 		this.gateService = gateService;
 	}
 
+	// Keep the existing legacy text representation, formatting, and exact-string comparisons.
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
 		if (!(sender instanceof Player)) {

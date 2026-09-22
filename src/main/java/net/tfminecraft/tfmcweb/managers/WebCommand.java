@@ -46,6 +46,8 @@ public final class WebCommand implements CommandExecutor, TabCompleter {
 		this.gateService = gateService;
 	}
 
+	// Keep the existing legacy text representation, formatting, and exact-string comparisons.
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
 		if (!sender.hasPermission("tfmcweb.admin")) {
@@ -78,6 +80,8 @@ public final class WebCommand implements CommandExecutor, TabCompleter {
 		}
 	}
 
+	// Keep the existing legacy text representation, formatting, and exact-string comparisons.
+	@SuppressWarnings("deprecation")
 	private boolean cmdStatus(CommandSender sender) {
 		sender.sendMessage(ChatColor.GREEN + "[TFMCWeb] Checking API…");
 		Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
@@ -101,6 +105,8 @@ public final class WebCommand implements CommandExecutor, TabCompleter {
 		return true;
 	}
 
+	// Keep the existing legacy text representation, formatting, and exact-string comparisons.
+	@SuppressWarnings("deprecation")
 	private boolean cmdReload(CommandSender sender) {
 		if (plugin instanceof TFMCWeb) {
 			((TFMCWeb) plugin).reloadLocalConfig();
@@ -114,6 +120,8 @@ public final class WebCommand implements CommandExecutor, TabCompleter {
 		return true;
 	}
 
+	// Keep the existing legacy text representation, formatting, and exact-string comparisons.
+	@SuppressWarnings("deprecation")
 	private boolean cmdSyncMeta(CommandSender sender, String[] args) {
 		if (args.length >= 2) {
 			OfflinePlayer target = resolvePlayer(args[1]);
@@ -136,6 +144,8 @@ public final class WebCommand implements CommandExecutor, TabCompleter {
 		return true;
 	}
 
+	// Keep the existing legacy text representation, formatting, and exact-string comparisons.
+	@SuppressWarnings("deprecation")
 	private boolean cmdLookup(CommandSender sender, String[] args) {
 		if (args.length < 2) {
 			sender.sendMessage(ChatColor.YELLOW + "Usage: /web lookup <player>");
@@ -182,6 +192,8 @@ public final class WebCommand implements CommandExecutor, TabCompleter {
 		return true;
 	}
 
+	// Keep the existing legacy text representation, formatting, and exact-string comparisons.
+	@SuppressWarnings("deprecation")
 	private boolean cmdUnlink(CommandSender sender, String[] args) {
 		if (args.length < 2) {
 			sender.sendMessage(ChatColor.YELLOW + "Usage: /web unlink <player>");
@@ -214,6 +226,8 @@ public final class WebCommand implements CommandExecutor, TabCompleter {
 		return true;
 	}
 
+	// Keep the existing legacy text representation, formatting, and exact-string comparisons.
+	@SuppressWarnings("deprecation")
 	private boolean cmdReconcile(CommandSender sender) {
 		List<Player> online = new ArrayList<>(Bukkit.getOnlinePlayers());
 		sender.sendMessage(ChatColor.GREEN + "[TFMCWeb] Reconciling "

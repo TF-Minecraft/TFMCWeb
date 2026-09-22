@@ -73,6 +73,8 @@ public final class PluginNoticePoller {
 		Bukkit.getScheduler().runTask(plugin, () -> deliverAndAck(snapshot));
 	}
 
+	// Keep the existing legacy text representation, formatting, and exact-string comparisons.
+	@SuppressWarnings("deprecation")
 	private void deliverAndAck(List<PluginNotice> notices) {
 		List<Integer> toAck = new ArrayList<>();
 
