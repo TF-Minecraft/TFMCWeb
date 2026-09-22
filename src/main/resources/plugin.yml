@@ -5,7 +5,8 @@ version: ${project.version}
 author: TFMC
 
 depend: [TLibs]
-softdepend: [RPCharacters, Essentials]
+# RPCharacters depends on TFMCWeb; its optional gate API is resolved at runtime.
+softdepend: [Essentials]
 
 commands:
   linkdiscord:

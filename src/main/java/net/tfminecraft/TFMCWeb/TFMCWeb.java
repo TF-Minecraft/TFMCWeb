@@ -39,8 +39,8 @@ public class TFMCWeb extends JavaPlugin {
 
 		gateService = new DiscordGateService(this, linkCache);
 		if (!gateService.isRpcAvailable()) {
-			getLogger().warning(
-				"RPCharacters not found — Discord Survival gate disabled; link/HTTP still active."
+			getLogger().info(
+				"Discord Survival gate waiting for RPCharacters; availability is checked when used."
 			);
 		}
 
