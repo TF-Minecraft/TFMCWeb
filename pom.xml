@@ -9,12 +9,13 @@
     <version>1.0-SNAPSHOT</version>
 
     <properties>
+        <tlibs.version>1.0-tfmc-bbac27e3055d</tlibs.version>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <tfmc.refs>D:/Dokumenter/My Plugins/Reference Libs</tfmc.refs>
         <tfmc.builds>D:/Dokumenter/My Plugins/TFMC/TFMCWeb</tfmc.builds>
-        <tfmc.tlibs>D:/Dokumenter/My Plugins/TFMC/TLibs</tfmc.tlibs>
+
     </properties>
 
     <dependencies>
@@ -35,11 +36,14 @@
         </dependency>
 
         <dependency>
-            <groupId>local</groupId>
+            <groupId>me.plugins</groupId>
             <artifactId>tlibs</artifactId>
-            <version>1.0</version>
-            <scope>system</scope>
-            <systemPath>${tfmc.tlibs}/TLibs.jar</systemPath>
+            <version>${tlibs.version}</version>
+            <scope>provided</scope>
+            <exclusions>
+                <!-- The server supplies TLibs and its integrations. -->
+                <exclusion><groupId>*</groupId><artifactId>*</artifactId></exclusion>
+            </exclusions>
         </dependency>
         <!-- RPCharacters is softdepend; DiscordGateService uses reflection at runtime. -->
     </dependencies>
