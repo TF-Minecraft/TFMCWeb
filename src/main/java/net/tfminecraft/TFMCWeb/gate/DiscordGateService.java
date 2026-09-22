@@ -15,29 +15,39 @@ import net.tfminecraft.TFMCWeb.api.ProvinceSystemClient.IdentityStatus;
 import net.tfminecraft.TFMCWeb.cache.LinkCache;
 
 /**
- * Applies Survival Discord gate via RPCharacters (soft-depend, reflection).
+ * Applies Survival Discord gate via RPCharacters (optional, reflection).
  */
 public final class DiscordGateService {
 
 	private final JavaPlugin plugin;
 	private final LinkCache linkCache;
-	private final boolean rpcAvailable;
+	private Plugin resolvedRpc;
 	private Method setGateUuid;
 	private Method setGatePlayer;
 
 	public DiscordGateService(JavaPlugin plugin, LinkCache linkCache) {
 		this.plugin = plugin;
 		this.linkCache = linkCache;
-		this.rpcAvailable = resolveRpc();
 	}
 
 	private boolean resolveRpc() {
 		Plugin rpc = Bukkit.getPluginManager().getPlugin("RPCharacters");
 		if (rpc == null || !rpc.isEnabled()) {
+			resolvedRpc = null;
+			setGateUuid = null;
+			setGatePlayer = null;
 			return false;
 		}
+		if (rpc == resolvedRpc) {
+			return setGateUuid != null && setGatePlayer != null;
+		}
+		resolvedRpc = rpc;
+		setGateUuid = null;
+		setGatePlayer = null;
 		try {
-			Class<?> cls = Class.forName("net.tfminecraft.RPCharacters.RPCharacters");
+			// RPC depends on TFMCWeb, so resolve only once it has enabled, using
+			// its own class rather than TFMCWeb's plugin class loader.
+			Class<?> cls = rpc.getClass();
 			setGateUuid = cls.getMethod("setDiscordGate", UUID.class, boolean.class);
 			setGatePlayer = cls.getMethod("setDiscordGate", Player.class, boolean.class);
 			return true;
@@ -52,7 +62,7 @@ public final class DiscordGateService {
 	}
 
 	public boolean isRpcAvailable() {
-		return rpcAvailable;
+		return resolveRpc();
 	}
 
 	/**
@@ -77,7 +87,7 @@ public final class DiscordGateService {
 	}
 
 	public void applyGate(Player player, boolean eligible) {
-		if (player == null || !rpcAvailable) {
+		if (player == null || !isRpcAvailable()) {
 			return;
 		}
 		boolean required = player.getGameMode() == GameMode.SURVIVAL && !eligible;
@@ -86,7 +96,7 @@ public final class DiscordGateService {
 
 	/** Offline-safe: set UUID gate flag; RPC reevaluates if online. */
 	public void applyGate(UUID uuid, boolean eligible) {
-		if (uuid == null || !rpcAvailable) {
+		if (uuid == null || !isRpcAvailable()) {
 			return;
 		}
 		Player online = Bukkit.getPlayer(uuid);
@@ -99,7 +109,7 @@ public final class DiscordGateService {
 	}
 
 	public void clearGate(UUID uuid) {
-		if (uuid == null || !rpcAvailable) {
+		if (uuid == null || !isRpcAvailable()) {
 			return;
 		}
 		Player online = Bukkit.getPlayer(uuid);
