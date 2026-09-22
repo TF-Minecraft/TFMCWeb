@@ -1,19 +1,19 @@
 package net.tfminecraft.tfmcweb.utils;
 
-import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 
-import net.md_5.bungee.api.chat.ClickEvent;
-import net.md_5.bungee.api.chat.ComponentBuilder;
-import net.md_5.bungee.api.chat.HoverEvent;
-import net.md_5.bungee.api.chat.TextComponent;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.event.HoverEvent;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 
 /**
  * Prefixed chat helpers, including click-to-copy codes.
  */
 public final class ChatMessages {
 
-	public static final String PREFIX = ChatColor.GREEN + "[TFMCWeb] " + ChatColor.RESET;
+	public static final String PREFIX = "\u00A7a[TFMCWeb] \u00A7r";
 
 	private ChatMessages() {}
 
@@ -22,7 +22,7 @@ public final class ChatMessages {
 	}
 
 	public static void error(Player player, String message) {
-		player.sendMessage(PREFIX + ChatColor.RED + message);
+		player.sendMessage(PREFIX + "\u00A7c" + message);
 	}
 
 	public static void sendCopyableCode(Player player, String intro, String code) {
@@ -33,26 +33,14 @@ public final class ChatMessages {
 			return;
 		}
 
-		TextComponent label = new TextComponent("Code: ");
-		label.setColor(net.md_5.bungee.api.ChatColor.GRAY);
+		Component label = Component.text("Code: ", NamedTextColor.GRAY);
+		Component codeComp = Component.text(code, NamedTextColor.AQUA)
+				.decorate(TextDecoration.BOLD)
+				.clickEvent(ClickEvent.copyToClipboard(code))
+				.hoverEvent(HoverEvent.showText(Component.text("Click to copy")));
+		Component hint = Component.text(" (click to copy)", NamedTextColor.DARK_GRAY)
+				.decorate(TextDecoration.ITALIC);
 
-		TextComponent codeComp = new TextComponent(code);
-		codeComp.setColor(net.md_5.bungee.api.ChatColor.AQUA);
-		codeComp.setBold(true);
-		codeComp.setClickEvent(
-			new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, code)
-		);
-		@SuppressWarnings("deprecation")
-		HoverEvent hover = new HoverEvent(
-			HoverEvent.Action.SHOW_TEXT,
-			new ComponentBuilder("Click to copy").create()
-		);
-		codeComp.setHoverEvent(hover);
-
-		TextComponent hint = new TextComponent(" (click to copy)");
-		hint.setColor(net.md_5.bungee.api.ChatColor.DARK_GRAY);
-		hint.setItalic(true);
-
-		player.spigot().sendMessage(label, codeComp, hint);
+		player.sendMessage(Component.empty().append(label).append(codeComp).append(hint));
 	}
 }

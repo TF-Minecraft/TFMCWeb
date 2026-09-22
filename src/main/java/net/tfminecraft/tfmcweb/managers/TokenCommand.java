@@ -75,6 +75,8 @@ public final class TokenCommand implements CommandExecutor, TabCompleter {
 		return true;
 	}
 
+	// Keep the existing legacy text representation, formatting, and exact-string comparisons.
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
 		if (args.length == 0) {
@@ -98,6 +100,8 @@ public final class TokenCommand implements CommandExecutor, TabCompleter {
 		return true;
 	}
 
+	// Keep the existing legacy text representation, formatting, and exact-string comparisons.
+	@SuppressWarnings("deprecation")
 	private void sendUsage(CommandSender sender) {
 		boolean canCreate = sender.hasPermission(PERM_CREATE) || sender.hasPermission(PERM_CREATE_STAFF);
 		boolean canReset = sender.hasPermission(PERM_RESET);
@@ -121,6 +125,8 @@ public final class TokenCommand implements CommandExecutor, TabCompleter {
 		}
 	}
 
+	// Keep the existing legacy text representation, formatting, and exact-string comparisons.
+	@SuppressWarnings("deprecation")
 	private boolean handleResetCooldowns(CommandSender sender, String[] args) {
 		if (!sender.hasPermission(PERM_RESET)) {
 			if (sender instanceof Player) {
@@ -185,6 +191,8 @@ public final class TokenCommand implements CommandExecutor, TabCompleter {
 		return true;
 	}
 
+	// Keep the existing legacy text representation, formatting, and exact-string comparisons.
+	@SuppressWarnings("deprecation")
 	private boolean handleCreate(CommandSender sender, String[] args) {
 		if (!(sender instanceof Player)) {
 			sender.sendMessage(ChatColor.RED + "Players only.");
