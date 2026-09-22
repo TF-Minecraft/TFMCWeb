@@ -1,4 +1,4 @@
-main: net.tfminecraft.TFMCWeb.TFMCWeb
+main: net.tfminecraft.tfmcweb.TFMCWeb
 api-version: '1.21.10'
 name: TFMCWeb
 version: ${project.version}
