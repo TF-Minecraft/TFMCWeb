@@ -4,4 +4,4 @@ set -euo pipefail
 ref=726208728d6b3b66d09e5efcdfab9a63b8e39228
 mkdir -p libs
 curl --fail --location --silent --show-error --retry 3 -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github.raw+json" "https://api.github.com/repos/TF-Minecraft/ServerAssets/contents/jars/3bc6fa2477eb/BungeeCord.jar?ref=$ref" > "libs/BungeeCord.jar"
-sha256sum --check .github/dependencies.sha256
+bash .github/scripts/install-local-dependencies.sh "$@"
