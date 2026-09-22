@@ -1,41 +1,24 @@
-# tfmcweb
+# TFMC Web
 
-Technical documentation is maintained in [TF-Minecraft/Docs](https://github.com/TF-Minecraft/Docs/blob/main/projects/TFMCWeb/README.md).
+> Connecting TF-Minecraft gameplay, website features, and Discord identity.
 
-Use that project index for setup, configuration, architecture, integration and testing guides. This repository contains the source and project-specific assets.
+TFMC Web is the Minecraft-side bridge to the TF-Minecraft website services. It helps players connect their Discord account, obtain access codes for website features, and receive account updates in-game.
 
-## TLibs build dependency
+The same bridge connects selected moderation and roleplay events to the wider community services, keeping account identity and supported player benefits aligned across them.
 
-TLibs is a versioned Maven `provided` dependency. From this repository, prepare
-it once with the shared installer, then build as usual:
+## Features
 
-```sh
-python3 ../tlibs/tools/install-dependency.py --pom pom.xml
-mvn clean verify
-```
+- **Discord account linking** — players can request a linking code or unlink their Minecraft account.
+- **Website feature codes** — issues scoped codes for skins, drinks, and player profiles, subject to access rules and cooldowns.
+- **Account status updates** — processes website notices about linking and eligibility, including RPCharacters survival access checks.
+- **Moderation connections** — sends player warnings and supported Essentials ban or unban events to the linked services.
+- **Player benefit synchronization** — shares resolved player metadata and entitlements with ProvinceSystem.
+- **Bird-mail notifications** — provides the connection for BirdMessenger arrival notifications to linked Discord accounts.
 
-See [TLibs dependency setup](https://github.com/TF-Minecraft/TLibs/blob/5da8e77d0e0696bbff7d7064a2644072da9c6428/DEPENDENCIES.md)
-for public release installation, offline builds and rollback.
-Other declared build dependencies still need their usual preparation.
-Use JDK 25 for this TLibs binary; the server must also run Java 25.
+These features rely on the corresponding TF-Minecraft services and gameplay integrations being available.
 
-Builds and server runtime require Java 25. Local builds default to [TLibs 1.1.0](https://github.com/TF-Minecraft/TLibs/releases/tag/v1.1.0); CI resolves the latest published stable TLibs release for each build, verifies its checksum, and uses its exact version throughout that job.
+## Documentation
 
-## Shared plugin dependencies
+[Project documentation](https://github.com/TF-Minecraft/Docs/blob/main/projects/TFMCWeb/README.md)
 
-Build and release workflows install checksum-verified plugin releases through
-[TLibs' shared installer](https://github.com/TF-Minecraft/TLibs/blob/main/DEPENDENCIES.md).
-CI selects the latest published versions; local builds use the explicit Maven
-version properties. Shared plugins use `provided` scope and remain separate
-server plugins. Each build records exact versions and checksums in
-`.build/plugin-dependencies.json` alongside its JAR.
-
-From this checkout, with the TLibs repository next to it:
-
-```sh
-python3 ../tlibs/tools/install-plugins.py --pom pom.xml
-```
-
-Prepare any remaining third-party inputs with `.github/scripts/prepare-release.sh`
-before running Maven. Any source-unavailable inputs remain private and checksum-pinned wherever declared; see the installer
-documentation for authentication and reproducible rebuilds.
+Technical documentation is maintained in [TF-Minecraft/Docs](https://github.com/TF-Minecraft/Docs).
