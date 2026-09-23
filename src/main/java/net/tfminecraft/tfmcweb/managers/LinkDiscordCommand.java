@@ -78,7 +78,7 @@ public final class LinkDiscordCommand implements CommandExecutor {
 				ChatMessages.info(
 					player,
 					"In Discord, run " + ChatColor.AQUA + "/linkdiscord <code>"
-						+ ChatColor.GRAY + " with that code."
+						+ ChatColor.GRAY + " with that code in any channel on the server."
 				);
 				String expiry = ExpiryFormat.relativeLabel(result.expiresAt);
 				if (expiry != null) {
