@@ -111,7 +111,7 @@ player-meta:
         tier: 3
         name-colour-stops: 20
         skin-token-cooldown-days: 14
-        skin-kinds: [item_3d, shield, helmet_3d, gun]
+        skin-kinds: [item_3d, shield, helmet_3d, mask, gun]
         allow-armor-3d-helmet: true
       - permission: rpchar.group.legacy
         tier: 4
