@@ -5,5 +5,5 @@ set -euo pipefail
 sha256sum --check .github/dependencies.sha256
 
 mvn -B --no-transfer-progress org.apache.maven.plugins:maven-install-plugin:3.1.4:install-file \
-    -Dfile="libs/BungeeCord.jar" -DgroupId="net.md-5" -DartifactId="bungeecord-chat" \
-    -Dversion="1.20-R0.1-tfmc-3bc6fa2477eb" -Dpackaging=jar -DgeneratePom=true "$@"
+    -Dfile="libs/BungeeCord-26.1-R0.1-SNAPSHOT-build2096.jar" -DgroupId="net.md-5" -DartifactId="bungeecord-chat" \
+    -Dversion="26.1-R0.1-SNAPSHOT-build2096-tfmc-822e034c64c8" -Dpackaging=jar -DgeneratePom=true "$@"
