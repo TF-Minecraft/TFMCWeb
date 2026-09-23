@@ -25,7 +25,7 @@
         <dependency>
             <groupId>net.md-5</groupId>
             <artifactId>bungeecord-chat</artifactId>
-            <version>1.20-R0.1-tfmc-3bc6fa2477eb</version>
+            <version>26.1-R0.1-SNAPSHOT-build2096-tfmc-822e034c64c8</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
