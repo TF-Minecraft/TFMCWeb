@@ -164,7 +164,6 @@ public final class WebCommand implements CommandExecutor, TabCompleter {
 			sender.sendMessage(ChatColor.GRAY + "cache: linked=" + cached.linked
 				+ " eligible=" + cached.eligible
 				+ " in_grace=" + cached.inGrace
-				+ " discord=" + nullSafe(cached.discordUsername)
 				+ " grace_until=" + nullSafe(cached.graceUntil));
 			sender.sendMessage(discordUsernameLine(cached.discordUsername));
 		} else {
@@ -182,7 +181,6 @@ public final class WebCommand implements CommandExecutor, TabCompleter {
 				sender.sendMessage(ChatColor.GRAY + "live: linked=" + status.linked
 					+ " eligible=" + status.eligible
 					+ " in_grace=" + status.inGrace
-					+ " discord=" + nullSafe(status.discordUsername)
 					+ " grace_until=" + nullSafe(status.graceUntil));
 				sender.sendMessage(discordUsernameLine(status.discordUsername));
 				Player online = Bukkit.getPlayer(uuid);
