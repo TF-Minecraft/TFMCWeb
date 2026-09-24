@@ -40,9 +40,9 @@ token-cooldowns:
 
 # Web entitlements pushed to ProvinceSystem on join (rpc_player_meta).
 # Duplicated ladders — keep in sync with plugin permission-groups.yml:
-#   Workspace/rpcharacters/src/main/resources/permission-groups.yml
-#   Workspace/armourshop/src/main/resources/permission-groups.yml
-#   Workspace/drinkbuilder/src/main/resources/permission-groups.yml
+#   rpcharacters/src/main/resources/permission-groups.yml
+#   armourshop/src/main/resources/permission-groups.yml
+#   drinkbuilder/src/main/resources/permission-groups.yml
 # TFMCWeb only posts values; plugins still own in-game unlock semantics.
 # Optional per-realm overrides (falls back to top-level rpc/skins/drinks):
 #   player-meta.by-realm.dev.rpc: { defaults: ..., groups: [...] }
