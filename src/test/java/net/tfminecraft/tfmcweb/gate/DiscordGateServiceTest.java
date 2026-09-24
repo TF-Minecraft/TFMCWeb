@@ -74,6 +74,19 @@ class DiscordGateServiceTest {
 	}
 
 	@Test
+	void staffBypassSkipsSurvivalGateWhenUnlinked() {
+		when(rpc.isEnabled()).thenReturn(true);
+		when(player.hasPermission(DiscordGateService.BYPASS_PERMISSION)).thenReturn(true);
+		cache.putUnlinked(uuid);
+
+		gate.applyGate(player);
+
+		assertEquals(Boolean.FALSE, RpcPlugin.lastRequired);
+		assertFalse(DiscordGateService.requiresGate(GameMode.SURVIVAL, false, true));
+		assertTrue(DiscordGateService.requiresGate(GameMode.SURVIVAL, false, false));
+	}
+
+	@Test
 	void releasesEligiblePlayersAndDoesNotFreezeOtherGameModes() {
 		when(rpc.isEnabled()).thenReturn(true);
 		cache.putLinked(uuid, "discord-id", "player");

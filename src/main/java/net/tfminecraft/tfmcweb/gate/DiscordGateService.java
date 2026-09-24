@@ -16,8 +16,12 @@ import net.tfminecraft.tfmcweb.cache.LinkCache;
 
 /**
  * Applies Survival Discord gate via RPCharacters (optional, reflection).
+ * Players with {@link #BYPASS_PERMISSION} are not gated.
  */
 public final class DiscordGateService {
+
+	/** Survival play without a Discord link. Registered in plugin.yml. */
+	public static final String BYPASS_PERMISSION = "tfmcweb.discord.bypass";
 
 	private final JavaPlugin plugin;
 	private final LinkCache linkCache;
@@ -90,8 +94,16 @@ public final class DiscordGateService {
 		if (player == null || !isRpcAvailable()) {
 			return;
 		}
-		boolean required = player.getGameMode() == GameMode.SURVIVAL && !eligible;
+		boolean required = requiresGate(
+			player.getGameMode(),
+			eligible,
+			player.hasPermission(BYPASS_PERMISSION)
+		);
 		invokeGate(player.getUniqueId(), player, required);
+	}
+
+	static boolean requiresGate(GameMode mode, boolean eligible, boolean bypass) {
+		return mode == GameMode.SURVIVAL && !eligible && !bypass;
 	}
 
 	/** Offline-safe: set UUID gate flag; RPC reevaluates if online. */

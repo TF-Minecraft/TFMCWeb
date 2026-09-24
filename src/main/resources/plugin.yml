@@ -37,6 +37,9 @@ permissions:
   tfmcweb.linkdiscord:
     description: Use /linkdiscord and /unlinkdiscord
     default: true
+  tfmcweb.discord.bypass:
+    description: Play Survival without linking Discord
+    default: false
   tfmcweb.admin:
     description: Admin /web commands
     default: op
