@@ -166,6 +166,7 @@ public final class WebCommand implements CommandExecutor, TabCompleter {
 				+ " in_grace=" + cached.inGrace
 				+ " discord=" + nullSafe(cached.discordUsername)
 				+ " grace_until=" + nullSafe(cached.graceUntil));
+			sender.sendMessage(discordUsernameLine(cached.discordUsername));
 		} else {
 			sender.sendMessage(ChatColor.GRAY + "cache: (miss)");
 		}
@@ -183,6 +184,7 @@ public final class WebCommand implements CommandExecutor, TabCompleter {
 					+ " in_grace=" + status.inGrace
 					+ " discord=" + nullSafe(status.discordUsername)
 					+ " grace_until=" + nullSafe(status.graceUntil));
+				sender.sendMessage(discordUsernameLine(status.discordUsername));
 				Player online = Bukkit.getPlayer(uuid);
 				if (online != null && online.isOnline()) {
 					gateService.applyGate(online, status.eligible);
@@ -283,6 +285,13 @@ public final class WebCommand implements CommandExecutor, TabCompleter {
 
 	private static String nullSafe(String s) {
 		return s == null || s.isBlank() ? "-" : s;
+	}
+
+	/** Chat line for the command sender. Blank names stay visible as "-". */
+	@SuppressWarnings("deprecation")
+	static String discordUsernameLine(String username) {
+		return ChatColor.GRAY + "Discord username: "
+			+ ChatColor.AQUA + nullSafe(username);
 	}
 
 	@Override
