@@ -10,8 +10,13 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.Duration;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 
 import net.tfminecraft.tfmcweb.Cache;
 import net.tfminecraft.tfmcweb.TFMCWeb;
@@ -24,9 +29,6 @@ public final class ProvinceSystemGateway {
 
 	private static final int TIMEOUT_MS = 8000;
 	private static final int DOWNLOAD_TIMEOUT_MS = 30000;
-	private static final Pattern REALM_IN_BODY = Pattern.compile(
-		"\"realm_id\"\\s*:"
-	);
 
 	private ProvinceSystemGateway() {}
 
@@ -169,15 +171,11 @@ public final class ProvinceSystemGateway {
 		if (queryContainsRealm(query)) {
 			return path;
 		}
-		try {
-			String enc = URLEncoder.encode(realm, StandardCharsets.UTF_8);
-			if (q >= 0) {
-				return path + (query.isEmpty() ? "" : "&") + "realm_id=" + enc;
-			}
-			return path + "?realm_id=" + enc;
-		} catch (Exception e) {
-			return path + (q >= 0 ? "&" : "?") + "realm_id=" + realm;
+		String enc = URLEncoder.encode(realm, StandardCharsets.UTF_8);
+		if (q >= 0) {
+			return path + (query.isEmpty() ? "" : "&") + "realm_id=" + enc;
 		}
+		return path + "?realm_id=" + enc;
 	}
 
 	static String injectRealmBody(String method, String path, String jsonBody) {
@@ -192,19 +190,17 @@ public final class ProvinceSystemGateway {
 		if (!needsRealmBody(method, bare)) {
 			return jsonBody;
 		}
-		if (REALM_IN_BODY.matcher(jsonBody).find()) {
+		try {
+			JsonElement parsed = JsonParser.parseString(jsonBody);
+			if (!parsed.isJsonObject() || parsed.getAsJsonObject().has("realm_id")) {
+				return jsonBody;
+			}
+			// Only the top-level field scopes the request; nested metadata is independent.
+			parsed.getAsJsonObject().addProperty("realm_id", TFMCWeb.getRealmId());
+			return parsed.toString();
+		} catch (com.google.gson.JsonParseException e) {
 			return jsonBody;
 		}
-		String realm = TFMCWeb.getRealmId();
-		String trimmed = jsonBody.trim();
-		if (!trimmed.startsWith("{") || !trimmed.endsWith("}")) {
-			return jsonBody;
-		}
-		String inner = trimmed.substring(1, trimmed.length() - 1).trim();
-		if (inner.isEmpty()) {
-			return "{\"realm_id\":\"" + escapeJson(realm) + "\"}";
-		}
-		return "{\"realm_id\":\"" + escapeJson(realm) + "\"," + inner + "}";
 	}
 
 	private static boolean needsRealmQuery(String method, String barePath) {
@@ -233,9 +229,6 @@ public final class ProvinceSystemGateway {
 	}
 
 	private static boolean equalsPath(String bare, String expected) {
-		if (bare == null) {
-			return false;
-		}
 		String p = bare.trim();
 		if (p.endsWith("/") && p.length() > 1) {
 			p = p.substring(0, p.length() - 1);
@@ -273,13 +266,17 @@ public final class ProvinceSystemGateway {
 			return GatewayResult.fail(notConfiguredMessage());
 		}
 
+		if ("PATCH".equals(method)) {
+			return executePatch(base, key, path, body, contentType, readTimeoutMs);
+		}
+
 		HttpURLConnection connection = null;
 		try {
 			String root = trimSlash(base);
 			@SuppressWarnings("deprecation")
 			URL url = new URL(root + path);
 			connection = (HttpURLConnection) url.openConnection();
-			applyRequestMethod(connection, method);
+			connection.setRequestMethod(method.isBlank() ? "GET" : method);
 			connection.setConnectTimeout(TIMEOUT_MS);
 			connection.setReadTimeout(readTimeoutMs);
 			connection.setRequestProperty("X-Plugin-Key", key);
@@ -317,31 +314,33 @@ public final class ProvinceSystemGateway {
 	}
 
 	private static String trimSlash(String base) {
-		if (base == null) {
-			return "";
-		}
 		return base.endsWith("/") ? base.substring(0, base.length() - 1) : base;
 	}
 
-	/**
-	 * {@link HttpURLConnection} rejects PATCH on many JVMs ({@code Invalid HTTP method: PATCH}).
-	 */
-	private static void applyRequestMethod(HttpURLConnection connection, String method)
-			throws java.net.ProtocolException {
-		String m = method == null || method.isBlank() ? "GET" : method.trim().toUpperCase(Locale.ROOT);
-		try {
-			connection.setRequestMethod(m);
-		} catch (java.net.ProtocolException ex) {
-			if (!"PATCH".equals(m)) {
-				throw ex;
+	/** Use the supported JDK HTTP API for PATCH, which HttpURLConnection rejects. */
+	private static GatewayResult executePatch(String base, String key, String path,
+			byte[] body, String contentType, int readTimeoutMs) {
+		try (HttpClient client = HttpClient.newBuilder()
+				.connectTimeout(Duration.ofMillis(TIMEOUT_MS)).build()) {
+			HttpRequest.Builder request = HttpRequest.newBuilder(URI.create(trimSlash(base) + path))
+				.timeout(Duration.ofMillis(readTimeoutMs))
+				.header("X-Plugin-Key", key).header("Accept", "application/json");
+			if (contentType != null) {
+				request.header("Content-Type", contentType);
 			}
-			try {
-				var field = HttpURLConnection.class.getDeclaredField("method");
-				field.setAccessible(true);
-				field.set(connection, "PATCH");
-			} catch (ReflectiveOperationException roe) {
-				throw ex;
-			}
+			request.method("PATCH", body == null ? HttpRequest.BodyPublishers.noBody()
+				: HttpRequest.BodyPublishers.ofByteArray(body));
+			HttpResponse<String> response = client.send(request.build(),
+				HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+			int status = response.statusCode();
+			return status >= 200 && status < 300
+				? GatewayResult.success(status, response.body())
+				: GatewayResult.fail(status, detailOrHttp(response.body(), status));
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+			return GatewayResult.fail("Could not reach API: request interrupted");
+		} catch (Exception e) {
+			return GatewayResult.fail("Could not reach API: " + e.getMessage());
 		}
 	}
 
@@ -350,7 +349,7 @@ public final class ProvinceSystemGateway {
 	}
 
 	private static String detailOrHttp(String response, int status) {
-		String detail = extractJsonString(response, "detail");
+		String detail = ProvinceSystemClient.jsonString(response, "detail");
 		if (detail == null || detail.isEmpty()) {
 			detail = response == null || response.isEmpty()
 				? ("HTTP " + status)
@@ -360,52 +359,6 @@ public final class ProvinceSystemGateway {
 			return "Unauthorized (check api.plugin-key). " + detail;
 		}
 		return detail;
-	}
-
-	private static String extractJsonString(String json, String key) {
-		if (json == null || key == null) {
-			return null;
-		}
-		Matcher m = Pattern.compile(
-			"\"" + Pattern.quote(key) + "\"\\s*:\\s*\"((?:\\\\.|[^\"\\\\])*)\""
-		).matcher(json);
-		if (!m.find()) {
-			return null;
-		}
-		return unescape(m.group(1));
-	}
-
-	private static String unescape(String raw) {
-		if (raw == null) {
-			return null;
-		}
-		StringBuilder out = new StringBuilder(raw.length());
-		for (int i = 0; i < raw.length(); i++) {
-			char c = raw.charAt(i);
-			if (c == '\\' && i + 1 < raw.length()) {
-				char n = raw.charAt(++i);
-				out.append(n == 'n' ? '\n' : n == 't' ? '\t' : n == 'r' ? '\r' : n);
-			} else {
-				out.append(c);
-			}
-		}
-		return out.toString();
-	}
-
-	private static String escapeJson(String raw) {
-		if (raw == null) {
-			return "";
-		}
-		StringBuilder out = new StringBuilder(raw.length() + 8);
-		for (int i = 0; i < raw.length(); i++) {
-			char c = raw.charAt(i);
-			switch (c) {
-				case '\\' -> out.append("\\\\");
-				case '"' -> out.append("\\\"");
-				default -> out.append(c);
-			}
-		}
-		return out.toString();
 	}
 
 	private static String readBody(InputStream stream) throws Exception {
@@ -428,9 +381,6 @@ public final class ProvinceSystemGateway {
 	}
 
 	private static byte[] readBytes(InputStream stream) throws Exception {
-		if (stream == null) {
-			return new byte[0];
-		}
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		byte[] buf = new byte[8192];
 		int n;

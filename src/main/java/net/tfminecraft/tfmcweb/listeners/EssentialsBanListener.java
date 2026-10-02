@@ -256,9 +256,6 @@ public final class EssentialsBanListener {
 	}
 
 	private static Object tryInvoke(Object target, String method) throws Exception {
-		if (target == null) {
-			return null;
-		}
 		try {
 			Method m = target.getClass().getMethod(method);
 			return m.invoke(target);

@@ -117,9 +117,11 @@ public final class PlayerMetaConfigLoader {
 					skinsDefaults,
 					Cache.skinsMetaDefaults
 				);
-				Cache.skinsMetaDefaultKinds = List.copyOf(
-					readStringList(skinsDefaults.getList("skin-kinds"))
-				);
+				if (skinsDefaults.contains("skin-kinds")) {
+					Cache.skinsMetaDefaultKinds = List.copyOf(
+						readStringList(skinsDefaults.getList("skin-kinds"))
+					);
+				}
 				Cache.skinsMetaDefaultAllowArmor3dHelmet = skinsDefaults.getBoolean(
 					"allow-armor-3d-helmet",
 					Cache.skinsMetaDefaultAllowArmor3dHelmet

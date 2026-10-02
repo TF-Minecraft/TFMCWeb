@@ -25,9 +25,6 @@ public final class ConfigLoader {
 		}
 
 		String base = config.getString("api.base-url", "");
-		if (base == null) {
-			base = "";
-		}
 		base = base.trim();
 		while (base.endsWith("/")) {
 			base = base.substring(0, base.length() - 1);

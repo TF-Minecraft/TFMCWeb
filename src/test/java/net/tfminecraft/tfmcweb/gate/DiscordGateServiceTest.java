@@ -143,6 +143,49 @@ class DiscordGateServiceTest {
 		assertEquals(Boolean.TRUE, RpcPlugin.lastRequired);
 	}
 
+    @Test
+    void fetchCachesOnlySuccessfulIdentityAndOnlineUuidUsesPlayerGate() {
+        var linked = net.tfminecraft.tfmcweb.api.ProvinceSystemClient.IdentityStatus.fromJson("{\"eligible\":true}");
+        var failed = net.tfminecraft.tfmcweb.api.ProvinceSystemClient.IdentityStatus.fail("down");
+        try (var api = mockStatic(net.tfminecraft.tfmcweb.api.ProvinceSystemClient.class)) {
+            api.when(() -> net.tfminecraft.tfmcweb.api.ProvinceSystemClient.getIdentityStatus(uuid.toString())).thenReturn(linked, failed);
+            assertTrue(gate.fetchAndCache(uuid).ok);
+            assertTrue(cache.isEligible(uuid));
+            assertFalse(gate.fetchAndCache(uuid).ok);
+            assertTrue(cache.isEligible(uuid));
+        }
+        when(rpc.isEnabled()).thenReturn(true);
+        bukkit.when(() -> Bukkit.getPlayer(uuid)).thenReturn(player);
+        gate.applyGate(uuid, false);
+        assertEquals(Boolean.TRUE, RpcPlugin.lastRequired);
+        gate.applyGate((Player) null);
+        gate.applyGate((Player) null, false);
+        gate.applyGate((UUID) null, false);
+        gate.clearGate(null);
+        when(player.isOnline()).thenReturn(false);
+        gate.applyGate(player);
+    }
+
+    @Test
+    void unavailableOrFailingReflectiveApiIsReportedWithoutThrowing() {
+        JavaPlugin incompatible = mock(JavaPlugin.class);
+        when(incompatible.isEnabled()).thenReturn(true);
+        when(plugins.getPlugin("RPCharacters")).thenReturn(incompatible);
+        assertFalse(gate.isRpcAvailable());
+        assertFalse(gate.isRpcAvailable());
+        ThrowingRpc failing = mock(ThrowingRpc.class);
+        when(failing.isEnabled()).thenReturn(true);
+        when(plugins.getPlugin("RPCharacters")).thenReturn(failing);
+        assertTrue(gate.isRpcAvailable());
+        gate.applyGate(uuid, false);
+        assertNull(RpcPlugin.lastRequired);
+    }
+
+    public static class ThrowingRpc extends JavaPlugin {
+        public static void setDiscordGate(UUID uuid, boolean required) { throw new IllegalStateException("fixture failure"); }
+        public static void setDiscordGate(Player player, boolean required) { throw new IllegalStateException("fixture failure"); }
+    }
+
 	public static class RpcPlugin extends JavaPlugin {
 		static UUID lastUuid;
 		static Boolean lastRequired;
