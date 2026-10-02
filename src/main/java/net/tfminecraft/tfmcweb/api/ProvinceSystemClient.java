@@ -11,6 +11,10 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 
 import net.tfminecraft.tfmcweb.Cache;
 
@@ -277,7 +281,7 @@ public final class ProvinceSystemClient {
 
 	public static FeatureCodeResult issueFeatureCode(String playerUuid, String scope) {
 		String uuid = playerUuid == null ? "" : playerUuid.trim();
-		String sc = scope == null ? "" : scope.trim().toLowerCase();
+		String sc = scope == null ? "" : scope.trim().toLowerCase(Locale.ROOT);
 		if (uuid.isEmpty()) {
 			return FeatureCodeResult.fail("player_uuid is required");
 		}
@@ -289,7 +293,7 @@ public final class ProvinceSystemClient {
 		}
 		String realm = Cache.realmId == null || Cache.realmId.isBlank()
 			? "main"
-			: Cache.realmId.trim().toLowerCase();
+			: Cache.realmId.trim().toLowerCase(Locale.ROOT);
 		String body = "{"
 			+ "\"player_uuid\":\"" + escapeJson(uuid) + "\","
 			+ "\"scope\":\"" + escapeJson(sc) + "\","
@@ -410,7 +414,7 @@ public final class ProvinceSystemClient {
 		String duration,
 		String staffName
 	) {
-		String etype = event == null ? "" : event.trim().toLowerCase();
+		String etype = event == null ? "" : event.trim().toLowerCase(Locale.ROOT);
 		if (!"ban".equals(etype) && !"unban".equals(etype)) {
 			return MirrorResult.fail("event must be ban or unban");
 		}
@@ -940,79 +944,21 @@ public final class ProvinceSystemClient {
 		if (json == null || key == null) {
 			return null;
 		}
-		String needle = "\"" + key + "\"";
-		int keyIdx = json.indexOf(needle);
-		if (keyIdx < 0) {
-			return null;
-		}
-		int colon = json.indexOf(':', keyIdx + needle.length());
-		if (colon < 0) {
-			return null;
-		}
-		int i = colon + 1;
-		while (i < json.length() && Character.isWhitespace(json.charAt(i))) {
-			i++;
-		}
-		if (i >= json.length()) {
-			return null;
-		}
-		char c = json.charAt(i);
-		if (c == '"') {
-			StringBuilder out = new StringBuilder();
-			i++;
-			while (i < json.length()) {
-				char ch = json.charAt(i++);
-				if (ch == '\\' && i < json.length()) {
-					out.append(json.charAt(i++));
-					continue;
-				}
-				if (ch == '"') {
-					break;
-				}
-				out.append(ch);
+		try {
+			JsonElement root = JsonParser.parseString(json);
+			if (!root.isJsonObject()) {
+				return null;
 			}
-			return out.toString();
-		}
-		if (c == 'n' && json.startsWith("null", i)) {
+			JsonElement value = root.getAsJsonObject().get(key);
+			return value != null && value.isJsonPrimitive() ? value.getAsString() : null;
+		} catch (com.google.gson.JsonParseException e) {
 			return null;
 		}
-		int start = i;
-		while (i < json.length()) {
-			char ch = json.charAt(i);
-			if (ch == ',' || ch == '}' || ch == ']') {
-				break;
-			}
-			i++;
-		}
-		return json.substring(start, i).trim();
 	}
 
 	static String escapeJson(String raw) {
-		if (raw == null) {
-			return "";
-		}
-		StringBuilder sb = new StringBuilder(raw.length() + 8);
-		for (int i = 0; i < raw.length(); i++) {
-			char ch = raw.charAt(i);
-			switch (ch) {
-				case '\\':
-				case '"':
-					sb.append('\\').append(ch);
-					break;
-				case '\n':
-					sb.append("\\n");
-					break;
-				case '\r':
-					sb.append("\\r");
-					break;
-				case '\t':
-					sb.append("\\t");
-					break;
-				default:
-					sb.append(ch);
-			}
-		}
-		return sb.toString();
+		String encoded = new Gson().toJson(raw == null ? "" : raw);
+		return encoded.substring(1, encoded.length() - 1);
 	}
 
 	private static String readBody(InputStream stream) throws Exception {

@@ -87,7 +87,7 @@ public final class PlayerMetaSyncService {
 				sb.append(',');
 			}
 			first = false;
-			sb.append('"').append(escape(kind.trim().toLowerCase())).append('"');
+			sb.append('"').append(escape(kind.trim().toLowerCase(java.util.Locale.ROOT))).append('"');
 		}
 		sb.append(']');
 		sb.append(",\"allow_armor_3d_helmet\":").append(meta.allowArmor3dHelmet);
@@ -110,18 +110,7 @@ public final class PlayerMetaSyncService {
 	}
 
 	private static String escape(String raw) {
-		if (raw == null) {
-			return "";
-		}
-		StringBuilder out = new StringBuilder(raw.length() + 8);
-		for (int i = 0; i < raw.length(); i++) {
-			char c = raw.charAt(i);
-			switch (c) {
-				case '\\' -> out.append("\\\\");
-				case '"' -> out.append("\\\"");
-				default -> out.append(c);
-			}
-		}
-		return out.toString();
+		String encoded = new com.google.gson.Gson().toJson(raw);
+		return encoded.substring(1, encoded.length() - 1);
 	}
 }

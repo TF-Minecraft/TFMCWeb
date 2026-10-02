@@ -139,6 +139,6 @@ public class TFMCWeb extends JavaPlugin {
 		if (realm == null || realm.isBlank()) {
 			return "main";
 		}
-		return realm.trim().toLowerCase();
+		return realm.trim().toLowerCase(java.util.Locale.ROOT);
 	}
 }
