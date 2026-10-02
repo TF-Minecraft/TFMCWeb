@@ -73,7 +73,9 @@ class PlayerAndAdminCommandsTest {
         f.api.when(()->ProvinceSystemClient.unlinkDiscord(f.id.toString())).thenReturn(SimpleResult.fail("down"));run(cmd,f.console,"unlink","Ada");assertTrue(f.contains("Unlink failed"));
         f.api.when(()->ProvinceSystemClient.unlinkDiscord(f.id.toString())).thenReturn(SimpleResult.success());run(cmd,f.console,"unlink","Ada");assertFalse(f.cache.isEligible(f.id));verify(f.gate).applyGate(f.player,false);
         OfflinePlayer offline=mock(OfflinePlayer.class);when(offline.getUniqueId()).thenReturn(f.id);f.bukkit.when(()->Bukkit.getOfflinePlayer("old")).thenReturn(offline);f.bukkit.when(()->Bukkit.getPlayer(f.id)).thenReturn(null);
-        run(cmd,f.console,"unlink","old");verify(f.gate).applyGate(f.id,false);run(cmd,f.console,"lookup","old");assertTrue(f.contains("Discord"));
+        run(cmd,f.console,"unlink","old");verify(f.gate).applyGate(f.id,false);
+        f.messages.clear();run(cmd,f.console,"lookup","old");
+        assertTrue(f.messages.stream().anyMatch(message -> message.endsWith("Discord")));
     }
     @Test void webReconcileAndMetaSyncUseOnlineSnapshotAndSummarizeFailures() {
         var cmd=new WebCommand(f.plugin,f.cache,f.gate);f.permissions(f.console,true);Player failed=mock(Player.class);UUID failedId=UUID.randomUUID();when(failed.getUniqueId()).thenReturn(failedId);

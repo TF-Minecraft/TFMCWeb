@@ -5,6 +5,8 @@ import org.bukkit.event.HandlerList;
 
 /** Test-only shape for the optional Essentials reflective integration. */
 public class BanStatusChangeEvent extends Event {
+    private static final HandlerList HANDLERS = new HandlerList();
+    public static HandlerList getHandlerList(){return HANDLERS;}
     public Object value, banned, affected, entry, banEntry, controller, name;
     public Object getValue(){return value;}
     public Object isBanned(){return banned;}
@@ -13,5 +15,5 @@ public class BanStatusChangeEvent extends Event {
     public Object getBanEntry(){return banEntry;}
     public Object getController(){return controller;}
     public Object getName(){return name;}
-    @Override public HandlerList getHandlers(){return new HandlerList();}
+    @Override public HandlerList getHandlers(){return HANDLERS;}
 }
