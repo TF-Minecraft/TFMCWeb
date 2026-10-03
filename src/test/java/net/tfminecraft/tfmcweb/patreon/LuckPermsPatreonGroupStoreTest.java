@@ -258,6 +258,21 @@ class LuckPermsPatreonGroupStoreTest {
 		verify(users).cleanupUser(user);
 	}
 
+	@Test void refusedRemovalDoesNotReportOrPushASavedChange() {
+		InheritanceNode noble = node("noble", true, false, true);
+		live.add(noble);
+		doReturn(DataMutateResult.FAIL).when(data).remove(noble);
+
+		assertFalse(store().setGroups(id, null, Set.of("noble")));
+
+		assertTrue(live.contains(noble));
+		verify(data).remove(noble);
+		verify(users, never()).saveUser(any());
+		verify(messaging, never()).pushUserUpdate(any());
+		verify(logger).log(eq(Level.WARNING), contains("update failed"), any(RuntimeException.class));
+		verify(users).cleanupUser(user);
+	}
+
 	@Test void failedSaveIsRetriedAndCleanupFailuresAreSwallowed() {
 		LuckPermsPatreonGroupStore store = store();
 		CompletableFuture<Void> failed = new CompletableFuture<>();

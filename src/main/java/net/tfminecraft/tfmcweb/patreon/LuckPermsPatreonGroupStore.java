@@ -137,6 +137,11 @@ public final class LuckPermsPatreonGroupStore implements PatreonGroupStore {
 			}
 			changed |= data.remove(node) == DataMutateResult.SUCCESS;
 		}
+		for (String group : remove) {
+			if (hasGlobal(data, group)) {
+				throw new IllegalStateException("LuckPerms refused to remove group " + group);
+			}
+		}
 		return changed;
 	}
 
