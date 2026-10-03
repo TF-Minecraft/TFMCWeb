@@ -6,7 +6,7 @@ author: TFMC
 
 depend: [TLibs]
 # RPCharacters depends on TFMCWeb; its optional gate API is resolved at runtime.
-softdepend: [Essentials]
+softdepend: [Essentials, LuckPerms]
 
 commands:
   linkdiscord:
@@ -32,6 +32,11 @@ commands:
     description: Warn a player in-game and mirror to Discord if linked
     permission: tfmcweb.warning
     permission-message: You do not have permission to use /warning.
+  patreon:
+    usage: /patreon [unlink]
+    description: Check your Patreon supporter status or unlink
+    permission: tfmcweb.patreon
+    permission-message: You do not have permission to use /patreon.
 
 permissions:
   tfmcweb.linkdiscord:
@@ -55,3 +60,6 @@ permissions:
   tfmcweb.warning:
     description: Issue in-game warnings via /warning
     default: false
+  tfmcweb.patreon:
+    description: Check and unlink your Patreon supporter status
+    default: true

@@ -3,6 +3,7 @@ package net.tfminecraft.tfmcweb;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -62,7 +63,25 @@ public final class Cache {
 	public static boolean drinksMetaDefaultAllowMessage = false;
 	public static List<MetaGroupDefinition> drinksMetaGroups = MetaGroupDefinition.emptyList();
 
+	/** Master switch for /patreon and the rank writer. */
+	public static boolean patreonEnabled = false;
+	/** When true with {@link #patreonEnabled}, this server writes LuckPerms ranks. */
+	public static boolean patreonApplyRanks = false;
+	public static int patreonPollSeconds = 60;
+	public static int patreonReconcileMinutes = 30;
+	/** Tier key → LuckPerms group. Only these groups are ever added or removed. */
+	public static Map<String, String> patreonGroups = Map.copyOf(patreonGroupDefaults());
+
 	private Cache() {}
+
+	/** Mutable noble/gilded/ascended → same-name group map. */
+	public static Map<String, String> patreonGroupDefaults() {
+		Map<String, String> groups = new LinkedHashMap<>();
+		groups.put("noble", "noble");
+		groups.put("gilded", "gilded");
+		groups.put("ascended", "ascended");
+		return groups;
+	}
 
 	/** One LP-gated cooldown row from token-cooldowns.groups. */
 	public static final class TokenCooldownGroup {

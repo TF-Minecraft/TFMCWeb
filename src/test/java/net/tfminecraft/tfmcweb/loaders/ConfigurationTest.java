@@ -19,11 +19,14 @@ class ConfigurationTest {
     }
     @Test void defaultsAndMissingOrInvalidFiles() throws Exception {
         load("");assertEquals("",Cache.apiBaseUrl);assertEquals("",Cache.pluginKey);assertEquals("main",Cache.realmId);
+        assertFalse(Cache.patreonEnabled);assertFalse(Cache.patreonApplyRanks);assertEquals(60,Cache.patreonPollSeconds);
+        assertEquals(30,Cache.patreonReconcileMinutes);assertEquals(Map.of("noble","noble","gilded","gilded","ascended","ascended"),Cache.patreonGroups);
         assertEquals(List.of("skin","drink","profile","skin_staff"),Cache.tokenEnabledScopes);
         assertEquals(List.of("skin","drink"),Cache.tokenCooldownSharedScopes);assertEquals(-1,Cache.tokenCooldownDefaultDays);
         assertEquals(3,Cache.rpcMetaDefaults.get("max-alive-characters"));assertTrue(Cache.rpcMetaGroups.isEmpty());
-        Cache.apiBaseUrl="preserved";new ConfigLoader().load(temp.resolve("missing.yml").toFile());assertEquals("preserved",Cache.apiBaseUrl);
-        load("bad: [");assertEquals("preserved",Cache.apiBaseUrl);
+        Cache.apiBaseUrl="preserved";Cache.patreonEnabled=true;new ConfigLoader().load(temp.resolve("missing.yml").toFile());
+        assertEquals("preserved",Cache.apiBaseUrl);assertTrue(Cache.patreonEnabled);
+        load("bad: [");assertEquals("preserved",Cache.apiBaseUrl);assertTrue(Cache.patreonEnabled);
         load("realm:\n  id: '  '\ntokens:\n  enabled-scopes: []\n");assertEquals("main",Cache.realmId);assertTrue(Cache.tokenEnabledScopes.isEmpty());
     }
     @Test void normalizesApiTokensAndCooldownRows() throws Exception {
@@ -113,6 +116,36 @@ class ConfigurationTest {
         config.set("player-meta.skins.defaults.skin-kinds",List.of("item","book"));
         config.set("player-meta.by-realm.dev.skins.defaults.name-colour-stops",3);
         PlayerMetaConfigLoader.load(config);assertEquals(List.of("item","book"),Cache.skinsMetaDefaultKinds);
+    }
+    @Test void patreonGroupsIntervalsAndLocale() throws Exception {
+        Locale.setDefault(Locale.forLanguageTag("tr-TR"));
+        load("""
+            patreon:
+              enabled: true
+              apply-ranks: true
+              poll-seconds: 0
+              reconcile-minutes: -4
+              groups:
+                NOBLE: ""
+                gilded: " "
+                ascended: "  High "
+                legacy: legacy
+                VIP: vip
+            """);
+        assertTrue(Cache.patreonEnabled && Cache.patreonApplyRanks);
+        assertEquals(60, Cache.patreonPollSeconds); assertEquals(30, Cache.patreonReconcileMinutes);
+        assertEquals(Map.of("ascended", "High"), Cache.patreonGroups);
+        load("""
+            patreon:
+              poll-seconds: 15
+              reconcile-minutes: 2
+              groups:
+                noble: " donator "
+            """);
+        assertEquals(15, Cache.patreonPollSeconds); assertEquals(2, Cache.patreonReconcileMinutes);
+        assertEquals("donator", Cache.patreonGroups.get("noble"));
+        assertEquals("gilded", Cache.patreonGroups.get("gilded"));
+        assertEquals("ascended", Cache.patreonGroups.get("ascended"));
     }
     @Test void cooldownConfigurationSectionsAreSupported() throws Exception {
         YamlConfiguration source=new YamlConfiguration();var row=new YamlConfiguration();row.set("permission","rank");row.set("cooldown-days",4);

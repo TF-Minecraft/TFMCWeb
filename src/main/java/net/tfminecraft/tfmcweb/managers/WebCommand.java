@@ -26,6 +26,7 @@ import net.tfminecraft.tfmcweb.api.ProvinceSystemClient.SimpleResult;
 import net.tfminecraft.tfmcweb.cache.LinkCache;
 import net.tfminecraft.tfmcweb.entitlements.PlayerMetaSyncService;
 import net.tfminecraft.tfmcweb.gate.DiscordGateService;
+import net.tfminecraft.tfmcweb.patreon.PatreonRankWriter;
 
 /**
  * Admin /web status|reload|lookup|unlink|reconcile|syncmeta.
@@ -39,11 +40,22 @@ public final class WebCommand implements CommandExecutor, TabCompleter {
 	private final JavaPlugin plugin;
 	private final LinkCache linkCache;
 	private final DiscordGateService gateService;
+	private final PatreonRankWriter rankWriter;
 
 	public WebCommand(JavaPlugin plugin, LinkCache linkCache, DiscordGateService gateService) {
+		this(plugin, linkCache, gateService, null);
+	}
+
+	public WebCommand(
+		JavaPlugin plugin,
+		LinkCache linkCache,
+		DiscordGateService gateService,
+		PatreonRankWriter rankWriter
+	) {
 		this.plugin = plugin;
 		this.linkCache = linkCache;
 		this.gateService = gateService;
+		this.rankWriter = rankWriter;
 	}
 
 	// Keep the existing legacy text representation, formatting, and exact-string comparisons.
@@ -94,6 +106,7 @@ public final class WebCommand implements CommandExecutor, TabCompleter {
 				sender.sendMessage(ChatColor.GRAY + "link cache entries: " + linkCache.size());
 				sender.sendMessage(ChatColor.GRAY + "RPCharacters gate: "
 					+ (gateService.isRpcAvailable() ? "yes" : "no"));
+				sender.sendMessage(ChatColor.GRAY + "patreon: " + patreonStatus());
 				if (ping.ok) {
 					sender.sendMessage(ChatColor.GREEN + "API reachable.");
 				} else {
@@ -116,8 +129,14 @@ public final class WebCommand implements CommandExecutor, TabCompleter {
 		sender.sendMessage(ChatColor.GREEN + "[TFMCWeb] Config reloaded.");
 		sender.sendMessage(ChatColor.GRAY + "api.base-url="
 			+ (Cache.apiBaseUrl.isEmpty() ? "(unset)" : Cache.apiBaseUrl));
+		sender.sendMessage(ChatColor.GRAY + "patreon: " + patreonStatus());
 		sender.sendMessage(ChatColor.GRAY + "Pushing player-meta for online players…");
 		return true;
+	}
+
+	private String patreonStatus() {
+		boolean running = rankWriter != null && rankWriter.isRunning();
+		return PatreonRankWriter.statusText(running);
 	}
 
 	// Keep the existing legacy text representation, formatting, and exact-string comparisons.

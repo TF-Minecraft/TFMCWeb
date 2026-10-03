@@ -56,10 +56,10 @@ class PlayerAndAdminCommandsTest {
     @Test void webValidatesCommandsReloadsBothPluginKindsAndReportsStatus() {
         var cmd=new WebCommand(f.plugin,f.cache,f.gate);run(cmd,f.console,"status");assertTrue(f.contains("No permission"));f.permissions(f.console,true);
         run(cmd,f.console);run(cmd,f.console,"unknown");assertTrue(f.contains("Usage:"));assertTrue(f.contains("Unknown subcommand"));
-        Cache.apiBaseUrl="";Cache.pluginKey="";f.api.when(ProvinceSystemClient::ping).thenReturn(SimpleResult.success());run(cmd,f.console,"status");assertTrue(f.contains("API reachable"));
+        Cache.apiBaseUrl="";Cache.pluginKey="";f.api.when(ProvinceSystemClient::ping).thenReturn(SimpleResult.success());run(cmd,f.console,"status");assertTrue(f.contains("API reachable"));assertTrue(f.contains("writer=off"));
         Cache.apiBaseUrl="local";Cache.pluginKey="key";when(f.gate.isRpcAvailable()).thenReturn(true);
         for(String error:Arrays.asList(null,"down")){f.api.when(ProvinceSystemClient::ping).thenReturn(SimpleResult.fail(error));run(cmd,f.console,"status");assertTrue(f.contains(error==null?"unreachable":"down"));}
-        run(cmd,f.console,"reload");verify(f.plugin).reloadConfig();
+        run(cmd,f.console,"reload");verify(f.plugin).reloadConfig();assertTrue(f.contains("patreon:"));
         TFMCWeb plugin=mock(TFMCWeb.class);run(new WebCommand(plugin,f.cache,f.gate),f.console,"reload");verify(plugin).reloadLocalConfig();
     }
     @Test void webLookupAndUnlinkHandleOfflineUnknownFailuresAndGating() {
