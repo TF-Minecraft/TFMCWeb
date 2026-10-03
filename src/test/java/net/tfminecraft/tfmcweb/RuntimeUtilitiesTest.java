@@ -48,6 +48,16 @@ class RuntimeUtilitiesTest {
         ArgumentCaptor<Component> message=ArgumentCaptor.forClass(Component.class);verify(player).sendMessage(message.capture());
         assertEquals(ClickEvent.copyToClipboard("ABC"),message.getValue().children().get(1).clickEvent());
         ChatMessages.sendCopyableCode(player,null,null);ChatMessages.sendCopyableCode(player,"","");verify(player,times(1)).sendMessage(any(Component.class));
+        ChatMessages.sendOpenUrl(null,"label","https://example.test");ChatMessages.sendOpenUrl(player,null," ");ChatMessages.sendOpenUrl(player,""," ");
+        ChatMessages.sendOpenUrl(player,null,"https://example.test/link");ChatMessages.sendOpenUrl(player,"","https://example.test/link");
+        ChatMessages.sendOpenUrl(player,"Link your Patreon account:","https://example.test/link");
+        verify(player).sendMessage(ChatMessages.PREFIX+"Link your Patreon account:");
+        ArgumentCaptor<Component> link=ArgumentCaptor.forClass(Component.class);verify(player,atLeastOnce()).sendMessage(link.capture());
+        assertTrue(link.getAllValues().stream().anyMatch(component->ClickEvent.openUrl("https://example.test/link").equals(component.clickEvent())));
+        ChatMessages.sendOpenUrl(player,"broken","not a url");verify(player).sendMessage(ChatMessages.PREFIX+"not a url");
+        ChatMessages.sendOpenUrl(player,"plain","not-a-url");verify(player).sendMessage(ChatMessages.PREFIX+"not-a-url");
+        ChatMessages.sendOpenUrl(player,"mail","mailto:a@b.test");verify(player).sendMessage(ChatMessages.PREFIX+"mailto:a@b.test");
+        ChatMessages.sendOpenUrl(player,"missing host","https:authorize");verify(player).sendMessage(ChatMessages.PREFIX+"https:authorize");
     }
     @Test void cooldownPermissionOrderAndStatuses() {
         Player player=mock(Player.class);UUID id=UUID.randomUUID();when(player.getUniqueId()).thenReturn(id);

@@ -41,6 +41,13 @@
             <version>26.1-R0.1-SNAPSHOT-build2096-tfmc-822e034c64c8</version>
             <scope>provided</scope>
         </dependency>
+        <!-- Optional at runtime: the rank writer no-ops when LuckPerms is absent. -->
+        <dependency>
+            <groupId>net.luckperms</groupId>
+            <artifactId>api</artifactId>
+            <version>5.4</version>
+            <scope>provided</scope>
+        </dependency>
         <dependency>
             <groupId>me.plugins</groupId>
             <artifactId>tlibs</artifactId>

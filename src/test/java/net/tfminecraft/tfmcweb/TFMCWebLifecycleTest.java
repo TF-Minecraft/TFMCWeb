@@ -22,8 +22,8 @@ class TFMCWebLifecycleTest {
     @Test void enableRegistersCommandsAndReloadsConfigurationAndDisableStopsPoller() throws Exception {
         try(var pollers=mockConstruction(PluginNoticePoller.class);var sync=mockStatic(PlayerMetaSyncService.class)){
             TFMCWeb plugin=MockBukkit.load(TFMCWeb.class);assertSame(plugin,TFMCWeb.plugin);assertNotNull(plugin.getLinkCache());assertNotNull(plugin.getGateService());
-            for(String name:new String[]{"linkdiscord","unlinkdiscord","web","token","warning"})assertNotNull(plugin.getCommand(name).getExecutor());
-            assertNotNull(plugin.getCommand("web").getTabCompleter());assertNotNull(plugin.getCommand("token").getTabCompleter());
+            for(String name:new String[]{"linkdiscord","unlinkdiscord","web","token","warning","patreon"})assertNotNull(plugin.getCommand(name).getExecutor());
+            assertNotNull(plugin.getCommand("web").getTabCompleter());assertNotNull(plugin.getCommand("token").getTabCompleter());assertNotNull(plugin.getCommand("patreon").getTabCompleter());
             verify(pollers.constructed().getFirst()).start();assertTrue(TFMCWeb.isPresent());
             Files.writeString(plugin.getDataFolder().toPath().resolve("config.yml"),"realm:\n  id: dev\n");plugin.reloadLocalConfig();assertEquals("dev",TFMCWeb.getRealmId());
             plugin.onDisable();verify(pollers.constructed().getFirst()).stop();
@@ -32,7 +32,7 @@ class TFMCWebLifecycleTest {
     @Test void enableCreatesMissingDataDirectoryAndLogsMissingCommands() throws Exception {
         try(var pollers=mockConstruction(PluginNoticePoller.class);var sync=mockStatic(PlayerMetaSyncService.class);var gates=mockConstruction(DiscordGateService.class,(mock,context)->when(mock.isRpcAvailable()).thenReturn(true))){
             TFMCWeb plugin=MockBukkit.load(TFMCWeb.class);TFMCWeb spy=spy(plugin);
-            for(String name:new String[]{"linkdiscord","unlinkdiscord","web","token","warning"})doReturn(null).when(spy).getCommand(name);
+            for(String name:new String[]{"linkdiscord","unlinkdiscord","web","token","warning","patreon"})doReturn(null).when(spy).getCommand(name);
             try(var paths=Files.walk(plugin.getDataFolder().toPath())){for(Path path:paths.sorted(Comparator.reverseOrder()).toList())Files.delete(path);}
             spy.onEnable();assertTrue(Files.isDirectory(plugin.getDataFolder().toPath()));assertTrue(Files.exists(plugin.getDataFolder().toPath().resolve("config.yml")));
             spy.onDisable();verify(pollers.constructed().getLast()).stop();

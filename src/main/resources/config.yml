@@ -143,3 +143,15 @@ player-meta:
         name-colour-stops: 8
         allow-drink-texture: true
         allow-drink-message: true
+
+# Patreon supporter ranks. LuckPerms storage is shared across servers, so
+# set apply-ranks true on exactly one server. /patreon still works everywhere.
+patreon:
+  enabled: false
+  apply-ranks: false
+  poll-seconds: 60
+  reconcile-minutes: 30
+  groups:
+    noble: noble
+    gilded: gilded
+    ascended: ascended

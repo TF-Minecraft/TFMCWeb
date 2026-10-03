@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.InvalidConfigurationException;
@@ -37,6 +38,47 @@ public final class ConfigLoader {
 		loadRealmAndTokens(config);
 		loadTokenCooldowns(config);
 		PlayerMetaConfigLoader.load(config);
+		loadPatreon(config);
+	}
+
+	private void loadPatreon(FileConfiguration config) {
+		Cache.patreonEnabled = config.getBoolean("patreon.enabled", false);
+		Cache.patreonApplyRanks = config.getBoolean("patreon.apply-ranks", false);
+		Cache.patreonPollSeconds = positiveOrDefault(
+			config.getInt("patreon.poll-seconds", 60),
+			60
+		);
+		Cache.patreonReconcileMinutes = positiveOrDefault(
+			config.getInt("patreon.reconcile-minutes", 30),
+			30
+		);
+		Cache.patreonGroups = Map.copyOf(readPatreonGroups(
+			config.getConfigurationSection("patreon.groups")
+		));
+	}
+
+	private static int positiveOrDefault(int value, int fallback) {
+		return value < 1 ? fallback : value;
+	}
+
+	private static Map<String, String> readPatreonGroups(ConfigurationSection section) {
+		Map<String, String> groups = Cache.patreonGroupDefaults();
+		if (section == null) {
+			return groups;
+		}
+		for (String rawKey : section.getKeys(false)) {
+			String tier = rawKey.trim().toLowerCase(Locale.ROOT);
+			if (!"noble".equals(tier) && !"gilded".equals(tier) && !"ascended".equals(tier)) {
+				continue;
+			}
+			String value = section.getString(rawKey);
+			if (value == null || value.isBlank()) {
+				groups.remove(tier);
+				continue;
+			}
+			groups.put(tier, value.trim());
+		}
+		return groups;
 	}
 
 	private void loadRealmAndTokens(FileConfiguration config) {

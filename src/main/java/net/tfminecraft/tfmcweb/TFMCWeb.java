@@ -13,11 +13,13 @@ import net.tfminecraft.tfmcweb.listeners.PlayerJoinListener;
 import net.tfminecraft.tfmcweb.loaders.ConfigLoader;
 import net.tfminecraft.tfmcweb.entitlements.PlayerMetaSyncService;
 import net.tfminecraft.tfmcweb.managers.LinkDiscordCommand;
+import net.tfminecraft.tfmcweb.managers.PatreonCommand;
 import net.tfminecraft.tfmcweb.managers.PluginNoticePoller;
 import net.tfminecraft.tfmcweb.managers.TokenCommand;
 import net.tfminecraft.tfmcweb.managers.UnlinkDiscordCommand;
 import net.tfminecraft.tfmcweb.managers.WarningCommand;
 import net.tfminecraft.tfmcweb.managers.WebCommand;
+import net.tfminecraft.tfmcweb.patreon.PatreonRankWriter;
 
 public class TFMCWeb extends JavaPlugin {
 
@@ -27,6 +29,7 @@ public class TFMCWeb extends JavaPlugin {
 	private final LinkCache linkCache = new LinkCache();
 	private DiscordGateService gateService;
 	private PluginNoticePoller noticePoller;
+	private PatreonRankWriter rankWriter;
 
 	@Override
 	public void onEnable() {
@@ -46,6 +49,8 @@ public class TFMCWeb extends JavaPlugin {
 
 		noticePoller = new PluginNoticePoller(this, linkCache, gateService);
 		noticePoller.start();
+		rankWriter = new PatreonRankWriter(this);
+		rankWriter.refresh();
 
 		if (getCommand("linkdiscord") != null) {
 			getCommand("linkdiscord").setExecutor(new LinkDiscordCommand(this, linkCache, gateService));
@@ -60,7 +65,7 @@ public class TFMCWeb extends JavaPlugin {
 			getLogger().severe("Command unlinkdiscord missing from plugin.yml");
 		}
 		if (getCommand("web") != null) {
-			WebCommand web = new WebCommand(this, linkCache, gateService);
+			WebCommand web = new WebCommand(this, linkCache, gateService, rankWriter);
 			getCommand("web").setExecutor(web);
 			getCommand("web").setTabCompleter(web);
 		} else {
@@ -77,6 +82,13 @@ public class TFMCWeb extends JavaPlugin {
 			getCommand("warning").setExecutor(new WarningCommand(this, linkCache));
 		} else {
 			getLogger().severe("Command warning missing from plugin.yml");
+		}
+		if (getCommand("patreon") != null) {
+			PatreonCommand patreon = new PatreonCommand(this);
+			getCommand("patreon").setExecutor(patreon);
+			getCommand("patreon").setTabCompleter(patreon);
+		} else {
+			getLogger().severe("Command patreon missing from plugin.yml");
 		}
 
 		Bukkit.getPluginManager().registerEvents(
@@ -99,6 +111,9 @@ public class TFMCWeb extends JavaPlugin {
 		if (noticePoller != null) {
 			noticePoller.stop();
 		}
+		if (rankWriter != null) {
+			rankWriter.stop();
+		}
 	}
 
 	public LinkCache getLinkCache() {
@@ -111,6 +126,9 @@ public class TFMCWeb extends JavaPlugin {
 
 	public void reloadLocalConfig() {
 		configLoader.load(new File(getDataFolder(), "config.yml"));
+		if (rankWriter != null) {
+			rankWriter.refresh();
+		}
 		PlayerMetaSyncService.pushAllOnlineAsync();
 	}
 
