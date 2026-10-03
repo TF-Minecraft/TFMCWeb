@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -32,6 +33,7 @@ public final class LuckPermsPatreonGroupStore implements PatreonGroupStore {
 	private final UserManager users;
 	private final MessagingService messaging;
 	private final Logger logger;
+	private final Set<UUID> pendingSaves = ConcurrentHashMap.newKeySet();
 
 	public LuckPermsPatreonGroupStore(UserManager users, MessagingService messaging, Logger logger) {
 		this.users = users;
@@ -70,11 +72,20 @@ public final class LuckPermsPatreonGroupStore implements PatreonGroupStore {
 			if (data == null) {
 				return false;
 			}
-			mutate(data, ensure, remove);
-			// Always save. A previous failed save can leave the loaded user already
-			// edited in memory; skipping the write would ack a change storage never got.
-			users.saveUser(user).join();
-			pushUpdate(user, player);
+			boolean changed = mutate(data, ensure, remove);
+			boolean retryPending = pendingSaves.contains(player);
+			if (changed || loaded || retryPending) {
+				try {
+					users.saveUser(user).join();
+				} catch (RuntimeException e) {
+					pendingSaves.add(player);
+					throw e;
+				}
+				pendingSaves.remove(player);
+				if (changed || retryPending) {
+					pushUpdate(user, player);
+				}
+			}
 			return true;
 		} catch (RuntimeException e) {
 			logger.log(Level.WARNING, "[patreon] LuckPerms update failed for " + player, e);
@@ -101,13 +112,15 @@ public final class LuckPermsPatreonGroupStore implements PatreonGroupStore {
 		}
 	}
 
-	private static void mutate(NodeMap data, String ensure, Set<String> remove) {
+	private static boolean mutate(NodeMap data, String ensure, Set<String> remove) {
+		boolean changed = false;
 		if (ensure != null && !hasGlobal(data, ensure)) {
 			InheritanceNode created = InheritanceNode.builder(ensure).build();
 			DataMutateResult added = data.add(created);
 			if (added == DataMutateResult.FAIL) {
 				throw new IllegalStateException("LuckPerms refused group " + ensure);
 			}
+			changed |= added == DataMutateResult.SUCCESS;
 		}
 		for (InheritanceNode node : inheritance(data)) {
 			if (node.getGroupName() == null || !node.getValue()) {
@@ -122,14 +135,15 @@ public final class LuckPermsPatreonGroupStore implements PatreonGroupStore {
 			if (node.getContexts() != null && !node.getContexts().isEmpty()) {
 				continue;
 			}
-			data.remove(node);
+			changed |= data.remove(node) == DataMutateResult.SUCCESS;
 		}
+		return changed;
 	}
 
 	private static boolean hasGlobal(NodeMap data, String group) {
 		String key = group.toLowerCase(Locale.ROOT);
 		for (InheritanceNode node : inheritance(data)) {
-			if (node.getGroupName() == null || !node.getValue() || node.hasExpired()) {
+			if (node.getGroupName() == null || !node.getValue() || node.hasExpiry()) {
 				continue;
 			}
 			if (!key.equals(node.getGroupName().toLowerCase(Locale.ROOT))) {

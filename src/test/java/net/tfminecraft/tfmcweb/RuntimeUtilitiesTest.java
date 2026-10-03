@@ -57,6 +57,7 @@ class RuntimeUtilitiesTest {
         ChatMessages.sendOpenUrl(player,"broken","not a url");verify(player).sendMessage(ChatMessages.PREFIX+"not a url");
         ChatMessages.sendOpenUrl(player,"plain","not-a-url");verify(player).sendMessage(ChatMessages.PREFIX+"not-a-url");
         ChatMessages.sendOpenUrl(player,"mail","mailto:a@b.test");verify(player).sendMessage(ChatMessages.PREFIX+"mailto:a@b.test");
+        ChatMessages.sendOpenUrl(player,"missing host","https:authorize");verify(player).sendMessage(ChatMessages.PREFIX+"https:authorize");
     }
     @Test void cooldownPermissionOrderAndStatuses() {
         Player player=mock(Player.class);UUID id=UUID.randomUUID();when(player.getUniqueId()).thenReturn(id);

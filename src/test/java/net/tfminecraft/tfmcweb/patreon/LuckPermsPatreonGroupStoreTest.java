@@ -26,12 +26,14 @@ import net.luckperms.api.node.Node;
 import net.luckperms.api.node.NodeBuilderRegistry;
 import net.luckperms.api.node.types.InheritanceNode;
 import net.luckperms.api.context.ImmutableContextSet;
+import net.tfminecraft.tfmcweb.TestState;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 
 class LuckPermsPatreonGroupStoreTest {
+	private TestState state;
 	private final UUID id = UUID.randomUUID();
 	private Logger logger;
 	private UserManager users;
@@ -43,7 +45,8 @@ class LuckPermsPatreonGroupStoreTest {
 	private MockedStatic<LuckPermsProvider> provider;
 	private final String[] builtGroup = new String[1];
 
-	@BeforeEach void setup() {
+	@BeforeEach void setup() throws Exception {
+		state = new TestState();
 		logger = mock(Logger.class);
 		users = mock(UserManager.class);
 		messaging = mock(MessagingService.class);
@@ -78,7 +81,7 @@ class LuckPermsPatreonGroupStoreTest {
 		provider.when(LuckPermsProvider::get).thenReturn(api);
 	}
 
-	@AfterEach void cleanup() { provider.close(); }
+	@AfterEach void cleanup() throws Exception { provider.close(); state.close(); }
 
 	LuckPermsPatreonGroupStore store() { return new LuckPermsPatreonGroupStore(users, messaging, logger); }
 
@@ -113,7 +116,7 @@ class LuckPermsPatreonGroupStoreTest {
 		verify(users, never()).loadUser(any());
 	}
 
-	@Test void addsAGlobalNodeOnceAndSavesAgainWithoutDuplicatingIt() {
+	@Test void addsAGlobalNodeOnceAndSkipsUnchangedSave() {
 		Locale.setDefault(Locale.forLanguageTag("tr-TR"));
 		assertTrue(store().setGroups(id, " Gilded ", Set.of("gilded", "noble")));
 		assertEquals("Gilded", builtGroup[0]);
@@ -121,8 +124,9 @@ class LuckPermsPatreonGroupStoreTest {
 		assertTrue(store().setGroups(id, "Gilded", Set.of("GILDED")));
 		assertEquals(1, live.size());
 		verify(data, times(1)).add(any());
-		verify(users, times(2)).saveUser(user);
+		verify(users, times(1)).saveUser(user);
 		verify(users, times(2)).cleanupUser(user);
+		verify(messaging, times(1)).pushUserUpdate(user);
 		verify(user, never()).setPrimaryGroup(anyString());
 	}
 
@@ -197,13 +201,40 @@ class LuckPermsPatreonGroupStoreTest {
 	}
 
 	@Test void expiredOrContextualGroupIsGrantedAgain() {
-		live.add(node("noble", true, true, true));
+		InheritanceNode expired = node("noble", true, true, true);
+		when(expired.hasExpiry()).thenReturn(true);
+		live.add(expired);
 		assertTrue(store().setGroups(id, "noble", Set.of()));
 		verify(data).add(any());
 		live.clear();
 		live.add(node("noble", true, false, false));
 		assertTrue(store().setGroups(id, "noble", Set.of()));
 		verify(data, times(2)).add(any());
+	}
+
+	@Test void temporaryGlobalGroupDoesNotSatisfyPermanentGrant() {
+		InheritanceNode temporary = node("noble", true, false, true);
+		when(temporary.hasExpiry()).thenReturn(true);
+		live.add(temporary);
+		assertTrue(store().setGroups(id, "noble", Set.of()));
+		verify(data).add(any());
+		verify(users).saveUser(user);
+	}
+
+	@Test void unchangedUnloadedUserIsNotSavedOrPushed() {
+		live.add(node("noble", true, false, true));
+		assertTrue(store().setGroups(id, "noble", Set.of()));
+		verify(users, never()).saveUser(any());
+		verify(messaging, never()).pushUserUpdate(any());
+		verify(users).cleanupUser(user);
+	}
+
+	@Test void unchangedLoadedUserIsSavedWithoutPushingUpdate() {
+		when(users.isLoaded(id)).thenReturn(true);
+		live.add(node("noble", true, false, true));
+		assertTrue(store().setGroups(id, "noble", Set.of()));
+		verify(users).saveUser(user);
+		verify(messaging, never()).pushUserUpdate(any());
 	}
 
 	@Test void nullNodeCollectionStillSavesTheGrant() {
@@ -213,10 +244,10 @@ class LuckPermsPatreonGroupStoreTest {
 		verify(users).saveUser(user);
 	}
 
-	@Test void alreadyPresentAddIsStillSaved() {
+	@Test void alreadyPresentAddDoesNotSaveUnchangedData() {
 		when(data.add(any())).thenReturn(DataMutateResult.FAIL_ALREADY_HAS);
 		assertTrue(store().setGroups(id, "noble", Set.of()));
-		verify(users).saveUser(user);
+		verify(users, never()).saveUser(any());
 	}
 
 	@Test void refusedNodeDoesNotSave() {
@@ -228,16 +259,18 @@ class LuckPermsPatreonGroupStoreTest {
 	}
 
 	@Test void failedSaveIsRetriedAndCleanupFailuresAreSwallowed() {
+		LuckPermsPatreonGroupStore store = store();
 		CompletableFuture<Void> failed = new CompletableFuture<>();
 		failed.completeExceptionally(new IllegalStateException("db down"));
 		when(users.saveUser(user)).thenReturn(failed);
-		assertFalse(store().setGroups(id, "noble", Set.of()));
+		assertFalse(store.setGroups(id, "noble", Set.of()));
 		assertEquals(1, live.size());
 		when(users.saveUser(user)).thenReturn(CompletableFuture.completedFuture(null));
 		doThrow(new IllegalStateException("cleanup")).when(users).cleanupUser(user);
-		assertTrue(store().setGroups(id, "noble", Set.of()));
+		assertTrue(store.setGroups(id, "noble", Set.of()));
 		verify(data, times(1)).add(any());
 		verify(users, times(2)).saveUser(user);
+		verify(messaging).pushUserUpdate(user);
 		verify(logger).log(eq(Level.WARNING), contains("cleanup failed"), any(RuntimeException.class));
 	}
 

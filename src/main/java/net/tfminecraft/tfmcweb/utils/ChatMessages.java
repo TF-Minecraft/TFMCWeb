@@ -54,7 +54,8 @@ public final class ChatMessages {
 				return false;
 			}
 			String normalized = scheme.toLowerCase(Locale.ROOT);
-			return "http".equals(normalized) || "https".equals(normalized);
+			return uri.getHost() != null
+				&& ("http".equals(normalized) || "https".equals(normalized));
 		} catch (IllegalArgumentException e) {
 			return false;
 		}
