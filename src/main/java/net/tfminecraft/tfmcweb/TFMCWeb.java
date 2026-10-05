@@ -8,10 +8,10 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import net.tfminecraft.tfmcweb.cache.LinkCache;
 import net.tfminecraft.tfmcweb.gate.DiscordGateService;
-import net.tfminecraft.tfmcweb.listeners.EssentialsBanListener;
 import net.tfminecraft.tfmcweb.listeners.PlayerJoinListener;
 import net.tfminecraft.tfmcweb.loaders.ConfigLoader;
 import net.tfminecraft.tfmcweb.entitlements.PlayerMetaSyncService;
+import net.tfminecraft.tfmcweb.managers.BanMirrorPoller;
 import net.tfminecraft.tfmcweb.managers.LinkDiscordCommand;
 import net.tfminecraft.tfmcweb.managers.PatreonCommand;
 import net.tfminecraft.tfmcweb.managers.PluginNoticePoller;
@@ -30,6 +30,7 @@ public class TFMCWeb extends JavaPlugin {
 	private DiscordGateService gateService;
 	private PluginNoticePoller noticePoller;
 	private PatreonRankWriter rankWriter;
+	private BanMirrorPoller banMirror;
 
 	@Override
 	public void onEnable() {
@@ -95,7 +96,8 @@ public class TFMCWeb extends JavaPlugin {
 			new PlayerJoinListener(this, gateService),
 			this
 		);
-		new EssentialsBanListener(this, linkCache).register();
+		banMirror = new BanMirrorPoller(this, linkCache);
+		banMirror.start();
 
 		getLogger().info(
 			"TFMCWeb enabled (api="
@@ -113,6 +115,9 @@ public class TFMCWeb extends JavaPlugin {
 		}
 		if (rankWriter != null) {
 			rankWriter.stop();
+		}
+		if (banMirror != null) {
+			banMirror.stop();
 		}
 	}
 

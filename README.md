@@ -11,7 +11,7 @@ The same bridge connects selected moderation and roleplay events to the wider co
 - **Discord account linking** — players can request a linking code or unlink their Minecraft account.
 - **Website feature codes** — issues scoped codes for skins, drinks, and player profiles, subject to access rules and cooldowns.
 - **Account status updates** — processes website notices about linking and eligibility, including RPCharacters survival access checks.
-- **Moderation connections** — sends player warnings and supported Essentials ban or unban events to the linked services.
+- **Moderation connections** — sends player warnings, and bans, unbans and expired timed bans from the server ban list, to the linked services so the Discord Banned role follows the in-game ban.
 - **Player benefit synchronization** — shares resolved player metadata and entitlements with ProvinceSystem.
 - **Bird-mail notifications** — provides the connection for BirdMessenger arrival notifications to linked Discord accounts.
 

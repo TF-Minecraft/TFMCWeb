@@ -155,3 +155,10 @@ patreon:
     noble: noble
     gilded: gilded
     ascended: ascended
+
+# Mirror this server's ban list to Discord (DM + Banned role on ban, role
+# cleared on unban or when a timed ban expires). Linked players only. The list
+# is checked every poll-seconds; changes apply on restart.
+ban-mirror:
+  enabled: true
+  poll-seconds: 30

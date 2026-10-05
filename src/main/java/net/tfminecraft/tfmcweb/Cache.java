@@ -72,6 +72,10 @@ public final class Cache {
 	/** Tier key → LuckPerms group. Only these groups are ever added or removed. */
 	public static Map<String, String> patreonGroups = Map.copyOf(patreonGroupDefaults());
 
+	/** Mirror this server's ban list (bans, unbans, expiries) to the Discord bot. */
+	public static boolean banMirrorEnabled = true;
+	public static int banMirrorPollSeconds = 30;
+
 	private Cache() {}
 
 	/** Mutable noble/gilded/ascended → same-name group map. */

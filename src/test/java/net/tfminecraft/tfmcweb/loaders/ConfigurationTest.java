@@ -24,6 +24,9 @@ class ConfigurationTest {
         assertEquals(List.of("skin","drink","profile","skin_staff"),Cache.tokenEnabledScopes);
         assertEquals(List.of("skin","drink"),Cache.tokenCooldownSharedScopes);assertEquals(-1,Cache.tokenCooldownDefaultDays);
         assertEquals(3,Cache.rpcMetaDefaults.get("max-alive-characters"));assertTrue(Cache.rpcMetaGroups.isEmpty());
+        assertTrue(Cache.banMirrorEnabled);assertEquals(30,Cache.banMirrorPollSeconds);
+        load("ban-mirror:\n  enabled: false\n  poll-seconds: 0\n");assertFalse(Cache.banMirrorEnabled);assertEquals(30,Cache.banMirrorPollSeconds);
+        load("ban-mirror:\n  poll-seconds: 5\n");assertTrue(Cache.banMirrorEnabled);assertEquals(5,Cache.banMirrorPollSeconds);
         Cache.apiBaseUrl="preserved";Cache.patreonEnabled=true;new ConfigLoader().load(temp.resolve("missing.yml").toFile());
         assertEquals("preserved",Cache.apiBaseUrl);assertTrue(Cache.patreonEnabled);
         load("bad: [");assertEquals("preserved",Cache.apiBaseUrl);assertTrue(Cache.patreonEnabled);
