@@ -151,7 +151,7 @@ class BanMirrorPollerTest {
         verify(logger).warning(contains("could not read the ban list"));
         bukkit.when(() -> Bukkit.getBanList(BanListType.PROFILE)).thenReturn(banList);
         ban(ADA, "Ada", 1L, null, null, null);
-        ban(BOB, "Bob", 0L, System.currentTimeMillis() + 2 * HOUR, null, null);
+        ban(BOB, "Bob", 0L, System.currentTimeMillis() + 2 * HOUR - 60_000L, null, null);
         tick.run();
         verifyPost("ban", ADA, null, "Ada", null, "Permanent", null);
         verifyPost("ban", BOB, null, "Bob", null, "1h", null);
