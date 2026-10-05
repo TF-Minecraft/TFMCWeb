@@ -186,7 +186,7 @@ public final class BanMirrorPoller {
 			resolveDiscordId(change.id),
 			name,
 			change.banned ? cleanReason(ban.reason) : null,
-			change.banned ? formatDuration(ban.expires, System.currentTimeMillis()) : null,
+			change.banned ? formatDuration(ban.expires, banStart(ban)) : null,
 			cleanDisplay(change.staff, STAFF_NAME_MAX)
 		);
 		if (!result.ok) {
@@ -271,11 +271,16 @@ public final class BanMirrorPoller {
 		return date == null ? 0L : date.getTime();
 	}
 
-	static String formatDuration(long expires, long now) {
+	/** Full ban length, not time left: a 7 day ban seen a minute late is still "7 days". */
+	private static long banStart(BanRecord ban) {
+		return ban.created > 0L ? ban.created : System.currentTimeMillis();
+	}
+
+	static String formatDuration(long expires, long since) {
 		if (expires <= 0L) {
 			return "Permanent";
 		}
-		Duration d = Duration.ofMillis(Math.max(0L, expires - now));
+		Duration d = Duration.ofMillis(Math.max(0L, expires - since));
 		long days = d.toDays();
 		if (days >= 1) {
 			return days + (days == 1 ? " day" : " days");

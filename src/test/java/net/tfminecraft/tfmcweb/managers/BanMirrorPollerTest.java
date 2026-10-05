@@ -128,7 +128,7 @@ class BanMirrorPollerTest {
         var identity = IdentityStatus.fromJson("{\"discord_user_id\":\"fetched\"}");
         api.when(() -> ProvinceSystemClient.getIdentityStatus(ADA.toString())).thenReturn(identity);
         tick.run();
-        verifyPost("ban", ADA, "fetched", "Ada", "first", "1h", "Mod");
+        verifyPost("ban", ADA, "fetched", "Ada", "first", "2h", "Mod");
         verifyPost("ban", BOB, null, "Bob", "long", "1 day", "Mod");
         assertEquals("fetched", cache.get(ADA).discordUserId);
 
@@ -151,8 +151,10 @@ class BanMirrorPollerTest {
         verify(logger).warning(contains("could not read the ban list"));
         bukkit.when(() -> Bukkit.getBanList(BanListType.PROFILE)).thenReturn(banList);
         ban(ADA, "Ada", 1L, null, null, null);
+        ban(BOB, "Bob", 0L, System.currentTimeMillis() + 2 * HOUR, null, null);
         tick.run();
         verifyPost("ban", ADA, null, "Ada", null, "Permanent", null);
+        verifyPost("ban", BOB, null, "Bob", null, "1h", null);
     }
 
     @Test void readBanListSkipsEntriesWithoutAnId() {
