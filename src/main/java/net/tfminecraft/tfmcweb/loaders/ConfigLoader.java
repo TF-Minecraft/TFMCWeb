@@ -39,6 +39,11 @@ public final class ConfigLoader {
 		loadTokenCooldowns(config);
 		PlayerMetaConfigLoader.load(config);
 		loadPatreon(config);
+		Cache.banMirrorEnabled = config.getBoolean("ban-mirror.enabled", true);
+		Cache.banMirrorPollSeconds = positiveOrDefault(
+			config.getInt("ban-mirror.poll-seconds", 30),
+			30
+		);
 	}
 
 	private void loadPatreon(FileConfiguration config) {
