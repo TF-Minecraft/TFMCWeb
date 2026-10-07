@@ -23,6 +23,8 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -403,6 +405,60 @@ class LuckPermsBridgeStoreTest {
 			add(new NodeSpec("group.knight", false, Map.of(), 0)))).ok);
 		assertTrue(store.apply(new Change(9, "user", ADA.toString(), null, null, null, null,
 			List.of(add(spec("group.knight"))))).ok);
+	}
+
+	@Test void changesHoldTheSharedWriteLockAndWaitForIt() throws Exception {
+		List<Boolean> held = new ArrayList<>();
+		when(users.saveUser(user)).thenAnswer(call -> {
+			held.add(LuckPermsWriteLock.LOCK.isHeldByCurrentThread());
+			return CompletableFuture.completedFuture(null);
+		});
+		Track ladder = track("ladder");
+		when(tracks.createAndLoadTrack("ladder")).thenAnswer(call -> {
+			held.add(LuckPermsWriteLock.LOCK.isHeldByCurrentThread());
+			return CompletableFuture.completedFuture(ladder);
+		});
+		Group bare = mock(Group.class);
+		when(bare.getWeight()).thenReturn(OptionalInt.empty());
+		NodeMap bareData = nodeMap(new ArrayList<>());
+		when(bare.data()).thenReturn(bareData);
+		when(groups.createAndLoadGroup("bare")).thenAnswer(call -> {
+			held.add(LuckPermsWriteLock.LOCK.isHeldByCurrentThread());
+			return CompletableFuture.completedFuture(bare);
+		});
+		LuckPermsBridgeStore store = store();
+		assertTrue(store.apply(userChange(add(spec("perm.a")))).ok);
+		assertTrue(store.apply(change("track", "ladder", op("create_track"))).ok);
+		assertTrue(store.apply(change("group", "bare", op("create_group"))).ok);
+		assertEquals("bad_target", store.apply(change("role", "x", op("create_group"))).error);
+		assertEquals(List.of(true, true, true), held);
+		assertFalse(LuckPermsWriteLock.LOCK.isLocked());
+
+		CountDownLatch locked = new CountDownLatch(1);
+		CountDownLatch release = new CountDownLatch(1);
+		Thread patreon = new Thread(() -> {
+			LuckPermsWriteLock.LOCK.lock();
+			try {
+				locked.countDown();
+				release.await();
+			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
+			} finally {
+				LuckPermsWriteLock.LOCK.unlock();
+			}
+		});
+		patreon.start();
+		assertTrue(locked.await(5, TimeUnit.SECONDS));
+		Track queued = track("queued");
+		when(tracks.createAndLoadTrack("queued")).thenReturn(CompletableFuture.completedFuture(queued));
+		CompletableFuture<ChangeResult> waiting = CompletableFuture.supplyAsync(
+			() -> store.apply(change("track", "queued", op("create_track"))));
+		Thread.sleep(200);
+		assertFalse(waiting.isDone());
+		verify(tracks, never()).loadTrack("queued");
+		release.countDown();
+		assertTrue(waiting.get(5, TimeUnit.SECONDS).ok);
+		patreon.join(5_000);
 	}
 
 	@Test void loadedUserStaysLoadedAndRefusedMutationsAreReloaded() {

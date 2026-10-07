@@ -153,15 +153,20 @@ public final class LuckPermsBridgeStore implements BridgeStore {
 			// Admins only manage players' groups; group and track edits are root's.
 			return ChangeResult.failure(change.id, ROOT_ONLY);
 		}
-		switch (type) {
-			case "user":
-				return applyUser(change);
-			case "group":
-				return applyGroup(change);
-			case "track":
-				return applyTrack(change);
-			default:
-				return ChangeResult.failure(change.id, BAD_TARGET);
+		LuckPermsWriteLock.LOCK.lock();
+		try {
+			switch (type) {
+				case "user":
+					return applyUser(change);
+				case "group":
+					return applyGroup(change);
+				case "track":
+					return applyTrack(change);
+				default:
+					return ChangeResult.failure(change.id, BAD_TARGET);
+			}
+		} finally {
+			LuckPermsWriteLock.LOCK.unlock();
 		}
 	}
 
