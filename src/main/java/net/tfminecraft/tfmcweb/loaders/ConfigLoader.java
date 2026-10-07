@@ -44,6 +44,20 @@ public final class ConfigLoader {
 			config.getInt("ban-mirror.poll-seconds", 30),
 			30
 		);
+		loadLuckPermsBridge(config);
+	}
+
+	private void loadLuckPermsBridge(FileConfiguration config) {
+		Cache.luckPermsBridgePublish = config.getBoolean("luckperms-bridge.publish", false);
+		Cache.luckPermsBridgeApply = config.getBoolean("luckperms-bridge.apply", false);
+		Cache.luckPermsBridgePollSeconds = positiveOrDefault(
+			config.getInt("luckperms-bridge.poll-seconds", 3),
+			3
+		);
+		Cache.luckPermsBridgeSnapshotSeconds = positiveOrDefault(
+			config.getInt("luckperms-bridge.snapshot-seconds", 30),
+			30
+		);
 	}
 
 	private void loadPatreon(FileConfiguration config) {

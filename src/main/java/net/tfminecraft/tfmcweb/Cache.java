@@ -76,6 +76,13 @@ public final class Cache {
 	public static boolean banMirrorEnabled = true;
 	public static int banMirrorPollSeconds = 30;
 
+	/** Publish LuckPerms snapshots to this server's site. {@link #luckPermsBridgeApply} implies it. */
+	public static boolean luckPermsBridgePublish = false;
+	/** Apply staff-queued LuckPerms changes. LuckPerms storage is shared: one server only. */
+	public static boolean luckPermsBridgeApply = false;
+	public static int luckPermsBridgePollSeconds = 3;
+	public static int luckPermsBridgeSnapshotSeconds = 30;
+
 	private Cache() {}
 
 	/** Mutable noble/gilded/ascended → same-name group map. */
