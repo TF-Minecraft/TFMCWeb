@@ -71,6 +71,7 @@ class LuckPermsBridgeTest {
 		final Set<Long> boom = new HashSet<>();
 		RuntimeException snapshotFailure;
 		Runnable duringApply = () -> {};
+		Runnable duringSnapshot = () -> {};
 
 		static JsonObject data(String group) {
 			JsonObject root = new JsonObject();
@@ -85,6 +86,7 @@ class LuckPermsBridgeTest {
 		}
 
 		@Override public JsonObject snapshot() {
+			duringSnapshot.run();
 			if (snapshotFailure != null) {
 				throw snapshotFailure;
 			}
@@ -209,11 +211,12 @@ class LuckPermsBridgeTest {
 		verify(worker).scheduleWithFixedDelay(scheduled.getFirst(), 1L, 1L, TimeUnit.SECONDS);
 		bridge.refresh();
 		verify(worker).shutdown();
-		verify(worker, never()).shutdownNow();
+		verify(worker).awaitTermination(1L, TimeUnit.SECONDS);
 		assertTrue(bridge.isRunning());
 		when(worker.awaitTermination(anyLong(), any())).thenReturn(false);
 		bridge.stop();
-		verify(worker).shutdownNow();
+		verify(worker, times(2)).shutdown();
+		verify(worker, never()).shutdownNow();
 		bridge.stop();
 		assertFalse(bridge.isRunning());
 		tick();
@@ -226,7 +229,8 @@ class LuckPermsBridgeTest {
 		when(worker.awaitTermination(anyLong(), any())).thenThrow(new InterruptedException());
 		bridge.stop();
 		assertTrue(Thread.interrupted());
-		verify(worker).shutdownNow();
+		assertFalse(bridge.isRunning());
+		verify(worker, never()).shutdownNow();
 	}
 
 	@Test void unavailableLuckPermsLeavesTheBridgeOff() {
@@ -420,14 +424,49 @@ class LuckPermsBridgeTest {
 		assertEquals(1, uploads.size());
 	}
 
-	@Test void stoppingMidBatchLeavesTheRestAndSkipsTheSnapshot() {
+	@Test void stoppingMidBatchAnswersTheRestAsNotAppliedAndSkipsTheSnapshot() {
 		start();
 		queue(change(1, null), change(2, null));
 		store.duringApply = bridge::stop;
 		tick();
 		assertEquals(List.of(1L), store.applied);
-		assertEquals(List.of(1L), posts.getLast().stream().map(result -> result.id).toList());
+		List<ChangeResult> posted = posts.getLast();
+		assertEquals(List.of(1L, 2L), posted.stream().map(result -> result.id).toList());
+		assertTrue(posted.get(0).ok);
+		assertEquals(BridgeStore.SAVE_FAILED, posted.get(1).error);
+		assertTrue(posted.get(1).revision > posted.get(0).revision);
+		verify(logger).warning("[luckperms] change 2 not applied: the bridge stopped");
 		assertTrue(uploads.isEmpty());
+	}
+
+	@Test void aPassOutlivingARefreshNeverRunsBesideTheNewWorker() {
+		start();
+		Runnable oldPass = scheduled.getLast();
+		queue(change(1, null), change(2, null));
+		store.duringApply = () -> {
+			store.duringApply = () -> {};
+			bridge.refresh();
+		};
+		oldPass.run();
+		assertEquals(List.of(1L), store.applied);
+		assertEquals(List.of(1L, 2L), posts.getLast().stream().map(result -> result.id).toList());
+		assertTrue(uploads.isEmpty());
+		Runnable newPass = scheduled.getLast();
+		assertNotSame(oldPass, newPass);
+
+		oldPass.run();
+		api.verify(LuckPermsBridgeClient::listChanges, times(1));
+		newPass.run();
+		api.verify(LuckPermsBridgeClient::listChanges, times(2));
+		assertEquals(List.of(1L), store.applied);
+		assertEquals(1, uploads.size());
+
+		store.data = RecordingStore.data("changed");
+		store.duringSnapshot = bridge::stop;
+		clock.addAndGet(30_000L);
+		newPass.run();
+		assertEquals(1, uploads.size());
+		api.verify(() -> LuckPermsBridgeClient.snapshotUnchanged(anyString(), anyLong()), never());
 	}
 
 	@Test void revisionsKeepRisingWhenTheClockDoesNot() {

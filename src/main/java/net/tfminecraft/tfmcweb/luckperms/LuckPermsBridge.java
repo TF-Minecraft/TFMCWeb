@@ -39,7 +39,8 @@ import net.tfminecraft.tfmcweb.api.LuckPermsBridgeClient.UnchangedResult;
 public final class LuckPermsBridge {
 
 	static final int REMEMBERED_RESULTS = 500;
-	static final long STOP_WAIT_SECONDS = 10;
+	/** Short, so a reload never stalls the main thread; an older pass that outlives it is harmless. */
+	static final long STOP_WAIT_SECONDS = 1;
 
 	@FunctionalInterface
 	public interface StoreOpener {
@@ -62,13 +63,22 @@ public final class LuckPermsBridge {
 	private final Map<Long, ChangeResult> unposted = new LinkedHashMap<>();
 	private final Set<String> failing = new HashSet<>();
 
+	/**
+	 * One worker generation: what refresh() started it with. A pass from an older
+	 * generation can outlive stop() while blocked on storage or the site.
+	 */
+	private record Run(long generation, BridgeStore store, boolean applying, long snapshotMillis) {}
+
+	/** Held for a whole pass, so passes from two generations never interleave. */
+	private final Object passLock = new Object();
+
 	private ScheduledExecutorService worker;
-	private volatile BridgeStore store;
-	private volatile boolean active;
+	/** Advanced by every stop(); a pass whose generation is older has been superseded. */
+	private volatile long generation;
 	private volatile long lastPublishedAt;
 	private boolean loggedLuckPermsMissing;
-	private boolean applying;
-	private long snapshotMillis;
+	// Guarded by passLock.
+	private long stateGeneration = -1L;
 	private long nextSnapshotAt;
 	private String uploadedHash;
 	/** Last revision handed out; survives reloads, and the clock carries it across restarts. */
@@ -134,22 +144,20 @@ public final class LuckPermsBridge {
 			plugin.getLogger().warning("[luckperms] LuckPerms is unavailable; bridge disabled");
 			return;
 		}
-		applying = Cache.luckPermsBridgeApply;
-		snapshotMillis = Cache.luckPermsBridgeSnapshotSeconds * 1000L;
+		boolean applying = Cache.luckPermsBridgeApply;
 		long period = applying ? Cache.luckPermsBridgePollSeconds : Cache.luckPermsBridgeSnapshotSeconds;
-		nextSnapshotAt = 0L;
-		uploadedHash = null;
-		failing.clear();
-		store = opened;
-		active = true;
+		Run run = new Run(generation, opened, applying, Cache.luckPermsBridgeSnapshotSeconds * 1000L);
 		worker = workers.get();
-		worker.scheduleWithFixedDelay(this::tick, 1L, Math.max(1L, period), TimeUnit.SECONDS);
+		worker.scheduleWithFixedDelay(() -> tick(run), 1L, Math.max(1L, period), TimeUnit.SECONDS);
 	}
 
-	/** Stops the worker, letting a running pass finish so LuckPerms is never left half-changed. */
+	/**
+	 * Stops scheduling passes and supersedes the running one, which stops before
+	 * fetching, applying or publishing anything more. It is never interrupted, so a
+	 * LuckPerms save in progress completes and its result is still posted.
+	 */
 	public void stop() {
-		active = false;
-		store = null;
+		generation++;
 		ScheduledExecutorService current = worker;
 		worker = null;
 		if (current == null) {
@@ -157,17 +165,14 @@ public final class LuckPermsBridge {
 		}
 		current.shutdown();
 		try {
-			if (!current.awaitTermination(STOP_WAIT_SECONDS, TimeUnit.SECONDS)) {
-				current.shutdownNow();
-			}
+			current.awaitTermination(STOP_WAIT_SECONDS, TimeUnit.SECONDS);
 		} catch (InterruptedException e) {
-			current.shutdownNow();
 			Thread.currentThread().interrupt();
 		}
 	}
 
 	public boolean isRunning() {
-		return active && worker != null;
+		return worker != null;
 	}
 
 	public String statusDetail() {
@@ -202,44 +207,55 @@ public final class LuckPermsBridge {
 		return Cache.luckPermsBridgePublish || Cache.luckPermsBridgeApply;
 	}
 
-	void tick() {
-		BridgeStore current = store;
-		if (!active || current == null) {
-			return;
-		}
-		long now = clock.getAsLong();
-		boolean applied = false;
-		if (applying) {
-			try {
-				applied = pollChanges(current);
-			} catch (RuntimeException e) {
-				fail("changes", "[luckperms] change poll failed", e);
+	private boolean current(Run run) {
+		return generation == run.generation();
+	}
+
+	private void tick(Run run) {
+		synchronized (passLock) {
+			if (!current(run)) {
+				return;
 			}
-		}
-		if (!active) {
-			return;
-		}
-		if (applied || now >= nextSnapshotAt) {
-			nextSnapshotAt = now + snapshotMillis;
-			publish(current);
+			if (stateGeneration != run.generation()) {
+				stateGeneration = run.generation();
+				nextSnapshotAt = 0L;
+				uploadedHash = null;
+				failing.clear();
+			}
+			long now = clock.getAsLong();
+			boolean applied = false;
+			if (run.applying()) {
+				try {
+					applied = pollChanges(run);
+				} catch (RuntimeException e) {
+					fail("changes", "[luckperms] change poll failed", e);
+				}
+			}
+			if (current(run) && (applied || now >= nextSnapshotAt)) {
+				nextSnapshotAt = now + run.snapshotMillis();
+				publish(run);
+			}
 		}
 	}
 
-	/** @return true when at least one change was applied in this pass */
-	private boolean pollChanges(BridgeStore current) {
+	/**
+	 * The site hands out each change once, so every fetched change gets a result:
+	 * once this pass is superseded, the rest of its batch is answered as not applied.
+	 *
+	 * @return true when at least one change was applied in this pass
+	 */
+	private boolean pollChanges(Run run) {
 		boolean applied = false;
 		ChangesResult batch = LuckPermsBridgeClient.listChanges();
 		if (batch.ok) {
 			recover("changes");
 			for (Change change : batch.changes) {
-				if (!active) {
-					break;
-				}
 				Long id = Long.valueOf(change.id);
 				if (remembered.containsKey(id)) {
 					continue;
 				}
-				ChangeResult result = applyChange(current, change).withRevision(nextRevision());
+				ChangeResult result = current(run) ? applyChange(run.store(), change) : notApplied(change);
+				result = result.withRevision(nextRevision());
 				remembered.put(id, result);
 				unposted.put(id, result);
 				applied |= result.ok;
@@ -255,6 +271,11 @@ public final class LuckPermsBridge {
 	private long nextRevision() {
 		lastRevision = Math.max(lastRevision + 1, clock.getAsLong());
 		return lastRevision;
+	}
+
+	private ChangeResult notApplied(Change change) {
+		plugin.getLogger().warning("[luckperms] change " + change.id + " not applied: the bridge stopped");
+		return ChangeResult.failure(change.id, BridgeStore.SAVE_FAILED);
 	}
 
 	private ChangeResult applyChange(BridgeStore current, Change change) {
@@ -287,9 +308,12 @@ public final class LuckPermsBridge {
 		unposted.clear();
 	}
 
-	private void publish(BridgeStore current) {
+	private void publish(Run run) {
 		try {
-			JsonObject data = current.snapshot();
+			JsonObject data = run.store().snapshot();
+			if (!current(run)) {
+				return;
+			}
 			String hash = sha256(data.toString());
 			long revision = nextRevision();
 			if (hash.equals(uploadedHash)) {
