@@ -142,6 +142,25 @@ class LuckPermsBridgeClientTest {
 		http.request();
 	}
 
+	@Test void guardsListAdminGroupsAndFailClosedWhenMalformed() throws Exception {
+		http.reply(200, "{\"changes\":["
+			+ "{\"id\":1,\"guard\":{\"admin_groups\":[\" Default \",\"COMMONER\",\" \",1,null]}},"
+			+ "{\"id\":2,\"guard\":null},"
+			+ "{\"id\":3},"
+			+ "{\"id\":4,\"guard\":[\"default\"]},"
+			+ "{\"id\":5,\"guard\":{}},"
+			+ "{\"id\":6,\"guard\":{\"admin_groups\":\"default\"}}]}");
+		List<Change> changes = LuckPermsBridgeClient.listChanges().changes;
+		assertEquals(List.of("default", "commoner"), changes.get(0).guardGroups);
+		assertNull(changes.get(1).guardGroups);
+		assertNull(changes.get(2).guardGroups);
+		for (Change failClosed : changes.subList(3, 6)) {
+			assertEquals(List.of(), failClosed.guardGroups);
+		}
+		assertThrows(UnsupportedOperationException.class, () -> changes.getFirst().guardGroups.clear());
+		http.request();
+	}
+
 	@Test void malformedNodesAndGroupListsBecomeMissingFields() throws Exception {
 		List<String> badNodes = List.of(
 			"null", "\"group.x\"", "{}", "{\"key\":\" \"}", "{\"key\":1}",

@@ -211,6 +211,11 @@ class LuckPermsBridgeStoreTest {
 		return new Change(7, "user", ADA.toString(), "Ada", "web:won", ACTOR.toString(), "parent add staff", List.of(ops));
 	}
 
+	static Change guarded(Op... ops) {
+		return new Change(7, "user", ADA.toString(), "Ada", "web:won", null, null, List.of(ops),
+			List.of("Default", "commoner", "a", "b", "squire", "loner"));
+	}
+
 	static List<String> keys(JsonObject holder) {
 		List<String> keys = new ArrayList<>();
 		holder.getAsJsonArray("nodes").forEach(node -> keys.add(node.getAsJsonObject().get("key").getAsString()));
@@ -357,6 +362,47 @@ class LuckPermsBridgeStoreTest {
 		when(tracks.createAndLoadTrack("solo")).thenReturn(CompletableFuture.completedFuture(solo));
 		assertTrue(store(null).apply(change("track", "solo", op("create_track"))).ok);
 		verifyNoInteractions(messaging);
+	}
+
+	@Test void guardKeepsAdminsAwayFromStaffPlayersAndStaffGroups() {
+		group("default", null, OptionalInt.empty(), node("perm.chat"), null);
+		group("commoner", null, OptionalInt.empty(), node("group.DEFAULT", true, Map.of("server", Set.of("main")), 0));
+		group("mod", null, OptionalInt.empty());
+		group("squire", null, OptionalInt.empty(), node("group.knight", true, Map.of(), 1_791_321_779L));
+		group("knight", null, OptionalInt.empty(), node("group.mod", true, Map.of("world", Set.of("vardera")), 0));
+		group("a", null, OptionalInt.empty(), node("group.b"));
+		group("b", null, OptionalInt.empty(), node("group.a"), node("group.mod", false, Map.of(), 0));
+		group("loner", null, OptionalInt.empty(), node("group.ghost"));
+		LuckPermsBridgeStore store = store();
+
+		userNodes.add(node("group.mod", true, Map.of("server", Set.of("dev")), 1_791_321_779L));
+		assertEquals("target_is_staff", store.apply(guarded(add(spec("perm.x")))).error);
+		userNodes.clear();
+		userNodes.add(node("group.Knight"));
+		assertEquals("target_is_staff", store.apply(guarded(remove(spec("group.Knight")))).error);
+		userNodes.clear();
+		assertEquals("root_only", store.apply(guarded(add(spec("group.mod")))).error);
+		assertEquals("root_only", store.apply(guarded(add(spec("group.Squire")))).error);
+		assertEquals("root_only", store.apply(guarded(add(spec("group.commoner")), add(spec("group.knight")))).error);
+		assertEquals("root_only", store.apply(guarded(add(spec("group.loner")))).error);
+		verify(userData, never()).add(any());
+		verify(users, never()).saveUser(any());
+		verifyNoInteractions(actions);
+
+		assertEquals("root_only", store.apply(new Change(8, "group", "mod", null, null, null, null,
+			List.of(op("delete_group")), List.of("mod"))).error);
+		assertEquals("root_only", store.apply(new Change(8, "track", "staff", null, null, null, null,
+			List.of(op("delete_track")), List.of())).error);
+		verify(groups, never()).deleteGroup(any());
+		verifyNoInteractions(tracks);
+
+		userNodes.add(node("group.mod", false, Map.of(), 0));
+		userNodes.add(node("group.default"));
+		userNodes.add(null);
+		assertTrue(store.apply(guarded(add(spec("group.Commoner")), add(spec("group.a")), add(spec("perm.x")),
+			add(new NodeSpec("group.knight", false, Map.of(), 0)))).ok);
+		assertTrue(store.apply(new Change(9, "user", ADA.toString(), null, null, null, null,
+			List.of(add(spec("group.knight"))))).ok);
 	}
 
 	@Test void loadedUserStaysLoadedAndRefusedMutationsAreReloaded() {

@@ -56,6 +56,8 @@ public final class LuckPermsBridgeStore implements BridgeStore {
 	static final String CREATE_TRACK = "create_track";
 	static final String DELETE_TRACK = "delete_track";
 	static final String SET_GROUPS = "set_groups";
+	static final String TARGET_IS_STAFF = "target_is_staff";
+	static final String ROOT_ONLY = "root_only";
 
 	private record Step(boolean add, Node node) {}
 
@@ -147,6 +149,10 @@ public final class LuckPermsBridgeStore implements BridgeStore {
 			return ChangeResult.failure(change.id, BAD_OP);
 		}
 		String type = change.targetType == null ? "" : change.targetType;
+		if (change.guardGroups != null && !"user".equals(type)) {
+			// Admins only manage players' groups; group and track edits are root's.
+			return ChangeResult.failure(change.id, ROOT_ONLY);
+		}
 		switch (type) {
 			case "user":
 				return applyUser(change);
@@ -174,7 +180,10 @@ public final class LuckPermsBridgeStore implements BridgeStore {
 			user = users.loadUser(uuid).join();
 			NodeMap data = user.data();
 			List<Step> steps = new ArrayList<>();
-			String error = plan(data.toCollection(), change.ops, steps);
+			String error = guard(change, data.toCollection());
+			if (error == null) {
+				error = plan(data.toCollection(), change.ops, steps);
+			}
 			if (error != null) {
 				return ChangeResult.failure(change.id, error);
 			}
@@ -311,6 +320,58 @@ public final class LuckPermsBridgeStore implements BridgeStore {
 		pushAll(change.id);
 		logAction(change, type, null, name);
 		return ChangeResult.success(change.id, state);
+	}
+
+	/**
+	 * Limits an admin's change to players outside staff, and to groups whose whole
+	 * inheritance stays within the admin groups. Checks live data; changes nothing.
+	 *
+	 * @return the refusal, or null when the change has no guard or passes it
+	 */
+	private String guard(Change change, Collection<Node> live) {
+		if (change.guardGroups == null) {
+			return null;
+		}
+		Set<String> allowed = new HashSet<>();
+		for (String group : change.guardGroups) {
+			allowed.add(group.toLowerCase(Locale.ROOT));
+		}
+		for (Node node : live) {
+			String group = node == null || !node.getValue() ? null : inheritedGroup(node.getKey());
+			if (group != null && !allowed.contains(group)) {
+				return TARGET_IS_STAFF;
+			}
+		}
+		for (Op op : change.ops) {
+			String group = ADD_NODE.equals(op.type) && op.node.value ? inheritedGroup(op.node.key) : null;
+			if (group != null && !allowed.containsAll(inheritance(group))) {
+				return ROOT_ONLY;
+			}
+		}
+		return null;
+	}
+
+	/** The group and every group it inherits through positive nodes in any context. */
+	private Set<String> inheritance(String root) {
+		Set<String> seen = new HashSet<>();
+		List<String> pending = new ArrayList<>(List.of(root));
+		while (!pending.isEmpty()) {
+			String name = pending.removeLast();
+			if (!seen.add(name)) {
+				continue;
+			}
+			Group group = findGroup(name);
+			if (group == null) {
+				continue;
+			}
+			for (Node node : group.data().toCollection()) {
+				String parent = node == null || !node.getValue() ? null : inheritedGroup(node.getKey());
+				if (parent != null) {
+					pending.add(parent);
+				}
+			}
+		}
+		return seen;
 	}
 
 	/** Node ops only, each with a well-formed node. */

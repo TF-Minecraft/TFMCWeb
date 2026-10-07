@@ -33,7 +33,9 @@ luckperms-bridge:
 LuckPerms storage is shared between servers, so set `apply: true` on exactly one
 of them. A server that only publishes makes its site's panel read-only. Changes
 are checked against live LuckPerms data, saved together or not at all, logged in
-`/lp log`, and followed by a fresh snapshot. `/web status` shows the bridge state
+`/lp log`, and followed by a fresh snapshot. A change made by a website admin
+(rather than root) is refused if the player already holds a staff group, or if
+the group it adds, or any group that group inherits, is outside the admin groups. `/web status` shows the bridge state
 and the age of the last snapshot.
 
 ## Documentation

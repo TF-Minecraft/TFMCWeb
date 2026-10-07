@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -196,6 +197,11 @@ public final class LuckPermsBridgeClient {
 		public final String actorUuid;
 		public final String description;
 		public final List<Op> ops;
+		/**
+		 * Lower-case groups an admin (not root) may manage, from the change's guard;
+		 * null when the change has no guard.
+		 */
+		public final List<String> guardGroups;
 
 		public Change(
 			long id,
@@ -207,6 +213,20 @@ public final class LuckPermsBridgeClient {
 			String description,
 			List<Op> ops
 		) {
+			this(id, targetType, target, targetName, actorName, actorUuid, description, ops, null);
+		}
+
+		public Change(
+			long id,
+			String targetType,
+			String target,
+			String targetName,
+			String actorName,
+			String actorUuid,
+			String description,
+			List<Op> ops,
+			List<String> guardGroups
+		) {
 			this.id = id;
 			this.targetType = targetType;
 			this.target = target;
@@ -215,6 +235,7 @@ public final class LuckPermsBridgeClient {
 			this.actorUuid = actorUuid;
 			this.description = description;
 			this.ops = ops == null ? List.of() : List.copyOf(ops);
+			this.guardGroups = guardGroups == null ? null : List.copyOf(guardGroups);
 		}
 	}
 
@@ -429,8 +450,33 @@ public final class LuckPermsBridgeClient {
 			jsonText(obj, "actor_name"),
 			jsonText(obj, "actor_uuid"),
 			jsonText(obj, "description"),
-			ops
+			ops,
+			guardGroups(obj.get("guard"))
 		);
+	}
+
+	/**
+	 * A guard that is present but malformed allows no groups, so a broken guard
+	 * can only refuse a change, never widen what an admin may do.
+	 */
+	private static List<String> guardGroups(JsonElement guard) {
+		if (guard == null || guard.isJsonNull()) {
+			return null;
+		}
+		List<String> groups = new ArrayList<>();
+		if (!guard.isJsonObject()) {
+			return groups;
+		}
+		JsonElement names = guard.getAsJsonObject().get("admin_groups");
+		if (names == null || !names.isJsonArray()) {
+			return groups;
+		}
+		for (JsonElement name : names.getAsJsonArray()) {
+			if (isString(name) && !name.getAsString().isBlank()) {
+				groups.add(name.getAsString().trim().toLowerCase(Locale.ROOT));
+			}
+		}
+		return groups;
 	}
 
 	private static Op parseOp(JsonElement element) {
