@@ -383,6 +383,12 @@ class LuckPermsBridgeStoreTest {
 		userNodes.add(node("group.Knight"));
 		assertEquals("target_is_staff", store.apply(guarded(remove(spec("group.Knight")))).error);
 		userNodes.clear();
+		userNodes.add(node("Group.SQUIRE", true, Map.of("server", Set.of("main")), 0));
+		assertEquals("target_is_staff", store.apply(guarded(remove(spec("Group.SQUIRE")))).error);
+		userNodes.clear();
+		userNodes.add(node("group.loner"));
+		assertEquals("target_is_staff", store.apply(guarded(add(spec("perm.x")))).error);
+		userNodes.clear();
 		assertEquals("root_only", store.apply(guarded(add(spec("group.mod")))).error);
 		assertEquals("root_only", store.apply(guarded(add(spec("group.Squire")))).error);
 		assertEquals("root_only", store.apply(guarded(add(spec("group.commoner")), add(spec("group.knight")))).error);

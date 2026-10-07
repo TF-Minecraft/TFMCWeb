@@ -328,8 +328,10 @@ public final class LuckPermsBridgeStore implements BridgeStore {
 	}
 
 	/**
-	 * Limits an admin's change to players outside staff, and to groups whose whole
-	 * inheritance stays within the admin groups. Checks live data; changes nothing.
+	 * Limits an admin's change to players whose groups, with everything those groups
+	 * inherit, stay within the admin groups, and to added groups that do the same.
+	 * Checks live data, so a group that just gained a staff parent counts as staff;
+	 * changes nothing.
 	 *
 	 * @return the refusal, or null when the change has no guard or passes it
 	 */
@@ -343,7 +345,7 @@ public final class LuckPermsBridgeStore implements BridgeStore {
 		}
 		for (Node node : live) {
 			String group = node == null || !node.getValue() ? null : inheritedGroup(node.getKey());
-			if (group != null && !allowed.contains(group)) {
+			if (group != null && !allowed.containsAll(inheritance(group))) {
 				return TARGET_IS_STAFF;
 			}
 		}
