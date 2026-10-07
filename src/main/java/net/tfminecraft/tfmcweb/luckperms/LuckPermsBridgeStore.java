@@ -246,7 +246,7 @@ public final class LuckPermsBridgeStore implements BridgeStore {
 			group = create ? groups.createAndLoadGroup(name).join() : existing;
 			error = execute(group.data(), steps);
 			if (error != null) {
-				reloadGroup(name);
+				discardGroup(group, name, create);
 				return ChangeResult.failure(change.id, error);
 			}
 			if (!steps.isEmpty()) {
@@ -256,7 +256,7 @@ public final class LuckPermsBridgeStore implements BridgeStore {
 		} catch (RuntimeException e) {
 			logger.log(Level.WARNING, "[luckperms] change " + change.id + " failed", e);
 			if (group != null) {
-				reloadGroup(name);
+				discardGroup(group, name, create);
 			}
 			return ChangeResult.failure(change.id, failureCode(e));
 		}
@@ -315,7 +315,7 @@ public final class LuckPermsBridgeStore implements BridgeStore {
 		} catch (RuntimeException e) {
 			logger.log(Level.WARNING, "[luckperms] change " + change.id + " failed", e);
 			if (track != null) {
-				reloadTrack(name);
+				discardTrack(track, name, create);
 			}
 			return ChangeResult.failure(change.id, failureCode(e));
 		}
@@ -585,6 +585,32 @@ public final class LuckPermsBridgeStore implements BridgeStore {
 			users.loadUser(uuid).join();
 		} catch (RuntimeException e) {
 			logger.log(Level.WARNING, "[luckperms] could not reload user " + uuid, e);
+		}
+	}
+
+	/** Undoes a failed change: a group it created is deleted, an existing one reloaded. */
+	private void discardGroup(Group group, String name, boolean created) {
+		if (!created) {
+			reloadGroup(name);
+			return;
+		}
+		try {
+			groups.deleteGroup(group).join();
+		} catch (RuntimeException e) {
+			logger.log(Level.WARNING, "[luckperms] could not remove partly created group " + name, e);
+		}
+	}
+
+	/** Undoes a failed change: a track it created is deleted, an existing one reloaded. */
+	private void discardTrack(Track track, String name, boolean created) {
+		if (!created) {
+			reloadTrack(name);
+			return;
+		}
+		try {
+			tracks.deleteTrack(track).join();
+		} catch (RuntimeException e) {
+			logger.log(Level.WARNING, "[luckperms] could not remove partly created track " + name, e);
 		}
 	}
 

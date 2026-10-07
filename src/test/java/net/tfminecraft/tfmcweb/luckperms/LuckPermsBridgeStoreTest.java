@@ -586,6 +586,22 @@ class LuckPermsBridgeStoreTest {
 		assertEquals("save_failed", store.apply(change("group", "mod", add(spec("perm.c")))).error);
 		verify(logger).log(eq(Level.WARNING), eq("[luckperms] could not reload group mod"), any(RuntimeException.class));
 
+		Group created = mock(Group.class);
+		List<Node> createdNodes = new ArrayList<>();
+		NodeMap createdData = nodeMap(createdNodes);
+		when(created.data()).thenReturn(createdData);
+		when(groups.createAndLoadGroup("fresh")).thenReturn(CompletableFuture.completedFuture(created));
+		when(groups.saveGroup(created)).thenReturn(CompletableFuture.failedFuture(new IllegalStateException("db")));
+		assertEquals("save_failed", store.apply(change("group", "fresh", op("create_group"), add(spec("perm.a")))).error);
+		verify(groups).deleteGroup(created);
+		doReturn(DataMutateResult.FAIL).when(createdData).add(any());
+		when(groups.deleteGroup(created)).thenReturn(CompletableFuture.failedFuture(new IllegalStateException("db")));
+		assertEquals("save_failed", store.apply(change("group", "fresh", op("create_group"), add(spec("perm.a")))).error);
+		verify(groups, times(2)).deleteGroup(created);
+		verify(logger).log(eq(Level.WARNING), eq("[luckperms] could not remove partly created group fresh"), any(RuntimeException.class));
+		verify(groups, times(2)).loadGroup("fresh");
+		verify(groups, times(1)).saveGroup(created);
+
 		when(groups.loadGroup("bad name")).thenThrow(new IllegalArgumentException("invalid"));
 		assertEquals("bad_target", store.apply(change("group", "bad name", op("create_group"))).error);
 		Group fallback = group("default", null, OptionalInt.empty());
@@ -651,6 +667,19 @@ class LuckPermsBridgeStoreTest {
 			CompletableFuture.failedFuture(new IllegalStateException("db")));
 		assertEquals("save_failed", store.apply(change("track", "ladder", setGroups("staff"))).error);
 		verify(logger).log(eq(Level.WARNING), eq("[luckperms] could not reload track ladder"), any(RuntimeException.class));
+
+		Track fresh = track("fresh");
+		when(tracks.createAndLoadTrack("fresh")).thenReturn(CompletableFuture.completedFuture(fresh));
+		when(fresh.appendGroup(any())).thenReturn(DataMutateResult.FAIL);
+		assertEquals("save_failed", store.apply(change("track", "fresh", op("create_track"), setGroups("staff"))).error);
+		verify(tracks).deleteTrack(fresh);
+		when(fresh.appendGroup(any())).thenReturn(DataMutateResult.SUCCESS);
+		when(tracks.saveTrack(fresh)).thenReturn(CompletableFuture.failedFuture(new IllegalStateException("db")));
+		when(tracks.deleteTrack(fresh)).thenReturn(CompletableFuture.failedFuture(new IllegalStateException("db")));
+		assertEquals("save_failed", store.apply(change("track", "fresh", op("create_track"), setGroups("staff"))).error);
+		verify(tracks, times(2)).deleteTrack(fresh);
+		verify(logger).log(eq(Level.WARNING), eq("[luckperms] could not remove partly created track fresh"), any(RuntimeException.class));
+		verify(tracks, times(2)).loadTrack("fresh");
 
 		when(tracks.loadTrack("broken")).thenReturn(CompletableFuture.failedFuture(new IllegalStateException("db")));
 		assertEquals("save_failed", store.apply(change("track", "broken", op("delete_track"))).error);
