@@ -21,6 +21,7 @@ import net.luckperms.api.model.user.UserManager;
 import net.luckperms.api.node.Node;
 import net.luckperms.api.node.NodeType;
 import net.luckperms.api.node.types.InheritanceNode;
+import net.tfminecraft.tfmcweb.luckperms.LuckPermsWriteLock;
 
 /**
  * Applies supporter inheritance nodes through the LuckPerms API, including offline players.
@@ -60,6 +61,15 @@ public final class LuckPermsPatreonGroupStore implements PatreonGroupStore {
 		if (ensure == null && remove.isEmpty()) {
 			return true;
 		}
+		LuckPermsWriteLock.LOCK.lock();
+		try {
+			return write(player, ensure, remove);
+		} finally {
+			LuckPermsWriteLock.LOCK.unlock();
+		}
+	}
+
+	private boolean write(UUID player, String ensure, Set<String> remove) {
 		boolean loaded = false;
 		User user = null;
 		try {

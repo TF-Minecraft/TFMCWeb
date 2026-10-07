@@ -10,6 +10,7 @@ import net.tfminecraft.tfmcweb.cache.LinkCache;
 import net.tfminecraft.tfmcweb.gate.DiscordGateService;
 import net.tfminecraft.tfmcweb.listeners.PlayerJoinListener;
 import net.tfminecraft.tfmcweb.loaders.ConfigLoader;
+import net.tfminecraft.tfmcweb.luckperms.LuckPermsBridge;
 import net.tfminecraft.tfmcweb.entitlements.PlayerMetaSyncService;
 import net.tfminecraft.tfmcweb.managers.BanMirrorPoller;
 import net.tfminecraft.tfmcweb.managers.LinkDiscordCommand;
@@ -30,6 +31,7 @@ public class TFMCWeb extends JavaPlugin {
 	private DiscordGateService gateService;
 	private PluginNoticePoller noticePoller;
 	private PatreonRankWriter rankWriter;
+	private LuckPermsBridge luckPermsBridge;
 	private BanMirrorPoller banMirror;
 
 	@Override
@@ -52,6 +54,8 @@ public class TFMCWeb extends JavaPlugin {
 		noticePoller.start();
 		rankWriter = new PatreonRankWriter(this);
 		rankWriter.refresh();
+		luckPermsBridge = new LuckPermsBridge(this);
+		luckPermsBridge.refresh();
 
 		if (getCommand("linkdiscord") != null) {
 			getCommand("linkdiscord").setExecutor(new LinkDiscordCommand(this, linkCache, gateService));
@@ -66,7 +70,13 @@ public class TFMCWeb extends JavaPlugin {
 			getLogger().severe("Command unlinkdiscord missing from plugin.yml");
 		}
 		if (getCommand("web") != null) {
-			WebCommand web = new WebCommand(this, linkCache, gateService, rankWriter);
+			WebCommand web = new WebCommand(
+				this,
+				linkCache,
+				gateService,
+				rankWriter,
+				luckPermsBridge
+			);
 			getCommand("web").setExecutor(web);
 			getCommand("web").setTabCompleter(web);
 		} else {
@@ -116,6 +126,9 @@ public class TFMCWeb extends JavaPlugin {
 		if (rankWriter != null) {
 			rankWriter.stop();
 		}
+		if (luckPermsBridge != null) {
+			luckPermsBridge.stop();
+		}
 		if (banMirror != null) {
 			banMirror.stop();
 		}
@@ -133,6 +146,9 @@ public class TFMCWeb extends JavaPlugin {
 		configLoader.load(new File(getDataFolder(), "config.yml"));
 		if (rankWriter != null) {
 			rankWriter.refresh();
+		}
+		if (luckPermsBridge != null) {
+			luckPermsBridge.refresh();
 		}
 		PlayerMetaSyncService.pushAllOnlineAsync();
 	}

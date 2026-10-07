@@ -7,6 +7,7 @@ import java.util.Comparator;
 import net.tfminecraft.tfmcweb.api.ProvinceSystemClient;
 import net.tfminecraft.tfmcweb.entitlements.PlayerMetaSyncService;
 import net.tfminecraft.tfmcweb.gate.DiscordGateService;
+import net.tfminecraft.tfmcweb.luckperms.LuckPermsBridge;
 import net.tfminecraft.tfmcweb.managers.BanMirrorPoller;
 import net.tfminecraft.tfmcweb.managers.PluginNoticePoller;
 import org.bukkit.Bukkit;
@@ -21,13 +22,13 @@ class TFMCWebLifecycleTest {
     @BeforeEach void setup() throws Exception {state=new TestState();server=MockBukkit.mock();}
     @AfterEach void cleanup() throws Exception {MockBukkit.unmock();state.close();}
     @Test void enableRegistersCommandsAndReloadsConfigurationAndDisableStopsPoller() throws Exception {
-        try(var pollers=mockConstruction(PluginNoticePoller.class);var bans=mockConstruction(BanMirrorPoller.class);var sync=mockStatic(PlayerMetaSyncService.class)){
-            TFMCWeb plugin=MockBukkit.load(TFMCWeb.class);verify(bans.constructed().getFirst()).start();assertSame(plugin,TFMCWeb.plugin);assertNotNull(plugin.getLinkCache());assertNotNull(plugin.getGateService());
+        try(var pollers=mockConstruction(PluginNoticePoller.class);var bans=mockConstruction(BanMirrorPoller.class);var bridges=mockConstruction(LuckPermsBridge.class);var sync=mockStatic(PlayerMetaSyncService.class)){
+            TFMCWeb plugin=MockBukkit.load(TFMCWeb.class);LuckPermsBridge bridge=bridges.constructed().getFirst();verify(bridge).refresh();verify(bans.constructed().getFirst()).start();assertSame(plugin,TFMCWeb.plugin);assertNotNull(plugin.getLinkCache());assertNotNull(plugin.getGateService());
             for(String name:new String[]{"linkdiscord","unlinkdiscord","web","token","warning","patreon"})assertNotNull(plugin.getCommand(name).getExecutor());
             assertNotNull(plugin.getCommand("web").getTabCompleter());assertNotNull(plugin.getCommand("token").getTabCompleter());assertNotNull(plugin.getCommand("patreon").getTabCompleter());
             verify(pollers.constructed().getFirst()).start();assertTrue(TFMCWeb.isPresent());
-            Files.writeString(plugin.getDataFolder().toPath().resolve("config.yml"),"realm:\n  id: dev\n");plugin.reloadLocalConfig();assertEquals("dev",TFMCWeb.getRealmId());
-            plugin.onDisable();verify(pollers.constructed().getFirst()).stop();verify(bans.constructed().getFirst()).stop();
+            Files.writeString(plugin.getDataFolder().toPath().resolve("config.yml"),"realm:\n  id: dev\n");plugin.reloadLocalConfig();assertEquals("dev",TFMCWeb.getRealmId());verify(bridge,times(2)).refresh();
+            plugin.onDisable();verify(pollers.constructed().getFirst()).stop();verify(bans.constructed().getFirst()).stop();verify(bridge).stop();
         }
     }
     @Test void enableCreatesMissingDataDirectoryAndLogsMissingCommands() throws Exception {

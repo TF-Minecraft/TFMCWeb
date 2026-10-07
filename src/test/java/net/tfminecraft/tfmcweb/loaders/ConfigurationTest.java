@@ -25,6 +25,8 @@ class ConfigurationTest {
         assertEquals(List.of("skin","drink"),Cache.tokenCooldownSharedScopes);assertEquals(-1,Cache.tokenCooldownDefaultDays);
         assertEquals(3,Cache.rpcMetaDefaults.get("max-alive-characters"));assertTrue(Cache.rpcMetaGroups.isEmpty());
         assertTrue(Cache.banMirrorEnabled);assertEquals(30,Cache.banMirrorPollSeconds);
+        assertFalse(Cache.luckPermsBridgePublish);assertFalse(Cache.luckPermsBridgeApply);
+        assertEquals(3,Cache.luckPermsBridgePollSeconds);assertEquals(30,Cache.luckPermsBridgeSnapshotSeconds);
         load("ban-mirror:\n  enabled: false\n  poll-seconds: 0\n");assertFalse(Cache.banMirrorEnabled);assertEquals(30,Cache.banMirrorPollSeconds);
         load("ban-mirror:\n  poll-seconds: 5\n");assertTrue(Cache.banMirrorEnabled);assertEquals(5,Cache.banMirrorPollSeconds);
         Cache.apiBaseUrl="preserved";Cache.patreonEnabled=true;new ConfigLoader().load(temp.resolve("missing.yml").toFile());
@@ -149,6 +151,14 @@ class ConfigurationTest {
         assertEquals("donator", Cache.patreonGroups.get("noble"));
         assertEquals("gilded", Cache.patreonGroups.get("gilded"));
         assertEquals("ascended", Cache.patreonGroups.get("ascended"));
+    }
+    @Test void luckPermsBridgeFlagsAndIntervals() throws Exception {
+        load("luckperms-bridge:\n  publish: true\n  poll-seconds: 0\n  snapshot-seconds: -1\n");
+        assertTrue(Cache.luckPermsBridgePublish);assertFalse(Cache.luckPermsBridgeApply);
+        assertEquals(3,Cache.luckPermsBridgePollSeconds);assertEquals(30,Cache.luckPermsBridgeSnapshotSeconds);
+        load("luckperms-bridge:\n  apply: true\n  poll-seconds: 5\n  snapshot-seconds: 60\n");
+        assertFalse(Cache.luckPermsBridgePublish);assertTrue(Cache.luckPermsBridgeApply);
+        assertEquals(5,Cache.luckPermsBridgePollSeconds);assertEquals(60,Cache.luckPermsBridgeSnapshotSeconds);
     }
     @Test void cooldownConfigurationSectionsAreSupported() throws Exception {
         YamlConfiguration source=new YamlConfiguration();var row=new YamlConfiguration();row.set("permission","rank");row.set("cooldown-days",4);

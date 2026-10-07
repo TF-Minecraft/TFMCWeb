@@ -162,3 +162,11 @@ patreon:
 ban-mirror:
   enabled: true
   poll-seconds: 30
+
+# Staff-panel LuckPerms bridge. LuckPerms storage is shared across servers, so
+# set apply true on exactly one server. publish only sends data to this server's site.
+luckperms-bridge:
+  publish: false
+  apply: false
+  poll-seconds: 3
+  snapshot-seconds: 30

@@ -164,6 +164,21 @@ class LuckPermsPatreonGroupStoreTest {
 		verify(data, times(1)).add(any());
 	}
 
+	@Test void writesHoldTheLockSharedWithTheStaffPanelBridge() {
+		List<Boolean> held = new ArrayList<>();
+		when(users.loadUser(id)).thenAnswer(call -> {
+			held.add(net.tfminecraft.tfmcweb.luckperms.LuckPermsWriteLock.LOCK.isHeldByCurrentThread());
+			return CompletableFuture.completedFuture(user);
+		});
+		doAnswer(call -> {
+			held.add(net.tfminecraft.tfmcweb.luckperms.LuckPermsWriteLock.LOCK.isHeldByCurrentThread());
+			return null;
+		}).when(users).cleanupUser(user);
+		assertTrue(store().setGroups(id, "noble", Set.of()));
+		assertEquals(List.of(true, true), held);
+		assertFalse(net.tfminecraft.tfmcweb.luckperms.LuckPermsWriteLock.LOCK.isLocked());
+	}
+
 	@Test void pushesSuccessfulSavesThroughLuckPermsMessaging() {
 		assertTrue(store().setGroups(id, "noble", Set.of()));
 		verify(users).saveUser(user);
