@@ -14,8 +14,27 @@ The same bridge connects selected moderation and roleplay events to the wider co
 - **Moderation connections** — sends player warnings, and bans, unbans and expired timed bans from the server ban list, to the linked services so the Discord Banned role follows the in-game ban.
 - **Player benefit synchronization** — shares resolved player metadata and entitlements with ProvinceSystem.
 - **Bird-mail notifications** — provides the connection for BirdMessenger arrival notifications to linked Discord accounts.
+- **Staff-panel LuckPerms bridge** — publishes LuckPerms groups, tracks and player permissions to the website's staff panel, and applies the rank and permission changes staff queue there through LuckPerms.
 
 These features rely on the corresponding TF-Minecraft services and gameplay integrations being available.
+
+## LuckPerms bridge
+
+The bridge is off by default and needs LuckPerms on the server:
+
+```yaml
+luckperms-bridge:
+  publish: false        # send LuckPerms snapshots to this server's site
+  apply: false          # also apply staff-queued changes (implies publish)
+  poll-seconds: 3       # how often to fetch queued changes when applying
+  snapshot-seconds: 30  # how often to publish a snapshot
+```
+
+LuckPerms storage is shared between servers, so set `apply: true` on exactly one
+of them. A server that only publishes makes its site's panel read-only. Changes
+are checked against live LuckPerms data, saved together or not at all, logged in
+`/lp log`, and followed by a fresh snapshot. `/web status` shows the bridge state
+and the age of the last snapshot.
 
 ## Documentation
 
