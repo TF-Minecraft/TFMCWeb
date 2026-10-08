@@ -1,8 +1,8 @@
-# TFMC Web
+# TFMCWeb
 
 > Connecting TF-Minecraft gameplay, website features, and Discord identity.
 
-TFMC Web is the Minecraft-side bridge to the TF-Minecraft website services. It helps players connect their Discord account, obtain access codes for website features, and receive account updates in-game.
+TFMCWeb is the Minecraft-side bridge to the TF-Minecraft website services. It helps players connect their Discord account, obtain access codes for website features, and receive account updates in-game.
 
 The same bridge connects selected moderation and roleplay events to the wider community services, keeping account identity and supported player benefits aligned across them.
 
@@ -12,31 +12,12 @@ The same bridge connects selected moderation and roleplay events to the wider co
 - **Website feature codes** — issues scoped codes for skins, drinks, and player profiles, subject to access rules and cooldowns.
 - **Account status updates** — processes website notices about linking and eligibility, including RPCharacters survival access checks.
 - **Moderation connections** — sends player warnings, and bans, unbans and expired timed bans from the server ban list, to the linked services so the Discord Banned role follows the in-game ban.
-- **Player benefit synchronization** — shares resolved player metadata and entitlements with ProvinceSystem.
+- **Supporter benefits** — links Patreon accounts and synchronizes supported LuckPerms tiers through ProvinceSystem.
+- **Player metadata** — shares resolved player permissions and entitlements with the website.
 - **Bird-mail notifications** — provides the connection for BirdMessenger arrival notifications to linked Discord accounts.
 - **Staff-panel LuckPerms bridge** — publishes LuckPerms groups, tracks and player permissions to the website's staff panel, and applies the rank and permission changes staff queue there through LuckPerms.
 
 These features rely on the corresponding TF-Minecraft services and gameplay integrations being available.
-
-## LuckPerms bridge
-
-The bridge is off by default and needs LuckPerms on the server:
-
-```yaml
-luckperms-bridge:
-  publish: false        # send LuckPerms snapshots to this server's site
-  apply: false          # also apply staff-queued changes (implies publish)
-  poll-seconds: 3       # how often to fetch queued changes when applying
-  snapshot-seconds: 30  # how often to publish a snapshot
-```
-
-LuckPerms storage is shared between servers, so set `apply: true` on exactly one
-of them. A server that only publishes makes its site's panel read-only. Changes
-are checked against live LuckPerms data, saved together or not at all, logged in
-`/lp log`, and followed by a fresh snapshot. A change made by a website admin
-(rather than root) is refused if the player already holds a staff group, or if
-the group it adds, or any group that group inherits, is outside the admin groups. `/web status` shows the bridge state
-and the age of the last snapshot.
 
 ## Documentation
 
@@ -46,12 +27,16 @@ Technical documentation is maintained in [TF-Minecraft/Docs](https://github.com/
 
 ## Tests and coverage
 
-Run `mvn clean verify` with Java 21. The build runs the unit tests and enforces
-100% executable runtime **line coverage** with JaCoCo, without production-class
-exclusions. Instruction and branch coverage are reported separately.
+Run `mvn clean verify` with Java 21 after preparing the dependencies in the
+[project guide](https://github.com/TF-Minecraft/Docs/blob/main/projects/TFMCWeb/README.md#build-and-dependencies).
+JUnit 5, Mockito and MockBukkit exercise plugin logic with mocked server APIs.
+JaCoCo enforces 100% production line coverage with no class or package exclusions;
+branch and instruction coverage are reported separately.
 
-The HTML report is `target/site/jacoco/index.html`; the machine-readable report is
-`target/site/jacoco/jacoco.xml`. CI uploads these reports alongside test results.
+Surefire writes test results to `target/surefire-reports/`. Coverage reports are
+`target/site/jacoco/index.html` and `target/site/jacoco/jacoco.xml`; CI uploads
+both test and coverage reports. These tests do not run a live Paper server,
+LuckPerms storage, Discord, Patreon, or the deployed website.
 
 ## License
 
