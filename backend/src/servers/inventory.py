@@ -9,7 +9,7 @@ The version a server is running comes from the
 `Enabling <name> v<version>` lines of its most recent startup log, so a newer
 jar on disk shows as waiting for a restart.
 
-Main should run published releases; Dev may also run test builds.
+Main, Lobby and Tutorial should run published releases; Dev may also run test builds.
 """
 from __future__ import annotations
 
@@ -35,6 +35,8 @@ from typing import Any, Callable, Iterator
 SERVERS = (
     ("main", "Main", "SERVER_MAIN_DIR", True),
     ("dev", "Dev", "SERVER_DEV_DIR", False),
+    ("lobby", "Lobby", "SERVER_LOBBY_DIR", True),
+    ("tutorial", "Tutorial", "SERVER_TUTORIAL_DIR", True),
 )
 DEFAULT_ORG = "TF-Minecraft"
 # Older rotated logs are read until one holds a startup.

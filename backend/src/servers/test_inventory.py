@@ -52,7 +52,7 @@ def startup_log(*plugins, paper="1.21.10-130", done=True):
 @pytest.fixture(autouse=True)
 def fresh_environment(monkeypatch):
     for name in ("SERVERS_GITHUB_TOKEN", "PATCHNOTES_GITHUB_TOKEN", "SERVERS_GITHUB_ORG",
-                 "SERVER_MAIN_DIR", "SERVER_DEV_DIR"):
+                 "SERVER_MAIN_DIR", "SERVER_DEV_DIR", "SERVER_LOBBY_DIR", "SERVER_TUTORIAL_DIR"):
         monkeypatch.delenv(name, raising=False)
     monkeypatch.setattr(inventory, "_check_slots", threading.BoundedSemaphore(2))
 
@@ -211,7 +211,7 @@ def test_overview_compares_each_server_with_verified_releases(tmp_path, monkeypa
     result = inventory.overview(github(shas))
     assert result["github"]["status"] == "available" and result["github"]["checked_at"]
     assert "stale" not in result["github"]
-    assert [s["status"] for s in result["servers"]] == ["available", "available"]
+    assert [s["status"] for s in result["servers"]] == ["available", "available", "not_configured", "not_configured"]
     assert result["servers"][0]["paper"] == "1.21.10-130" and result["servers"][0]["started"] is True
     plugins = {p["repo"]: p for p in result["plugins"]}
     assert set(plugins) == {"Core", "Lib"}
@@ -231,6 +231,17 @@ def test_overview_compares_each_server_with_verified_releases(tmp_path, monkeypa
         "dev": {"file": "Essentials-2.23.jar", "version": "2.23"}}}]
 
 
+def test_lobby_and_tutorial_expect_releases(tmp_path, monkeypatch):
+    _, dev, shas = servers_fixture(tmp_path)
+    monkeypatch.setenv("SERVER_TUTORIAL_DIR", str(dev))
+    result = inventory.overview(github(shas))
+    assert [(s["key"], s["label"], s["releases_only"], s["status"]) for s in result["servers"]] == [
+        ("main", "Main", True, "not_configured"), ("dev", "Dev", False, "not_configured"),
+        ("lobby", "Lobby", True, "not_configured"), ("tutorial", "Tutorial", True, "available")]
+    core = {p["repo"]: p for p in result["plugins"]}["Core"]["servers"]
+    assert set(core) == {"tutorial"} and core["tutorial"]["state"] == "not_release"
+
+
 def test_a_newer_jar_than_the_running_one_waits_for_a_restart(tmp_path, monkeypatch):
     main, _, shas = servers_fixture(tmp_path)
     (main / "logs" / "latest.log").write_text(startup_log(("Core", "0.9.0")))
@@ -246,7 +257,7 @@ def test_a_newer_jar_than_the_running_one_waits_for_a_restart(tmp_path, monkeypa
 def test_unreadable_servers_and_github(tmp_path, monkeypatch):
     monkeypatch.setenv("SERVER_MAIN_DIR", str(tmp_path / "gone"))
     result = inventory.overview(github({}, fail=True))
-    assert [s["status"] for s in result["servers"]] == ["missing", "not_configured"]
+    assert [s["status"] for s in result["servers"]] == ["missing", "not_configured", "not_configured", "not_configured"]
     assert result["github"] == {"status": "unavailable", "checked_at": None}
     assert result["plugins"] == [] and result["others"] == []
 
@@ -506,7 +517,7 @@ def test_the_route_is_for_admins(database, postgres, monkeypatch, tmp_path):
     assert client(app, mod).get("/admin/servers").json() == {"detail": "forbidden"}
     response = client(app, admin).get("/admin/servers")
     assert response.status_code == 200 and response.headers["cache-control"] == "no-store"
-    assert [s["status"] for s in response.json()["servers"]] == ["not_configured", "not_configured"]
+    assert [s["status"] for s in response.json()["servers"]] == ["not_configured"] * 4
 
 
 @pytest.mark.parametrize('failure', [

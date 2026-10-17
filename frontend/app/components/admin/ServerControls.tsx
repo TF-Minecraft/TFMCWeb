@@ -16,7 +16,7 @@ import type { ServerKey } from "@/lib/admin/servers";
 import { formatLocal } from "@/lib/skins/formatTime";
 import { buttonClass, errorClass, headingClass, inputClass, mutedClass, pagerClass, quietButtonClass } from "./ui";
 
-const LABEL = { main: "Main", dev: "Dev" };
+const LABEL = { main: "Main", dev: "Dev", lobby: "Lobby", tutorial: "Tutorial" };
 const ACTIVE: ServerJob["phase"][] = ["countdown", "installing", "restarting", "checking", "reopening"];
 const STEPS: [ServerJob["phase"], string][] = [
   ["countdown", "Warning players"],

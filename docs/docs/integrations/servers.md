@@ -3,8 +3,8 @@
 [Project index](../../README.md) · [Source module](../../../backend/src/servers)
 
 The staff panel's Servers tab compares every TFMC plugin's latest GitHub
-release with the jar Main and Dev have installed and the version each server
-is running. `GET /admin/servers` serves it to admins and the owner
+release with the jar Main, Dev, Lobby and Tutorial have installed and the
+version each server is running. `GET /admin/servers` serves it to admins and the owner
 (`view_servers`). The comparison reads server files; the separate control
 connection below installs released jars and restarts servers.
 
@@ -14,7 +14,7 @@ Each server has a card showing whether it is running, its Paper version and
 how many plugins have each kind of problem. Below them,
 **Needs a look** lists the plugins with a problem, worst first; **TFMC
 plugins** lists every plugin, and **Other plugins** compares third-party jars
-between Main and Dev by version. Each row shows the plugin's latest release
+between the servers by version. Each row shows the plugin's latest release
 beside the version each server runs, dimmed when it matches that release.
 Hovering a version shows the jar's file name.
 
@@ -38,7 +38,7 @@ gets these labels:
 | Label | Meaning |
 | --- | --- |
 | No label | The jar is the latest release's file and the server is running it. |
-| Not a release (Main) | The jar's SHA-256 matches no published release, whatever its name. |
+| Not a release (Main, Lobby, Tutorial) | The jar's SHA-256 matches no published release, whatever its name. |
 | Test build (Dev) | The same on Dev, where test builds are allowed. |
 | Unverified | GitHub or the check deadline prevented complete checksum verification. This is not proof of a test build. |
 | Older release | The jar is an earlier release's file. |
@@ -64,7 +64,7 @@ since the last startup is not detected.
 
 | Variable | Meaning |
 | --- | --- |
-| `SERVER_MAIN_DIR`, `SERVER_DEV_DIR` | A folder inside the backend container holding the server's `plugins` and `logs` folders. Unset: the server's card says the site is not set up to read it. |
+| `SERVER_MAIN_DIR`, `SERVER_DEV_DIR`, `SERVER_LOBBY_DIR`, `SERVER_TUTORIAL_DIR` | A folder inside the backend container holding the server's `plugins` and `logs` folders. Unset: the server's card says the site is not set up to read it. |
 | `SERVERS_GITHUB_TOKEN` | A read-only GitHub token, falling back to `PATCHNOTES_GITHUB_TOKEN`. Each check discovers active repositories afresh, then reads current releases in groups of eight with at most six queries concurrently. Without a token, fresh REST reads remain available but can quickly reach GitHub’s unauthenticated limit. |
 | `SERVERS_GITHUB_ORG` | The organisation to read. Defaults to `TF-Minecraft`. |
 
@@ -86,9 +86,15 @@ services:
       - /home/amp/.ampdata/instances/TFMCMain01/Minecraft/logs:/servers/main/logs:ro
       - /home/amp/.ampdata/instances/TFMCDev01/Minecraft/plugins:/servers/dev/plugins:ro
       - /home/amp/.ampdata/instances/TFMCDev01/Minecraft/logs:/servers/dev/logs:ro
+      - /home/amp/.ampdata/instances/TFMCLobby01/Minecraft/plugins:/servers/lobby/plugins:ro
+      - /home/amp/.ampdata/instances/TFMCLobby01/Minecraft/logs:/servers/lobby/logs:ro
+      - /home/amp/.ampdata/instances/TFMCTutorial01/Minecraft/plugins:/servers/tutorial/plugins:ro
+      - /home/amp/.ampdata/instances/TFMCTutorial01/Minecraft/logs:/servers/tutorial/logs:ro
     environment:
       - SERVER_MAIN_DIR=/servers/main
       - SERVER_DEV_DIR=/servers/dev
+      - SERVER_LOBBY_DIR=/servers/lobby
+      - SERVER_TUTORIAL_DIR=/servers/tutorial
 ```
 
 Every page load and **Check again** waits for a fresh check. There is no
@@ -124,6 +130,7 @@ Instant restarts begin installation immediately and cannot be cancelled.
 The www website can control Main and Dev; the Dev
 website can control Dev only. Every action requires the site's own origin,
 a current signed-in session and a reason, and is recorded in the staff audit.
+Lobby and Tutorial have no controls; their cards only report what they run.
 View-as sessions cannot issue these actions.
 
 **Restart** activates the jars already on disk. **Update and restart**
