@@ -517,7 +517,7 @@ def test_the_route_is_for_admins(database, postgres, monkeypatch, tmp_path):
     assert client(app, mod).get("/admin/servers").json() == {"detail": "forbidden"}
     response = client(app, admin).get("/admin/servers")
     assert response.status_code == 200 and response.headers["cache-control"] == "no-store"
-    assert [s["status"] for s in response.json()["servers"]] == ["not_configured", "not_configured"]
+    assert [s["status"] for s in response.json()["servers"]] == ["not_configured"] * 4
 
 
 @pytest.mark.parametrize('failure', [
