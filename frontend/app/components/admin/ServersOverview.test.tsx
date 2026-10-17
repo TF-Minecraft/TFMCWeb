@@ -178,6 +178,33 @@ it("says when a server or GitHub can't be read", async () => {
   expect(screen.getByRole("alert").textContent).toContain("GitHub didn’t answer");
 });
 
+it("adds a column for each readable server, Lobby and Tutorial included", async () => {
+  const lobby = { ...overview.servers[0], key: "lobby" as const, label: "Lobby" };
+  const tutorial = { ...overview.servers[0], key: "tutorial" as const, label: "Tutorial" };
+  vi.mocked(getServers).mockResolvedValue({
+    ...overview,
+    servers: [...overview.servers, lobby, tutorial],
+    plugins: [
+      {
+        repo: "TFMCWebBridge",
+        latest: latest("1.3.0"),
+        servers: {
+          main: copy({ version: "1.3.0" }),
+          lobby: copy({ state: "not_release", version: "1.0-SNAPSHOT", release: null, loaded: null }),
+          tutorial: copy({ state: "missing", files: [], version: null, release: null, loaded: null }),
+        },
+      },
+    ],
+    others: [],
+  });
+  render(<ServersOverview />);
+  const row = (await screen.findByText("TFMCWebBridge")).closest("li")!;
+  expect(row.className).toContain("repeat(4,minmax(0,1fr))");
+  expect(within(row).getByText("Not a release")).toBeTruthy();
+  expect(within(row).getByText("Not installed")).toBeTruthy();
+  expect(screen.getByRole("heading", { name: "Tutorial" })).toBeTruthy();
+});
+
 it("shows the staff gate when the role is too low", async () => {
   vi.mocked(getServers).mockRejectedValue(new AccountApiError("forbidden", 403));
   render(<ServersOverview />);

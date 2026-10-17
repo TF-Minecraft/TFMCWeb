@@ -1,11 +1,11 @@
 import { adminRequest } from "./api";
 
-export type ServerKey = "main" | "dev";
+export type ServerKey = "main" | "dev" | "lobby" | "tutorial";
 
 export type ServerInfo = {
   key: ServerKey;
   label: string;
-  /** Main should only run published releases; Dev may run test builds. */
+  /** Main, Lobby and Tutorial should only run published releases; Dev may run test builds. */
   releases_only: boolean;
   status: "available" | "not_configured" | "missing";
   paper: string | null;

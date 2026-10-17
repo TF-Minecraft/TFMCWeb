@@ -35,10 +35,14 @@ type View = "look" | "all" | "others";
 const COLUMNS: Record<number, string> = {
   1: "grid grid-cols-2 gap-x-4 gap-y-1.5 sm:grid-cols-[minmax(10rem,14rem)_minmax(0,1fr)]",
   2: "grid grid-cols-2 gap-x-4 gap-y-1.5 sm:grid-cols-[minmax(10rem,14rem)_minmax(0,1fr)_minmax(0,1fr)]",
+  3: "grid grid-cols-2 gap-x-4 gap-y-1.5 sm:grid-cols-[minmax(8rem,14rem)_repeat(3,minmax(0,1fr))]",
+  4: "grid grid-cols-2 gap-x-4 gap-y-1.5 sm:grid-cols-[minmax(8rem,14rem)_repeat(4,minmax(0,1fr))]",
 };
 const RELEASE_COLUMNS: Record<number, string> = {
   1: "grid grid-cols-2 gap-x-4 gap-y-1.5 sm:grid-cols-[minmax(10rem,14rem)_6rem_minmax(0,1fr)]",
   2: "grid grid-cols-2 gap-x-4 gap-y-1.5 sm:grid-cols-[minmax(10rem,14rem)_6rem_minmax(0,1fr)_minmax(0,1fr)]",
+  3: "grid grid-cols-2 gap-x-4 gap-y-1.5 sm:grid-cols-[minmax(8rem,14rem)_6rem_repeat(3,minmax(0,1fr))]",
+  4: "grid grid-cols-2 gap-x-4 gap-y-1.5 sm:grid-cols-[minmax(8rem,14rem)_6rem_repeat(4,minmax(0,1fr))]",
 };
 
 const versionClass = "break-all font-mono text-xs text-[var(--tfmc-cream)]";
@@ -259,8 +263,8 @@ export default function ServersOverview() {
   const needle = query.trim().toLowerCase();
   const rows = (view === "look" ? needsLook : data.plugins).filter((p) => p.repo.toLowerCase().includes(needle));
   const others = data.others.filter((o) => o.name.toLowerCase().includes(needle));
-  const columns = COLUMNS[readable.length] ?? COLUMNS[2];
-  const releaseColumns = RELEASE_COLUMNS[readable.length] ?? RELEASE_COLUMNS[2];
+  const columns = COLUMNS[readable.length] ?? COLUMNS[4];
+  const releaseColumns = RELEASE_COLUMNS[readable.length] ?? RELEASE_COLUMNS[4];
   const unverifiedOthers = data.others.some((other) => other.unverified);
   const incomplete = checkFailed || data.github.status !== "available" || unverifiedOthers;
   const tabs: [View, string, number][] = [
