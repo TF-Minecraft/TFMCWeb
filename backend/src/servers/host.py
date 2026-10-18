@@ -515,15 +515,34 @@ class Controller:
     def _maintenance(self, server: str) -> bool | None:
         """Whether maintenance is on; None when the server has no Maintenance plugin and its policy allows that."""
         files = self._files(server)
-        if inventory.entry(files, "plugins/Maintenance/config.yml") is None:
+        def plugins() -> list[dict]:
+            found = files.listing("plugins")
+            if found is None:
+                raise ControlError("server_files_unavailable", 503)
+            return found
+        installed = any(e["Filename"] == "Maintenance" and e["IsDirectory"] for e in self._settled(plugins, timeout=10))
+        if not installed:
             if self.registry.get(server).policy.maintenance:
                 raise ControlError("maintenance_unavailable")
             return None
-        text = files.read("plugins/Maintenance/config.yml").decode("utf-8", "replace")
-        match = re.search(r"^maintenance-enabled:\s*(true|false)\s*$", text, re.MULTILINE)
-        if not match:
-            raise ControlError("maintenance_unavailable")
-        return match[1] == "true"
+
+        def read() -> bool:
+            # The plugin rewrites its config when maintenance changes, so a missing,
+            # short or half-written file is read again.
+            try:
+                text = files.read("plugins/Maintenance/config.yml").decode("utf-8", "replace")
+            except OSError:
+                raise ControlError("server_files_unavailable", 503) from None
+            match = re.search(r"^maintenance-enabled:\s*(true|false)\s*$", text, re.MULTILINE)
+            if not match:
+                raise ControlError("server_files_unavailable", 503)
+            return match[1] == "true"
+        try:
+            return self._settled(read, timeout=10)
+        except ControlError as exc:
+            if exc.code == "server_files_unavailable":
+                raise ControlError("maintenance_unavailable") from None
+            raise
 
     def _schedule(self, server: str) -> list[dict]:
         """The instance's enabled AMP time triggers that run at least one enabled task, cached for five minutes."""
