@@ -450,8 +450,8 @@ class LocalFiles:
     """A server's Minecraft folder on this machine, with the same calls as the helper's AMP client.
 
     Paths are relative to the folder, like AMP's file manager. Listing entries
-    use AMP's field names; times are Unix seconds. Identity changes only when a
-    new file takes the name, as when Paper rotates latest.log.
+    use AMP's field names; times are Unix seconds. Identity (the inode) changes
+    only when a new file takes the name; AMP has no such field and lists None.
     """
 
     def __init__(self, root: Path):

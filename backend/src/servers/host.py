@@ -285,7 +285,8 @@ class AmpFiles:
         found = []
         for e in result:
             created = _amp_time(e.get("Created", e["Modified"]))
-            found.append({**e, "Modified": _amp_time(e["Modified"]), "Created": created, "Identity": created})
+            # AMP's Created is the modification time, so it can't tell one file from another.
+            found.append({**e, "Modified": _amp_time(e["Modified"]), "Created": created, "Identity": None})
         return found
 
     def read(self, name: str, start: int = 0, size: int | None = None) -> bytes:
@@ -896,17 +897,24 @@ class Controller:
             time.sleep(1)
         raise ControlError(code)
 
+    @staticmethod
+    def _log_identity(files, log: dict) -> tuple:
+        """What tells one latest.log from the next: the file's identity where the files have one,
+        and its first line, which carries the time Paper started writing it."""
+        head = files.read("logs/latest.log", 0, size=min(512, log["SizeBytes"]))
+        return log.get("Identity"), head.split(b"\n", 1)[0]
+
     def _save_game(self, server: str):
         files = self._files(server)
         log = inventory.entry(files, "logs/latest.log")
         if log is None:
             raise ControlError("save_failed")
-        offset, identity = log["SizeBytes"], log["Identity"]
+        offset, identity = log["SizeBytes"], self._log_identity(files, log)
         self.console(server, "save-all flush")
 
         def saved():
             now = inventory.entry(files, "logs/latest.log")
-            if now is None or now["Identity"] != identity or now["SizeBytes"] < offset:
+            if now is None or now["SizeBytes"] < offset or self._log_identity(files, now) != identity:
                 raise ControlError("unexpected_restart")
             return b"Saved the game" in files.read("logs/latest.log", offset)
         self._wait(saved, 60, "save_failed")
@@ -1016,13 +1024,13 @@ class Controller:
             found[change["asset"]] = change["sha256"]
         return found
 
-    @staticmethod
-    def _boot(files):
+    @classmethod
+    def _boot(cls, files):
         log = inventory.entry(files, "logs/latest.log")
         if log is None:
             return None
         boot = next((line for line in inventory.log_lines(files, "latest.log") if inventory._BOOT.search(line)), None)
-        return log["Identity"], boot
+        return cls._log_identity(files, log), boot
 
     def _startup_ok(self, plan: dict, *, fresh: bool = True) -> bool:
         files = self._files(plan["server"])

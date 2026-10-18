@@ -17,8 +17,9 @@ def jar(path, name="Core", version="1.0.0"):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def startup(logs, version="1.0.0", error=False):
-    (logs / "latest.log").write_text("[06:00:00 INFO]: [bootstrap] Loading Paper 1.21.10\n"
+def startup(logs, version="1.0.0", error=False, at="06:00:00"):
+    # Paper's first line carries the time the log was opened.
+    (logs / "latest.log").write_text(f"[{at} INFO]: [bootstrap] Loading Paper 1.21.10\n"
                                     f"[06:00:01 INFO]: [Core] Enabling Core v{version}\n"
                                     + ("[06:00:02 ERROR]: plugin failed\n" if error else "")
                                     + "[06:00:03 INFO]: Done (1.0s)!\n")
@@ -56,6 +57,7 @@ def controller(tmp_path, monkeypatch):
     monkeypatch.setattr(host.Controller, "_schedule", lambda self, server: [])
     roots = {}
     commands = []
+    boots = []
     # Lobby has no Maintenance plugin, like the real one.
     for server in ("main", "dev", "lobby"):
         plugins = tmp_path / server / "plugins"
@@ -80,7 +82,8 @@ def controller(tmp_path, monkeypatch):
         if command == "stop":
             (logs / "latest.log").rename(logs / "old.log")
             jars = inventory.read_jars(inventory.LocalFiles(plugins.parent))
-            startup(logs, jars[0].version)
+            boots.append(1)
+            startup(logs, jars[0].version, at=f"07:{len(boots):02d}:00")
 
     instance = host.Controller(tmp_path / "state", registry(roots), console=console, amp=FakeAmp(busy=0))
     instance.roots = roots
@@ -1363,7 +1366,7 @@ def test_amp_files_move_bytes_in_chunks_and_read_amp_times(monkeypatch):
     with pytest.raises(FileExistsError):
         files.write("plugins/a.jar", b"x")
     [item] = files.listing("plugins")
-    assert item["Created"] == 1792302900.857 and item["Identity"] == item["Created"]
+    assert item["Created"] == 1792302900.857 and item["Identity"] is None
     assert item["Modified"] == pytest.approx(1792096125.932)
     assert {instance for instance, _ in calls} == {"TFMCLobby01"}
 
@@ -1573,3 +1576,46 @@ def test_a_folder_proven_intact_reports_the_original_error(controller, tmp_path)
     with pytest.raises(control.ControlError, match="amp_unavailable"):
         controller._install(plan)
     assert [(j["file"], j["sha256"]) for j in controller.snapshot("dev")] == [("core-1.0.0.jar", old)]
+
+
+
+class AmpLikeFiles(inventory.LocalFiles):
+    """Local files listed the way AMP lists them: no identity, and Created equal to Modified."""
+
+    def listing(self, folder):
+        found = super().listing(folder)
+        return None if found is None else [{**e, "Created": e["Modified"], "Identity": None} for e in found]
+
+
+def amp_like(controller, server):
+    plugins, _ = controller.roots[server]
+    files = AmpLikeFiles(plugins.parent)
+    controller.registry.found[server] = host.Instance(**{**controller.registry.found[server].__dict__, "files": files})
+    return files
+
+
+@pytest.mark.parametrize("server", ["main", "lobby"])
+def test_a_save_written_to_the_log_is_not_mistaken_for_a_restart(controller, monkeypatch, server):
+    # The Lobby restart on 2026-10-18 failed here: AMP's Created is the modification time,
+    # so the save itself looked like a new log file.
+    monkeypatch.setattr(host.threading.Thread, "start", lambda _: None)
+    monkeypatch.setattr(controller.cancelled, "wait", lambda delay: False)
+    amp_like(controller, server)
+    public = controller.plan(server, "restart", [])
+    controller.start(server, public["id"], "www:user:1", "planned restart", emergency_override=True)
+    controller.run(controller._plan(public["id"]), controller.jobs[server])
+    job = controller.jobs[server]
+    assert job["phase"] == "complete", job["error"]
+    assert [c for s, c in controller.commands if s == server].count("stop") == 1
+
+
+def test_the_old_log_is_not_taken_for_the_new_startup(controller, monkeypatch):
+    files = amp_like(controller, "dev")
+    plugins, logs = controller.roots["dev"]
+    before = controller._boot(files)
+    with (logs / "latest.log").open("a") as handle:
+        handle.write("[06:01:00 INFO]: still the same log\n")
+    assert controller._boot(files) == before
+    (logs / "latest.log").rename(logs / "old.log")
+    (logs / "latest.log").write_text("[07:00:00 INFO]: [bootstrap] Loading Paper 1.21.10\n")
+    assert controller._boot(files) != before
