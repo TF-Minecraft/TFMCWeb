@@ -1761,3 +1761,12 @@ def test_maintenance_that_stays_unreadable_is_unavailable(controller, monkeypatc
 
 def test_a_server_without_the_maintenance_folder_has_none(controller):
     assert controller._maintenance("lobby") is None
+
+
+
+def test_a_failed_plugins_listing_is_not_taken_for_no_maintenance_plugin(controller, monkeypatch):
+    files = controller.registry.get("lobby").files
+    original = files.listing
+    monkeypatch.setattr(files, "listing", lambda folder: None if folder == "plugins" else original(folder))
+    with pytest.raises(control.ControlError, match="server_files_unavailable"):
+        controller._maintenance("lobby")
