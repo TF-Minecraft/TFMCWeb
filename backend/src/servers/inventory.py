@@ -1,21 +1,22 @@
 """Which TFMC plugin each Minecraft server runs, against the plugin's GitHub releases.
 
-Each server's `plugins/` and `logs/` folders are mounted read-only into the
-backend. A jar is identified by its SHA-256: GitHub reports the digest of every
-release asset, so a jar is a release only if its bytes are that release's
-file, whatever it is called. Each latest release is also compared with its
-repository's default branch, to show merged work that is not released yet.
-The version a server is running comes from the
-`Enabling <name> v<version>` lines of its most recent startup log, so a newer
-jar on disk shows as waiting for a restart.
+The host's server control helper reads every Minecraft server's `plugins/` and
+`logs/` folders through the AMP API and hands them to the website. A jar is
+identified by its SHA-256: GitHub reports the digest of every release asset, so
+a jar is a release only if its bytes are that release's file, whatever it is
+called. Each latest release is also compared with its repository's default
+branch, to show merged work that is not released yet. The version a server is
+running comes from the `Enabling <name> v<version>` lines of its most recent
+startup log, so a newer jar on disk shows as waiting for a restart.
 
-Main, Lobby and Tutorial should run published releases; Dev may also run test builds.
+Dev may run test builds; every other server should run published releases.
 """
 from __future__ import annotations
 
 import gzip
 import hashlib
 import http.client
+import io
 import json
 import os
 import re
@@ -31,13 +32,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Iterator
 
-# (key, label, folder variable, whether only published releases belong there)
-SERVERS = (
-    ("main", "Main", "SERVER_MAIN_DIR", True),
-    ("dev", "Dev", "SERVER_DEV_DIR", False),
-    ("lobby", "Lobby", "SERVER_LOBBY_DIR", True),
-    ("tutorial", "Tutorial", "SERVER_TUTORIAL_DIR", True),
-)
 DEFAULT_ORG = "TF-Minecraft"
 # Older rotated logs are read until one holds a startup.
 MAX_LOGS = 12
@@ -409,37 +403,33 @@ def _resolve(found: Releases, jars: list[Jar], fetch: Fetch):
             if complete: found.complete.add(repo)
 
 
-def _local_server(root: Path, releases_only: bool):
-    return {"jars": read_jars(root / "plugins"), "startup": read_startup(root / "logs"), "releases_only": releases_only}
+def check_releases(jars: list[Jar] | Callable[[], list[Jar]], fetch: Fetch | None = None) -> Releases:
+    """Fresh latest releases, plus the release history needed to identify `jars`. No response survives this call.
 
-
-def check_servers(roots: dict[str, tuple[Path, bool]], fetch: Fetch | None = None):
-    """Fresh GitHub and local reads overlap; no response survives this call."""
+    `jars` may be a function; it runs while the latest releases are looked up, and always runs.
+    """
     deadline = time.monotonic() + CHECK_TIMEOUT
     request = _fetcher(fetch, deadline)
-    acquired = _check_slots.acquire(blocking=False)
-    found = Releases()
+    read = jars if callable(jars) else lambda: jars
+    if not _check_slots.acquire(blocking=False):
+        read()
+        found = Releases()
+        found.error = "busy"
+        return found
     try:
-        with ThreadPoolExecutor(max_workers=max(1, len(roots) + 1)) as pool:
-            locals_ = {key: pool.submit(_local_server, root, only) for key, (root, only) in roots.items()}
-            remote = pool.submit(_latest, request) if acquired else None
-            servers = {key: future.result() for key, future in locals_.items()}
-            if remote is None:
-                found.error = "busy"
-            else:
-                try:
-                    found = remote.result()
-                    _resolve(found, [j for server in servers.values() for j in server["jars"]], request)
-                except (OSError, ValueError, KeyError, TypeError, http.client.HTTPException):
-                    found = Releases(); found.error = "github_unavailable"
-        return found, servers
+        with ThreadPoolExecutor(max_workers=1) as pool:
+            remote = pool.submit(_latest, request)
+            local = read()
+            try:
+                found = remote.result()
+                _resolve(found, local, request)
+                return found
+            except (OSError, ValueError, KeyError, TypeError, http.client.HTTPException):
+                found = Releases()
+                found.error = "github_unavailable"
+                return found
     finally:
-        if acquired: _check_slots.release()
-
-
-def fetch_releases(fetch: Fetch | None = None) -> Releases:
-    """Fresh latest-release metadata; installed history is resolved by check_servers."""
-    return check_servers({}, fetch)[0]
+        _check_slots.release()
 
 
 # --------------------
@@ -456,67 +446,149 @@ class Jar:
     update: bool
 
 
+class LocalFiles:
+    """A server's Minecraft folder on this machine, with the same calls as the helper's AMP client.
+
+    Paths are relative to the folder, like AMP's file manager. Listing entries
+    use AMP's field names; times are Unix seconds. Identity changes only when a
+    new file takes the name, as when Paper rotates latest.log.
+    """
+
+    def __init__(self, root: Path):
+        self.root = Path(root)
+
+    def _path(self, name: str) -> Path:
+        path = self.root / name
+        if ".." in Path(name).parts or Path(name).is_absolute():
+            raise ValueError(name)
+        return path
+
+    def listing(self, folder: str) -> list[dict] | None:
+        path = self._path(folder)
+        if not path.is_dir():
+            return None
+        found = []
+        for entry in sorted(path.iterdir()):
+            stat = entry.stat()
+            found.append({"Filename": entry.name, "IsDirectory": entry.is_dir(), "SizeBytes": stat.st_size,
+                          "Modified": stat.st_mtime, "Created": stat.st_ctime, "Identity": stat.st_ino})
+        return found
+
+    def read(self, name: str, start: int = 0) -> bytes:
+        with self._path(name).open("rb") as handle:
+            handle.seek(start)
+            return handle.read()
+
+    def write(self, name: str, data: bytes):
+        with self._path(name).open("xb") as handle:
+            handle.write(data)
+            handle.flush()
+            os.fsync(handle.fileno())
+        self._path(name).chmod(0o644)
+
+    def rename(self, name: str, new_name: str):
+        path = self._path(name)
+        target = path.with_name(new_name)
+        if "/" in new_name or target.exists():
+            raise FileExistsError(new_name)
+        path.rename(target)
+
+    def trash(self, name: str):
+        path = self._path(name)
+        folder = self.root / ".trash" / Path(name).parent
+        folder.mkdir(parents=True, exist_ok=True)
+        target, n = folder / path.name, 0
+        while target.exists():
+            n += 1
+            target = folder / f"{path.name}.{n}"
+        path.rename(target)
+
+    def md5(self, name: str) -> str:
+        return hashlib.md5(self._path(name).read_bytes()).hexdigest()
+
+
+def entry(files, name: str) -> dict | None:
+    """The listing entry for one file, or None."""
+    folder, _, base = name.rpartition("/")
+    return next((e for e in files.listing(folder) or [] if e["Filename"] == base and not e["IsDirectory"]), None)
+
+
 def _archive_metadata(archive) -> tuple[str | None, str | None]:
-    for entry in ("paper-plugin.yml", "plugin.yml"):
-        if entry in archive.namelist():
-            fields = dict(_YAML_FIELD.findall(archive.read(entry).decode("utf-8", "replace")))
+    for name in ("paper-plugin.yml", "plugin.yml"):
+        if name in archive.namelist():
+            fields = dict(_YAML_FIELD.findall(archive.read(name).decode("utf-8", "replace")))
             return fields.get("name") or None, fields.get("version") or None
     return None, None
 
 
-def _describe(path: Path) -> tuple[str, str | None, str | None]:
-    digest = hashlib.sha256()
+def describe(data: bytes) -> tuple[str, str | None, str | None]:
+    """A jar's SHA-256 and its plugin.yml name and version, from one copy of its bytes."""
     name = version = None
-    with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1 << 20), b""):
-            digest.update(chunk)
-        handle.seek(0)
-        try:
-            with zipfile.ZipFile(handle) as archive:
-                name, version = _archive_metadata(archive)
-        except zipfile.BadZipFile:
-            pass
-    return digest.hexdigest(), name, version
+    try:
+        with zipfile.ZipFile(io.BytesIO(data)) as archive:
+            name, version = _archive_metadata(archive)
+    except zipfile.BadZipFile:
+        pass
+    return hashlib.sha256(data).hexdigest(), name, version
 
 
-def read_jars(plugins: Path) -> list[Jar]:
+def plugin_folders(files) -> Iterator[tuple[str, bool, dict]]:
+    """(path, in plugins/update/, listing entry) for each jar."""
+    for folder, update in (("plugins", False), ("plugins/update", True)):
+        for item in sorted(files.listing(folder) or [], key=lambda e: e["Filename"]):
+            if not item["IsDirectory"] and item["Filename"].endswith(".jar"):
+                yield f"{folder}/{item['Filename']}", update, item
+
+
+def read_jars(files, cache: dict | None = None) -> list[Jar]:
+    """Every jar in plugins/ and plugins/update/. With a cache, unchanged size and times skip the read."""
     found = []
-    for folder, update in ((plugins, False), (plugins / "update", True)):
-        if not folder.is_dir():
+    for path, update, item in plugin_folders(files):
+        key = (path, item["SizeBytes"], item["Modified"], item.get("Created"))
+        try:
+            described = cache.get(key) if cache is not None else None
+            if described is None:
+                described = describe(files.read(path))
+                if cache is not None:
+                    cache[key] = described
+        except (OSError, ValueError):
             continue
-        for path in sorted(folder.glob("*.jar")):
-            try:
-                sha256, name, version = _describe(path)
-            except OSError:
-                continue
-            found.append(Jar(file=path.name, sha256=sha256, name=name, version=version, update=update))
+        sha256, name, version = described
+        found.append(Jar(file=item["Filename"], sha256=sha256, name=name, version=version, update=update))
+    if cache is not None:
+        # Forget jars that are gone.
+        live = {(p, i["SizeBytes"], i["Modified"], i.get("Created")) for p, _, i in plugin_folders(files)}
+        for key in set(cache) - live:
+            cache.pop(key, None)
     return found
 
 
-def _log_lines(path: Path) -> Iterator[str]:
-    opener = gzip.open if path.suffix == ".gz" else open
-    with opener(path, "rt", encoding="utf-8", errors="replace") as handle:
-        yield from handle
+def log_lines(files, name: str) -> Iterator[str]:
+    data = files.read(f"logs/{name}")
+    if name.endswith(".gz"):
+        data = gzip.decompress(data)
+    yield from data.decode("utf-8", "replace").splitlines(keepends=True)
 
 
-def read_startup(logs: Path) -> dict | None:
+def read_startup(files) -> dict | None:
     """The most recent startup in the logs: Paper version, whether it finished, and each plugin's enabled version.
 
     Each startup begins a new log, and Paper starts one at midnight too, so older
     logs are read until one holds a startup.
     """
-    rotated = [(m.group(1), int(m.group(2)), path) for path in logs.glob("*.log.gz")
-               if (m := _ROTATED.match(path.name))]
-    candidates = [logs / "latest.log"] + [path for *_, path in sorted(rotated, reverse=True)[:MAX_LOGS]]
-    for path in candidates:
-        if not path.is_file():
+    listing = files.listing("logs") or []
+    names = {e["Filename"] for e in listing if not e["IsDirectory"]}
+    rotated = [(m.group(1), int(m.group(2)), name) for name in names if (m := _ROTATED.match(name))]
+    candidates = ["latest.log"] + [name for *_, name in sorted(rotated, reverse=True)[:MAX_LOGS]]
+    for name in candidates:
+        if name not in names:
             continue
         startup = None
         try:
-            for line in _log_lines(path):
+            for line in log_lines(files, name):
                 boot = _BOOT.search(line)
                 if boot:
-                    startup = {"paper": boot.group(1), "done": False, "log": path.name, "enabled": {}, "failed": {}}
+                    startup = {"paper": boot.group(1), "done": False, "log": name, "enabled": {}, "failed": {}}
                 elif startup is not None:
                     enabled = _ENABLING.search(line)
                     failed = _ENABLE_FAILED.search(line) or _DISABLING.search(line)
@@ -530,7 +602,7 @@ def read_startup(logs: Path) -> dict | None:
                         # Paper starts a new log at each startup, so nothing after this changes it.
                         startup["done"] = True
                         break
-        except (OSError, EOFError):
+        except (OSError, EOFError, ValueError):
             continue
         if startup is not None:
             return startup
@@ -645,22 +717,38 @@ def _now() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
 
 
+def jars_from(rows: list[dict]) -> list[Jar]:
+    return [Jar(file=r["file"], sha256=r["sha256"], name=r.get("name"), version=r.get("version"), update=bool(r.get("update")))
+            for r in rows]
+
+
 def overview(fetch: Fetch | None = None) -> dict:
-    roots = {}
-    server_info = []
-    for key, label, variable, only in SERVERS:
-        value = os.getenv(variable, "").strip()
-        available = bool(value) and (Path(value) / "plugins").is_dir()
-        server_info.append({"key": key, "label": label, "releases_only": only,
-                            "status": "available" if available else "missing" if value else "not_configured",
-                            "paper": None, "started": None, "log": None})
-        if available: roots[key] = (Path(value), only)
-    releases, servers = check_servers(roots, fetch)
-    for info in server_info:
-        startup = servers.get(info["key"], {}).get("startup")
-        if startup:
-            info.update(paper=startup["paper"], started=startup["done"], log=startup["log"])
+    """Every Minecraft server the control helper reports, with each TFMC plugin's state on it."""
+    from src.servers import control
+
+    found, error = [], None
+
+    def read() -> list[Jar]:
+        nonlocal found, error
+        try:
+            found = control.request("inventory")["servers"]
+        except control.ControlError as exc:
+            error = exc.code
+        return [j for row in found if row.get("error") is None for j in jars_from(row["jars"])]
+
+    releases = check_releases(read, fetch)
+    server_info, servers = [], {}
+    for row in found:
+        info = {key: row.get(key) for key in ("key", "label", "state", "releases_only", "policy")}
+        info.update(status=row.get("error") or "available", paper=None, started=None, log=None)
+        if row.get("error") is None:
+            startup = row.get("startup")
+            servers[row["key"]] = {"jars": jars_from(row["jars"]), "startup": startup,
+                                   "releases_only": bool(row["releases_only"])}
+            if startup:
+                info.update(paper=startup["paper"], started=startup["done"], log=startup["log"])
+        server_info.append(info)
     plugins, others = compare(releases, servers)
     status = "busy" if releases.error == "busy" else "unavailable" if releases.error else "partial" if releases.errors else "available"
     return {"checked_at": _now(), "github": {"status": status, "checked_at": releases.checked_at},
-            "servers": server_info, "plugins": plugins, "others": others}
+            "control": error or "available", "servers": server_info, "plugins": plugins, "others": others}

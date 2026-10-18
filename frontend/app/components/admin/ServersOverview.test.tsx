@@ -44,6 +44,7 @@ const latest = (version: string, branch: NonNullable<ServerPlugin["latest"]>["br
 
 const overview: Overview = {
   checked_at: "2026-10-11T18:00:00Z",
+  control: "available",
   github: {
     status: "available",
     checked_at: "2026-10-11T18:00:00Z",
@@ -54,6 +55,8 @@ const overview: Overview = {
       label: "Main",
       releases_only: true,
       status: "available",
+      state: "running",
+      policy: null,
       paper: "1.21.10-130-ver/x",
       started: true,
       log: "latest.log",
@@ -63,6 +66,8 @@ const overview: Overview = {
       label: "Dev",
       releases_only: false,
       status: "available",
+      state: "running",
+      policy: null,
       paper: "1.21.10-130-ver/x",
       started: true,
       log: "latest.log",
@@ -169,13 +174,52 @@ it("says when a server or GitHub can't be read", async () => {
   vi.mocked(getServers).mockResolvedValue({
     ...overview,
     github: { status: "unavailable", checked_at: null },
-    servers: [overview.servers[0], { ...overview.servers[1], status: "not_configured" }],
+    servers: [overview.servers[0], { ...overview.servers[1], status: "files_unavailable" }],
     plugins: [],
     others: [],
   });
   render(<ServersOverview />);
-  expect(await screen.findByText("The site isn’t set up to read this server’s files.")).toBeTruthy();
+  expect(
+    await screen.findByText("AMP couldn’t read this server’s files. Check the instance in the AMP panel."),
+  ).toBeTruthy();
   expect(screen.getByRole("alert").textContent).toContain("GitHub didn’t answer");
+});
+
+it("lists switched-off instances on one line and shows AMP's state", async () => {
+  const off = (key: string, label: string) => ({
+    ...overview.servers[0],
+    key,
+    label,
+    status: "instance_off",
+    state: "off",
+    paper: null,
+    started: null,
+  });
+  vi.mocked(getServers).mockResolvedValue({
+    ...overview,
+    servers: [
+      { ...overview.servers[0], state: "stopped" },
+      overview.servers[1],
+      off("build", "Build"),
+      off("events", "Events"),
+    ],
+  });
+  render(<ServersOverview />);
+  expect(await screen.findByText(/Switched off in AMP: Build, Events\./)).toBeTruthy();
+  expect(screen.queryByRole("heading", { name: "Build" })).toBeNull();
+  expect(screen.getByText("Stopped")).toBeTruthy();
+});
+
+it("says when the control helper can't list the servers", async () => {
+  vi.mocked(getServers).mockResolvedValue({
+    ...overview,
+    control: "control_unavailable",
+    servers: [],
+    plugins: [],
+    others: [],
+  });
+  render(<ServersOverview />);
+  expect((await screen.findByRole("alert")).textContent).toContain("server control helper didn’t answer");
 });
 
 it("adds a column for each readable server, Lobby and Tutorial included", async () => {
@@ -199,7 +243,8 @@ it("adds a column for each readable server, Lobby and Tutorial included", async 
   });
   render(<ServersOverview />);
   const row = (await screen.findByText("TFMCWebBridge")).closest("li")!;
-  expect(row.className).toContain("repeat(4,minmax(0,1fr))");
+  expect(row.className).toContain("repeat(var(--servers)");
+  expect((row.closest("[style]") as HTMLElement).style.getPropertyValue("--servers")).toBe("4");
   expect(within(row).getByText("Not a release")).toBeTruthy();
   expect(within(row).getByText("Not installed")).toBeTruthy();
   expect(screen.getByRole("heading", { name: "Tutorial" })).toBeTruthy();

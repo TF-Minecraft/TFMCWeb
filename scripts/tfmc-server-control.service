@@ -2,7 +2,6 @@
 Description=TFMC Minecraft server control
 After=network.target
 Before=docker.service
-RequiresMountsFor=/home/amp/.ampdata/instances
 
 [Service]
 Type=simple
@@ -16,8 +15,8 @@ Environment=SERVER_CONTROL_SOCKET_DIR=/run/tfmc-server-control
 Environment=SERVER_CONTROL_LOG_TIMEZONE=Etc/UTC
 Environment=SERVER_CONTROL_SOCKET_GROUP=tfmc-control
 Environment=PYTHONNOUSERSITE=1
-# The AMP login for console input and backups: root-owned JSON {"username", "password"}.
-# Without the file the credential is empty: the helper starts, but console input fails.
+# The AMP login for every server call: root-owned JSON {"username", "password"}.
+# Without the file the credential is empty: the helper starts, but knows no servers.
 LoadCredential=amp-login:/etc/tfmc/server-control-amp-login
 SetCredential=amp-login:
 NoNewPrivileges=true
@@ -33,15 +32,8 @@ RestartSec=5
 UMask=0077
 PrivateTmp=true
 ProtectSystem=strict
-ProtectHome=tmpfs
-BindPaths=/home/amp/.ampdata/instances/TFMCMain01/Minecraft/plugins
-BindPaths=/home/amp/.ampdata/instances/TFMCDev01/Minecraft/plugins
-BindReadOnlyPaths=/home/amp/.ampdata/instances/TFMCMain01/Minecraft/logs
-BindReadOnlyPaths=/home/amp/.ampdata/instances/TFMCDev01/Minecraft/logs
-BindReadOnlyPaths=-/home/amp/.ampdata/instances/TFMCMain01/Backups
-BindReadOnlyPaths=-/home/amp/.ampdata/instances/TFMCDev01/Backups
-ReadWritePaths=/home/amp/.ampdata/instances/TFMCMain01/Minecraft/plugins
-ReadWritePaths=/home/amp/.ampdata/instances/TFMCDev01/Minecraft/plugins
+# Server files are reached through the AMP API, never the filesystem.
+ProtectHome=true
 
 [Install]
 WantedBy=multi-user.target

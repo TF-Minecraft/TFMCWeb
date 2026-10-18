@@ -6,10 +6,12 @@ import threading
 import urllib.error
 import urllib.parse
 import zipfile
+from dataclasses import asdict
+from pathlib import Path
 
 import pytest
 
-from src.servers import inventory
+from src.servers import control, inventory
 
 
 def test_bridge_repository_matches_unchanged_runtime_name():
@@ -49,12 +51,42 @@ def startup_log(*plugins, paper="1.21.10-130", done=True):
     return "".join(lines)
 
 
+# The servers a test's fake control helper reports, from SERVER_<KEY>_DIR folders.
+SERVERS = (("main", "Main", True), ("dev", "Dev", False), ("lobby", "Lobby", True), ("tutorial", "Tutorial", True))
+
+
 @pytest.fixture(autouse=True)
 def fresh_environment(monkeypatch):
     for name in ("SERVERS_GITHUB_TOKEN", "PATCHNOTES_GITHUB_TOKEN", "SERVERS_GITHUB_ORG",
                  "SERVER_MAIN_DIR", "SERVER_DEV_DIR", "SERVER_LOBBY_DIR", "SERVER_TUTORIAL_DIR"):
         monkeypatch.delenv(name, raising=False)
     monkeypatch.setattr(inventory, "_check_slots", threading.BoundedSemaphore(2))
+
+    def request(operation, **body):
+        assert operation == "inventory" and body == {}
+        rows = []
+        for key, label, only in SERVERS:
+            if not (value := os.getenv(f"SERVER_{key.upper()}_DIR")):
+                continue
+            files = inventory.LocalFiles(Path(value))
+            row = {"key": key, "label": label, "state": "running", "releases_only": only, "policy": {},
+                   "error": None, "jars": [], "startup": None}
+            if files.listing("plugins") is None:
+                row["error"] = "files_unavailable"
+            else:
+                row.update(jars=[asdict(j) for j in inventory.read_jars(files)], startup=inventory.read_startup(files))
+            rows.append(row)
+        return {"servers": rows}
+    monkeypatch.setattr(control, "request", request)
+
+
+def check_servers(roots, fetch):
+    """Read local folders as the helper would, then check their jars against GitHub."""
+    local = {}
+    for key, (root, only) in roots.items():
+        files = inventory.LocalFiles(root)
+        local[key] = {"jars": inventory.read_jars(files), "startup": inventory.read_startup(files), "releases_only": only}
+    return inventory.check_releases([j for server in local.values() for j in server["jars"]], fetch), local
 
 
 def servers_fixture(tmp_path):
@@ -211,7 +243,8 @@ def test_overview_compares_each_server_with_verified_releases(tmp_path, monkeypa
     result = inventory.overview(github(shas))
     assert result["github"]["status"] == "available" and result["github"]["checked_at"]
     assert "stale" not in result["github"]
-    assert [s["status"] for s in result["servers"]] == ["available", "available", "not_configured", "not_configured"]
+    assert [s["status"] for s in result["servers"]] == ["available", "available"]
+    assert result["control"] == "available"
     assert result["servers"][0]["paper"] == "1.21.10-130" and result["servers"][0]["started"] is True
     plugins = {p["repo"]: p for p in result["plugins"]}
     assert set(plugins) == {"Core", "Lib"}
@@ -236,8 +269,7 @@ def test_lobby_and_tutorial_expect_releases(tmp_path, monkeypatch):
     monkeypatch.setenv("SERVER_TUTORIAL_DIR", str(dev))
     result = inventory.overview(github(shas))
     assert [(s["key"], s["label"], s["releases_only"], s["status"]) for s in result["servers"]] == [
-        ("main", "Main", True, "not_configured"), ("dev", "Dev", False, "not_configured"),
-        ("lobby", "Lobby", True, "not_configured"), ("tutorial", "Tutorial", True, "available")]
+        ("tutorial", "Tutorial", True, "available")]
     core = {p["repo"]: p for p in result["plugins"]}["Core"]["servers"]
     assert set(core) == {"tutorial"} and core["tutorial"]["state"] == "not_release"
 
@@ -250,16 +282,24 @@ def test_a_newer_jar_than_the_running_one_waits_for_a_restart(tmp_path, monkeypa
     plugins = {p["repo"]: p["servers"]["main"] for p in result["plugins"]}
     assert plugins["Core"]["loaded"] == "0.9.0" and plugins["Core"]["loaded_state"] == "different"
     assert plugins["Lib"]["loaded_state"] == "not_loaded"
-    assert result["servers"][1]["status"] == "not_configured"
+    assert [s["key"] for s in result["servers"]] == ["main"]
     assert set(result["plugins"][0]["servers"]) == {"main"}
 
 
 def test_unreadable_servers_and_github(tmp_path, monkeypatch):
     monkeypatch.setenv("SERVER_MAIN_DIR", str(tmp_path / "gone"))
     result = inventory.overview(github({}, fail=True))
-    assert [s["status"] for s in result["servers"]] == ["missing", "not_configured", "not_configured", "not_configured"]
+    assert [s["status"] for s in result["servers"]] == ["files_unavailable"]
     assert result["github"] == {"status": "unavailable", "checked_at": None}
     assert result["plugins"] == [] and result["others"] == []
+
+
+def test_an_unreachable_control_helper_lists_no_servers(monkeypatch):
+    def unreachable(operation, **body):
+        raise control.ControlError("control_unavailable", 503)
+    monkeypatch.setattr(control, "request", unreachable)
+    result = inventory.overview(github({}, fail=True))
+    assert result["control"] == "control_unavailable" and result["servers"] == [] and result["plugins"] == []
 
 
 @pytest.mark.parametrize("authenticated", [False, True])
@@ -268,9 +308,9 @@ def test_every_check_reads_the_designated_latest_release_fresh(tmp_path, monkeyp
     if authenticated:
         monkeypatch.setenv("SERVERS_GITHUB_TOKEN", "token")
     fetch = github(shas)
-    first = inventory.fetch_releases(fetch)
+    first = inventory.check_releases([], fetch)
     fetch.repos["Core"].insert(0, release("v1.2.0", "2026-10-03T00:00:00Z", "core-1.2.0.jar", "new"))
-    second = inventory.fetch_releases(fetch)
+    second = inventory.check_releases([], fetch)
     assert first["Core"][0].version == "1.1.0"
     assert second["Core"][0].version == "1.2.0"
     assert first is not second
@@ -288,14 +328,14 @@ def test_latest_is_github_designation_instead_of_newest_published_date(monkeypat
     fetch = Github({"Core": [release("v1.0.1", "2026-10-15T00:00:00Z", "core-1.0.1.jar", "old"),
                               release("v2.0.0", "2026-10-01T00:00:00Z", "core-2.0.0.jar", "new")]},
                    latest={"Core": "v2.0.0"})
-    assert inventory.fetch_releases(fetch)["Core"][0].version == "2.0.0"
+    assert inventory.check_releases([], fetch)["Core"][0].version == "2.0.0"
 
 
 def test_identical_commits_annotated_tag_commit_skip_compare(tmp_path, monkeypatch):
     _, _, shas = servers_fixture(tmp_path)
     monkeypatch.setenv("SERVERS_GITHUB_TOKEN", "token")
     fetch = github(shas)
-    found = inventory.fetch_releases(fetch)
+    found = inventory.check_releases([], fetch)
     assert found["Core"][0].branch["status"] == "identical"
     assert found["Lib"][0].branch["name"] == "master"
     assert not any("compare(headRef" in q["query"] for q in fetch.queries)
@@ -308,7 +348,7 @@ def test_unequal_commits_only_compare_mismatches_and_unknown_tag_commit_stays_un
     _, _, shas = servers_fixture(tmp_path)
     monkeypatch.setenv("SERVERS_GITHUB_TOKEN", "token")
     fetch = Github(repo_data(shas), heads={"Core": "head"}, commits={"Lib": None})
-    found = inventory.fetch_releases(fetch)
+    found = inventory.check_releases([], fetch)
     assert found["Core"][0].branch == {"name": "main", "status": "ahead", "ahead": 3,
         "url": "https://github.com/TF-Minecraft/Core/compare/v1.1.0...main"}
     assert found["Lib"][0].branch is None
@@ -321,7 +361,7 @@ def test_latest_queries_are_split_into_bounded_chunks(tmp_path, monkeypatch):
     monkeypatch.setenv("SERVERS_GITHUB_TOKEN", "token")
     monkeypatch.setattr(inventory, "GRAPHQL_CHUNK", 1)
     fetch = github(shas)
-    found = inventory.fetch_releases(fetch)
+    found = inventory.check_releases([], fetch)
     assert set(found) == {"Core", "Lib"} and found.repos == {"Core", "Lib", "Docs"}
     assert len([q for q in fetch.queries if "latestRelease" in q["query"]]) == 3
 
@@ -353,7 +393,7 @@ def test_global_failure_does_not_reuse_previous_releases_and_keeps_local_invento
 
 def test_bad_graphql_answer_fails_fresh_check(monkeypatch):
     monkeypatch.setenv("SERVERS_GITHUB_TOKEN", "token")
-    found = inventory.fetch_releases(lambda path, body=None: {"errors": [{"message": "nope"}]})
+    found = inventory.check_releases([], lambda path, body=None: {"errors": [{"message": "nope"}]})
     assert found.error == "github_unavailable" and not found and found.checked_at is None
 
 
@@ -364,7 +404,7 @@ def test_exact_old_release_tag_verifies_hash_without_history(tmp_path, monkeypat
             release("v1.0.0", "2026-10-01T00:00:00Z", "core-1.0.0.jar", sha)]
     monkeypatch.setenv("SERVERS_GITHUB_TOKEN", "token")
     fetch = Github({"Core": rows})
-    found, servers = inventory.check_servers({"main": (main, True)}, fetch)
+    found, servers = check_servers({"main": (main, True)}, fetch)
     [plugin], others = inventory.compare(found, servers)
     assert plugin["servers"]["main"]["state"] == "older_release" and not others
     assert plugin["latest"]["version"] == "2.0.0"
@@ -382,7 +422,7 @@ def test_history_paginates_past_thirty_and_recognises_renamed_old_jar(tmp_path, 
     rows = [release(f"v2.0.{i}", "2026-10-15T00:00:00Z", f"core-2.0.{i}.jar", str(i)) for i in range(31)]
     rows.append(release("v0.9.0", "2025-01-01T00:00:00Z", "ancient-0.9.0.jar", sha))
     fetch = Github({"Core": rows})
-    found, servers = inventory.check_servers({"main": (root, True)}, fetch)
+    found, servers = check_servers({"main": (root, True)}, fetch)
     [plugin], others = inventory.compare(found, servers)
     assert plugin["servers"]["main"]["state"] == "older_release"
     assert plugin["servers"]["main"]["release"] == "0.9.0" and not others
@@ -400,7 +440,7 @@ def test_asset_connection_paginates_before_resolving_old_hash(tmp_path, monkeypa
     old = release("v1.0.0", "2026-10-01T00:00:00Z", "core-1.0.0.jar", sha)
     old["assets"] = [{"name": f"notes-{n}.txt", "digest": "sha256:notes"} for n in range(25)] + old["assets"]
     fetch = Github({"Core": [release("v2.0.0", "2026-10-02T00:00:00Z", "core-2.0.0.jar", "new"), old]})
-    found, servers = inventory.check_servers({"main": (root, True)}, fetch)
+    found, servers = check_servers({"main": (root, True)}, fetch)
     [plugin], _ = inventory.compare(found, servers)
     assert plugin["servers"]["main"]["state"] == "older_release"
     assert any("releaseAssets(first:20,after:" in q["query"] for q in fetch.queries)
@@ -413,7 +453,7 @@ def test_incomplete_history_stays_unverified_instead_of_claiming_a_test_build(tm
     root = tmp_path / "dev"
     make_jar(root / "plugins", "core-branch.jar", "Core", "main-SNAPSHOT")
     fetch = Github({"Core": [release("v2.0.0", "2026-10-02T00:00:00Z", "core-2.0.0.jar", "new")]}, history_failed={"Core"})
-    found, servers = inventory.check_servers({"dev": (root, False)}, fetch)
+    found, servers = check_servers({"dev": (root, False)}, fetch)
     [plugin], _ = inventory.compare(found, servers)
     assert plugin["servers"]["dev"]["state"] == "unverified"
     assert "Core" not in found.complete
@@ -422,12 +462,12 @@ def test_incomplete_history_stays_unverified_instead_of_claiming_a_test_build(tm
 def test_same_size_same_mtime_jar_bytes_are_read_again(tmp_path):
     plugins = tmp_path / "plugins"
     first = make_jar(plugins, "core.jar", "Core", "1.0.0", b"AAAA")
-    [original] = inventory.read_jars(plugins)
+    [original] = inventory.read_jars(inventory.LocalFiles(tmp_path))
     path = plugins / "core.jar"
     stamp = path.stat()
     second = make_jar(plugins, "core.jar", "Core", "1.0.0", b"BBBB")
     os.utime(path, ns=(stamp.st_atime_ns, stamp.st_mtime_ns))
-    [changed] = inventory.read_jars(plugins)
+    [changed] = inventory.read_jars(inventory.LocalFiles(tmp_path))
     assert path.stat().st_size == stamp.st_size
     assert path.stat().st_mtime_ns == stamp.st_mtime_ns
     assert original.sha256 == first and changed.sha256 == second and first != second
@@ -450,14 +490,14 @@ def test_two_checks_have_independent_results_and_third_returns_busy_with_local_f
             return Github({"Core": [release(f"v{index + 1}.0.0", "2026-10-01T00:00:00Z", f"core-{index + 1}.0.0.jar", str(index))]})(path, body)
         return answer
     def run(index):
-        results[index] = inventory.fetch_releases(fetch(index))
+        results[index] = inventory.check_releases([], fetch(index))
     try:
         for i in range(2):
             worker = threading.Thread(target=run, args=(i,))
             workers.append(worker)
             worker.start()
             assert entered[i].wait(3)
-        busy, local = inventory.check_servers({"dev": (root, False)}, lambda *_: pytest.fail("busy check fetched GitHub"))
+        busy, local = check_servers({"dev": (root, False)}, lambda *_: pytest.fail("busy check fetched GitHub"))
         assert busy.error == "busy" and busy.checked_at is None
         assert local["dev"]["jars"][0].name == "Core"
         assert {i for i, path in calls if path.startswith("/orgs/")} == {0, 1}
@@ -476,10 +516,10 @@ def test_startup_comes_from_the_newest_log_that_has_one(tmp_path):
         handle.write(startup_log(("Core", "0.9"), paper="old"))
     with gzip.open(logs / "2026-10-10-10.log.gz", "wt") as handle:
         handle.write(startup_log(("Core", "1.1"), done=False))
-    startup = inventory.read_startup(logs)
+    startup = inventory.read_startup(inventory.LocalFiles(tmp_path))
     assert startup == {"paper": "1.21.10-130", "done": False, "log": "2026-10-10-10.log.gz",
                        "enabled": {"core": "1.1"}, "failed": {}}
-    assert inventory.read_startup(tmp_path / "nowhere") is None
+    assert inventory.read_startup(inventory.LocalFiles(tmp_path / "nowhere")) is None
 
 
 
@@ -487,7 +527,7 @@ def test_unreadable_jar_keeps_its_hash_without_a_version(tmp_path):
     folder = tmp_path / "plugins"
     folder.mkdir()
     (folder / "broken.jar").write_bytes(b"not a zip")
-    [jar] = inventory.read_jars(folder)
+    [jar] = inventory.read_jars(inventory.LocalFiles(tmp_path))
     assert jar.sha256 == hashlib.sha256(b"not a zip").hexdigest()
     assert jar.name is None and jar.version is None
 
@@ -517,7 +557,7 @@ def test_the_route_is_for_admins(database, postgres, monkeypatch, tmp_path):
     assert client(app, mod).get("/admin/servers").json() == {"detail": "forbidden"}
     response = client(app, admin).get("/admin/servers")
     assert response.status_code == 200 and response.headers["cache-control"] == "no-store"
-    assert [s["status"] for s in response.json()["servers"]] == ["not_configured"] * 4
+    assert response.json()["servers"] == []
 
 
 @pytest.mark.parametrize('failure', [
@@ -526,17 +566,19 @@ def test_the_route_is_for_admins(database, postgres, monkeypatch, tmp_path):
 ])
 def test_failed_or_disabled_plugin_is_not_counted_as_enabled(tmp_path, failure):
     text = startup_log(('Core', '1.1'), ('Other', '2.0'))
-    (tmp_path / 'latest.log').write_text(text.replace('[06:10:40]', failure + '[06:10:40]'))
-    assert inventory.read_startup(tmp_path)['enabled'] == {'other': '2.0'}
+    (tmp_path / 'logs').mkdir()
+    (tmp_path / 'logs' / 'latest.log').write_text(text.replace('[06:10:40]', failure + '[06:10:40]'))
+    assert inventory.read_startup(inventory.LocalFiles(tmp_path))['enabled'] == {'other': '2.0'}
 
 
 def test_plugin_text_quoting_an_enable_failure_is_not_a_failure(tmp_path):
-    (tmp_path / "latest.log").write_text(
+    (tmp_path / "logs").mkdir()
+    (tmp_path / "logs" / "latest.log").write_text(
         "[06:10:00] [ServerMain/INFO]: [bootstrap] Loading Paper 1.21.10-130-main@abc\n"
         "[06:10:20] [Server thread/INFO]: [Core] Enabling Core v1.1\n"
         "[06:10:21] [Server thread/INFO]: [Chat] Player said: Error occurred while enabling Core v1.1\n"
         "[06:10:40] [Server thread/INFO]: Done (40.0s)! For help, type \"help\"\n")
-    startup = inventory.read_startup(tmp_path)
+    startup = inventory.read_startup(inventory.LocalFiles(tmp_path))
     assert startup["enabled"] == {"core": "1.1"} and startup["failed"] == {}
 
 
@@ -549,7 +591,7 @@ def test_partial_graphql_error_cannot_disguise_failed_latest_as_no_releases(monk
             result["data"]["r0"]["latestRelease"] = None
             result["errors"] = [{"message": "temporary failure", "path": ["r0", "latestRelease"]}]
         return result
-    found = inventory.fetch_releases(failed_latest)
+    found = inventory.check_releases([], failed_latest)
     assert found.errors == {"Core": "github_unavailable"} and not found
 
 
@@ -561,7 +603,7 @@ def test_failed_branch_compare_keeps_latest_release_without_claiming_identity(mo
         if "compare(headRef" in body["query"]:
             return {"data": {"r0": {"ref": None}}, "errors": [{"path": ["r0", "ref"], "message": "unknown tag"}]}
         return base(path, body)
-    found = inventory.fetch_releases(failed_compare)
+    found = inventory.check_releases([], failed_compare)
     assert found["Core"][0].version == "1.0.0" and found["Core"][0].branch is None
 
 
@@ -576,7 +618,7 @@ def test_failure_after_full_first_history_page_cannot_prove_unreleased_bytes(tmp
         if (body and "releases(first:30" in body["query"] and body["variables"]["after"] == "30") or "page=2" in path:
             raise urllib.error.URLError("history page two down")
         return base(path, body)
-    found, local = inventory.check_servers({"dev": (root, False)}, partial_history)
+    found, local = check_servers({"dev": (root, False)}, partial_history)
     [plugin], _ = inventory.compare(found, local)
     assert plugin["servers"]["dev"]["state"] == "unverified"
     assert "Core" not in found.complete
@@ -587,27 +629,29 @@ def test_latest_asset_connection_paginates_beyond_first_twenty_assets(monkeypatc
     row = release("v1.0.0", "2026-10-01T00:00:00Z", "core-1.0.0.jar", "known")
     row["assets"] = [{"name": f"notes-{n}.txt", "digest": "sha256:notes"} for n in range(25)] + row["assets"]
     fetch = Github({"Core": [row]})
-    found = inventory.fetch_releases(fetch)
+    found = inventory.check_releases([], fetch)
     assert found["Core"][0].sha256 == "known" and found["Core"][0].branch["status"] == "identical"
     assert any("releaseAssets(first:20,after:" in q["query"] for q in fetch.queries)
 
 
-def test_local_inventory_and_github_reads_overlap(tmp_path, monkeypatch):
+def test_helper_inventory_and_github_reads_overlap(tmp_path, monkeypatch):
     root = tmp_path / "main"
     make_jar(root / "plugins", "core.jar", "Core", "1.0.0")
+    monkeypatch.setenv("SERVER_MAIN_DIR", str(root))
     local_started, remote_started = threading.Event(), threading.Event()
-    original = inventory._local_server
-    def local(*args):
+    original = control.request
+    def local(operation, **body):
         local_started.set()
-        assert remote_started.wait(3), "GitHub work waited for local inventory"
-        return original(*args)
+        assert remote_started.wait(3), "GitHub work waited for the helper's inventory"
+        return original(operation, **body)
     def remote(path, body=None):
         remote_started.set()
-        assert local_started.wait(3), "local inventory waited for GitHub"
+        assert local_started.wait(3), "the helper's inventory waited for GitHub"
         return []
-    monkeypatch.setattr(inventory, "_local_server", local)
-    found, servers = inventory.check_servers({"main": (root, True)}, remote)
-    assert found.error is None and servers["main"]["jars"][0].name == "Core"
+    monkeypatch.setattr(control, "request", local)
+    result = inventory.overview(remote)
+    assert result["github"]["status"] == "available" and result["servers"][0]["status"] == "available"
+    assert result["others"][0]["name"] == "Core"
 
 
 @pytest.mark.parametrize("authenticated", [False, True])
@@ -621,7 +665,7 @@ def test_exhausted_history_with_missing_jar_digest_keeps_unmatched_bytes_unverif
     old = release("v1.0.0", "2026-09-01T00:00:00Z", "core-1.0.0.jar", "unknown")
     old["assets"][-1]["digest"] = None
     fetch = Github({"Core": [release("v2.0.0", "2026-10-01T00:00:00Z", "core-2.0.0.jar", "new"), old]})
-    found, local = inventory.check_servers({key: (root, releases_only)}, fetch)
+    found, local = check_servers({key: (root, releases_only)}, fetch)
     [plugin], others = inventory.compare(found, local)
     assert plugin["servers"][key]["state"] == "unverified" and not others
     assert plugin["servers"][key]["release"] is None
@@ -638,7 +682,7 @@ def test_positive_historical_hash_wins_even_when_another_release_has_no_jar_dige
     unknown["assets"][-1]["digest"] = None
     rows = [release("v2.0.0", "2026-10-01T00:00:00Z", "core-2.0.0.jar", "new"), unknown,
             release("v1.0.0", "2026-09-01T00:00:00Z", "core-1.0.0.jar", sha)]
-    found, local = inventory.check_servers({"main": (root, True)}, Github({"Core": rows}))
+    found, local = check_servers({"main": (root, True)}, Github({"Core": rows}))
     [plugin], others = inventory.compare(found, local)
     copy = plugin["servers"]["main"]
     assert copy["state"] == "older_release" and copy["release"] == "1.0.0" and not others
@@ -654,7 +698,7 @@ def test_second_jar_asset_in_a_historical_release_can_prove_the_installed_releas
     old = release("v1.0.0", "2026-09-01T00:00:00Z", "core-api-1.0.0.jar", "f" * 64)
     old["assets"].append({"name": "core-1.0.0.jar", "digest": f"sha256:{sha}"})
     rows = [release("v2.0.0", "2026-10-01T00:00:00Z", "core-2.0.0.jar", "new"), old]
-    found, local = inventory.check_servers({"main": (root, True)}, Github({"Core": rows}))
+    found, local = check_servers({"main": (root, True)}, Github({"Core": rows}))
     [plugin], others = inventory.compare(found, local)
     assert plugin["servers"]["main"]["state"] == "older_release" and not others
     assert plugin["servers"]["main"]["release"] == "1.0.0"

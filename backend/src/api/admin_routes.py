@@ -299,7 +299,8 @@ def _server_write(request: Request, server: str, operation: str, body: ServerJob
             if not roles.can(actor["role"], "manage_servers") or actor.get("acting_user_id"):
                 raise HTTPException(403, detail="forbidden")
             reason = admin.clean_reason(body.reason)
-            if body.emergency_override and (server != "main" or operation != "start"):
+            # The helper refuses an override for servers that restart without a countdown.
+            if body.emergency_override and operation != "start":
                 raise HTTPException(400, detail="bad_server_action")
             if body.replace_test_builds and operation != "start":
                 raise HTTPException(400, detail="bad_server_action")

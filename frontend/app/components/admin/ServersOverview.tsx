@@ -1,7 +1,7 @@
 "use client";
 
 import LoadingSkeleton from "@/app/components/shared/LoadingSkeleton";
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 
 import {
   branchFlag,
@@ -30,20 +30,14 @@ const TONE: Record<Tone, string> = {
 
 type View = "look" | "all" | "others";
 
-// Written out in full so Tailwind finds them: one column per readable server, after the plugin
-// name and (for TFMC plugins) its latest release.
-const COLUMNS: Record<number, string> = {
-  1: "grid grid-cols-2 gap-x-4 gap-y-1.5 sm:grid-cols-[minmax(10rem,14rem)_minmax(0,1fr)]",
-  2: "grid grid-cols-2 gap-x-4 gap-y-1.5 sm:grid-cols-[minmax(10rem,14rem)_minmax(0,1fr)_minmax(0,1fr)]",
-  3: "grid grid-cols-2 gap-x-4 gap-y-1.5 sm:grid-cols-[minmax(8rem,14rem)_repeat(3,minmax(0,1fr))]",
-  4: "grid grid-cols-2 gap-x-4 gap-y-1.5 sm:grid-cols-[minmax(8rem,14rem)_repeat(4,minmax(0,1fr))]",
-};
-const RELEASE_COLUMNS: Record<number, string> = {
-  1: "grid grid-cols-2 gap-x-4 gap-y-1.5 sm:grid-cols-[minmax(10rem,14rem)_6rem_minmax(0,1fr)]",
-  2: "grid grid-cols-2 gap-x-4 gap-y-1.5 sm:grid-cols-[minmax(10rem,14rem)_6rem_minmax(0,1fr)_minmax(0,1fr)]",
-  3: "grid grid-cols-2 gap-x-4 gap-y-1.5 sm:grid-cols-[minmax(8rem,14rem)_6rem_repeat(3,minmax(0,1fr))]",
-  4: "grid grid-cols-2 gap-x-4 gap-y-1.5 sm:grid-cols-[minmax(8rem,14rem)_6rem_repeat(4,minmax(0,1fr))]",
-};
+// One column per readable server (--servers), after the plugin name and, for TFMC plugins, its
+// latest release. Past the page width the table scrolls sideways.
+const COLUMNS =
+  "grid grid-cols-2 gap-x-4 gap-y-1.5 sm:grid-cols-[minmax(8rem,14rem)_repeat(var(--servers),minmax(6.5rem,1fr))]";
+const RELEASE_COLUMNS =
+  "grid grid-cols-2 gap-x-4 gap-y-1.5 sm:grid-cols-[minmax(8rem,14rem)_6rem_repeat(var(--servers),minmax(6.5rem,1fr))]";
+// Full width; below room for every column it scrolls instead of squeezing them.
+const tableClass = "mt-4 sm:min-w-[calc(22rem+var(--servers)*7.5rem)]";
 
 const versionClass = "break-all font-mono text-xs text-[var(--tfmc-cream)]";
 // A copy that matches the latest release has nothing to say, so it sits back.
@@ -55,6 +49,17 @@ const STARTUP: Record<string, [string, string]> = {
   true: ["Running", "bg-[var(--tfmc-accent)] shadow-[0_0_0_3px_color-mix(in_srgb,var(--tfmc-accent)_25%,transparent)]"],
   false: ["Starting", "animate-pulse bg-[#f0d090]"],
   null: ["No startup in the logs", "bg-[var(--tfmc-mist)]"],
+};
+// AMP's state when Paper isn't simply running; otherwise the startup log decides.
+const STATE: Record<string, [string, string]> = {
+  stopped: ["Stopped", "bg-[#e8a0a0]"],
+  failed: ["Failed in AMP", "bg-[#e8a0a0]"],
+  stopping: ["Stopping", "animate-pulse bg-[#f0d090]"],
+  starting: ["Starting", "animate-pulse bg-[#f0d090]"],
+  restarting: ["Restarting", "animate-pulse bg-[#f0d090]"],
+  sleeping: ["Sleeping", "bg-[var(--tfmc-mist)]"],
+  updating: ["Updating", "animate-pulse bg-[#f0d090]"],
+  installing: ["Installing", "animate-pulse bg-[#f0d090]"],
 };
 const STAT_TONE: Record<Tone, string> = {
   bad: "text-[#f0a0a0]",
@@ -69,7 +74,7 @@ const cardClass = `flex flex-col overflow-hidden rounded-md border ${hairline} b
 
 function ServerCard({ server, plugins, actions }: { server: ServerInfo; plugins: ServerPlugin[]; actions: ReactNode }) {
   const available = server.status === "available";
-  const [startup, dot] = STARTUP[String(server.started)];
+  const [startup, dot] = (server.state && STATE[server.state]) || STARTUP[String(server.started)];
   const c = counts(plugins, server.key);
   const unverified = plugins.filter((plugin) => plugin.servers[server.key]?.state === "unverified").length;
   const stats: [number, string, Tone][] = [
@@ -116,9 +121,7 @@ function ServerCard({ server, plugins, actions }: { server: ServerInfo; plugins:
         </div>
       ) : (
         <p className={`border-y ${hairline} px-5 py-4 ${mutedClass}`}>
-          {server.status === "missing"
-            ? "The site can’t find this server’s plugins folder."
-            : "The site isn’t set up to read this server’s files."}
+          AMP couldn’t read this server’s files. Check the instance in the AMP panel.
         </p>
       )}
       {available && unverified ? (
@@ -244,6 +247,7 @@ export default function ServersOverview() {
   }, [load]);
 
   const readable = useMemo(() => data?.servers.filter((s) => s.status === "available") ?? [], [data]);
+  const off = useMemo(() => data?.servers.filter((s) => s.status === "instance_off") ?? [], [data]);
   const needsLook = useMemo(() => {
     const list = (data?.plugins ?? []).filter((p) => severity(p) !== null);
     return list.sort((a, b) => (severity(a) ?? 9) - (severity(b) ?? 9) || a.repo.localeCompare(b.repo));
@@ -263,8 +267,9 @@ export default function ServersOverview() {
   const needle = query.trim().toLowerCase();
   const rows = (view === "look" ? needsLook : data.plugins).filter((p) => p.repo.toLowerCase().includes(needle));
   const others = data.others.filter((o) => o.name.toLowerCase().includes(needle));
-  const columns = COLUMNS[readable.length] ?? COLUMNS[4];
-  const releaseColumns = RELEASE_COLUMNS[readable.length] ?? RELEASE_COLUMNS[4];
+  const columns = COLUMNS;
+  const releaseColumns = RELEASE_COLUMNS;
+  const width = { "--servers": readable.length } as CSSProperties;
   const unverifiedOthers = data.others.some((other) => other.unverified);
   const incomplete = checkFailed || data.github.status !== "available" || unverifiedOthers;
   const tabs: [View, string, number][] = [
@@ -287,16 +292,28 @@ export default function ServersOverview() {
         </p>
       ) : null}
 
+      {data.control !== "available" ? (
+        <p className={`mt-2 ${warnClass}`} role="alert">
+          The server control helper didn’t answer, so the servers can’t be read. Try again in a minute.
+        </p>
+      ) : null}
       <div className="mt-2 grid gap-3 sm:grid-cols-2">
-        {data.servers.map((server) => (
-          <ServerCard
-            key={server.key}
-            server={server}
-            plugins={data.plugins}
-            actions={<ServerActions control={control} server={server.key} />}
-          />
-        ))}
+        {data.servers
+          .filter((server) => server.status !== "instance_off")
+          .map((server) => (
+            <ServerCard
+              key={server.key}
+              server={server}
+              plugins={data.plugins}
+              actions={<ServerActions control={control} server={server.key} />}
+            />
+          ))}
       </div>
+      {off.length ? (
+        <p className={`mt-3 ${captionClass}`}>
+          Switched off in AMP: {off.map((s) => s.label).join(", ")}. Start an instance in AMP to see it here.
+        </p>
+      ) : null}
       <ControlNotice control={control} />
       <ControlDialog control={control} />
 
@@ -352,91 +369,93 @@ export default function ServersOverview() {
             />
           </div>
 
-          {view === "others" ? (
-            <ul className="mt-4">
-              <li
-                className={`${columns} hidden border-b border-[color-mix(in_srgb,var(--tfmc-cream)_14%,transparent)] pb-2 sm:grid`}
-              >
-                <span className={labelClass}>Plugin</span>
-                {readable.map((s) => (
-                  <span key={s.key} className={labelClass}>
-                    {s.label}
-                  </span>
-                ))}
-              </li>
-              {others.map((other) => (
+          <div className="sm:overflow-x-auto" style={width}>
+            {view === "others" ? (
+              <ul className={tableClass}>
                 <li
-                  key={other.name}
-                  className={`${columns} items-baseline border-b border-[color-mix(in_srgb,var(--tfmc-cream)_8%,transparent)] py-2.5`}
+                  className={`${columns} hidden border-b border-[color-mix(in_srgb,var(--tfmc-cream)_14%,transparent)] pb-2 sm:grid`}
                 >
-                  <p className="col-span-2 text-sm font-semibold text-[var(--tfmc-cream)] sm:col-span-1">
-                    {other.name}
-                    {other.differs ? (
-                      <span className={`${badgeClass} ${TONE.warn} ml-2 align-middle`}>Differs</span>
-                    ) : null}
-                    {other.unverified ? (
-                      <span className={`${badgeClass} ${TONE.warn} ml-2 align-middle`}>Unverified</span>
-                    ) : null}
-                  </p>
-                  {readable.map((s) => {
-                    const found = other.servers[s.key];
-                    return (
-                      <div key={s.key} className="min-w-0">
-                        <p className={`${labelClass} sm:hidden`}>{s.label}</p>
-                        {found ? (
-                          <p className={versionClass}>{found.version ?? found.file}</p>
-                        ) : (
-                          <span className={`${badgeClass} ${TONE.none}`}>Not installed</span>
-                        )}
-                      </div>
-                    );
-                  })}
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <ul className="mt-4">
-              <li
-                className={`${releaseColumns} hidden border-b border-[color-mix(in_srgb,var(--tfmc-cream)_14%,transparent)] pb-2 sm:grid`}
-              >
-                <span className={labelClass}>Plugin</span>
-                <span className={labelClass}>Latest</span>
-                {readable.map((s) => (
-                  <span key={s.key} className={labelClass}>
-                    {s.label}
-                  </span>
-                ))}
-              </li>
-              {rows.map((plugin) => (
-                <li
-                  key={plugin.repo}
-                  className={`${releaseColumns} items-baseline border-b border-[color-mix(in_srgb,var(--tfmc-cream)_8%,transparent)] py-2.5`}
-                >
-                  <div className="col-span-2 flex items-baseline justify-between gap-2 sm:contents">
-                    <p className="text-sm font-semibold text-[var(--tfmc-cream)]">{plugin.repo}</p>
-                    <LatestCell latest={plugin.latest} error={plugin.error} />
-                  </div>
+                  <span className={labelClass}>Plugin</span>
                   {readable.map((s) => (
-                    <CopyCell
-                      key={s.key}
-                      copy={plugin.servers[s.key]}
-                      label={s.label}
-                      latest={plugin.latest?.version ?? null}
-                    />
+                    <span key={s.key} className={labelClass}>
+                      {s.label}
+                    </span>
                   ))}
                 </li>
-              ))}
-              {!rows.length ? (
-                <li className={`py-6 text-center ${mutedClass}`}>
-                  {view === "look" && !needle
-                    ? incomplete
-                      ? "Release checks are incomplete. Check again to verify these plugins."
-                      : "Every server runs the latest release of every plugin."
-                    : "No plugins match."}
+                {others.map((other) => (
+                  <li
+                    key={other.name}
+                    className={`${columns} items-baseline border-b border-[color-mix(in_srgb,var(--tfmc-cream)_8%,transparent)] py-2.5`}
+                  >
+                    <p className="col-span-2 text-sm font-semibold text-[var(--tfmc-cream)] sm:col-span-1">
+                      {other.name}
+                      {other.differs ? (
+                        <span className={`${badgeClass} ${TONE.warn} ml-2 align-middle`}>Differs</span>
+                      ) : null}
+                      {other.unverified ? (
+                        <span className={`${badgeClass} ${TONE.warn} ml-2 align-middle`}>Unverified</span>
+                      ) : null}
+                    </p>
+                    {readable.map((s) => {
+                      const found = other.servers[s.key];
+                      return (
+                        <div key={s.key} className="min-w-0">
+                          <p className={`${labelClass} sm:hidden`}>{s.label}</p>
+                          {found ? (
+                            <p className={versionClass}>{found.version ?? found.file}</p>
+                          ) : (
+                            <span className={`${badgeClass} ${TONE.none}`}>Not installed</span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <ul className={tableClass}>
+                <li
+                  className={`${releaseColumns} hidden border-b border-[color-mix(in_srgb,var(--tfmc-cream)_14%,transparent)] pb-2 sm:grid`}
+                >
+                  <span className={labelClass}>Plugin</span>
+                  <span className={labelClass}>Latest</span>
+                  {readable.map((s) => (
+                    <span key={s.key} className={labelClass}>
+                      {s.label}
+                    </span>
+                  ))}
                 </li>
-              ) : null}
-            </ul>
-          )}
+                {rows.map((plugin) => (
+                  <li
+                    key={plugin.repo}
+                    className={`${releaseColumns} items-baseline border-b border-[color-mix(in_srgb,var(--tfmc-cream)_8%,transparent)] py-2.5`}
+                  >
+                    <div className="col-span-2 flex items-baseline justify-between gap-2 sm:contents">
+                      <p className="text-sm font-semibold text-[var(--tfmc-cream)]">{plugin.repo}</p>
+                      <LatestCell latest={plugin.latest} error={plugin.error} />
+                    </div>
+                    {readable.map((s) => (
+                      <CopyCell
+                        key={s.key}
+                        copy={plugin.servers[s.key]}
+                        label={s.label}
+                        latest={plugin.latest?.version ?? null}
+                      />
+                    ))}
+                  </li>
+                ))}
+                {!rows.length ? (
+                  <li className={`py-6 text-center ${mutedClass}`}>
+                    {view === "look" && !needle
+                      ? incomplete
+                        ? "Release checks are incomplete. Check again to verify these plugins."
+                        : "Every server runs the latest release of every plugin."
+                      : "No plugins match."}
+                  </li>
+                ) : null}
+              </ul>
+            )}
+          </div>
         </section>
       ) : null}
     </>

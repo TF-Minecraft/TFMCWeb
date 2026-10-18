@@ -5,6 +5,7 @@ import { AccountApiError } from "@/lib/account/api";
 import { adminErrorMessage } from "@/lib/admin/api";
 import {
   CONTROL_MESSAGES,
+  describe,
   getControl,
   planServer,
   serverAction,
@@ -12,11 +13,10 @@ import {
   type ServerJob,
   type ServerPlan,
 } from "@/lib/admin/serverControl";
-import type { ServerKey } from "@/lib/admin/servers";
+import type { ServerKey, ServerPolicy } from "@/lib/admin/servers";
 import { formatLocal } from "@/lib/skins/formatTime";
 import { buttonClass, errorClass, headingClass, inputClass, mutedClass, pagerClass, quietButtonClass } from "./ui";
 
-const LABEL = { main: "Main", dev: "Dev", lobby: "Lobby", tutorial: "Tutorial" };
 const ACTIVE: ServerJob["phase"][] = ["countdown", "installing", "restarting", "checking", "reopening"];
 const STEPS: [ServerJob["phase"], string][] = [
   ["countdown", "Warning players"],
@@ -136,7 +136,8 @@ export function useServerControls(onComplete: () => void) {
     setError(null);
     try {
       const start = action === "start";
-      await serverAction(server, action, id, reason, start && server === "main" && override, start ? replace : []);
+      const countdown = describe(status, server).policy.countdown > 0;
+      await serverAction(server, action, id, reason, start && countdown && override, start ? replace : []);
       setDialog(null);
       await refresh();
     } catch (err) {
@@ -170,7 +171,9 @@ export function ControlNotice({ control }: { control: ServerControl }) {
 }
 
 function Steps({ job }: { job: ServerJob }) {
-  const steps = job.server === "main" && !job.emergency_override ? STEPS : STEPS.slice(1);
+  // Jobs from older helpers: only Main counted down.
+  const countdown = job.countdown ?? (job.server === "main" && !job.emergency_override ? 300 : 0);
+  const steps = countdown ? STEPS : STEPS.slice(1);
   const at = steps.findIndex(([phase]) => phase === job.phase);
   return (
     <ol className="mt-3 flex flex-wrap gap-x-3.5 gap-y-1 text-xs">
@@ -216,7 +219,7 @@ function ReleaseList({ changes }: { changes: ServerJob["changes"] }) {
 export function ServerActions({ control, server }: { control: ServerControl; server: ServerKey }) {
   const { status, busy, now, active } = control;
   if (!status || status.status !== "available") return null;
-  const name = LABEL[server];
+  const name = describe(status, server).label;
   if (!(status.allowed_servers ?? ["main", "dev"]).includes(server)) {
     return <p className={mutedClass}>This site can’t restart {name}.</p>;
   }
@@ -312,7 +315,9 @@ export function ServerActions({ control, server }: { control: ServerControl; ser
     <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
       <p className="min-w-0 text-xs">
         {other ? (
-          <span className="text-[var(--tfmc-mist)]">Waiting for the {LABEL[other.server]} restart</span>
+          <span className="text-[var(--tfmc-mist)]">
+            Waiting for the {describe(status, other.server).label} restart
+          </span>
         ) : done ? (
           <span className={done[1]}>{done[0]}</span>
         ) : null}
@@ -369,9 +374,7 @@ function Upgrade({ from, to }: { from: string | null; to: string }) {
 
 function backupNote(plan: ServerPlan, override: boolean): string {
   const last = plan.last_backup_at ? formatLocal(new Date(plan.last_backup_at * 1000).toISOString()) : "not recorded";
-  // An older control helper without an AMP login takes no backup.
-  if (!plan.backup)
-    return `Last AMP backup: ${last}. The control helper will not take a fresh backup for this restart.`;
+  if (!plan.backup) return `Last AMP backup: ${last}. No fresh backup is taken for this restart.`;
   if (override) return `Skipping the countdown skips the fresh backup. Last AMP backup: ${last}.`;
   return `AMP takes a fresh backup during the countdown, and the restart waits for it to finish. Last AMP backup: ${last}.`;
 }
@@ -438,31 +441,42 @@ function TestBuilds({
   );
 }
 
+const NUMBERS = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"];
+
+/** "five-minute", "30-second": how long a countdown warns players. */
+function warning(seconds: number): string {
+  const [n, unit] = seconds % 60 ? [seconds, "second"] : [seconds / 60, "minute"];
+  return `${NUMBERS[n] ?? n}-${unit}`;
+}
+
 function PlanBody({
   plan,
+  name,
+  policy,
   now,
   override,
   replace,
   onReplace,
 }: {
   plan: ServerPlan;
+  name: string;
+  policy: ServerPolicy;
   now: number;
   override: boolean;
   replace: string[];
   onReplace: (next: string[]) => void;
 }) {
-  const main = plan.server === "main";
   const releases = plan.changes.filter((c) => !c.test_build);
   const tests = plan.changes.filter((c) => c.test_build);
   const changed = releases.length + replace.length + plan.activation.length > 0;
   return (
     <>
       <p className={`mt-2 ${mutedClass}`}>
-        {main
+        {policy.countdown
           ? override
             ? "Players are disconnected straight away, with no warning."
-            : "Players get a five-minute warning, and you can cancel during it."
-          : "Dev restarts as soon as you confirm."}
+            : `Players get a ${warning(policy.countdown)} warning, and you can cancel during it.`
+          : `${name} restarts as soon as you confirm.`}
       </p>
       {releases.length ? (
         <Rows
@@ -489,7 +503,11 @@ function PlanBody({
           <summary className="cursor-pointer text-[var(--tfmc-mist)] hover:text-[var(--tfmc-cream)]">
             {plan.skipped.length} {plan.skipped.length === 1 ? "plugin" : "plugins"} left as they are
           </summary>
-          <p className="mt-2 text-xs text-[var(--tfmc-mist)]">Main only takes releases that have already run on Dev.</p>
+          {policy.dev_verified ? (
+            <p className="mt-2 text-xs text-[var(--tfmc-mist)]">
+              {name} only takes releases that have already run on Dev.
+            </p>
+          ) : null}
           <ul className="mt-1 divide-y divide-[color-mix(in_srgb,var(--tfmc-cream)_8%,transparent)]">
             {plan.skipped.map((s) => (
               <li key={s.repo} className="flex items-baseline justify-between gap-3 py-1.5">
@@ -500,9 +518,9 @@ function PlanBody({
           </ul>
         </details>
       ) : null}
-      {main && changed ? (
+      {policy.review && changed ? (
         <p className={`mt-4 ${calloutClass.warn} text-sm text-[#f0e0b0]`}>
-          Main stays in maintenance after startup so you can check these plugins. Reopen it from this page when you’re
+          {name} stays in maintenance after startup so you can check these plugins. Reopen it from this page when you’re
           done.
         </p>
       ) : null}
@@ -515,7 +533,7 @@ function PlanBody({
 
 /** The confirmation for starting, cancelling, reopening or resolving a restart. */
 export function ControlDialog({ control }: { control: ServerControl }) {
-  const { dialog, busy, error, now } = control;
+  const { dialog, busy, error, now, status } = control;
   const titleId = useId();
   const box = useRef<HTMLDivElement>(null);
   const [reason, setReason] = useState("");
@@ -528,9 +546,9 @@ export function ControlDialog({ control }: { control: ServerControl }) {
     setShown(dialog);
     setReason("");
     setOverride(false);
-    // Main should only run releases; Dev test builds are often someone's work in progress.
+    // Most servers should only run releases; Dev test builds are often someone's work in progress.
     setReplace(
-      dialog?.kind === "plan" && dialog.plan.server === "main"
+      dialog?.kind === "plan" && describe(status, dialog.plan.server).policy.releases_only
         ? dialog.plan.changes.filter((c) => c.test_build).map((c) => c.repo)
         : [],
     );
@@ -551,8 +569,8 @@ export function ControlDialog({ control }: { control: ServerControl }) {
 
   if (!dialog) return null;
   const server = dialog.kind === "plan" ? dialog.plan.server : dialog.job.server;
-  const name = LABEL[server];
-  const main = server === "main";
+  const { label: name, policy } = describe(status, server);
+  const countdown = policy.countdown > 0;
   const ready = reason.trim().length >= 3;
 
   let title: string;
@@ -564,9 +582,19 @@ export function ControlDialog({ control }: { control: ServerControl }) {
   if (dialog.kind === "plan") {
     const { plan } = dialog;
     title = plan.mode === "latest" ? `Update and restart ${name}?` : `Restart ${name}?`;
-    body = <PlanBody plan={plan} now={now} override={override} replace={replace} onReplace={setReplace} />;
-    confirm = main ? (override ? "Restart Main now" : "Start Main countdown") : "Restart Dev now";
-    danger = main && override;
+    body = (
+      <PlanBody
+        plan={plan}
+        name={name}
+        policy={policy}
+        now={now}
+        override={override}
+        replace={replace}
+        onReplace={setReplace}
+      />
+    );
+    confirm = countdown && !override ? `Start ${name} countdown` : `Restart ${name} now`;
+    danger = countdown && override;
     blocked ||= now >= plan.expires_at;
     submit = () => void control.act(server, "start", plan.id, reason, override, replace);
   } else {
@@ -613,7 +641,7 @@ export function ControlDialog({ control }: { control: ServerControl }) {
         </h2>
         {body}
 
-        {dialog.kind === "plan" && main ? (
+        {dialog.kind === "plan" && countdown ? (
           <p className={`mt-4 ${mutedClass}`}>{backupNote(dialog.plan, override)}</p>
         ) : null}
         <Field label="Reason" hint="Saved in the staff audit log.">
@@ -625,7 +653,7 @@ export function ControlDialog({ control }: { control: ServerControl }) {
             placeholder={dialog.kind === "plan" ? "What is this restart for?" : undefined}
           />
         </Field>
-        {dialog.kind === "plan" && main ? (
+        {dialog.kind === "plan" && countdown ? (
           <label
             className={`mt-4 flex items-start gap-2.5 ${override ? calloutClass.bad : "rounded-sm border border-[color-mix(in_srgb,var(--tfmc-cream)_12%,transparent)] p-3"}`}
           >

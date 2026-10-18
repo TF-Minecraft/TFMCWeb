@@ -72,7 +72,8 @@ def host(tmp_path, monkeypatch):
 
     monkeypatch.setattr(updater, "get", get)
     monkeypatch.setattr(updater.subprocess, "run", run)
-    monkeypatch.setattr(updater, "status", lambda path: {"jobs": state.jobs, "allowed_servers": updater.SOCKETS[path]})
+    allowed = {"www": ["dev", "lobby", "main"], "dev": ["dev"]}
+    monkeypatch.setattr(updater, "status", lambda path: {"jobs": state.jobs, "allowed_servers": allowed[path.parent.name]})
     monkeypatch.setattr(updater, "healthy", healthy)
     state.servers = servers
     return state
@@ -191,3 +192,10 @@ def test_old_backups_are_pruned(host):
         updater.os.utime(updater.BACKUPS / f"update-{i:03}", (i, i))
     updater.prune_backups()
     assert sorted(p.name for p in updater.BACKUPS.iterdir())[0] == "update-003"
+
+
+def test_socket_scopes_accept_new_servers_on_www_but_only_dev_on_dev():
+    www, dev = (updater.SOCKETS[updater.Path(f"/run/tfmc-server-control/{site}/control.sock")] for site in ("www", "dev"))
+    assert www(["dev", "lobby", "main", "s6"]) and www(["dev", "main"])
+    assert not www(["dev"]) and not www([])
+    assert dev(["dev"]) and not dev(["dev", "main"]) and not dev([])

@@ -34,8 +34,9 @@ BACKUPS = Path("/var/backups/tfmc-server-control")
 KEEP_BACKUPS = 10
 LOCK = Path("/run/tfmc-server-control-update.lock")
 LOG = Path("/var/log/tfmc-server-control-update.log")
-SOCKETS = {Path("/run/tfmc-server-control/www/control.sock"): ["dev", "main"],
-           Path("/run/tfmc-server-control/dev/control.sock"): ["dev"]}
+# The www site controls every server AMP lists, so its scope is checked for Main and Dev only.
+SOCKETS = {Path("/run/tfmc-server-control/www/control.sock"): lambda found: {"dev", "main"} <= set(found),
+           Path("/run/tfmc-server-control/dev/control.sock"): lambda found: found == ["dev"]}
 MODULES = ("__init__.py", "control.py", "host.py", "inventory.py")
 # Installed by the administrator; a commit that changes them needs root.
 PINNED = {"scripts/tfmc-server-control.service": Path("/etc/systemd/system/tfmc-server-control.service"),
@@ -128,7 +129,7 @@ def healthy() -> bool:
     deadline = time.monotonic() + 30
     while time.monotonic() < deadline:
         try:
-            if running() and all(sorted(status(path).get("allowed_servers", [])) == scope for path, scope in SOCKETS.items()):
+            if running() and all(scope(sorted(status(path).get("allowed_servers", []))) for path, scope in SOCKETS.items()):
                 return True
         except Exception:
             pass
