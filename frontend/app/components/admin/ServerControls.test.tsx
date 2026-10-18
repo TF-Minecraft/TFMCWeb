@@ -276,3 +276,17 @@ it("shows the countdown's AMP backup progress", async () => {
   render(<ServerControls onComplete={vi.fn()} />);
   await screen.findByText("AMP backup running. The restart waits for it.");
 });
+
+it("an older helper's status falls back to the default rules, not Main's", async () => {
+  vi.mocked(getControl).mockResolvedValue({ status: "available", jobs: [], allowed_servers: ["dev", "lobby", "main"] });
+  vi.mocked(planServer).mockResolvedValue({
+    ...plan,
+    server: "lobby",
+    activation: [{ name: "Cooking", loaded: "1", version: "2" }],
+  });
+  render(<LobbyControls />);
+  fireEvent.click(await screen.findByRole("button", { name: "Update and restart Lobby" }));
+  const dialog = await screen.findByRole("dialog", { name: "Update and restart Lobby?" });
+  expect(within(dialog).getByText(/five-minute warning/)).toBeTruthy();
+  expect(within(dialog).queryByText(/stays in maintenance/)).toBeNull();
+});

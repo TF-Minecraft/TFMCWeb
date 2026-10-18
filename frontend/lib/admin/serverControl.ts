@@ -57,17 +57,25 @@ export type ControlStatus = {
   servers?: ControlServer[];
 };
 
-// Main's and Dev's rules, for a helper that doesn't report them.
-const LEGACY: Record<string, ServerPolicy> = {
-  main: { countdown: 300, backup: true, dev_verified: true, review: true, maintenance: true, releases_only: true },
-  dev: { countdown: 0, backup: false, dev_verified: false, review: false, maintenance: true, releases_only: false },
+// The helper's rules, for servers its status doesn't report: Main and Dev, or the default.
+const DEFAULT: ServerPolicy = {
+  countdown: 300,
+  backup: false,
+  dev_verified: true,
+  review: false,
+  maintenance: false,
+  releases_only: true,
+};
+const KNOWN: Record<string, ServerPolicy> = {
+  main: { ...DEFAULT, backup: true, review: true, maintenance: true },
+  dev: { ...DEFAULT, countdown: 0, dev_verified: false, maintenance: true, releases_only: false },
 };
 
 /** A server's label and rules from the helper's status. */
 export function describe(status: ControlStatus | null, key: ServerKey): { label: string; policy: ServerPolicy } {
   const found = status?.servers?.find((s) => s.key === key);
   if (found) return { label: found.label, policy: found.policy };
-  return { label: key.charAt(0).toUpperCase() + key.slice(1), policy: LEGACY[key] ?? LEGACY.main };
+  return { label: key.charAt(0).toUpperCase() + key.slice(1), policy: KNOWN[key] ?? DEFAULT };
 }
 
 export function getControl(): Promise<ControlStatus> {
@@ -117,6 +125,10 @@ export const CONTROL_MESSAGES: Record<string, string> = {
     "This would come within 15 minutes of a task in the server’s AMP schedule. Try again after that task.",
   schedule_unavailable: "AMP’s schedule for this server couldn’t be read, so the restart wasn’t started.",
   server_files_unavailable: "AMP couldn’t reach this server’s files. Check the instance in the AMP panel.",
+  install_check_failed:
+    "The installed files didn’t match the plan, so the old jars were put back. Nothing restarted; check the server.",
+  install_rollback_failed:
+    "Installing failed and the old jars couldn’t all be put back. Fix the plugins folder in AMP before restarting.",
   bad_server: "AMP has no Minecraft server by that name.",
   amp_unavailable: "AMP did not answer. Check the server in the AMP panel.",
   amp_login_failed: "The control helper could not sign in to AMP.",

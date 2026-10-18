@@ -957,7 +957,7 @@ def test_failed_countdown_tells_players_the_restart_is_off(controller, monkeypat
 
 
 def test_unreadable_jar_has_its_own_error(controller, monkeypatch):
-    def unreadable(self, name, start=0):
+    def unreadable(self, name, start=0, size=None):
         raise PermissionError(name)
     monkeypatch.setattr(inventory.LocalFiles, "read", unreadable)
     with pytest.raises(control.ControlError, match="plugin_unreadable"):
@@ -1112,9 +1112,9 @@ def test_helper_rejects_malformed_new_inventory_field(controller, expected):
 def test_snapshot_reads_each_jar_once(controller, monkeypatch):
     original = inventory.LocalFiles.read
     calls = []
-    def read(self, name, start=0):
+    def read(self, name, start=0, size=None):
         calls.append(name)
-        return original(self, name, start)
+        return original(self, name, start, size)
     monkeypatch.setattr(inventory.LocalFiles, "read", read)
     monkeypatch.setattr(host, "digest", lambda *_: pytest.fail("snapshot hashed the jar twice"))
     [copy] = controller.snapshot("dev")
@@ -1180,7 +1180,7 @@ def test_registry_lists_minecraft_instances_with_their_policies():
     assert [(i.key, i.label, i.instance, i.running) for i in found.values()] == [
         ("main", "Main", "TFMCMain01", True), ("dev", "Dev", "TFMCDev01", True),
         ("build", "Build", "TFMCBuild01", False), ("tutorial", "Tutorial", "TFMCTutorial01", True)]
-    assert found["main"].policy == host.Policy(backup=True, review=True, maintenance=True)
+    assert found["main"].policy == host.Policy(backup=True, review=True, maintenance=True, scheduled=True)
     assert found["dev"].policy.countdown == 0 and not found["dev"].policy.releases_only
     assert found["tutorial"].policy == host.Policy()
     assert isinstance(found["tutorial"].files, host.AmpFiles) and found["tutorial"].files.instance == "TFMCTutorial01"
@@ -1286,7 +1286,7 @@ def test_inventory_reads_every_server_and_reports_switched_off_ones(controller, 
     assert rows["build"]["error"] == "instance_off" and rows["build"]["jars"] == []
     reads = []
     original = inventory.LocalFiles.read
-    monkeypatch.setattr(inventory.LocalFiles, "read", lambda self, name, start=0: reads.append(name) or original(self, name, start))
+    monkeypatch.setattr(inventory.LocalFiles, "read", lambda self, name, start=0, size=None: reads.append(name) or original(self, name, start, size))
     controller.dispatch({"operation": "inventory"})
     assert not any(name.endswith(".jar") for name in reads)  # unchanged jars come from the cache
     controller.dispatch({"operation": "inventory", "server": "dev"})
@@ -1300,7 +1300,7 @@ def test_status_lists_servers_with_their_rules(controller):
     assert [s["key"] for s in status["servers"]] == ["main", "dev", "lobby"]
     assert status["servers"][0]["policy"]["backup"] is True
     assert status["servers"][2]["policy"] == {"countdown": 300, "backup": False, "dev_verified": True, "review": False,
-                                              "maintenance": False, "releases_only": True}
+                                              "maintenance": False, "releases_only": True, "scheduled": False}
 
 
 def serve(path, controller, allowed):
@@ -1350,6 +1350,12 @@ def test_amp_files_move_bytes_in_chunks_and_read_amp_times(monkeypatch):
                          "Modified": "2026-10-15T20:28:45.9320198Z", "Created": "/Date(1792302900857)/"}]
     files = host.AmpFiles(Amp(), "TFMCLobby01")
     assert files.read("plugins/a.jar") == b"0123456789" and files.read("plugins/a.jar", 8) == b"89"
+    calls.clear()
+    assert files.read("plugins/a.jar", 10) == b""  # at the end: no chunk is asked for
+    assert files.read("plugins/a.jar", size=8) == b"01234567"
+    assert [m for _, m in calls].count("FileManagerPlugin/GetFileChunk") == 2  # 8 bytes, 4 per chunk
+    with pytest.raises(OSError, match="short read"):
+        files.read("plugins/a.jar", size=12)
     with pytest.raises(FileNotFoundError):
         files.read("plugins/gone.jar")
     files.write("plugins/b.jar", b"abcdefghi")
@@ -1360,3 +1366,137 @@ def test_amp_files_move_bytes_in_chunks_and_read_amp_times(monkeypatch):
     assert item["Created"] == 1792302900.857 and item["Identity"] == item["Created"]
     assert item["Modified"] == pytest.approx(1792096125.932)
     assert {instance for instance, _ in calls} == {"TFMCLobby01"}
+
+
+
+class Unanswered(inventory.LocalFiles):
+    """Local files where chosen calls act, then lose AMP's answer."""
+
+    def __init__(self, root, lost=(), refused=()):
+        super().__init__(root)
+        self.lost, self.refused = set(lost), set(refused)
+
+    def _call(self, method, act):
+        if method in self.refused:
+            raise control.ControlError("amp_unavailable")
+        act()
+        if method in self.lost:
+            self.lost.discard(method)
+            raise control.ControlError("amp_unavailable")
+
+    def trash(self, name):
+        self._call("trash", lambda: super(Unanswered, self).trash(name))
+
+    def rename(self, name, new_name):
+        self._call("rename", lambda: super(Unanswered, self).rename(name, new_name))
+
+
+def flaky(controller, server, **kwargs):
+    plugins, _ = controller.roots[server]
+    files = Unanswered(plugins.parent, **kwargs)
+    controller.registry.found[server] = host.Instance(**{**controller.registry.found[server].__dict__, "files": files})
+    return files
+
+
+def upgrade_plan(controller, tmp_path, asset="core-2.0.0.jar"):
+    new = tmp_path / "new.jar"
+    sha = jar(new, version="2.0.0")
+    controller.fetch = lambda release, target: target.write_bytes(new.read_bytes())
+    old = controller.snapshot("dev")[0]["sha256"]
+    release = {"repo": "Core", "tag": "v2.0.0", "asset": asset, "sha256": sha, "known": [{"sha256": old, "version": "1.0.0"}]}
+    return controller._plan(controller.plan("dev", "latest", [release])["id"]), old
+
+
+def test_a_lost_answer_after_trashing_a_same_named_jar_still_restores_it(controller, tmp_path):
+    plugins, _ = controller.roots["dev"]
+    (plugins / "core-1.0.0.jar").rename(plugins / "TLibs.jar")
+    plan, old = upgrade_plan(controller, tmp_path, asset="TLibs.jar")
+    flaky(controller, "dev", lost={"trash"})
+    with pytest.raises(control.ControlError, match="amp_unavailable"):
+        controller._install(plan)
+    assert [(j["file"], j["sha256"]) for j in controller.snapshot("dev")] == [("TLibs.jar", old)]
+
+
+def test_a_lost_answer_after_renaming_the_new_jar_leaves_one_copy(controller, tmp_path):
+    plan, old = upgrade_plan(controller, tmp_path)
+    flaky(controller, "dev", lost={"rename"})
+    with pytest.raises(control.ControlError, match="amp_unavailable"):
+        controller._install(plan)
+    assert [(j["file"], j["sha256"]) for j in controller.snapshot("dev")] == [("core-1.0.0.jar", old)]
+    assert not list(controller.roots["dev"][0].glob(".control-*"))
+
+
+def test_rollback_tries_every_jar_and_says_when_it_could_not(controller, tmp_path):
+    plugins, _ = controller.roots["dev"]
+    old_core = controller.snapshot("dev")[0]["sha256"]
+    old_other = jar(plugins / "other-1.0.0.jar", name="Other")
+    core, other = tmp_path / "core.jar", tmp_path / "other.jar"
+    core_sha, other_sha = jar(core, version="2.0.0"), jar(other, name="Other", version="2.0.0")
+    controller.fetch = lambda r, p: p.write_bytes((core if r["repo"] == "Core" else other).read_bytes())
+    releases = [release_for(controller, core_sha), {"repo": "Other", "tag": "v2.0.0", "asset": "other-2.0.0.jar",
+                "sha256": other_sha, "known": [{"sha256": old_other, "version": "1.0.0"}]}]
+    plan = controller._plan(controller.plan("dev", "latest", releases)["id"])
+    files = flaky(controller, "dev")
+    original = files.trash
+    def trash(name):
+        # AMP can't move Other's jars: the swap fails, then so does its rollback.
+        if name.startswith("plugins/other-"):
+            raise control.ControlError("amp_unavailable")
+        original(name)
+    files.trash = trash
+    with pytest.raises(control.ControlError, match="install_rollback_failed"):
+        controller._install(plan)
+    # Rollback goes newest first: Other's restore fails, and Core's still runs after it.
+    assert (plugins / "core-1.0.0.jar").exists() and host.digest(plugins / "core-1.0.0.jar") == old_core
+    assert not (plugins / "core-2.0.0.jar").exists()
+
+
+def test_installed_files_are_checked_before_the_server_stops(controller, tmp_path, monkeypatch):
+    plan, old = upgrade_plan(controller, tmp_path)
+    real = controller._files_on_disk
+    answers = iter([{"core-2.0.0.jar": "not what was planned"}])
+    monkeypatch.setattr(controller, "_files_on_disk", lambda server: next(answers, None) or real(server))
+    with pytest.raises(control.ControlError, match="install_check_failed"):
+        controller._install(plan)
+    assert [(j["file"], j["sha256"]) for j in controller.snapshot("dev")] == [("core-1.0.0.jar", old)]
+
+
+@pytest.mark.parametrize("reply,detail", [
+    ({}, None),
+    ({"PopulatedTriggers": "none"}, None),
+    ({"PopulatedTriggers": [{"Id": "t", "Type": "TimeRangeTrigger", "EnabledState": 1, "Tasks": [{"EnabledState": 1}]}]}, None),
+    ({"PopulatedTriggers": [{"Id": "t", "Type": "TimeIntervalTrigger", "EnabledState": 1, "Tasks": [{"EnabledState": 1}]}]}, {"MatchHours": [6]}),
+])
+def test_an_unexpected_schedule_stops_the_restart(controller, monkeypatch, reply, detail):
+    monkeypatch.undo()
+    class Schedule(FakeAmp):
+        def call(self, server, method, **body):
+            if method == "Core/GetScheduleData":
+                return reply
+            if method == "Core/GetTimeIntervalTrigger":
+                return detail
+            return super().call(server, method, **body)
+    controller.amp = Schedule()
+    with pytest.raises(control.ControlError, match="schedule_unavailable"):
+        controller._schedule("lobby")
+
+
+def test_main_and_dev_must_have_a_schedule_but_other_servers_need_not(controller, monkeypatch):
+    monkeypatch.undo()
+    class Empty(FakeAmp):
+        def call(self, server, method, **body):
+            return {"PopulatedTriggers": []} if method == "Core/GetScheduleData" else super().call(server, method, **body)
+    controller.amp = Empty()
+    assert controller._schedule("lobby") == []
+    for server in ("main", "dev"):
+        with pytest.raises(control.ControlError, match="schedule_unavailable"):
+            controller._schedule(server)
+
+
+def test_a_server_without_its_logs_folder_is_unavailable(controller):
+    import shutil
+    shutil.rmtree(controller.roots["lobby"][1])
+    with pytest.raises(control.ControlError, match="server_files_unavailable"):
+        controller.snapshot("lobby")
+    rows = {r["key"]: r for r in controller.dispatch({"operation": "inventory"})["servers"]}
+    assert rows["lobby"]["error"] == "files_unavailable"

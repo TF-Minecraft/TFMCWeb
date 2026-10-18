@@ -63,12 +63,14 @@ class Policy:
     maintenance: bool = False
     # Any jar that is not a published release is flagged.
     releases_only: bool = True
+    # AMP's schedule must hold timed tasks; an empty one stops restarts instead of allowing any time.
+    scheduled: bool = False
 
 
 # Every other Minecraft instance gets the default Policy().
 POLICIES = {
-    "TFMCMain01": Policy(backup=True, review=True, maintenance=True),
-    "TFMCDev01": Policy(countdown=0, dev_verified=False, maintenance=True, releases_only=False),
+    "TFMCMain01": Policy(backup=True, review=True, maintenance=True, scheduled=True),
+    "TFMCDev01": Policy(countdown=0, dev_verified=False, maintenance=True, releases_only=False, scheduled=True),
 }
 # Servers listed first; the rest follow by name.
 ORDER = ("TFMCMain01", "TFMCDev01")
@@ -276,19 +278,29 @@ class AmpFiles:
             found.append({**e, "Modified": _amp_time(e["Modified"]), "Created": created, "Identity": created})
         return found
 
-    def read(self, name: str, start: int = 0) -> bytes:
+    def read(self, name: str, start: int = 0, size: int | None = None) -> bytes:
+        """Bytes from `start` to the size AMP lists (or `size`); never reads past the end."""
+        if size is None:
+            item = inventory.entry(self, name)
+            if item is None:
+                raise FileNotFoundError(name)
+            size = item["SizeBytes"]
         data = bytearray()
-        while True:
+        while start + len(data) < size:
             try:
-                chunk = self("GetFileChunk", Filename=name, Position=start + len(data), Length=CHUNK)
+                chunk = self("GetFileChunk", Filename=name, Position=start + len(data),
+                             Length=min(CHUNK, size - start - len(data)))
             except ControlError as exc:
                 if exc.code == "amp_action_failed":
                     raise FileNotFoundError(name) from None
                 raise
             piece = base64.b64decode((chunk or {}).get("Base64Data") or "")
+            if not piece:
+                break
             data += piece
-            if len(piece) < CHUNK:
-                return bytes(data)
+        if start + len(data) != size:
+            raise OSError(f"short read of {name}")
+        return bytes(data)
 
     def write(self, name: str, data: bytes):
         if inventory.entry(self, name) is not None:
@@ -450,12 +462,13 @@ class Controller:
         return True
 
     def _files(self, server: str):
-        """The server's files, once its plugins and logs folders answer."""
+        """The server's files, once its Minecraft folder lists plugins and logs folders."""
         found = self.registry.get(server)
         if not found.running:
             raise ControlError("server_files_unavailable", 503)
         try:
-            if found.files.listing("plugins") is None or found.files.listing("logs") is None:
+            folders = {e["Filename"] for e in found.files.listing("") or [] if e["IsDirectory"]}
+            if not {"plugins", "logs"} <= folders:
                 raise ControlError("server_files_unavailable", 503)
         except ControlError as exc:
             if exc.code == "amp_unavailable":
@@ -467,13 +480,18 @@ class Controller:
         files = self._files(server)
         result = []
         names = set()
-        for path, update, _ in inventory.plugin_folders(files):
+        for path, update, item in inventory.plugin_folders(files):
             if update:
                 raise ControlError("pending_plugin_update")
             try:
-                sha, name, version = inventory.describe(files.read(path))
+                sha, name, version = inventory.describe(files.read(path, size=item["SizeBytes"]))
             except PermissionError:
                 raise ControlError("plugin_unreadable") from None
+            except FileNotFoundError:
+                raise ControlError("plugins_changed") from None
+            except OSError:
+                # The jar changed size while it was read.
+                raise ControlError("plugins_changed") from None
             if not name or not version or name.lower() in names:
                 raise ControlError("plugin_inventory_conflict")
             names.add(name.lower())
@@ -498,17 +516,29 @@ class Controller:
         cached = self.schedules.get(server)
         if cached and time.monotonic() - cached[0] < 300:
             return cached[1]
+        # Anything AMP returns in another shape stops the restart rather than allowing any time.
         try:
             data = self._call(server, "Core/GetScheduleData")
+            triggers = data["PopulatedTriggers"]
+            if not isinstance(triggers, list):
+                raise TypeError("PopulatedTriggers")
             times = []
-            for trigger in (data or {}).get("PopulatedTriggers") or []:
-                if trigger.get("Type") != "TimeIntervalTrigger" or not trigger.get("EnabledState"):
+            for trigger in triggers:
+                if not trigger["EnabledState"] or not any(task["EnabledState"] for task in trigger["Tasks"]):
                     continue
-                if not any(task.get("EnabledState") for task in trigger.get("Tasks") or []):
-                    continue
-                times.append(self._call(server, "Core/GetTimeIntervalTrigger", Id=trigger["Id"]))
+                if "Time" not in trigger["Type"]:
+                    continue  # Event triggers, such as on start, have no time.
+                if trigger["Type"] != "TimeIntervalTrigger":
+                    raise TypeError(trigger["Type"])
+                detail = self._call(server, "Core/GetTimeIntervalTrigger", Id=trigger["Id"])
+                if not all(isinstance(detail[key], list) for key in
+                           ("MatchMonths", "MatchDays", "MatchDaysOfMonth", "MatchHours", "MatchMinutes")):
+                    raise TypeError("trigger fields")
+                times.append(detail)
         except (ControlError, KeyError, TypeError, AttributeError) as exc:
             raise ControlError("schedule_unavailable") from exc
+        if not times and self.registry.get(server).policy.scheduled:
+            raise ControlError("schedule_unavailable")
         self.schedules[server] = (time.monotonic(), times)
         return times
 
@@ -902,7 +932,20 @@ class Controller:
                 raise ControlError("release_checksum_failed")
             files.rename("plugins/" + temporary, name)
 
+        def restore(change: dict):
+            """Put the original jar back, judging only by what is on disk now."""
+            old, new = "plugins/" + change["old_file"], "plugins/" + change["asset"]
+            if change["asset"] != change["old_file"] and inventory.entry(files, new) is not None:
+                files.trash(new)
+            if inventory.entry(files, old) is not None:
+                if current(change["old_file"]) == expected[change["old_file"]]:
+                    return
+                files.trash(old)
+            place((backup / change["old_file"]).read_bytes(), ".restore-" + plan["id"], change["old_file"])
+
         # The old jar moves to AMP's trash, so Java keeps its open copy until stop.
+        # Each change counts as started before its first write: AMP can act on a
+        # call and still fail to answer, so rollback checks the files themselves.
         swapped = []
         try:
             for change in plan["changes"]:
@@ -914,22 +957,48 @@ class Controller:
                 same = change["asset"] == change["old_file"]
                 if not same and inventory.entry(files, "plugins/" + change["asset"]) is not None:
                     raise ControlError("plugin_inventory_conflict")
+                swapped.append(change)
                 if same:
                     files.trash("plugins/" + change["old_file"])
-                    swapped.append(change)
                     place(data, ".control-" + plan["id"], change["asset"])
                 else:
                     place(data, ".control-" + plan["id"], change["asset"])
-                    swapped.append(change)
                     files.trash("plugins/" + change["old_file"])
-        except Exception:
-            # Put every displaced jar back from the verified backup.
+            if plan["changes"] and self._files_on_disk(plan["server"]) != self._expected_files(plan):
+                raise ControlError("install_check_failed")
+        except Exception as exc:
+            failed = []
             for change in reversed(swapped):
-                if inventory.entry(files, "plugins/" + change["asset"]) is not None:
-                    files.trash("plugins/" + change["asset"])
-                if inventory.entry(files, "plugins/" + change["old_file"]) is None:
-                    place((backup / change["old_file"]).read_bytes(), ".restore-" + plan["id"], change["old_file"])
+                try:
+                    restore(change)
+                except Exception:
+                    logging.exception("Could not restore %s on %s", change["old_file"], plan["server"])
+                    failed.append(change["repo"])
+            for temporary in (".control-", ".restore-"):
+                try:
+                    if inventory.entry(files, "plugins/" + temporary + plan["id"]) is not None:
+                        files.trash("plugins/" + temporary + plan["id"])
+                except Exception:
+                    logging.exception("Could not clear a temporary jar on %s", plan["server"])
+            try:
+                intact = not swapped or self._files_on_disk(plan["server"]) == self._expected_files({**plan, "changes": []})
+            except Exception:
+                intact = False
+            if failed or not intact:
+                raise ControlError("install_rollback_failed") from exc
             raise
+
+    def _files_on_disk(self, server: str) -> dict[str, str]:
+        return {jar["file"]: jar["sha256"] for jar in self.snapshot(server)}
+
+    @staticmethod
+    def _expected_files(plan: dict) -> dict[str, str]:
+        """Each jar file and its SHA-256 once the plan's changes are installed."""
+        found = {jar["file"]: jar["sha256"] for jar in plan["baseline"]}
+        for change in plan["changes"]:
+            found.pop(change["old_file"])
+            found[change["asset"]] = change["sha256"]
+        return found
 
     @staticmethod
     def _boot(files):
@@ -957,12 +1026,7 @@ class Controller:
             if (name in changed or plan.get("failed_at_startup", {}).get(name) != version
                     or startup["failed"].get(name) != version):
                 return False
-        current = self.snapshot(plan["server"])
-        expected_files = {jar["file"]: jar["sha256"] for jar in plan["baseline"]}
-        for change in plan["changes"]:
-            expected_files.pop(change["old_file"])
-            expected_files[change["asset"]] = change["sha256"]
-        if {jar["file"]: jar["sha256"] for jar in current} != expected_files:
+        if self._files_on_disk(plan["server"]) != self._expected_files(plan):
             return False
         return {self._error_key(line) for line in self._boot_errors(files, startup["log"])} <= {
             self._error_key(line) for line in plan["boot_errors"]}

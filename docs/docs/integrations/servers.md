@@ -182,7 +182,8 @@ files against the reviewed plan and copies each jar it will replace into its own
 state folder. It writes each verified jar through AMP under a hidden name
 Paper ignores, checks AMP's MD5 of it, renames it into place and moves the old
 jar to the instance's `.trash`; Java keeps its open copy until it stops. It
-then sends console `stop`, and AMP relaunches Paper. The helper never uses AMP
+then reads every jar again and checks the files and hashes against the plan
+before it sends console `stop`, and AMP relaunches Paper. The helper never uses AMP
 instance `stop` or `restart`, kills Java, or runs reload commands.
 
 A new completed startup must load every changed plugin and every previously
@@ -389,8 +390,10 @@ restart would come within fifteen minutes of any of those tasks. A restart
 reserves its countdown plus fifteen minutes: twenty for a normal Main restart,
 fifteen for Dev or an emergency restart. Main's 05:30 and 05:55 warnings,
 06:00 Stop, 06:02 backup and 06:10 Start block 05:15–06:25, and its 07:00
-console task blocks 06:45–07:15. A schedule AMP can't return stops the restart
-with `schedule_unavailable`. Recheck other backup jobs and offline work before
+console task blocks 06:45–07:15. A schedule AMP can't return, or returns in
+an unexpected shape, stops the restart with `schedule_unavailable`; so does an
+empty schedule on Main or Dev (`scheduled` in their rules), which always have
+timed tasks. Recheck other backup jobs and offline work before
 confirming a restart.
 
 Control state is under `/var/lib/tfmc-server-control/state/`.
@@ -401,8 +404,13 @@ when a later job has completed. Expired unaccepted plans are removed when a
 new plan is prepared; accepted job evidence/backups remain until an operator
 archives them.
 
-If a swap fails, the helper moves the new jars to AMP's trash, writes every
-displaced jar back from its backups and leaves maintenance enabled. If the helper crashes or
+If a swap fails, the helper restores every changed plugin from what is on disk
+then, since AMP can act on a call and still fail to answer: it moves any new
+jar to AMP's trash and writes the original back from its backup unless the
+original is still in place. It tries every plugin even when one fails, then
+checks the folder against the original files. Maintenance stays enabled. If
+anything could not be put back, the job fails with `install_rollback_failed`
+and the plugins folder needs fixing in AMP before the next restart. If the helper crashes or
 the host reboots, active jobs are marked failed and never replayed. A
 countdown interrupted by a helper restart announces cancellation when the
 console is reachable. A crash during installation may require manual recovery.

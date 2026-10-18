@@ -101,7 +101,8 @@ def check_scope(files: dict[str, bytes], commit: str):
 
 def status(path: Path) -> dict:
     with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as connection:
-        connection.settimeout(10)
+        # The first status after a start waits for the helper to list AMP's instances.
+        connection.settimeout(60)
         connection.connect(str(path))
         connection.sendall(b'{"operation":"status"}\n')
         with connection.makefile("rb") as stream:
@@ -126,7 +127,7 @@ def check_idle():
 
 
 def healthy() -> bool:
-    deadline = time.monotonic() + 30
+    deadline = time.monotonic() + 120
     while time.monotonic() < deadline:
         try:
             if running() and all(scope(sorted(status(path).get("allowed_servers", []))) for path, scope in SOCKETS.items()):

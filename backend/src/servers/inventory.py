@@ -474,10 +474,13 @@ class LocalFiles:
                           "Modified": stat.st_mtime, "Created": stat.st_ctime, "Identity": stat.st_ino})
         return found
 
-    def read(self, name: str, start: int = 0) -> bytes:
+    def read(self, name: str, start: int = 0, size: int | None = None) -> bytes:
         with self._path(name).open("rb") as handle:
             handle.seek(start)
-            return handle.read()
+            data = handle.read() if size is None else handle.read(size - start)
+        if size is not None and len(data) != size - start:
+            raise OSError(f"short read of {name}")
+        return data
 
     def write(self, name: str, data: bytes):
         with self._path(name).open("xb") as handle:
@@ -548,7 +551,7 @@ def read_jars(files, cache: dict | None = None) -> list[Jar]:
         try:
             described = cache.get(key) if cache is not None else None
             if described is None:
-                described = describe(files.read(path))
+                described = describe(files.read(path, size=item["SizeBytes"]))
                 if cache is not None:
                     cache[key] = described
         except (OSError, ValueError):
