@@ -407,10 +407,11 @@ archives them.
 If a swap fails, the helper restores every changed plugin from what is on disk
 then, since AMP can act on a call and still fail to answer: it moves any new
 jar to AMP's trash and writes the original back from its backup unless the
-original is still in place. It tries every plugin even when one fails, then
+original is still in place. It tries every plugin, each twice if needed, then
 checks the folder against the original files. Maintenance stays enabled. If
-anything could not be put back, the job fails with `install_rollback_failed`
-and the plugins folder needs fixing in AMP before the next restart. If the helper crashes or
+that check fails, the job fails with `install_rollback_failed` and the plugins
+folder needs fixing in AMP before the next restart; otherwise the job reports
+the error that stopped the install. If the helper crashes or
 the host reboots, active jobs are marked failed and never replayed. A
 countdown interrupted by a helper restart announces cancellation when the
 console is reachable. A crash during installation may require manual recovery.

@@ -1466,6 +1466,8 @@ def test_installed_files_are_checked_before_the_server_stops(controller, tmp_pat
     ({"PopulatedTriggers": "none"}, None),
     ({"PopulatedTriggers": [{"Id": "t", "Type": "TimeRangeTrigger", "EnabledState": 1, "Tasks": [{"EnabledState": 1}]}]}, None),
     ({"PopulatedTriggers": [{"Id": "t", "Type": "TimeIntervalTrigger", "EnabledState": 1, "Tasks": [{"EnabledState": 1}]}]}, {"MatchHours": [6]}),
+    ({"PopulatedTriggers": [{"Id": "t", "Type": "TimeIntervalTrigger", "EnabledState": 1, "Tasks": [{"EnabledState": 1}]}]}, trigger([25], [0])),
+    ({"PopulatedTriggers": [{"Id": "t", "Type": "TimeIntervalTrigger", "EnabledState": 1, "Tasks": [{"EnabledState": 1}]}]}, trigger(["6"], [0])),
 ])
 def test_an_unexpected_schedule_stops_the_restart(controller, monkeypatch, reply, detail):
     monkeypatch.undo()
@@ -1539,3 +1541,35 @@ def test_a_failure_on_a_switched_off_server_can_still_be_marked_handled(controll
         controller.dispatch({"operation": "plan", "server": "lobby", "mode": "restart", "releases": []})
     with pytest.raises(control.ControlError, match="bad_server"):
         controller.dispatch({**body, "server": "nowhere"})
+
+
+
+def test_rollback_retries_a_restore_whose_reply_was_lost(controller, tmp_path):
+    plan, old = upgrade_plan(controller, tmp_path)
+    files = flaky(controller, "dev")
+    original = inventory.LocalFiles.trash
+    lost = {"plugins/core-1.0.0.jar", "plugins/core-2.0.0.jar"}
+    def trash(name):
+        # Trashing the old jar, then rollback's trashing of the new one, both act without an answer.
+        original(files, name)
+        if name in lost:
+            lost.discard(name)
+            raise control.ControlError("amp_unavailable")
+    files.trash = trash
+    with pytest.raises(control.ControlError, match="amp_unavailable"):
+        controller._install(plan)
+    assert [(j["file"], j["sha256"]) for j in controller.snapshot("dev")] == [("core-1.0.0.jar", old)]
+
+
+def test_a_folder_proven_intact_reports_the_original_error(controller, tmp_path):
+    plan, old = upgrade_plan(controller, tmp_path)
+    files = flaky(controller, "dev")
+    original = inventory.LocalFiles.rename
+    def rename(name, new_name):
+        original(files, name, new_name)
+        # The new jar's rename and the restore's both act without an answer.
+        raise control.ControlError("amp_unavailable")
+    files.rename = rename
+    with pytest.raises(control.ControlError, match="amp_unavailable"):
+        controller._install(plan)
+    assert [(j["file"], j["sha256"]) for j in controller.snapshot("dev")] == [("core-1.0.0.jar", old)]

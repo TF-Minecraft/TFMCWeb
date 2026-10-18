@@ -45,6 +45,9 @@ BACKUP_WAIT = 1200
 CHUNK = 4 << 20
 # Restarts keep this far from any task in the instance's AMP schedule.
 SCHEDULE_MARGIN = timedelta(minutes=15)
+# AMP time trigger fields and the values each may hold.
+SCHEDULE_FIELDS = {"MatchMonths": range(12), "MatchDays": range(7), "MatchDaysOfMonth": range(1, 32),
+                   "MatchHours": range(24), "MatchMinutes": range(60)}
 STATES = {0: "stopped", 5: "starting", 10: "starting", 20: "running", 30: "restarting", 40: "stopping",
           45: "sleeping", 50: "sleeping", 60: "waiting", 70: "installing", 75: "updating", 100: "failed"}
 
@@ -538,9 +541,10 @@ class Controller:
                 if trigger["Type"] != "TimeIntervalTrigger":
                     raise TypeError(trigger["Type"])
                 detail = self._call(server, "Core/GetTimeIntervalTrigger", Id=trigger["Id"])
-                if not all(isinstance(detail[key], list) for key in
-                           ("MatchMonths", "MatchDays", "MatchDaysOfMonth", "MatchHours", "MatchMinutes")):
-                    raise TypeError("trigger fields")
+                for key, values in SCHEDULE_FIELDS.items():
+                    if not isinstance(detail[key], list) or not all(
+                            type(v) is int and v in values for v in detail[key]):
+                        raise TypeError(key)
                 times.append(detail)
         except (ControlError, KeyError, TypeError, AttributeError) as exc:
             raise ControlError("schedule_unavailable") from exc
@@ -975,11 +979,15 @@ class Controller:
                 raise ControlError("install_check_failed")
         except Exception as exc:
             failed = []
+            # restore() judges by disk state, so a second try finishes what a lost reply interrupted.
             for change in reversed(swapped):
-                try:
-                    restore(change)
-                except Exception:
-                    logging.exception("Could not restore %s on %s", change["old_file"], plan["server"])
+                for attempt in (1, 2):
+                    try:
+                        restore(change)
+                        break
+                    except Exception:
+                        logging.exception("Could not restore %s on %s (try %d)", change["old_file"], plan["server"], attempt)
+                else:
                     failed.append(change["repo"])
             for temporary in (".control-", ".restore-"):
                 try:
@@ -991,7 +999,8 @@ class Controller:
                 intact = not swapped or self._files_on_disk(plan["server"]) == self._expected_files({**plan, "changes": []})
             except Exception:
                 intact = False
-            if failed or not intact:
+            # A folder proven to match the original is fine, whatever the restore calls answered.
+            if not intact:
                 raise ControlError("install_rollback_failed") from exc
             raise
 
