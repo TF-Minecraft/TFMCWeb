@@ -230,7 +230,7 @@ export default function MagicPage() {
       </div>
       <p className="mt-3 text-sm text-[var(--tfmc-mist)]">
         A weak shrine cannot fill a high-tier charge. The band printed on a charge (&quot;Cerrith II&quot;) is just a
-        readout of how much aura it holds: under 10 shows a dash, 10 is I, 40 is II, 75 is III, 110 is IV.
+        readout of how much aura it holds: under 10 shows a dash, 10 is I, 35 is II, 65 is III, 95 is IV.
       </p>
       <WikiSectionHeading
         id="orbs"
@@ -294,7 +294,7 @@ export default function MagicPage() {
         ]}
       />
       <p className="mt-4 text-sm text-[var(--tfmc-mist)]">
-        A refusal explains itself in chat, for example <em>&quot;This spell needs Cerrith 40. You carry 25.&quot;</em>,
+        A refusal explains itself in chat, for example <em>&quot;This spell needs Cerrith II. You carry I.&quot;</em>,
         but only once every 30 seconds per weapon and element, so do not expect a message on every click. To fix a{" "}
         <em>Damaged</em> weapon, right-click an <strong>empty</strong> <StationLink name="Magic Station" />: it works
         the loose runes free and hands them back.
