@@ -157,7 +157,9 @@ staff approved; it is not a cache for later panel checks.
 Upgrades on servers that need Dev evidence also require the target release's exact bytes to be on Dev,
 with its version enabled without a subsequent enable failure or disable at
 Dev's last completed startup. A jar changed after
-that startup is not proof and is skipped. This check proves that the release
+that startup is not proof and is skipped. AMP reports a file's modification
+time, not its change time, so a jar copied in with its old time kept (`cp -p`,
+`rsync -t`) after the startup still counts. This check proves that the release
 was loaded; staff must still verify its changed features and dependencies.
 Related migrations must be deployed as a reviewed set with a recovery plan.
 Use the manual deployment procedure when the proposed set needs offline work.
