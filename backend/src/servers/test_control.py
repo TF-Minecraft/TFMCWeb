@@ -1242,7 +1242,10 @@ def test_an_emergency_restart_needs_a_countdown_to_skip(controller, monkeypatch)
     assert job["phase"] == "installing" and job["countdown"] == 0
 
 
-def test_main_requires_its_maintenance_plugin(controller):
+def test_main_requires_its_maintenance_plugin(controller, monkeypatch):
+    monkeypatch.setattr(host.time, "sleep", lambda _: None)
+    clock = iter(range(0, 1000, 5))
+    monkeypatch.setattr(host.time, "monotonic", lambda: next(clock))
     (controller.roots["main"][0] / "Maintenance" / "config.yml").unlink()
     with pytest.raises(control.ControlError, match="maintenance_unavailable"):
         controller.plan("main", "restart", [])
@@ -1725,3 +1728,36 @@ def test_hidden_instances_are_left_out(monkeypatch):
     assert list(registry.all()) == ["lobby"]
     with pytest.raises(control.ControlError, match="bad_server"):
         registry.get("s6")
+
+
+
+@pytest.mark.parametrize("first", ["short read", "half written", "missing"])
+def test_maintenance_being_rewritten_is_read_again(controller, monkeypatch, first):
+    # Tutorial's restart on 2026-10-18 failed here: the read caught Maintenance rewriting its config.
+    monkeypatch.setattr(host.time, "sleep", lambda _: None)
+    original = inventory.LocalFiles.read
+    calls = []
+    def read(self, name, start=0, size=None):
+        if name.endswith("Maintenance/config.yml") and not calls:
+            calls.append(1)
+            if first == "short read":
+                raise OSError("short read of " + name)
+            if first == "half written":
+                return b"maintenance-ena"
+            raise FileNotFoundError(name)
+        return original(self, name, start, size)
+    monkeypatch.setattr(inventory.LocalFiles, "read", read)
+    assert controller._maintenance("main") is False and calls == [1]
+
+
+def test_maintenance_that_stays_unreadable_is_unavailable(controller, monkeypatch):
+    monkeypatch.setattr(host.time, "sleep", lambda _: None)
+    clock = iter(range(0, 1000, 5))
+    monkeypatch.setattr(host.time, "monotonic", lambda: next(clock))
+    (controller.roots["main"][0] / "Maintenance" / "config.yml").write_text("garbled\n")
+    with pytest.raises(control.ControlError, match="maintenance_unavailable"):
+        controller._maintenance("main")
+
+
+def test_a_server_without_the_maintenance_folder_has_none(controller):
+    assert controller._maintenance("lobby") is None
