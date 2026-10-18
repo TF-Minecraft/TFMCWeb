@@ -1,10 +1,14 @@
 """Host-side server control. Run as tfmc-server-control, outside website containers.
 
-The Unix socket only accepts plans, countdowns, cancellation and reopening.
-Console input and paths are fixed here, never supplied by website callers.
-The helper sends console input and takes Main's countdown backup through the AMP
-API, using its own login from the systemd credential `amp-login`. Without that
-credential it still answers status requests, but every console call fails.
+Every Minecraft instance in AMP is a server here. The helper reaches each one
+only through the AMP API, using its own login from the systemd credential
+`amp-login`: console input, backups, schedules and the files in the instance's
+Minecraft folder. Without that credential it still answers status requests,
+but it knows no servers.
+
+The Unix socket only accepts inventory reads, plans, countdowns, cancellation
+and reopening. Console input and paths are fixed here, never supplied by
+website callers. POLICIES holds the rules that differ between servers.
 """
 from __future__ import annotations
 
@@ -22,6 +26,9 @@ import time
 import urllib.parse
 import urllib.request
 import uuid
+import base64
+from concurrent.futures import ThreadPoolExecutor
+from dataclasses import dataclass, asdict
 from pathlib import Path
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
@@ -30,29 +37,88 @@ from src.servers import inventory
 from src.servers.control import ControlError, MAX_MESSAGE
 
 ACTIVE = {"countdown", "installing", "restarting", "checking", "reopening"}
-INSTANCES = {"main": "TFMCMain01", "dev": "TFMCDev01"}
 ID = re.compile(r"^[0-9a-f]{32}$")
 SAFE_NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,150}$")
 SHA = re.compile(r"^[0-9a-f]{64}$")
 AMP_ADS = os.getenv("SERVER_CONTROL_AMP_URL", "http://127.0.0.1:8080")
 BACKUP_WAIT = 1200
+CHUNK = 4 << 20
+# Restarts keep this far from any task in the instance's AMP schedule.
+SCHEDULE_MARGIN = timedelta(minutes=15)
+# AMP time trigger fields and the values each may hold.
+SCHEDULE_FIELDS = {"MatchMonths": range(12), "MatchDays": range(7), "MatchDaysOfMonth": range(1, 32),
+                   "MatchHours": range(24), "MatchMinutes": range(60)}
+STATES = {0: "stopped", 5: "starting", 10: "starting", 20: "running", 30: "restarting", 40: "stopping",
+          45: "sleeping", 50: "sleeping", 60: "waiting", 70: "installing", 75: "updating", 100: "failed"}
+
+
+@dataclass(frozen=True)
+class Policy:
+    # In-game warnings before the restart, in seconds; 0 restarts at once.
+    countdown: int = 300
+    # AMP takes a backup during the countdown and the restart waits for it.
+    backup: bool = False
+    # Updates install only releases Dev already runs.
+    dev_verified: bool = True
+    # After changed plugins the server stays in maintenance until staff reopen it.
+    review: bool = False
+    # The Maintenance plugin must be installed; otherwise it is used when present.
+    maintenance: bool = False
+    # Any jar that is not a published release is flagged.
+    releases_only: bool = True
+    # AMP's schedule must hold timed tasks; an empty one stops restarts instead of allowing any time.
+    scheduled: bool = False
+
+
+# Every other Minecraft instance gets the default Policy().
+POLICIES = {
+    "TFMCMain01": Policy(backup=True, review=True, maintenance=True, scheduled=True),
+    "TFMCDev01": Policy(countdown=0, dev_verified=False, maintenance=True, releases_only=False, scheduled=True),
+}
+# Servers listed first; the rest follow by name.
+ORDER = ("TFMCMain01", "TFMCDev01")
+ANNOUNCEMENTS = ((300, "5 minutes"), (180, "3 minutes"), (60, "1 minute"), (30, "30 seconds"), (10, "10 seconds"))
+
+
+def server_key(instance: str) -> tuple[str, str]:
+    """(key, label) from an AMP instance name: TFMCLobby01 is lobby, Lobby; TFMCS601 is s6, S6."""
+    # AMP numbers instances with two digits.
+    label = re.sub(r"\d{2}$", "", re.sub(r"^(TFMC|TF)", "", instance)) or instance
+    return re.sub(r"[^a-z0-9]+", "-", label.lower()).strip("-") or instance.lower(), label
 
 
 def numeric_version(value: str) -> tuple[int, ...] | None:
     return tuple(map(int, value.split("."))) if re.fullmatch(r"\d+(?:\.\d+){1,3}", value) else None
 
 
-def scheduled_restart(server: str, now: float, emergency_override: bool = False) -> bool:
-    start = datetime.fromtimestamp(now, timezone.utc)
-    end = start + timedelta(minutes=20 if server == "main" and not emergency_override else 15)
+def _zone() -> ZoneInfo:
+    return ZoneInfo(os.getenv("SERVER_CONTROL_LOG_TIMEZONE", "Etc/UTC"))
+
+
+def scheduled_restart(times: list[dict], now: float, minutes: float) -> bool:
+    """Whether [now, now + minutes] comes within SCHEDULE_MARGIN of a scheduled AMP task.
+
+    `times` are AMP time triggers: MatchMonths (0-11), MatchDays (0 is Sunday),
+    MatchDaysOfMonth, MatchHours and MatchMinutes; an empty list matches anything.
+    """
+    zone = _zone()
+    start = datetime.fromtimestamp(now, zone)
+    end = start + timedelta(minutes=minutes)
     midnight = start.replace(hour=0, minute=0, second=0, microsecond=0)
-    for day in (-1, 0, 1):
-        base = midnight + timedelta(days=day)
-        windows = [(base + timedelta(hours=5, minutes=25), base + timedelta(hours=6, minutes=20))] if server == "main" else [
-            (base + timedelta(hours=hour, minutes=-15), base + timedelta(hours=hour, minutes=15))
-            for hour in (0, 6, 12, 18)]
-        if any(start <= right and end >= left for left, right in windows):
-            return True
+    for trigger in times:
+        for day in (-1, 0, 1):
+            base = (midnight + timedelta(days=day)).replace(tzinfo=None)
+            if trigger.get("MatchMonths") and base.month - 1 not in trigger["MatchMonths"]:
+                continue
+            if trigger.get("MatchDays") and (base.weekday() + 1) % 7 not in trigger["MatchDays"]:
+                continue
+            if trigger.get("MatchDaysOfMonth") and base.day not in trigger["MatchDaysOfMonth"]:
+                continue
+            for hour in trigger.get("MatchHours") or range(24):
+                for minute in trigger.get("MatchMinutes") or range(60):
+                    at = base.replace(hour=hour, minute=minute).replace(tzinfo=zone)
+                    if start <= at + SCHEDULE_MARGIN and end >= at - SCHEDULE_MARGIN:
+                        return True
     return False
 
 
@@ -133,38 +199,195 @@ class Amp:
             raise ControlError("amp_login_failed")
         return result["sessionID"]
 
-    def _session(self, server: str) -> tuple[str, str]:
-        if server not in self.sessions:
-            ads = self._login(self.ads)
-            ports = {instance["InstanceName"]: instance["Port"]
-                     for target in self._post(self.ads, "ADSModule/GetInstances", SESSIONID=ads)
-                     for instance in target.get("AvailableInstances", [])}
-            if INSTANCES[server] not in ports:
-                raise ControlError("amp_unavailable")
-            base = f"http://127.0.0.1:{int(ports[INSTANCES[server]])}"
-            self.sessions[server] = base, self._login(base)
-        return self.sessions[server]
-
-    def call(self, server: str, method: str, **body):
+    def instances(self) -> list[dict]:
+        """Every instance ADS manages, as AMP lists it."""
         with self.lock:
             for attempt in (1, 2):
-                base, session = self._session(server)
+                if "" not in self.sessions:
+                    self.sessions[""] = self.ads, self._login(self.ads)
                 try:
-                    return self._post(base, method, SESSIONID=session, **body)
+                    targets = self._post(self.ads, "ADSModule/GetInstances", SESSIONID=self.sessions[""][1])
+                    return [instance for target in targets or [] for instance in target.get("AvailableInstances", [])]
                 except PermissionError:
-                    # Sessions expire; log in again once.
-                    del self.sessions[server]
-                except ControlError as exc:
-                    # Look the instance up again next time; never resend, as AMP may have acted.
-                    if exc.code == "amp_unavailable":
-                        self.sessions.pop(server, None)
-                    raise
+                    del self.sessions[""]
             raise ControlError("amp_login_failed")
+
+    def _session(self, instance: str) -> tuple[str, str]:
+        if instance not in self.sessions:
+            ads = self._login(self.ads)
+            ports = {item["InstanceName"]: item["Port"]
+                     for target in self._post(self.ads, "ADSModule/GetInstances", SESSIONID=ads)
+                     for item in target.get("AvailableInstances", [])}
+            if instance not in ports:
+                raise ControlError("amp_unavailable")
+            base = f"http://127.0.0.1:{int(ports[instance])}"
+            self.sessions[instance] = base, self._login(base)
+        return self.sessions[instance]
+
+    def call(self, instance: str, method: str, **body):
+        # The lock covers only the session table, so calls to AMP run in parallel.
+        for attempt in (1, 2):
+            with self.lock:
+                current = self._session(instance)
+            base, session = current
+            try:
+                return self._post(base, method, SESSIONID=session, **body)
+            except PermissionError:
+                # Sessions expire; log in again once.
+                self._forget(instance, current)
+            except ControlError as exc:
+                # Look the instance up again next time; never resend, as AMP may have acted.
+                if exc.code == "amp_unavailable":
+                    self._forget(instance, current)
+                raise
+        raise ControlError("amp_login_failed")
+
+    def _forget(self, instance: str, session: tuple[str, str]):
+        with self.lock:
+            if self.sessions.get(instance) == session:
+                del self.sessions[instance]
+
+
+def _amp_time(value) -> float:
+    """AMP's ISO times, or the /Date(ms)/ form some calls still return."""
+    if isinstance(value, (int, float)):
+        return float(value)
+    match = re.fullmatch(r"/Date\((-?\d+)\)/", str(value))
+    if match:
+        return int(match[1]) / 1000
+    # Python 3.10's fromisoformat takes neither 7 fractional digits nor "Z".
+    match = re.fullmatch(r"(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})(?:\.(\d+))?(Z|[+-]\d{2}:\d{2})?", str(value))
+    if not match:
+        raise ValueError(f"unexpected AMP time {value!r}")
+    zone = timezone.utc if match[3] in {None, "Z"} else datetime.strptime(match[3].replace(":", ""), "%z").tzinfo
+    stamp = datetime.strptime(match[1], "%Y-%m-%dT%H:%M:%S").replace(tzinfo=zone).timestamp()
+    return stamp + (int(match[2]) / 10 ** len(match[2]) if match[2] else 0)
+
+
+class AmpFiles:
+    """One instance's Minecraft folder through AMP's file manager, with LocalFiles' calls."""
+
+    def __init__(self, amp: Amp, instance: str):
+        self.amp, self.instance = amp, instance
+
+    def __call__(self, method: str, **body):
+        return self.amp.call(self.instance, f"FileManagerPlugin/{method}", **body)
+
+    def listing(self, folder: str) -> list[dict] | None:
+        try:
+            result = self("GetDirectoryListing", Dir=folder)
+        except ControlError as exc:
+            if exc.code == "amp_action_failed":
+                return None
+            raise
+        if not isinstance(result, list):
+            return None
+        found = []
+        for e in result:
+            created = _amp_time(e.get("Created", e["Modified"]))
+            found.append({**e, "Modified": _amp_time(e["Modified"]), "Created": created, "Identity": created})
+        return found
+
+    def read(self, name: str, start: int = 0, size: int | None = None) -> bytes:
+        """Bytes from `start` to the size AMP lists (or `size`); never reads past the end."""
+        if size is None:
+            item = inventory.entry(self, name)
+            if item is None:
+                raise FileNotFoundError(name)
+            size = item["SizeBytes"]
+        data = bytearray()
+        while start + len(data) < size:
+            try:
+                chunk = self("GetFileChunk", Filename=name, Position=start + len(data),
+                             Length=min(CHUNK, size - start - len(data)))
+            except ControlError as exc:
+                if exc.code == "amp_action_failed":
+                    raise FileNotFoundError(name) from None
+                raise
+            piece = base64.b64decode((chunk or {}).get("Base64Data") or "")
+            if not piece:
+                break
+            data += piece
+        if start + len(data) != size:
+            raise OSError(f"short read of {name}")
+        return bytes(data)
+
+    def write(self, name: str, data: bytes):
+        if inventory.entry(self, name) is not None:
+            raise FileExistsError(name)
+        for offset in range(0, max(len(data), 1), CHUNK):
+            self("WriteFileChunk", Filename=name, Offset=offset,
+                 Data=base64.b64encode(data[offset:offset + CHUNK]).decode(), FinalChunk=offset + CHUNK >= len(data))
+
+    def rename(self, name: str, new_name: str):
+        self("RenameFile", Filename=name, NewFilename=new_name)
+
+    def trash(self, name: str):
+        self("TrashFile", Filename=name)
+
+    def md5(self, name: str) -> str:
+        return str(self("CalculateFileMD5Sum", FilePath=name)["Result"]).lower()
+
+
+@dataclass(frozen=True)
+class Instance:
+    key: str
+    label: str
+    instance: str
+    policy: Policy
+    # The AMP instance is up, so its API and files can be reached.
+    running: bool
+    files: object
+
+
+class Registry:
+    """Every Minecraft instance in AMP, looked up again at most once a minute."""
+
+    def __init__(self, amp: Amp | None, fixed: list[Instance] | None = None, ttl: float = 60):
+        self.amp, self.ttl = amp, ttl
+        self.lock = threading.Lock()
+        self.found: dict[str, Instance] = {i.key: i for i in fixed or []}
+        self.fixed = fixed is not None
+        self.checked = 0.0
+
+    def all(self) -> dict[str, Instance]:
+        if self.fixed:
+            return dict(self.found)
+        with self.lock:
+            if self.amp is not None and time.monotonic() - self.checked > self.ttl:
+                try:
+                    rows = [r for r in self.amp.instances() if r.get("Module") == "Minecraft"]
+                except (ControlError, OSError, KeyError, TypeError, ValueError):
+                    logging.exception("Could not list AMP instances")
+                    rows = None
+                if rows is not None:
+                    self.found = self._build(rows)
+                    self.checked = time.monotonic()
+            return dict(self.found)
+
+    def _build(self, rows: list[dict]) -> dict[str, Instance]:
+        ordered = sorted(rows, key=lambda r: (ORDER.index(r["InstanceName"]) if r["InstanceName"] in ORDER else len(ORDER),
+                                              server_key(r["InstanceName"])[1].lower()))
+        found = {}
+        for row in ordered:
+            name = row["InstanceName"]
+            key, label = server_key(name)
+            if key in found:
+                key = name.lower()
+            found[key] = Instance(key, label, name, POLICIES.get(name, Policy()), bool(row.get("Running")),
+                                  AmpFiles(self.amp, name))
+        return found
+
+    def get(self, key: str) -> Instance:
+        found = self.all().get(key) if isinstance(key, str) else None
+        if found is None:
+            raise ControlError("bad_server", 400)
+        return found
 
 
 class Controller:
-    def __init__(self, state: Path, roots: dict[str, tuple[Path, Path]], *, console=None, fetch=None, amp=None):
-        self.state, self.roots = state, roots
+    def __init__(self, state: Path, registry: Registry, *, console=None, fetch=None, amp=None):
+        self.state, self.registry = state, registry
         self.amp = amp
         self.console = console or self._console
         self.fetch = fetch or download
@@ -172,6 +395,9 @@ class Controller:
         self.cancelled = threading.Event()
         self.worker = None
         self.status_json = "[]"
+        # Display reads skip unchanged jars; plans and restarts always read fresh bytes.
+        self.jar_cache: dict[str, dict] = {}
+        self.schedules: dict[str, tuple[float, list[dict]]] = {}
         state.mkdir(parents=True, exist_ok=True, mode=0o700)
         self.jobs = json.loads((state / "jobs.json").read_text()) if (state / "jobs.json").exists() else {}
         # Recover an accepted job whose journal reached disk just before a
@@ -203,14 +429,17 @@ class Controller:
             raise ControlError("amp_not_configured", 503)
         return self.amp
 
+    def _call(self, server: str, method: str, **body):
+        return self._client().call(self.registry.get(server).instance, method, **body)
+
     def _console(self, server: str, command: str):
-        self._client().call(server, "Core/SendConsoleMessage", message=command)
+        self._call(server, "Core/SendConsoleMessage", message=command)
 
     def _take_backup(self, server: str, job_id: str, actor: str, reason: str) -> dict:
         title = f"Before restart {job_id[:8]}"
-        task = self._client().call(server, "LocalFileBackupPlugin/TakeBackup", Title=title,
-                               Description=f"{actor}: {reason}"[:500], Sticky=False, Local=True, S3=False,
-                               WasCreatedAutomatically=False, DirtyOnly=False, BackupWhileRunning=None)
+        task = self._call(server, "LocalFileBackupPlugin/TakeBackup", Title=title,
+                          Description=f"{actor}: {reason}"[:500], Sticky=False, Local=True, S3=False,
+                          WasCreatedAutomatically=False, DirtyOnly=False, BackupWhileRunning=None)
         if not isinstance(task, dict) or not task.get("Id"):
             raise ControlError("amp_backup_failed")
         return {"title": title, "task": task["Id"], "state": "running"}
@@ -220,9 +449,8 @@ class Controller:
         backup = job.get("backup")
         if not backup:
             return True
-        amp = self._client()
         deadline, told = time.monotonic() + BACKUP_WAIT, False
-        while any(task.get("Id") == backup["task"] for task in amp.call(server, "Core/GetTasks")):
+        while any(task.get("Id") == backup["task"] for task in self._call(server, "Core/GetTasks")):
             if self.cancelled.is_set():
                 return False
             if not told:
@@ -232,7 +460,7 @@ class Controller:
                 raise ControlError("amp_backup_timeout")
             if self.cancelled.wait(10):
                 return False
-        done = next((b for b in amp.call(server, "LocalFileBackupPlugin/GetBackups")
+        done = next((b for b in self._call(server, "LocalFileBackupPlugin/GetBackups")
                      if b.get("Name") == backup["title"]), None)
         if self.cancelled.is_set():
             return False
@@ -243,42 +471,90 @@ class Controller:
             self._save()
         return True
 
-    def _paths(self, server: str) -> tuple[Path, Path]:
-        if server not in INSTANCES:
-            raise ControlError("bad_server", 400)
-        plugins, logs = self.roots[server]
-        if not plugins.is_dir() or not logs.is_dir():
+    def _files(self, server: str):
+        """The server's files, once its Minecraft folder lists plugins and logs folders."""
+        found = self.registry.get(server)
+        if not found.running:
             raise ControlError("server_files_unavailable", 503)
-        return plugins, logs
+        try:
+            folders = {e["Filename"] for e in found.files.listing("") or [] if e["IsDirectory"]}
+            if not {"plugins", "logs"} <= folders:
+                raise ControlError("server_files_unavailable", 503)
+        except ControlError as exc:
+            if exc.code == "amp_unavailable":
+                raise ControlError("server_files_unavailable", 503) from None
+            raise
+        return found.files
 
     def snapshot(self, server: str) -> list[dict]:
-        plugins, _ = self._paths(server)
+        files = self._files(server)
         result = []
         names = set()
-        for folder, prefix in ((plugins, ""), (plugins / "update", "update/")):
-            for path in sorted(folder.glob("*.jar")):
-                if path.is_symlink() or not path.is_file():
-                    raise ControlError("unsafe_plugin_file")
-                try:
-                    sha, name, version = inventory._describe(path)
-                    if not name or not version or name.lower() in names:
-                        raise ControlError("plugin_inventory_conflict")
-                    if prefix:
-                        raise ControlError("pending_plugin_update")
-                    names.add(name.lower())
-                    # _describe reads fresh bytes and metadata from the same open file.
-                    result.append({"file": path.name, "sha256": sha, "name": name, "version": version})
-                except PermissionError:
-                    raise ControlError("plugin_unreadable") from None
+        for path, update, item in inventory.plugin_folders(files):
+            if update:
+                raise ControlError("pending_plugin_update")
+            try:
+                sha, name, version = inventory.describe(files.read(path, size=item["SizeBytes"]))
+            except PermissionError:
+                raise ControlError("plugin_unreadable") from None
+            except FileNotFoundError:
+                raise ControlError("plugins_changed") from None
+            except OSError:
+                # The jar changed size while it was read.
+                raise ControlError("plugins_changed") from None
+            if not name or not version or name.lower() in names:
+                raise ControlError("plugin_inventory_conflict")
+            names.add(name.lower())
+            result.append({"file": path.rpartition("/")[2], "sha256": sha, "name": name, "version": version})
         return result
 
-    def _maintenance(self, server: str) -> bool:
-        plugins, _ = self._paths(server)
-        text = (plugins / "Maintenance" / "config.yml").read_text()
+    def _maintenance(self, server: str) -> bool | None:
+        """Whether maintenance is on; None when the server has no Maintenance plugin and its policy allows that."""
+        files = self._files(server)
+        if inventory.entry(files, "plugins/Maintenance/config.yml") is None:
+            if self.registry.get(server).policy.maintenance:
+                raise ControlError("maintenance_unavailable")
+            return None
+        text = files.read("plugins/Maintenance/config.yml").decode("utf-8", "replace")
         match = re.search(r"^maintenance-enabled:\s*(true|false)\s*$", text, re.MULTILINE)
         if not match:
             raise ControlError("maintenance_unavailable")
         return match[1] == "true"
+
+    def _schedule(self, server: str) -> list[dict]:
+        """The instance's enabled AMP time triggers that run at least one enabled task, cached for five minutes."""
+        cached = self.schedules.get(server)
+        if cached and time.monotonic() - cached[0] < 300:
+            return cached[1]
+        # Anything AMP returns in another shape stops the restart rather than allowing any time.
+        try:
+            data = self._call(server, "Core/GetScheduleData")
+            triggers = data["PopulatedTriggers"]
+            if not isinstance(triggers, list):
+                raise TypeError("PopulatedTriggers")
+            times = []
+            for trigger in triggers:
+                if not trigger["EnabledState"] or not any(task["EnabledState"] for task in trigger["Tasks"]):
+                    continue
+                if "Time" not in trigger["Type"]:
+                    continue  # Event triggers, such as on start, have no time.
+                if trigger["Type"] != "TimeIntervalTrigger":
+                    raise TypeError(trigger["Type"])
+                detail = self._call(server, "Core/GetTimeIntervalTrigger", Id=trigger["Id"])
+                for key, values in SCHEDULE_FIELDS.items():
+                    if not isinstance(detail[key], list) or not all(
+                            type(v) is int and v in values for v in detail[key]):
+                        raise TypeError(key)
+                times.append(detail)
+        except (ControlError, KeyError, TypeError, AttributeError) as exc:
+            raise ControlError("schedule_unavailable") from exc
+        if not times and self.registry.get(server).policy.scheduled:
+            raise ControlError("schedule_unavailable")
+        self.schedules[server] = (time.monotonic(), times)
+        return times
+
+    def _scheduled(self, server: str, minutes: float) -> bool:
+        return scheduled_restart(self._schedule(server), time.time(), minutes)
 
     def _idle(self, server):
         if any(job["phase"] in ACTIVE or (key == server and job["phase"] in {"failed", "awaiting_review"})
@@ -288,6 +564,7 @@ class Controller:
     def plan(self, server: str, mode: str, releases: list[dict], expected: list[dict] | None = None) -> dict:
         if mode not in {"restart", "latest"} or not isinstance(releases, list) or len(releases) > 100:
             raise ControlError("bad_server_action", 400)
+        policy = self.registry.get(server).policy
         with self.lock:
             self._idle(server)
             for folder in self.state.iterdir():
@@ -300,8 +577,8 @@ class Controller:
             baseline = self.snapshot(server)
             if expected is not None and baseline != expected:
                 raise ControlError("plugins_changed")
-            _, logs = self._paths(server)
-            startup = inventory.read_startup(logs)
+            files = self._files(server)
+            startup = inventory.read_startup(files)
             if not startup or not startup["done"] or self._maintenance(server):
                 raise ControlError("server_not_ready")
             self.console(server, "list")
@@ -310,6 +587,7 @@ class Controller:
             folder.mkdir(mode=0o700)
             changes = []
             skipped = []
+            dev = None
             try:
                 if mode == "latest":
                     used = set()
@@ -342,14 +620,17 @@ class Controller:
                             if current_version is None or target_version is None or target_version <= current_version:
                                 skipped.append({"repo": release["repo"], "reason": "not_a_newer_version"})
                                 continue
-                        if server == "main" and not self._dev_verified(release):
-                            skipped.append({"repo": release["repo"], "reason": "not_verified_on_dev"})
-                            continue
+                        if policy.dev_verified:
+                            if dev is None:
+                                dev = self._dev_evidence()
+                            if not self._dev_verified(release, dev):
+                                skipped.append({"repo": release["repo"], "reason": "not_verified_on_dev"})
+                                continue
                         target = folder / release["asset"]
-                        if (self.roots[server][0] / release["asset"]).exists() and release["asset"] != old[0]["file"]:
+                        if inventory.entry(files, "plugins/" + release["asset"]) is not None and release["asset"] != old[0]["file"]:
                             raise ControlError("plugin_inventory_conflict")
                         self.fetch(release, target)
-                        sha, name, jar_version = inventory._describe(target)
+                        sha, name, jar_version = inventory.describe(target.read_bytes())
                         if sha != release["sha256"] or name != old[0]["name"] or jar_version != version:
                             raise ControlError("release_identity_failed")
                         changes.append({**{k: v for k, v in release.items() if k != "known"}, "name": name, "version": jar_version,
@@ -361,9 +642,9 @@ class Controller:
                               and startup["failed"].get(jar["name"].lower()) != jar["version"]]
                 plan = {"id": plan_id, "server": server, "mode": mode, "expires_at": time.time() + 600,
                         "baseline": baseline, "changes": changes, "activation": activation, "skipped": skipped,
-                        "boot_errors": self._boot_errors(logs, startup["log"]), "failed_at_startup": startup["failed"],
+                        "boot_errors": self._boot_errors(files, startup["log"]), "failed_at_startup": startup["failed"],
                         "last_backup_at": self._backup_time(server),
-                        "backup": server == "main"}
+                        "backup": policy.backup}
                 save_json(folder / "plan.json", plan)
                 return self._public_plan(plan)
             except BaseException:
@@ -376,27 +657,37 @@ class Controller:
                 "backup": plan.get("backup", False)}
 
     def _backup_time(self, server: str) -> float | None:
-        root = self.roots[server][0].parents[1] / "Backups"
         try:
-            return max((p.stat().st_mtime for p in root.glob("*.zip") if p.is_file()), default=None)
-        except OSError:
+            backups = self._call(server, "LocalFileBackupPlugin/GetBackups")
+            return max((_amp_time(b["Timestamp"]) for b in backups or [] if b.get("Timestamp")), default=None)
+        except (ControlError, KeyError, TypeError, ValueError, AttributeError):
             return None
 
-    def _dev_verified(self, release: dict) -> bool:
-        _, logs = self._paths("dev")
-        startup = inventory.read_startup(logs)
+    def _dev_evidence(self) -> tuple | None:
+        """Dev's files, latest startup and jars, read once per plan; None when Dev can't be read."""
+        try:
+            files = self._files("dev")
+            return files, inventory.read_startup(files), self.snapshot("dev")
+        except ControlError:
+            return None
+
+    def _dev_verified(self, release: dict, evidence: tuple | None = None) -> bool:
+        evidence = evidence if evidence is not None else self._dev_evidence()
+        if evidence is None:
+            return False
+        files, startup, jars = evidence
         if not startup or not startup["done"]:
             return False
-        for jar in self.snapshot("dev"):
+        for jar in jars:
             if jar["sha256"] == release["sha256"] and startup["enabled"].get(jar["name"].lower()) == jar["version"]:
                 # A matching version alone cannot prove the running bytes. The
                 # recorded jar must have been on disk before that startup.
-                log = logs / startup["log"]
-                match = re.match(r"(\d{4}-\d{2}-\d{2})-", log.name)
-                zone = ZoneInfo(os.getenv("SERVER_CONTROL_LOG_TIMEZONE", "Etc/UTC"))
-                written_at = log.stat().st_mtime
+                log = inventory.entry(files, "logs/" + startup["log"])
+                match = re.match(r"(\d{4}-\d{2}-\d{2})-", startup["log"])
+                zone = _zone()
+                written_at = log["Modified"]
                 date = match[1] if match else datetime.fromtimestamp(written_at, zone).strftime("%Y-%m-%d")
-                for line in inventory._log_lines(log):
+                for line in inventory.log_lines(files, startup["log"]):
                     if inventory._BOOT.search(line):
                         stamp = re.search(r"\[(\d{2}:\d{2}:\d{2})\]", line)
                         if stamp is None:
@@ -404,15 +695,14 @@ class Controller:
                         boot = datetime.fromisoformat(date + "T" + stamp[1]).replace(tzinfo=zone)
                         if boot.timestamp() > written_at:
                             boot -= timedelta(days=1)
-                        boot_time = boot.timestamp()
-                        path = self.roots["dev"][0] / jar["file"]
-                        return max(path.stat().st_mtime, path.stat().st_ctime) <= boot_time
+                        placed = inventory.entry(files, "plugins/" + jar["file"])
+                        return placed is not None and max(placed["Modified"], placed["Created"]) <= boot.timestamp()
         return False
 
     @staticmethod
-    def _boot_errors(logs: Path, name: str) -> list[str]:
+    def _boot_errors(files, name: str) -> list[str]:
         errors = []
-        for line in inventory._log_lines(logs / name):
+        for line in inventory.log_lines(files, name):
             if "ERROR]" in line or any(text in line for text in ("Error occurred while enabling", "Could not load", "Disabling ")):
                 # Preserve the message and severity, strip the log's time.
                 errors.append(re.sub(r"^\[\d{2}:\d{2}:\d{2}", "[TIME", line).strip())
@@ -444,8 +734,9 @@ class Controller:
     def start(self, server: str, plan_id: str, actor: str, reason: str, emergency_override: bool = False,
               replace_test_builds: list[str] | None = None) -> dict:
         replace_test_builds = [] if replace_test_builds is None else replace_test_builds
+        policy = self.registry.get(server).policy
         with self.lock:
-            if not isinstance(emergency_override, bool) or (server != "main" and emergency_override):
+            if not isinstance(emergency_override, bool) or (not policy.countdown and emergency_override):
                 raise ControlError("bad_server_action", 400)
             if not isinstance(replace_test_builds, list) or any(not isinstance(repo, str) for repo in replace_test_builds):
                 raise ControlError("bad_server_action", 400)
@@ -459,7 +750,8 @@ class Controller:
             self._idle(server)
             if plan["server"] != server or plan["expires_at"] < time.time():
                 raise ControlError("plan_expired")
-            if scheduled_restart(server, time.time(), emergency_override):
+            countdown = policy.countdown if not emergency_override else 0
+            if self._scheduled(server, countdown / 60 + 15):
                 raise ControlError("scheduled_restart_conflict")
             tests = {change["repo"] for change in plan["changes"] if change.get("test_build")}
             if not set(replace_test_builds) <= tests:
@@ -470,16 +762,17 @@ class Controller:
                 plan = {**plan, "changes": [c for c in plan["changes"] if c["repo"] not in kept],
                         "skipped": plan["skipped"] + [{"repo": repo, "reason": "test_build_kept"} for repo in sorted(kept)]}
             self._unchanged(plan)
-            if self._maintenance(server):
+            maintenance = self._maintenance(server)
+            if maintenance:
                 raise ControlError("server_not_ready")
             self.console(server, "list")
             accepted_at = time.time()
-            countdown = server == "main" and not emergency_override
             # The backup runs alongside the countdown; an emergency restart skips it.
-            backup = self._take_backup(server, plan_id, actor, reason) if countdown else None
+            backup = self._take_backup(server, plan_id, actor, reason) if countdown and policy.backup else None
             job = {"id": plan_id, "server": server, "phase": "countdown" if countdown else "installing",
-                   "accepted_at": accepted_at, "deadline": accepted_at + (300 if countdown else 0),
-                   "emergency_override": emergency_override,
+                   "accepted_at": accepted_at, "deadline": accepted_at + countdown,
+                   "countdown": countdown, "emergency_override": emergency_override,
+                   "maintenance": maintenance is not None, "review": policy.review,
                    "actor": actor, "reason": reason, "changes": plan["changes"], "activation": plan["activation"],
                    "error": None, "maintenance_started": False, "backup": backup, "events": []}
             if kept:
@@ -520,15 +813,22 @@ class Controller:
             raise ControlError("job_not_found", 404)
         return job
 
+    @staticmethod
+    def _countdown(job: dict) -> int:
+        # Jobs from before per-server policies: Main counted down for five minutes.
+        if "countdown" in job:
+            return job["countdown"]
+        return 300 if job["server"] == "main" and not job.get("emergency_override", False) else 0
+
     def run(self, plan: dict, job: dict | None = None):
         server = plan["server"]
         job = job or self.jobs[server]
         if job["id"] != plan["id"]:
             return
-        countdown = server == "main" and not job.get("emergency_override", False)
+        countdown = self._countdown(job)
+        maintenance = job.get("maintenance", True)
         try:
-            announcements = ((300, "5 minutes"), (180, "3 minutes"), (60, "1 minute"),
-                             (30, "30 seconds"), (10, "10 seconds"), (0, "")) if countdown else ((0, ""),)
+            announcements = tuple((r, label) for r, label in ANNOUNCEMENTS if r <= countdown) + ((0, ""),)
             for remaining, label in announcements:
                 delay = max(0, job["deadline"] - remaining - time.time())
                 if self.cancelled.wait(delay):
@@ -543,7 +843,7 @@ class Controller:
                     else:
                         self._unchanged(plan)
                         # The countdown is over; only the restart itself still needs room.
-                        if scheduled_restart(server, time.time(), True):
+                        if self._scheduled(server, 15):
                             raise ControlError("scheduled_restart_conflict")
                         if self._maintenance(server):
                             raise ControlError("maintenance_changed")
@@ -552,18 +852,19 @@ class Controller:
             with self.lock:
                 job["maintenance_started"] = True
                 self._save()
-            self.console(server, "maintenance on")
-            self._wait(lambda: self._maintenance(server), 30, "maintenance_unavailable")
+            if maintenance:
+                self.console(server, "maintenance on")
+                self._wait(lambda: self._maintenance(server), 30, "maintenance_unavailable")
             self._save_game(server)
             self._unchanged(plan)
             self._install(plan)
-            _, logs = self._paths(server)
-            before = self._boot(logs)
+            files = self._files(server)
+            before = self._boot(files)
             self._event(job, "restarting")
             self.console(server, "stop")
             self._event(job, "checking")
-            self._wait(lambda: self._boot(logs) != before and self._startup_ok(plan), 600, "startup_check_failed")
-            if server == "main" and (plan["changes"] or plan["activation"]):
+            self._wait(lambda: self._boot(files) != before and self._startup_ok(plan), 600, "startup_check_failed")
+            if job.get("review", server == "main") and maintenance and (plan["changes"] or plan["activation"]):
                 self._event(job, "awaiting_review")
             else:
                 self._reopen(plan, job)
@@ -585,91 +886,147 @@ class Controller:
     def _wait(predicate, timeout: float, code: str):
         deadline = time.monotonic() + timeout
         while time.monotonic() < deadline:
-            if predicate():
-                return
+            try:
+                if predicate():
+                    return
+            except ControlError as exc:
+                # AMP restarts its view of the instance while Paper stops; keep waiting.
+                if exc.code not in {"amp_unavailable", "server_files_unavailable"}:
+                    raise
             time.sleep(1)
         raise ControlError(code)
 
     def _save_game(self, server: str):
-        _, logs = self._paths(server)
-        path = logs / "latest.log"
-        offset = path.stat().st_size
-        inode = path.stat().st_ino
+        files = self._files(server)
+        log = inventory.entry(files, "logs/latest.log")
+        if log is None:
+            raise ControlError("save_failed")
+        offset, identity = log["SizeBytes"], log["Identity"]
         self.console(server, "save-all flush")
 
         def saved():
-            if path.stat().st_ino != inode or path.stat().st_size < offset:
+            now = inventory.entry(files, "logs/latest.log")
+            if now is None or now["Identity"] != identity or now["SizeBytes"] < offset:
                 raise ControlError("unexpected_restart")
-            with path.open() as handle:
-                handle.seek(offset)
-                return "Saved the game" in handle.read()
+            return b"Saved the game" in files.read("logs/latest.log", offset)
         self._wait(saved, 60, "save_failed")
 
     def _install(self, plan: dict):
-        plugins, _ = self._paths(plan["server"])
+        files = self._files(plan["server"])
         backup = self.state / plan["id"] / "backup"
         backup.mkdir(exist_ok=True, mode=0o700)
         expected = {jar["file"]: jar["sha256"] for jar in plan["baseline"]}
+
+        def current(name: str) -> str:
+            return hashlib.sha256(files.read("plugins/" + name)).hexdigest()
+
         for change in plan["changes"]:
-            old = plugins / change["old_file"]
-            if digest(old) != expected[old.name]:
+            data = files.read("plugins/" + change["old_file"])
+            if hashlib.sha256(data).hexdigest() != expected[change["old_file"]]:
                 raise ControlError("plugins_changed")
-            shutil.copy2(old, backup / old.name)
-            with (backup / old.name).open("rb") as handle:
+            with (backup / change["old_file"]).open("wb") as handle:
+                handle.write(data)
+                handle.flush()
                 os.fsync(handle.fileno())
-            if digest(backup / old.name) != expected[old.name]:
+            if digest(backup / change["old_file"]) != expected[change["old_file"]]:
                 raise ControlError("backup_failed")
         with open_directory(backup) as fd:
             os.fsync(fd)
-        # Put the new inode in place: Java keeps its open old inode until stop.
+
+        def place(data: bytes, temporary: str, name: str):
+            """Write `data` under a name Paper ignores, check it, then give it its jar name."""
+            if inventory.entry(files, "plugins/" + temporary) is not None:
+                files.trash("plugins/" + temporary)
+            files.write("plugins/" + temporary, data)
+            if files.md5("plugins/" + temporary) != hashlib.md5(data).hexdigest():
+                files.trash("plugins/" + temporary)
+                raise ControlError("release_checksum_failed")
+            files.rename("plugins/" + temporary, name)
+
+        def restore(change: dict):
+            """Put the original jar back, judging only by what is on disk now."""
+            old, new = "plugins/" + change["old_file"], "plugins/" + change["asset"]
+            if change["asset"] != change["old_file"] and inventory.entry(files, new) is not None:
+                files.trash(new)
+            if inventory.entry(files, old) is not None:
+                if current(change["old_file"]) == expected[change["old_file"]]:
+                    return
+                files.trash(old)
+            place((backup / change["old_file"]).read_bytes(), ".restore-" + plan["id"], change["old_file"])
+
+        # The old jar moves to AMP's trash, so Java keeps its open copy until stop.
+        # Each change counts as started before its first write: AMP can act on a
+        # call and still fail to answer, so rollback checks the files themselves.
         swapped = []
         try:
             for change in plan["changes"]:
-                old, target = plugins / change["old_file"], plugins / change["asset"]
-                temporary = plugins / (".control-" + plan["id"])
-                shutil.copyfile(self.state / plan["id"] / change["asset"], temporary)
-                temporary.chmod(0o644)
-                with temporary.open("rb") as handle:
-                    os.fsync(handle.fileno())
-                if digest(temporary) != change["sha256"]:
+                data = (self.state / plan["id"] / change["asset"]).read_bytes()
+                if hashlib.sha256(data).hexdigest() != change["sha256"]:
                     raise ControlError("release_checksum_failed")
-                if digest(old) != expected[old.name]:
+                if current(change["old_file"]) != expected[change["old_file"]]:
                     raise ControlError("plugins_changed")
-                temporary.replace(target)
+                same = change["asset"] == change["old_file"]
+                if not same and inventory.entry(files, "plugins/" + change["asset"]) is not None:
+                    raise ControlError("plugin_inventory_conflict")
                 swapped.append(change)
-                if old != target:
-                    old.unlink()
-        except Exception:
-            # Restore displaced jars if any swap fails. Each restore
-            # also uses a fresh inode; Java's existing open jars are preserved.
+                if same:
+                    files.trash("plugins/" + change["old_file"])
+                    place(data, ".control-" + plan["id"], change["asset"])
+                else:
+                    place(data, ".control-" + plan["id"], change["asset"])
+                    files.trash("plugins/" + change["old_file"])
+            if plan["changes"] and self._files_on_disk(plan["server"]) != self._expected_files(plan):
+                raise ControlError("install_check_failed")
+        except Exception as exc:
+            failed = []
+            # restore() judges by disk state, so a second try finishes what a lost reply interrupted.
             for change in reversed(swapped):
-                old, target = plugins / change["old_file"], plugins / change["asset"]
-                temporary = plugins / (".restore-" + plan["id"])
-                shutil.copyfile(backup / old.name, temporary)
-                temporary.chmod(0o644)
-                with temporary.open("rb") as handle:
-                    os.fsync(handle.fileno())
-                temporary.replace(old)
-                if old != target:
-                    target.unlink(missing_ok=True)
-            with open_directory(plugins) as fd:
-                os.fsync(fd)
+                for attempt in (1, 2):
+                    try:
+                        restore(change)
+                        break
+                    except Exception:
+                        logging.exception("Could not restore %s on %s (try %d)", change["old_file"], plan["server"], attempt)
+                else:
+                    failed.append(change["repo"])
+            for temporary in (".control-", ".restore-"):
+                try:
+                    if inventory.entry(files, "plugins/" + temporary + plan["id"]) is not None:
+                        files.trash("plugins/" + temporary + plan["id"])
+                except Exception:
+                    logging.exception("Could not clear a temporary jar on %s", plan["server"])
+            try:
+                intact = not swapped or self._files_on_disk(plan["server"]) == self._expected_files({**plan, "changes": []})
+            except Exception:
+                intact = False
+            # A folder proven to match the original is fine, whatever the restore calls answered.
+            if not intact:
+                raise ControlError("install_rollback_failed") from exc
             raise
-        with open_directory(plugins) as fd:
-            os.fsync(fd)
+
+    def _files_on_disk(self, server: str) -> dict[str, str]:
+        return {jar["file"]: jar["sha256"] for jar in self.snapshot(server)}
 
     @staticmethod
-    def _boot(logs: Path):
-        path = logs / "latest.log"
-        if not path.exists():
+    def _expected_files(plan: dict) -> dict[str, str]:
+        """Each jar file and its SHA-256 once the plan's changes are installed."""
+        found = {jar["file"]: jar["sha256"] for jar in plan["baseline"]}
+        for change in plan["changes"]:
+            found.pop(change["old_file"])
+            found[change["asset"]] = change["sha256"]
+        return found
+
+    @staticmethod
+    def _boot(files):
+        log = inventory.entry(files, "logs/latest.log")
+        if log is None:
             return None
-        with path.open(errors="replace") as handle:
-            boot = next((line for line in handle if inventory._BOOT.search(line)), None)
-        return path.stat().st_ino, boot
+        boot = next((line for line in inventory.log_lines(files, "latest.log") if inventory._BOOT.search(line)), None)
+        return log["Identity"], boot
 
     def _startup_ok(self, plan: dict, *, fresh: bool = True) -> bool:
-        _, logs = self._paths(plan["server"])
-        startup = inventory.read_startup(logs)
+        files = self._files(plan["server"])
+        startup = inventory.read_startup(files)
         # Right after a restart the startup must be in latest.log. A later
         # recheck may follow Paper's midnight rotation into an older log.
         if not startup or not startup["done"] or (fresh and startup["log"] != "latest.log"):
@@ -685,22 +1042,18 @@ class Controller:
             if (name in changed or plan.get("failed_at_startup", {}).get(name) != version
                     or startup["failed"].get(name) != version):
                 return False
-        current = self.snapshot(plan["server"])
-        expected_files = {jar["file"]: jar["sha256"] for jar in plan["baseline"]}
-        for change in plan["changes"]:
-            expected_files.pop(change["old_file"])
-            expected_files[change["asset"]] = change["sha256"]
-        if {jar["file"]: jar["sha256"] for jar in current} != expected_files:
+        if self._files_on_disk(plan["server"]) != self._expected_files(plan):
             return False
-        return {self._error_key(line) for line in self._boot_errors(logs, startup["log"])} <= {
+        return {self._error_key(line) for line in self._boot_errors(files, startup["log"])} <= {
             self._error_key(line) for line in plan["boot_errors"]}
 
     def _reopen(self, plan: dict, job: dict, *, fresh: bool = True):
         if not self._startup_ok(plan, fresh=fresh):
             raise ControlError("startup_check_failed")
         self.console(plan["server"], "list")
-        self.console(plan["server"], "maintenance off")
-        self._wait(lambda: not self._maintenance(plan["server"]), 30, "maintenance_unavailable")
+        if job.get("maintenance", True):
+            self.console(plan["server"], "maintenance off")
+            self._wait(lambda: not self._maintenance(plan["server"]), 30, "maintenance_unavailable")
         self.console(plan["server"], "broadcast &aThe restart is complete. The server is open.")
         self._event(job, "complete", error=None)
 
@@ -737,24 +1090,62 @@ class Controller:
             self._event(job, "resolved")
             return dict(job)
 
+    def servers(self) -> list[dict]:
+        """Each server's identity and rules, for the status reply."""
+        return [{"key": i.key, "label": i.label, "instance": i.instance, "running": i.running, "policy": asdict(i.policy)}
+                for i in self.registry.all().values()]
+
+    def _read(self, found: Instance, fresh: bool) -> dict:
+        row = {"key": found.key, "label": found.label, "instance": found.instance, "policy": asdict(found.policy),
+               "releases_only": found.policy.releases_only, "state": "off", "error": None, "jars": [], "startup": None}
+        if not found.running:
+            row["error"] = "instance_off"
+            return row
+        try:
+            status = self._client().call(found.instance, "Core/GetStatus")
+            row["state"] = STATES.get((status or {}).get("State"), "unknown")
+            files = self._files(found.key)
+            cache = None if fresh else self.jar_cache.setdefault(found.key, {})
+            row["jars"] = [asdict(j) for j in inventory.read_jars(files, cache)]
+            row["startup"] = inventory.read_startup(files)
+        except ControlError as exc:
+            row["error"] = "files_unavailable" if exc.code in {"server_files_unavailable", "amp_unavailable"} else exc.code
+        except Exception:
+            logging.exception("Could not read %s", found.instance)
+            row["error"] = "files_unavailable"
+        return row
+
+    def inventory(self, server: str | None = None) -> dict:
+        """Every server's jars and latest startup, read in parallel. One named server is read fresh."""
+        found = [self.registry.get(server)] if server is not None else list(self.registry.all().values())
+        if not found:
+            return {"servers": []}
+        with ThreadPoolExecutor(max_workers=min(8, len(found))) as pool:
+            rows = list(pool.map(lambda i: self._read(i, fresh=server is not None), found))
+        return {"servers": rows}
+
     def dispatch(self, body: dict) -> dict:
         body = dict(body)
         # Older websites still send their own AMP login; the helper uses its credential.
         body.pop("amp", None)
         operation = body.get("operation")
-        allowed = {"status": {"operation"}, "plan": {"operation", "server", "mode", "releases"},
+        allowed = {"status": {"operation"}, "inventory": {"operation"}, "plan": {"operation", "server", "mode", "releases"},
                    "start": {"operation", "server", "plan_id", "actor", "reason", "emergency_override"},
                    "cancel": {"operation", "server", "job_id", "actor", "reason"},
                    "reopen": {"operation", "server", "job_id", "actor", "reason"},
                    "resolve": {"operation", "server", "job_id", "actor", "reason"}}
         # Older websites omit the optional baseline and test-build choices and still send backup_ref.
-        optional = {"replace_test_builds", "backup_ref"} if operation == "start" else {"expected"} if operation == "plan" else set()
+        optional = ({"replace_test_builds", "backup_ref"} if operation == "start" else {"expected"} if operation == "plan"
+                    else {"server"} if operation == "inventory" else set())
         if operation not in allowed or set(body) - optional != allowed[operation]:
             raise ControlError("bad_control_request", 400)
         if operation == "status":
-            return {"jobs": json.loads(self.status_json)}
+            return {"jobs": json.loads(self.status_json), "servers": self.servers()}
+        if operation == "inventory":
+            return self.inventory(body.get("server"))
         server = body["server"]
-        self._paths(server)
+        # Each operation checks the files it needs; resolving a failure needs none.
+        self.registry.get(server)
         if operation == "plan":
             expected = body.get("expected")
             if "expected" in body and (not isinstance(expected, list) or len(expected) > 300):
@@ -799,12 +1190,14 @@ class Handler(socketserver.StreamRequestHandler):
             body = json.loads(raw)
             if not isinstance(body, dict):
                 raise ControlError("bad_control_request", 400)
-            if body.get("operation") != "status" and body.get("server") not in self.server.allowed_servers:
+            allowed = self.server.allowed()
+            # Inventory is read-only, so every site may read every server.
+            if body.get("operation") not in {"status", "inventory"} and body.get("server") not in allowed:
                 raise ControlError("server_not_allowed", 403)
             result = self.server.controller.dispatch(body)
             if body.get("operation") == "status":
-                result["jobs"] = [job for job in result["jobs"] if job["server"] in self.server.allowed_servers]
-                result["allowed_servers"] = sorted(self.server.allowed_servers)
+                result["jobs"] = [job for job in result["jobs"] if job["server"] in allowed]
+                result["allowed_servers"] = sorted(allowed)
         except ControlError as exc:
             result = {"error": exc.code, "status": exc.status}
         except Exception:
@@ -815,7 +1208,17 @@ class Handler(socketserver.StreamRequestHandler):
 
 class Server(socketserver.ThreadingUnixStreamServer):
     daemon_threads = True
-    allowed_servers = {"main", "dev"}
+    # None: every server the registry knows.
+    allowed_servers: set[str] | None = {"main", "dev"}
+
+    def allowed(self) -> set[str]:
+        if self.allowed_servers is not None:
+            return set(self.allowed_servers)
+        return set(self.controller.registry.all())
+
+
+# Which servers each site's socket may control.
+SITES = (("www", None), ("dev", {"dev"}))
 
 
 def socket_group(name: str) -> int | None:
@@ -862,14 +1265,13 @@ def main():
     # Includes separate invocations and sockets; only one deployment owner.
     with (root / "lock").open("w") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        instances = Path(os.getenv("SERVER_CONTROL_INSTANCES_DIR", "/home/amp/.ampdata/instances"))
         sockets = Path(os.getenv("SERVER_CONTROL_SOCKET_DIR", str(root)))
-        roots = {key: (instances / instance / "Minecraft/plugins",
-                       instances / instance / "Minecraft/logs")
-                 for key, instance in INSTANCES.items()}
-        controller = Controller(root / "state", roots, amp=amp_login(os.getenv("CREDENTIALS_DIRECTORY")))
+        amp = amp_login(os.getenv("CREDENTIALS_DIRECTORY"))
+        controller = Controller(root / "state", Registry(amp), amp=amp)
+        # Fill the jar cache so the first Servers page after a restart is quick.
+        threading.Thread(target=controller.inventory, daemon=True).start()
         servers = []
-        for site, allowed in (("www", {"main", "dev"}), ("dev", {"dev"})):
+        for site, allowed in SITES:
             run = sockets / site
             run.mkdir(exist_ok=True, mode=0o755)
             path = run / "control.sock"

@@ -181,7 +181,7 @@ services:
   backend:
     user: "1001:1001"      # tfmc
     group_add:
-      - "1000"             # amp: some plugin jars are amp's and mode 640
+      - "1000"             # amp: owns the mounted CoreProtect and track files
       - "996"              # tfmc-control: the server control socket
 ```
 

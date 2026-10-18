@@ -3,8 +3,8 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import socket
-from pathlib import Path
 
 from src.servers import inventory
 
@@ -25,7 +25,7 @@ def request(operation: str, **body) -> dict:
         with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as connection:
             # Writes can wait behind a plan's downloads for the helper's lock, and a
             # reopen spends up to 30 s on maintenance plus 25 s per console call.
-            connection.settimeout(35 if operation in {"status", "resolve"} else 180)
+            connection.settimeout(35 if operation in {"status", "resolve"} else 90 if operation == "inventory" else 180)
             connection.connect(path)
             connection.sendall(json.dumps({"operation": operation, **body}).encode() + b"\n")
             with connection.makefile("rb") as stream:
@@ -50,25 +50,31 @@ def status() -> dict:
         return {"status": exc.code, "jobs": []}
 
 
+SERVER_KEY = re.compile(r"^[a-z0-9][a-z0-9-]{0,31}$")
+
+
 def plan(server: str, mode: str) -> dict:
-    if server not in {"main", "dev"} or mode not in {"restart", "latest"}:
+    if not SERVER_KEY.fullmatch(server) or mode not in {"restart", "latest"}:
         raise ControlError("bad_server_action", 400)
     candidates = []
     if mode == "latest":
         if inventory.github_org() != inventory.DEFAULT_ORG:
             raise ControlError("release_org_not_supported", 400)
-        variable = "SERVER_MAIN_DIR" if server == "main" else "SERVER_DEV_DIR"
-        root = os.getenv(variable, "").strip()
-        if not root or not (Path(root) / "plugins").is_dir():
+        row = next((r for r in request("inventory", server=server)["servers"] if r["key"] == server), None)
+        if row is None:
+            raise ControlError("bad_server", 400)
+        if row.get("error"):
             raise ControlError("server_files_unavailable", 503)
-        releases, servers = inventory.check_servers({server: (Path(root), server == "main")})
+        jars = inventory.jars_from(row["jars"])
+        servers = {server: {"jars": jars, "startup": row["startup"], "releases_only": bool(row["releases_only"])}}
+        releases = inventory.check_releases(jars)
         if releases.error or releases.errors:
             raise ControlError("releases_unavailable", 503)
         plugins, others = inventory.compare(releases, servers)
         if any(p["servers"][server]["state"] == "unverified" for p in plugins) or any(o.get("unverified") for o in others):
             raise ControlError("releases_unavailable", 503)
         expected = [{"file": ("update/" if j.update else "") + j.file, "sha256": j.sha256,
-                     "name": j.name, "version": j.version} for j in servers[server]["jars"]]
+                     "name": j.name, "version": j.version} for j in jars]
         for repo, found in releases.items():
             release = found[0]
             candidates.append({"repo": repo, "tag": release.tag, "asset": release.asset,

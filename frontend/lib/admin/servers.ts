@@ -1,13 +1,32 @@
 import { adminRequest } from "./api";
 
-export type ServerKey = "main" | "dev" | "lobby" | "tutorial";
+/** A Minecraft instance in AMP, named by the control helper: main, dev, lobby, s6… */
+export type ServerKey = string;
+
+/** The rules the control helper applies to one server. */
+export type ServerPolicy = {
+  /** Seconds of in-game warnings before a restart; 0 restarts at once. */
+  countdown: number;
+  /** AMP takes a backup during the countdown. */
+  backup: boolean;
+  /** Updates install only releases Dev already runs. */
+  dev_verified: boolean;
+  /** After changed plugins the server stays in maintenance until staff reopen it. */
+  review: boolean;
+  maintenance: boolean;
+  releases_only: boolean;
+};
 
 export type ServerInfo = {
   key: ServerKey;
   label: string;
-  /** Main, Lobby and Tutorial should only run published releases; Dev may run test builds. */
+  /** Every server but Dev should only run published releases. */
   releases_only: boolean;
-  status: "available" | "not_configured" | "missing";
+  /** "instance_off": the AMP instance is switched off. Other values: its files couldn't be read. */
+  status: "available" | "instance_off" | "files_unavailable" | string;
+  /** AMP's state for the Minecraft application: running, stopped, starting… */
+  state: string | null;
+  policy: ServerPolicy | null;
   paper: string | null;
   /** The last startup finished ("Done"). */
   started: boolean | null;
@@ -54,6 +73,8 @@ export type OtherPlugin = {
 
 export type ServersOverview = {
   checked_at: string;
+  /** "available", or why the control helper couldn't list the servers. */
+  control: string;
   github: {
     status: "available" | "partial" | "unavailable" | "busy";
     checked_at: string | null;

@@ -210,7 +210,62 @@ it("says when the control helper will not take a fresh backup", async () => {
   render(<ServerControls onComplete={vi.fn()} />);
   fireEvent.click(await screen.findByRole("button", { name: "Update and restart Main" }));
   const dialog = await screen.findByRole("dialog", { name: /Main\?$/ });
-  expect(within(dialog).getByText(/not recorded\. The control helper will not take a fresh backup/)).toBeTruthy();
+  expect(within(dialog).getByText(/not recorded\. No fresh backup is taken for this restart\./)).toBeTruthy();
+});
+
+const lobbyPolicy = {
+  countdown: 300,
+  backup: false,
+  dev_verified: true,
+  review: false,
+  maintenance: false,
+  releases_only: true,
+};
+
+function LobbyControls() {
+  const control = useServerControls(vi.fn());
+  return (
+    <>
+      <ServerActions control={control} server="lobby" />
+      <ControlDialog control={control} />
+    </>
+  );
+}
+
+it("other servers follow the rules the helper reports", async () => {
+  vi.mocked(getControl).mockResolvedValue({
+    status: "available",
+    jobs: [],
+    allowed_servers: ["dev", "lobby", "main"],
+    servers: [{ key: "lobby", label: "Lobby", running: true, policy: lobbyPolicy }],
+  });
+  vi.mocked(planServer).mockResolvedValue({ ...plan, server: "lobby", backup: false });
+  vi.mocked(serverAction).mockResolvedValue({ ...job, server: "lobby", countdown: 300 });
+  render(<LobbyControls />);
+  fireEvent.click(await screen.findByRole("button", { name: "Update and restart Lobby" }));
+  const dialog = await screen.findByRole("dialog", { name: "Update and restart Lobby?" });
+  expect(within(dialog).getByText(/five-minute warning/)).toBeTruthy();
+  expect(within(dialog).getByText("Lobby only takes releases that have already run on Dev.")).toBeTruthy();
+  expect(within(dialog).queryByText(/stays in maintenance/)).toBeNull();
+  expect(within(dialog).getByText(/No fresh backup is taken/)).toBeTruthy();
+  expect((within(dialog).getByRole("checkbox", { name: /TLibs/ }) as HTMLInputElement).checked).toBe(true);
+  fireEvent.click(within(dialog).getByRole("checkbox", { name: /Emergency/ }));
+  fireEvent.change(within(dialog).getByLabelText(/^Reason/), { target: { value: "Lobby is stuck" } });
+  fireEvent.click(within(dialog).getByRole("button", { name: "Restart Lobby now" }));
+  await waitFor(() =>
+    expect(serverAction).toHaveBeenCalledWith("lobby", "start", plan.id, "Lobby is stuck", true, ["TLibs"]),
+  );
+});
+
+it("a site that can't control a server says so with the server's name", async () => {
+  vi.mocked(getControl).mockResolvedValue({
+    status: "available",
+    jobs: [],
+    allowed_servers: ["dev"],
+    servers: [{ key: "lobby", label: "Lobby", running: true, policy: lobbyPolicy }],
+  });
+  render(<LobbyControls />);
+  expect(await screen.findByText("This site can’t restart Lobby.")).toBeTruthy();
 });
 
 it("shows the countdown's AMP backup progress", async () => {
@@ -220,4 +275,18 @@ it("shows the countdown's AMP backup progress", async () => {
   });
   render(<ServerControls onComplete={vi.fn()} />);
   await screen.findByText("AMP backup running. The restart waits for it.");
+});
+
+it("an older helper's status falls back to the default rules, not Main's", async () => {
+  vi.mocked(getControl).mockResolvedValue({ status: "available", jobs: [], allowed_servers: ["dev", "lobby", "main"] });
+  vi.mocked(planServer).mockResolvedValue({
+    ...plan,
+    server: "lobby",
+    activation: [{ name: "Cooking", loaded: "1", version: "2" }],
+  });
+  render(<LobbyControls />);
+  fireEvent.click(await screen.findByRole("button", { name: "Update and restart Lobby" }));
+  const dialog = await screen.findByRole("dialog", { name: "Update and restart Lobby?" });
+  expect(within(dialog).getByText(/five-minute warning/)).toBeTruthy();
+  expect(within(dialog).queryByText(/stays in maintenance/)).toBeNull();
 });
