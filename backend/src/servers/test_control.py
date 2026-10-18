@@ -1634,3 +1634,38 @@ def test_a_new_log_with_the_same_first_line_is_told_apart_by_its_rotation(contro
         handle.write(text)
     (logs / "latest.log").write_text(text)
     assert controller._boot(files) != before
+
+
+
+def test_a_log_caught_mid_replacement_is_retried_not_failed(controller, monkeypatch):
+    files = amp_like(controller, "dev")
+    _, logs = controller.roots["dev"]
+    before = controller._boot(files)
+    # Paper has just opened the new log and not finished its first line.
+    (logs / "latest.log").rename(logs / "old.log")
+    (logs / "latest.log").write_text("[07:00:00] [ServerMain/INFO]: [boot")
+    with pytest.raises(control.ControlError, match="server_files_unavailable"):
+        controller._boot(files)
+    polls = []
+    def check():
+        polls.append(1)
+        if len(polls) == 2:
+            (logs / "latest.log").write_text("[07:00:00] [ServerMain/INFO]: [bootstrap] Loading Paper 1.21.10\n")
+        return controller._boot(files) != before
+    monkeypatch.setattr(host.time, "sleep", lambda _: None)
+    controller._wait(check, 30, "startup_check_failed")
+    assert len(polls) == 2
+
+
+def test_the_first_reads_wait_for_a_log_paper_is_replacing(controller, monkeypatch):
+    files = amp_like(controller, "dev")
+    _, logs = controller.roots["dev"]
+    text = (logs / "latest.log").read_text()
+    (logs / "latest.log").write_text("")
+    calls = []
+    def sleep(_):
+        calls.append(1)
+        (logs / "latest.log").write_text(text)
+    monkeypatch.setattr(host.time, "sleep", sleep)
+    assert controller._settled(lambda: controller._log_identity(files))[1].startswith(b"[06:00:00")
+    assert calls == [1]
