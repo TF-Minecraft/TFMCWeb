@@ -223,7 +223,9 @@ and label come from the instance name, dropping a `TFMC` or `TF` prefix and the
 two-digit number: `TFMCLobby01` is `lobby`, Lobby, and `TFMCS601` is `s6`, S6.
 A new instance in AMP appears on the tab within a minute, with the default
 rules; give it other rules in `POLICIES`. An instance switched off in AMP
-is listed as off, since its files can't be reached.
+is listed as off, since its files can't be reached. Instances in `HIDDEN`
+are left out altogether, with no inventory and no controls; Season 6
+(`TFMCS601`) is there while it is being set up.
 
 The administrator installs the service from a reviewed commit on TFMCWeb
 `main`. This needs Python 3.10+ and systemd 249 or later, then the account
