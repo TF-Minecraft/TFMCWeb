@@ -1715,3 +1715,13 @@ def test_the_save_baseline_size_comes_from_the_log_it_settles_on(controller, mon
     monkeypatch.setattr(host.time, "sleep", lambda _: sleeps.append(1))
     controller._save_game("dev")
     assert "save-all flush" in [c for _, c in controller.commands]
+
+
+
+def test_hidden_instances_are_left_out(monkeypatch):
+    monkeypatch.setattr(host, "HIDDEN", {"TFMCS601"})
+    rows = [{"InstanceName": name, "Module": "Minecraft", "Running": True} for name in ("TFMCLobby01", "TFMCS601")]
+    registry = host.Registry(Instances(rows))
+    assert list(registry.all()) == ["lobby"]
+    with pytest.raises(control.ControlError, match="bad_server"):
+        registry.get("s6")

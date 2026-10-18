@@ -77,6 +77,8 @@ POLICIES = {
 }
 # Servers listed first; the rest follow by name.
 ORDER = ("TFMCMain01", "TFMCDev01")
+# Minecraft instances the helper leaves out: no inventory, no controls.
+HIDDEN = {"TFMCS601"}  # Season 6, while it is being set up
 ANNOUNCEMENTS = ((300, "5 minutes"), (180, "3 minutes"), (60, "1 minute"), (30, "30 seconds"), (10, "10 seconds"))
 
 
@@ -357,7 +359,8 @@ class Registry:
         with self.lock:
             if self.amp is not None and time.monotonic() - self.checked > self.ttl:
                 try:
-                    rows = [r for r in self.amp.instances() if r.get("Module") == "Minecraft"]
+                    rows = [r for r in self.amp.instances()
+                            if r.get("Module") == "Minecraft" and r.get("InstanceName") not in HIDDEN]
                 except (ControlError, OSError, KeyError, TypeError, ValueError):
                     logging.exception("Could not list AMP instances")
                     rows = None
