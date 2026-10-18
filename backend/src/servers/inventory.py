@@ -37,9 +37,10 @@ DEFAULT_ORG = "TF-Minecraft"
 MAX_LOGS = 12
 
 _BOOT = re.compile(r"\[bootstrap\] Loading Paper (\S+)")
-_ENABLING = re.compile(r"\]: \[[^\]]+\] Enabling (\S+) v(\S+)\s*$")
-_ENABLE_FAILED = re.compile(r"\]: Error occurred while enabling (\S+) v(\S+)")
-_DISABLING = re.compile(r"\]: \[[^\]]+\] Disabling (\S+) v(\S+)")
+# Versions run to the end of the line and may hold spaces: Citizens is "2.0.40-SNAPSHOT (build 3990)".
+_ENABLING = re.compile(r"\]: \[[^\]]+\] Enabling (\S+) v(.+?)\s*$")
+_ENABLE_FAILED = re.compile(r"\]: Error occurred while enabling (\S+) v(.+?)(?: \(Is it up to date\?\))?\s*$")
+_DISABLING = re.compile(r"\]: \[[^\]]+\] Disabling (\S+) v(.+?)\s*$")
 _DONE = re.compile(r"\]: Done \(")
 _ROTATED = re.compile(r"^(\d{4}-\d{2}-\d{2})-(\d+)\.log\.gz$")
 _YAML_FIELD = re.compile(r"^(name|version):\s*['\"]?([^'\"#\r\n]*?)['\"]?\s*(?:#.*)?$", re.MULTILINE)
