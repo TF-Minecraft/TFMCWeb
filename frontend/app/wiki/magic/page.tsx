@@ -23,7 +23,7 @@ import {
 export default function MagicPage() {
   return (
     <WikiPage
-      lastModified="2026-09-18"
+      lastModified="2026-10-18"
       title="Magic"
       width="lg"
       intro={
@@ -96,7 +96,7 @@ export default function MagicPage() {
         </li>
         <li>
           <strong>Build a shrine</strong> and put an artifact on a <WikiItemLink name="Pedestal">pedestal</WikiItemLink>{" "}
-          in it to soak up aura.
+          in it to soak up aura. The shrine reaches 4 blocks in each direction from the pedestal.
         </li>
         <li>
           <strong>Imprint and fill a charge</strong> on that same <WikiItemLink name="Pedestal">pedestal</WikiItemLink>.
