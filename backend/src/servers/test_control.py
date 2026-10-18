@@ -1764,9 +1764,22 @@ def test_a_server_without_the_maintenance_folder_has_none(controller):
 
 
 
-def test_a_failed_plugins_listing_is_not_taken_for_no_maintenance_plugin(controller, monkeypatch):
-    files = controller.registry.get("lobby").files
+def test_a_failed_plugins_listing_is_retried_not_taken_for_no_maintenance_plugin(controller, monkeypatch):
+    monkeypatch.setattr(host.time, "sleep", lambda _: None)
+    files = controller.registry.get("main").files
     original = files.listing
-    monkeypatch.setattr(files, "listing", lambda folder: None if folder == "plugins" else original(folder))
+    failures = [1]
+    def listing(folder):
+        if folder == "plugins" and failures:
+            failures.pop()
+            return None
+        return original(folder)
+    monkeypatch.setattr(files, "listing", listing)
+    assert controller._maintenance("main") is False
+    clock = iter(range(0, 1000, 5))
+    monkeypatch.setattr(host.time, "monotonic", lambda: next(clock))
+    lobby = controller.registry.get("lobby").files
+    lobby_listing = lobby.listing
+    monkeypatch.setattr(lobby, "listing", lambda folder: None if folder == "plugins" else lobby_listing(folder))
     with pytest.raises(control.ControlError, match="server_files_unavailable"):
         controller._maintenance("lobby")

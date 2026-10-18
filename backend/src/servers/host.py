@@ -515,10 +515,12 @@ class Controller:
     def _maintenance(self, server: str) -> bool | None:
         """Whether maintenance is on; None when the server has no Maintenance plugin and its policy allows that."""
         files = self._files(server)
-        listing = files.listing("plugins")
-        if listing is None:
-            raise ControlError("server_files_unavailable", 503)
-        installed = any(e["Filename"] == "Maintenance" and e["IsDirectory"] for e in listing)
+        def plugins() -> list[dict]:
+            found = files.listing("plugins")
+            if found is None:
+                raise ControlError("server_files_unavailable", 503)
+            return found
+        installed = any(e["Filename"] == "Maintenance" and e["IsDirectory"] for e in self._settled(plugins, timeout=10))
         if not installed:
             if self.registry.get(server).policy.maintenance:
                 raise ControlError("maintenance_unavailable")
