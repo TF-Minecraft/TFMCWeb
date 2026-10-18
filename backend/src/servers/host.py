@@ -900,9 +900,12 @@ class Controller:
     @staticmethod
     def _log_identity(files, log: dict) -> tuple:
         """What tells one latest.log from the next: the file's identity where the files have one,
-        and its first line, which carries the time Paper started writing it."""
+        its first line, which carries the time Paper started writing it, and the newest rotated
+        log, since Paper compresses the old latest.log whenever it opens a new one."""
         head = files.read("logs/latest.log", 0, size=min(512, log["SizeBytes"]))
-        return log.get("Identity"), head.split(b"\n", 1)[0]
+        rotated = max(((m.group(1), int(m.group(2))) for e in files.listing("logs") or []
+                       if (m := inventory._ROTATED.match(e["Filename"]))), default=None)
+        return log.get("Identity"), head.split(b"\n", 1)[0], rotated
 
     def _save_game(self, server: str):
         files = self._files(server)

@@ -1619,3 +1619,18 @@ def test_the_old_log_is_not_taken_for_the_new_startup(controller, monkeypatch):
     (logs / "latest.log").rename(logs / "old.log")
     (logs / "latest.log").write_text("[07:00:00 INFO]: [bootstrap] Loading Paper 1.21.10\n")
     assert controller._boot(files) != before
+
+
+
+def test_a_new_log_with_the_same_first_line_is_told_apart_by_its_rotation(controller):
+    import gzip
+    files = amp_like(controller, "dev")
+    _, logs = controller.roots["dev"]
+    before = controller._boot(files)
+    # Paper started at the same second of the day as last time: identical lines, but it
+    # compressed the old log on opening the new one.
+    text = (logs / "latest.log").read_text()
+    with gzip.open(logs / "2026-10-18-1.log.gz", "wt") as handle:
+        handle.write(text)
+    (logs / "latest.log").write_text(text)
+    assert controller._boot(files) != before
