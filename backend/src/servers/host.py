@@ -222,20 +222,27 @@ class Amp:
         return self.sessions[instance]
 
     def call(self, instance: str, method: str, **body):
+        # The lock covers only the session table, so calls to AMP run in parallel.
+        for attempt in (1, 2):
+            with self.lock:
+                current = self._session(instance)
+            base, session = current
+            try:
+                return self._post(base, method, SESSIONID=session, **body)
+            except PermissionError:
+                # Sessions expire; log in again once.
+                self._forget(instance, current)
+            except ControlError as exc:
+                # Look the instance up again next time; never resend, as AMP may have acted.
+                if exc.code == "amp_unavailable":
+                    self._forget(instance, current)
+                raise
+        raise ControlError("amp_login_failed")
+
+    def _forget(self, instance: str, session: tuple[str, str]):
         with self.lock:
-            for attempt in (1, 2):
-                base, session = self._session(instance)
-                try:
-                    return self._post(base, method, SESSIONID=session, **body)
-                except PermissionError:
-                    # Sessions expire; log in again once.
-                    del self.sessions[instance]
-                except ControlError as exc:
-                    # Look the instance up again next time; never resend, as AMP may have acted.
-                    if exc.code == "amp_unavailable":
-                        self.sessions.pop(instance, None)
-                    raise
-            raise ControlError("amp_login_failed")
+            if self.sessions.get(instance) == session:
+                del self.sessions[instance]
 
 
 def _amp_time(value) -> float:
@@ -1128,7 +1135,8 @@ class Controller:
         if operation == "inventory":
             return self.inventory(body.get("server"))
         server = body["server"]
-        self._files(server)
+        # Each operation checks the files it needs; resolving a failure needs none.
+        self.registry.get(server)
         if operation == "plan":
             expected = body.get("expected")
             if "expected" in body and (not isinstance(expected, list) or len(expected) > 300):

@@ -1500,3 +1500,42 @@ def test_a_server_without_its_logs_folder_is_unavailable(controller):
         controller.snapshot("lobby")
     rows = {r["key"]: r for r in controller.dispatch({"operation": "inventory"})["servers"]}
     assert rows["lobby"]["error"] == "files_unavailable"
+
+
+
+def test_amp_calls_to_different_instances_run_at_the_same_time(monkeypatch):
+    started, release = threading.Event(), threading.Event()
+    def post(base, method, **body):
+        if method == "Core/Login":
+            return {"success": True, "sessionID": "s"}
+        if method == "ADSModule/GetInstances":
+            return [{"AvailableInstances": [{"InstanceName": "TFMCMain01", "Port": 8081},
+                                            {"InstanceName": "TFMCLobby01", "Port": 8082}]}]
+        if base.endswith("8081"):
+            started.set()
+            assert release.wait(5), "the second call never ran"
+        else:
+            release.set()
+        return "ok"
+    monkeypatch.setattr(host.Amp, "_post", staticmethod(post))
+    amp = host.Amp("TFWeb", "secret", ads="http://ads")
+    slow = threading.Thread(target=amp.call, args=("TFMCMain01", "Core/GetStatus"))
+    slow.start()
+    assert started.wait(5)
+    assert amp.call("TFMCLobby01", "Core/GetStatus") == "ok"
+    slow.join(5)
+    assert not slow.is_alive()
+
+
+def test_a_failure_on_a_switched_off_server_can_still_be_marked_handled(controller):
+    public = controller.plan("lobby", "restart", [])
+    job = ready_job(controller, controller._plan(public["id"]))
+    job["phase"] = "failed"
+    controller._save()
+    controller.registry.found["lobby"] = host.Instance(**{**controller.registry.found["lobby"].__dict__, "running": False})
+    body = {"operation": "resolve", "server": "lobby", "job_id": job["id"], "actor": "www:user:1", "reason": "fixed by hand"}
+    assert controller.dispatch(body)["phase"] == "resolved"
+    with pytest.raises(control.ControlError, match="server_files_unavailable"):
+        controller.dispatch({"operation": "plan", "server": "lobby", "mode": "restart", "releases": []})
+    with pytest.raises(control.ControlError, match="bad_server"):
+        controller.dispatch({**body, "server": "nowhere"})
