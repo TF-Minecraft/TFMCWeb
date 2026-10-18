@@ -745,3 +745,25 @@ def test_http_body_trickle_cannot_extend_the_check_deadline(monkeypatch):
         server.shutdown()
         server.server_close()
         thread.join(2)
+
+
+
+def test_versions_with_spaces_are_read_whole(tmp_path):
+    (tmp_path / "logs").mkdir()
+    (tmp_path / "logs" / "latest.log").write_text(
+        "[14:53:50] [ServerMain/INFO]: [bootstrap] Loading Paper 1.21.10-130-ver/1.21.10@8043efd\n"
+        "[14:53:58] [Server thread/INFO]: [Citizens] Enabling Citizens v2.0.40-SNAPSHOT (build 3990)\n"
+        "[14:53:59] [Server thread/INFO]: [Odd] Enabling Odd v1.0 (dev) \n"
+        "[14:54:00] [Server thread/ERROR]: Error occurred while enabling Broken v3.1 (beta) (Is it up to date?)\n"
+        "[14:54:00] [Server thread/INFO]: [Gone] Enabling Gone v2 (rc1)\n"
+        "[14:54:01] [Server thread/INFO]: [Gone] Disabling Gone v2 (rc1)\n"
+        '[14:54:02] [Server thread/INFO]: Done (16.151s)! For help, type "help"\n')
+    startup = inventory.read_startup(inventory.LocalFiles(tmp_path))
+    assert startup["enabled"] == {"citizens": "2.0.40-SNAPSHOT (build 3990)", "odd": "1.0 (dev)"}
+    assert startup["failed"] == {"broken": "3.1 (beta)", "gone": "2 (rc1)"}
+
+
+def test_a_spaced_plugin_yml_version_matches_its_startup_line(tmp_path):
+    jar = make_jar(tmp_path / "plugins", "Citizens.jar", "Citizens", "2.0.40-SNAPSHOT (build 3990)")
+    [found] = inventory.read_jars(inventory.LocalFiles(tmp_path))
+    assert found.version == "2.0.40-SNAPSHOT (build 3990)" and found.sha256 == jar
