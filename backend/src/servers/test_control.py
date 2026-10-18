@@ -1667,5 +1667,51 @@ def test_the_first_reads_wait_for_a_log_paper_is_replacing(controller, monkeypat
         calls.append(1)
         (logs / "latest.log").write_text(text)
     monkeypatch.setattr(host.time, "sleep", sleep)
-    assert controller._settled(lambda: controller._log_identity(files))[1].startswith(b"[06:00:00")
+    assert controller._settled(lambda: controller._log_state(files))[1][1].startswith(b"[06:00:00")
     assert calls == [1]
+
+
+
+def test_a_failed_logs_listing_is_retried_not_a_new_log(controller, monkeypatch):
+    import gzip
+    files = amp_like(controller, "dev")
+    _, logs = controller.roots["dev"]
+    with gzip.open(logs / "2026-10-17-3.log.gz", "wt") as handle:
+        handle.write("old\n")
+    before = controller._boot(files)
+    original = files.listing
+    monkeypatch.setattr(files, "listing", lambda folder: None if folder == "logs" else original(folder))
+    with pytest.raises(control.ControlError, match="server_files_unavailable"):
+        controller._boot(files)
+    monkeypatch.setattr(files, "listing", original)
+    assert controller._boot(files) == before
+
+
+def test_a_long_first_line_is_a_settled_identity(controller):
+    files = amp_like(controller, "dev")
+    _, logs = controller.roots["dev"]
+    (logs / "latest.log").write_text("[00:00:01 INFO]: " + "x" * 600 + "\n[00:00:02 INFO]: next\n")
+    size, identity = controller._log_state(files)
+    assert len(identity[1]) == 512
+    with (logs / "latest.log").open("a") as handle:
+        handle.write("[00:00:03 INFO]: more\n")
+    assert controller._log_state(files)[1] == identity
+
+
+def test_the_save_baseline_size_comes_from_the_log_it_settles_on(controller, monkeypatch):
+    files = amp_like(controller, "dev")
+    _, logs = controller.roots["dev"]
+    text = (logs / "latest.log").read_text()
+    (logs / "latest.log").write_text(text * 50)
+    sleeps = []
+    original_state = controller._log_state
+    def state(files):
+        if not sleeps:
+            # The first look catches Paper replacing the log; a small new one follows.
+            (logs / "latest.log").write_text("[07:00:00 INFO]: new log\n")
+            raise control.ControlError("server_files_unavailable", 503)
+        return original_state(files)
+    monkeypatch.setattr(controller, "_log_state", state)
+    monkeypatch.setattr(host.time, "sleep", lambda _: sleeps.append(1))
+    controller._save_game("dev")
+    assert "save-all flush" in [c for _, c in controller.commands]
