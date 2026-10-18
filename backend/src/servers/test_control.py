@@ -17,8 +17,9 @@ def jar(path, name="Core", version="1.0.0"):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def startup(logs, version="1.0.0", error=False):
-    (logs / "latest.log").write_text("[06:00:00 INFO]: [bootstrap] Loading Paper 1.21.10\n"
+def startup(logs, version="1.0.0", error=False, at="06:00:00"):
+    # Paper's first line carries the time the log was opened.
+    (logs / "latest.log").write_text(f"[{at} INFO]: [bootstrap] Loading Paper 1.21.10\n"
                                     f"[06:00:01 INFO]: [Core] Enabling Core v{version}\n"
                                     + ("[06:00:02 ERROR]: plugin failed\n" if error else "")
                                     + "[06:00:03 INFO]: Done (1.0s)!\n")
@@ -56,6 +57,7 @@ def controller(tmp_path, monkeypatch):
     monkeypatch.setattr(host.Controller, "_schedule", lambda self, server: [])
     roots = {}
     commands = []
+    boots = []
     # Lobby has no Maintenance plugin, like the real one.
     for server in ("main", "dev", "lobby"):
         plugins = tmp_path / server / "plugins"
@@ -80,7 +82,8 @@ def controller(tmp_path, monkeypatch):
         if command == "stop":
             (logs / "latest.log").rename(logs / "old.log")
             jars = inventory.read_jars(inventory.LocalFiles(plugins.parent))
-            startup(logs, jars[0].version)
+            boots.append(1)
+            startup(logs, jars[0].version, at=f"07:{len(boots):02d}:00")
 
     instance = host.Controller(tmp_path / "state", registry(roots), console=console, amp=FakeAmp(busy=0))
     instance.roots = roots
@@ -1363,7 +1366,7 @@ def test_amp_files_move_bytes_in_chunks_and_read_amp_times(monkeypatch):
     with pytest.raises(FileExistsError):
         files.write("plugins/a.jar", b"x")
     [item] = files.listing("plugins")
-    assert item["Created"] == 1792302900.857 and item["Identity"] == item["Created"]
+    assert item["Created"] == 1792302900.857 and item["Identity"] is None
     assert item["Modified"] == pytest.approx(1792096125.932)
     assert {instance for instance, _ in calls} == {"TFMCLobby01"}
 
@@ -1573,3 +1576,142 @@ def test_a_folder_proven_intact_reports_the_original_error(controller, tmp_path)
     with pytest.raises(control.ControlError, match="amp_unavailable"):
         controller._install(plan)
     assert [(j["file"], j["sha256"]) for j in controller.snapshot("dev")] == [("core-1.0.0.jar", old)]
+
+
+
+class AmpLikeFiles(inventory.LocalFiles):
+    """Local files listed the way AMP lists them: no identity, and Created equal to Modified."""
+
+    def listing(self, folder):
+        found = super().listing(folder)
+        return None if found is None else [{**e, "Created": e["Modified"], "Identity": None} for e in found]
+
+
+def amp_like(controller, server):
+    plugins, _ = controller.roots[server]
+    files = AmpLikeFiles(plugins.parent)
+    controller.registry.found[server] = host.Instance(**{**controller.registry.found[server].__dict__, "files": files})
+    return files
+
+
+@pytest.mark.parametrize("server", ["main", "lobby"])
+def test_a_save_written_to_the_log_is_not_mistaken_for_a_restart(controller, monkeypatch, server):
+    # The Lobby restart on 2026-10-18 failed here: AMP's Created is the modification time,
+    # so the save itself looked like a new log file.
+    monkeypatch.setattr(host.threading.Thread, "start", lambda _: None)
+    monkeypatch.setattr(controller.cancelled, "wait", lambda delay: False)
+    amp_like(controller, server)
+    public = controller.plan(server, "restart", [])
+    controller.start(server, public["id"], "www:user:1", "planned restart", emergency_override=True)
+    controller.run(controller._plan(public["id"]), controller.jobs[server])
+    job = controller.jobs[server]
+    assert job["phase"] == "complete", job["error"]
+    assert [c for s, c in controller.commands if s == server].count("stop") == 1
+
+
+def test_the_old_log_is_not_taken_for_the_new_startup(controller, monkeypatch):
+    files = amp_like(controller, "dev")
+    plugins, logs = controller.roots["dev"]
+    before = controller._boot(files)
+    with (logs / "latest.log").open("a") as handle:
+        handle.write("[06:01:00 INFO]: still the same log\n")
+    assert controller._boot(files) == before
+    (logs / "latest.log").rename(logs / "old.log")
+    (logs / "latest.log").write_text("[07:00:00 INFO]: [bootstrap] Loading Paper 1.21.10\n")
+    assert controller._boot(files) != before
+
+
+
+def test_a_new_log_with_the_same_first_line_is_told_apart_by_its_rotation(controller):
+    import gzip
+    files = amp_like(controller, "dev")
+    _, logs = controller.roots["dev"]
+    before = controller._boot(files)
+    # Paper started at the same second of the day as last time: identical lines, but it
+    # compressed the old log on opening the new one.
+    text = (logs / "latest.log").read_text()
+    with gzip.open(logs / "2026-10-18-1.log.gz", "wt") as handle:
+        handle.write(text)
+    (logs / "latest.log").write_text(text)
+    assert controller._boot(files) != before
+
+
+
+def test_a_log_caught_mid_replacement_is_retried_not_failed(controller, monkeypatch):
+    files = amp_like(controller, "dev")
+    _, logs = controller.roots["dev"]
+    before = controller._boot(files)
+    # Paper has just opened the new log and not finished its first line.
+    (logs / "latest.log").rename(logs / "old.log")
+    (logs / "latest.log").write_text("[07:00:00] [ServerMain/INFO]: [boot")
+    with pytest.raises(control.ControlError, match="server_files_unavailable"):
+        controller._boot(files)
+    polls = []
+    def check():
+        polls.append(1)
+        if len(polls) == 2:
+            (logs / "latest.log").write_text("[07:00:00] [ServerMain/INFO]: [bootstrap] Loading Paper 1.21.10\n")
+        return controller._boot(files) != before
+    monkeypatch.setattr(host.time, "sleep", lambda _: None)
+    controller._wait(check, 30, "startup_check_failed")
+    assert len(polls) == 2
+
+
+def test_the_first_reads_wait_for_a_log_paper_is_replacing(controller, monkeypatch):
+    files = amp_like(controller, "dev")
+    _, logs = controller.roots["dev"]
+    text = (logs / "latest.log").read_text()
+    (logs / "latest.log").write_text("")
+    calls = []
+    def sleep(_):
+        calls.append(1)
+        (logs / "latest.log").write_text(text)
+    monkeypatch.setattr(host.time, "sleep", sleep)
+    assert controller._settled(lambda: controller._log_state(files))[1][1].startswith(b"[06:00:00")
+    assert calls == [1]
+
+
+
+def test_a_failed_logs_listing_is_retried_not_a_new_log(controller, monkeypatch):
+    import gzip
+    files = amp_like(controller, "dev")
+    _, logs = controller.roots["dev"]
+    with gzip.open(logs / "2026-10-17-3.log.gz", "wt") as handle:
+        handle.write("old\n")
+    before = controller._boot(files)
+    original = files.listing
+    monkeypatch.setattr(files, "listing", lambda folder: None if folder == "logs" else original(folder))
+    with pytest.raises(control.ControlError, match="server_files_unavailable"):
+        controller._boot(files)
+    monkeypatch.setattr(files, "listing", original)
+    assert controller._boot(files) == before
+
+
+def test_a_long_first_line_is_a_settled_identity(controller):
+    files = amp_like(controller, "dev")
+    _, logs = controller.roots["dev"]
+    (logs / "latest.log").write_text("[00:00:01 INFO]: " + "x" * 600 + "\n[00:00:02 INFO]: next\n")
+    size, identity = controller._log_state(files)
+    assert len(identity[1]) == 512
+    with (logs / "latest.log").open("a") as handle:
+        handle.write("[00:00:03 INFO]: more\n")
+    assert controller._log_state(files)[1] == identity
+
+
+def test_the_save_baseline_size_comes_from_the_log_it_settles_on(controller, monkeypatch):
+    files = amp_like(controller, "dev")
+    _, logs = controller.roots["dev"]
+    text = (logs / "latest.log").read_text()
+    (logs / "latest.log").write_text(text * 50)
+    sleeps = []
+    original_state = controller._log_state
+    def state(files):
+        if not sleeps:
+            # The first look catches Paper replacing the log; a small new one follows.
+            (logs / "latest.log").write_text("[07:00:00 INFO]: new log\n")
+            raise control.ControlError("server_files_unavailable", 503)
+        return original_state(files)
+    monkeypatch.setattr(controller, "_log_state", state)
+    monkeypatch.setattr(host.time, "sleep", lambda _: sleeps.append(1))
+    controller._save_game("dev")
+    assert "save-all flush" in [c for _, c in controller.commands]

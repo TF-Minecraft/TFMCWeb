@@ -285,7 +285,8 @@ class AmpFiles:
         found = []
         for e in result:
             created = _amp_time(e.get("Created", e["Modified"]))
-            found.append({**e, "Modified": _amp_time(e["Modified"]), "Created": created, "Identity": created})
+            # AMP's Created is the modification time, so it can't tell one file from another.
+            found.append({**e, "Modified": _amp_time(e["Modified"]), "Created": created, "Identity": None})
         return found
 
     def read(self, name: str, start: int = 0, size: int | None = None) -> bytes:
@@ -859,7 +860,7 @@ class Controller:
             self._unchanged(plan)
             self._install(plan)
             files = self._files(server)
-            before = self._boot(files)
+            before = self._settled(lambda: self._boot(files))
             self._event(job, "restarting")
             self.console(server, "stop")
             self._event(job, "checking")
@@ -896,17 +897,50 @@ class Controller:
             time.sleep(1)
         raise ControlError(code)
 
+    @staticmethod
+    def _log_state(files) -> tuple[int, tuple]:
+        """latest.log's size and what tells it from the next log, from one listing: the file's
+        identity where the files have one, its first line, which carries the time Paper started
+        writing it, and the newest rotated log, since Paper compresses the old latest.log
+        whenever it opens a new one.
+
+        A listing that fails, or a log Paper is still replacing or whose first line isn't
+        written yet, raises server_files_unavailable, which waits retry.
+        """
+        listing = files.listing("logs")
+        log = next((e for e in listing or [] if e["Filename"] == "latest.log" and not e["IsDirectory"]), None)
+        if log is None:
+            raise ControlError("server_files_unavailable", 503)
+        try:
+            head = files.read("logs/latest.log", 0, size=min(512, log["SizeBytes"]))
+        except OSError:
+            raise ControlError("server_files_unavailable", 503) from None
+        if b"\n" not in head and len(head) < 512:
+            raise ControlError("server_files_unavailable", 503)
+        rotated = max(((m.group(1), int(m.group(2))) for e in listing
+                       if (m := inventory._ROTATED.match(e["Filename"]))), default=None)
+        return log["SizeBytes"], (log.get("Identity"), head.split(b"\n", 1)[0], rotated)
+
+    @staticmethod
+    def _settled(read, timeout: float = 30):
+        """`read()`'s result once the files are readable: a log being replaced is retried."""
+        deadline = time.monotonic() + timeout
+        while True:
+            try:
+                return read()
+            except ControlError as exc:
+                if exc.code not in {"amp_unavailable", "server_files_unavailable"} or time.monotonic() > deadline:
+                    raise
+            time.sleep(1)
+
     def _save_game(self, server: str):
         files = self._files(server)
-        log = inventory.entry(files, "logs/latest.log")
-        if log is None:
-            raise ControlError("save_failed")
-        offset, identity = log["SizeBytes"], log["Identity"]
+        offset, identity = self._settled(lambda: self._log_state(files))
         self.console(server, "save-all flush")
 
         def saved():
-            now = inventory.entry(files, "logs/latest.log")
-            if now is None or now["Identity"] != identity or now["SizeBytes"] < offset:
+            size, now = self._log_state(files)
+            if size < offset or now != identity:
                 raise ControlError("unexpected_restart")
             return b"Saved the game" in files.read("logs/latest.log", offset)
         self._wait(saved, 60, "save_failed")
@@ -1016,13 +1050,14 @@ class Controller:
             found[change["asset"]] = change["sha256"]
         return found
 
-    @staticmethod
-    def _boot(files):
-        log = inventory.entry(files, "logs/latest.log")
-        if log is None:
-            return None
-        boot = next((line for line in inventory.log_lines(files, "latest.log") if inventory._BOOT.search(line)), None)
-        return log["Identity"], boot
+    @classmethod
+    def _boot(cls, files):
+        identity = cls._log_state(files)[1]
+        try:
+            boot = next((line for line in inventory.log_lines(files, "latest.log") if inventory._BOOT.search(line)), None)
+        except OSError:
+            raise ControlError("server_files_unavailable", 503) from None
+        return identity, boot
 
     def _startup_ok(self, plan: dict, *, fresh: bool = True) -> bool:
         files = self._files(plan["server"])
