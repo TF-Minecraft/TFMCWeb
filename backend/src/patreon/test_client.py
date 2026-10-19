@@ -121,6 +121,11 @@ def test_second_401_not_retried(tokens):
     assert len(calls) == 3
 
 
+def test_missing_member_has_its_own_code(tokens):
+    with pytest.raises(PatreonError, match="patreon_not_found"):
+        client(lambda request: httpx.Response(404, json={"errors": [{"code_name": "ResourceMissing"}]})).member("gone")
+
+
 def test_refresh_failure_keeps_rotating_token_and_alerts(tokens, database, caplog):
     def handler(request):
         return httpx.Response(400, json={"error": "secret-token sensitive@example.com"}) if request.method == "POST" else httpx.Response(401)

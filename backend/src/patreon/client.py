@@ -102,6 +102,8 @@ class PatreonClient:
             raise PatreonError("patreon_http_failed") from None
         if response.status_code == 401:
             raise PatreonError("patreon_unauthorized")
+        if response.status_code == 404:
+            raise PatreonError("patreon_not_found")
         if not 200 <= response.status_code < 300:
             raise PatreonError("patreon_http_failed")
         try:

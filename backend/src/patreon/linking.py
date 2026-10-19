@@ -34,7 +34,7 @@ KNOWN_EVENTS = frozenset({
     "members:pledge:update",
     "members:pledge:delete",
 })
-_SAFE_SYNC = {"patreon_sync_busy", "patreon_sync_failed", "patreon_disabled"}
+_SAFE_SYNC = {"patreon_sync_busy", "patreon_sync_failed", "patreon_disabled", "patreon_member_missing"}
 _USER_ID = re.compile(r"[A-Za-z0-9_-]{1,64}")
 _MEMBER_ID = re.compile(r"[A-Za-z0-9_-]{1,80}")
 _TIER = re.compile(r"[a-z0-9_]{1,32}")
@@ -320,7 +320,8 @@ def refresh_webhook_member_sync(member_id: str, *, config: Config | None = None,
         except Exception:
             logger.warning("Patreon webhook refresh retained")
             return
-        if result.get("ok"):
+        if result.get("ok") or result.get("detail") == "patreon_member_missing":
+            # A missing member would fail every retry; the full sync covers it.
             with database.connect() as conn:
                 conn.execute("DELETE FROM patreon_webhook_members WHERE member_id = %s", (member_id,))
             return
