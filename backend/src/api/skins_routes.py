@@ -55,6 +55,7 @@ from src.skins.moderation import (
     ack_moderation,
     enqueue_ban_event,
     enqueue_bird_mail,
+    list_ban_sync,
     list_undelivered_moderation,
     record_warning,
 )
@@ -205,6 +206,9 @@ class BanEventBody(BaseModel):
     reason: str | None = None
     duration: str | None = None
     staff_name: str | None = None
+    # Epoch milliseconds from the server's ban list; expires_at_ms 0 is permanent.
+    banned_at_ms: int | None = Field(default=None, ge=0)
+    expires_at_ms: int | None = Field(default=None, ge=0)
 
 
 class BirdMailBody(BaseModel):
@@ -518,9 +522,19 @@ def post_moderation_ban_event(
             reason=body.reason,
             duration=body.duration,
             staff_name=body.staff_name,
+            banned_at_ms=body.banned_at_ms,
+            expires_at_ms=body.expires_at_ms,
         )
     except ModerationError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
+
+
+@skins_router.get("/moderation/bans")
+def get_moderation_bans(
+    x_plugin_key: str | None = Header(default=None, alias=HEADER_PLUGIN_KEY),
+):
+    _require_plugin(x_plugin_key)
+    return list_ban_sync()
 
 
 @skins_router.post("/moderation/bird-mail")
