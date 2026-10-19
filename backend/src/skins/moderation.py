@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from src import database
@@ -135,6 +135,117 @@ def record_warning(
     }
 
 
+# Two reports of one ban: Main and Lobby each ban the player, or a server
+# reports a ban again. Their end times differ by the seconds between them.
+_SAME_BAN_WINDOW = timedelta(minutes=10)
+# How long an unban stays in the list the servers sync from.
+_UNBAN_SYNC_DAYS = 30
+
+
+_EPOCH = datetime(1970, 1, 1, tzinfo=timezone.utc)
+
+
+def _from_ms(value: int | None) -> datetime | None:
+    return None if value is None else _EPOCH + timedelta(milliseconds=value)
+
+
+def _to_ms(value: datetime | None) -> int:
+    return 0 if value is None else (value - _EPOCH) // timedelta(milliseconds=1)
+
+
+def _same_ban(row, banned_at: datetime | None, expires_at: datetime | None, now: datetime) -> bool:
+    """Whether a ban report repeats the active ban already recorded for the player."""
+    if not row["banned"]:
+        return False
+    if row["expires_at"] is not None and row["expires_at"] <= now:
+        return False
+    if row["banned_at"] is None or banned_at is None:
+        # A server that does not send times: only a report soon after counts.
+        return row["updated_at"] >= now - _SAME_BAN_WINDOW
+    if row["expires_at"] is None or expires_at is None:
+        return row["expires_at"] is None and expires_at is None
+    return abs(row["expires_at"] - expires_at) <= _SAME_BAN_WINDOW
+
+
+def _outlived(row, lapsed_expires_at: datetime | None, now: datetime) -> bool:
+    """Whether a lapsed ban one server reports is not the ban recorded, which still holds.
+
+    A server's older tempban runs out while a later ban from another server
+    still holds; that expiry must not lift the player's ban.
+    """
+    if lapsed_expires_at is None or lapsed_expires_at > now or row["banned_at"] is None:
+        return False
+    if row["expires_at"] is None:
+        return True
+    return row["expires_at"] > now and abs(row["expires_at"] - lapsed_expires_at) > _SAME_BAN_WINDOW
+
+
+def _record_ban(
+    conn,
+    etype: str,
+    uuid: str,
+    *,
+    minecraft_name: str | None,
+    reason: str | None,
+    staff_name: str | None,
+    banned_at: datetime | None,
+    expires_at: datetime | None,
+) -> bool:
+    """Store a ban or unban for the player. False when it repeats what is stored.
+
+    For an unban, banned_at and expires_at describe the ban the server lifted.
+    """
+    database.advisory_lock(conn, f"moderation:ban:{uuid.lower()}")
+    row = conn.execute(
+        "SELECT banned, banned_at, expires_at, updated_at FROM player_bans WHERE player_uuid = %s",
+        (uuid,),
+    ).fetchone()
+    now = _utcnow()
+    if etype == "ban":
+        if row is not None and _same_ban(row, banned_at, expires_at, now):
+            if row["banned_at"] is None and banned_at is not None:
+                # A server without times reported it first; keep the times so it can sync.
+                conn.execute(
+                    "UPDATE player_bans SET banned_at = %s, expires_at = %s WHERE player_uuid = %s",
+                    (banned_at, expires_at, uuid),
+                )
+            return False
+        conn.execute(
+            """
+            INSERT INTO player_bans (
+                player_uuid, minecraft_name, banned, reason, staff_name,
+                banned_at, expires_at, updated_at
+            ) VALUES (%s, %s, true, %s, %s, %s, %s, %s)
+            ON CONFLICT (player_uuid) DO UPDATE SET
+                minecraft_name = COALESCE(EXCLUDED.minecraft_name, player_bans.minecraft_name),
+                banned = true,
+                reason = EXCLUDED.reason,
+                staff_name = EXCLUDED.staff_name,
+                banned_at = EXCLUDED.banned_at,
+                expires_at = EXCLUDED.expires_at,
+                updated_at = EXCLUDED.updated_at
+            """,
+            (uuid, minecraft_name, reason, staff_name, banned_at, expires_at, now),
+        )
+        return True
+    if row is not None and not row["banned"]:
+        return False
+    if row is not None and _outlived(row, expires_at, now):
+        return False
+    conn.execute(
+        """
+        INSERT INTO player_bans (player_uuid, minecraft_name, banned, updated_at)
+        VALUES (%s, %s, false, %s)
+        ON CONFLICT (player_uuid) DO UPDATE SET
+            minecraft_name = COALESCE(EXCLUDED.minecraft_name, player_bans.minecraft_name),
+            banned = false,
+            updated_at = EXCLUDED.updated_at
+        """,
+        (uuid, minecraft_name, now),
+    )
+    return True
+
+
 def enqueue_ban_event(
     event: str,
     *,
@@ -144,36 +255,99 @@ def enqueue_ban_event(
     reason: str | None = None,
     duration: str | None = None,
     staff_name: str | None = None,
+    banned_at_ms: int | None = None,
+    expires_at_ms: int | None = None,
 ) -> dict:
-    """Enqueue ban or unban Discord side-effect. No outbox if unlinked."""
+    """Record a ban or unban and enqueue its Discord side-effect.
+
+    A report that repeats the player's recorded ban or unban (another server,
+    or the same server again) is stored once and sends nothing. banned_at_ms
+    and expires_at_ms are epoch milliseconds of the ban made or lifted;
+    expires_at_ms 0 is permanent.
+    No outbox if unlinked.
+    """
     etype = (event or "").strip().lower()
     if etype not in ("ban", "unban"):
         raise ModerationError("event must be 'ban' or 'unban'")
 
     discord_id = (discord_user_id or "").strip() or None
-    if not discord_id:
-        return {"ok": True, "mirrored": False, "notification_id": None}
-
     uuid = (player_uuid or "").strip() or None
     try:
-        payload = {
-            "minecraft_name": assert_optional_display_name(
-                minecraft_name, max_len=_MC_NAME_MAX, field="minecraft name"
-            ),
-            "reason": (
-                assert_prose(reason, min_len=1, max_len=_REASON_MAX, field="reason")
-                if (reason or "").strip()
-                else None
-            ),
-            "duration": (duration or "").strip() or None,
-            "staff_name": assert_optional_display_name(
-                staff_name, max_len=_STAFF_NAME_MAX, field="staff name"
-            ),
-        }
+        mc_name = assert_optional_display_name(
+            minecraft_name, max_len=_MC_NAME_MAX, field="minecraft name"
+        )
+        text = (
+            assert_prose(reason, min_len=1, max_len=_REASON_MAX, field="reason")
+            if (reason or "").strip()
+            else None
+        )
+        staff = assert_optional_display_name(
+            staff_name, max_len=_STAFF_NAME_MAX, field="staff name"
+        )
     except TextValidationError as e:
         raise ModerationError(str(e)) from e
-    notice_id = _enqueue(etype, discord_id, uuid, payload)
+    payload = {
+        "minecraft_name": mc_name,
+        "reason": text,
+        "duration": (duration or "").strip() or None,
+        "staff_name": staff,
+    }
+    try:
+        banned_at = _from_ms(banned_at_ms) if banned_at_ms else None
+        expires_at = _from_ms(expires_at_ms) if banned_at and expires_at_ms else None
+    except (OverflowError, ValueError) as e:
+        raise ModerationError("ban times are out of range") from e
+
+    with database.connect() as conn:
+        if uuid and not _record_ban(
+            conn,
+            etype,
+            uuid,
+            minecraft_name=mc_name,
+            reason=text,
+            staff_name=staff,
+            banned_at=banned_at,
+            expires_at=expires_at,
+        ):
+            return {"ok": True, "mirrored": False, "duplicate": True, "notification_id": None}
+        if not discord_id:
+            return {"ok": True, "mirrored": False, "notification_id": None}
+        notice_id = _enqueue(etype, discord_id, uuid, payload, conn=conn)
     return {"ok": True, "mirrored": True, "notification_id": notice_id}
+
+
+def list_ban_sync() -> dict:
+    """Active bans with known times, and recent unbans, for servers to apply."""
+    now = _utcnow()
+    with database.connect() as conn:
+        rows = conn.execute(
+            """
+            SELECT * FROM player_bans
+            WHERE (banned AND banned_at IS NOT NULL AND (expires_at IS NULL OR expires_at > %s))
+               OR (NOT banned AND updated_at > %s)
+            ORDER BY player_uuid
+            """,
+            (now, now - timedelta(days=_UNBAN_SYNC_DAYS)),
+        ).fetchall()
+    return {
+        "bans": [
+            {
+                "player_uuid": row["player_uuid"],
+                "minecraft_name": row["minecraft_name"],
+                "reason": row["reason"],
+                "staff_name": row["staff_name"],
+                "banned_at_ms": _to_ms(row["banned_at"]),
+                "expires_at_ms": _to_ms(row["expires_at"]),
+            }
+            for row in rows
+            if row["banned"]
+        ],
+        "unbans": [
+            {"player_uuid": row["player_uuid"], "unbanned_at_ms": _to_ms(row["updated_at"])}
+            for row in rows
+            if not row["banned"]
+        ],
+    }
 
 
 _ADDRESSEE_MAX = 256
