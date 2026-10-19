@@ -5,6 +5,7 @@ import pytest
 from src.auth import testing
 from src.database.migrate import migrate
 from src.patreon import service as s
+from src.patreon.client import PatreonError
 from src.patreon.config import Config
 from src.patreon.resolver import iso, utcnow
 
@@ -119,6 +120,19 @@ def test_failed_sync_retains_members_applied_and_no_sensitive_logs(database, cap
     assert "sensitive@example.com" not in caplog.text and "secret-token" not in caplog.text
     sync([member()])
     assert s.health(CONFIG)["consecutive_failures"] == 0
+
+
+class MissingMemberClient(FakeClient):
+    def member(self, member_id):
+        raise PatreonError("patreon_not_found")
+
+
+def test_failed_member_refresh_does_not_count_or_alert(database):
+    sync([member()])
+    for _ in range(3):
+        assert s.refresh_member("m1", config=CONFIG, client=FakeClient([], fail=True)) == {"ok": False, "detail": "patreon_sync_failed"}
+        assert s.refresh_member("m1", config=CONFIG, client=MissingMemberClient([])) == {"ok": False, "detail": "patreon_member_missing"}
+    assert s.health(CONFIG)["consecutive_failures"] == 0 and s.alerts()["alerts"] == []
 
 
 def test_declined_notification_once_then_expiry(database):

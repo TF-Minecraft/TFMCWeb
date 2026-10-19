@@ -24,6 +24,15 @@ class PatreonError(RuntimeError):
     """A stable, non-sensitive failure code."""
 
 
+def _resource_missing(response) -> bool:
+    """Patreon's own "not found" for an ID, not a 404 from a wrong path or proxy."""
+    try:
+        errors = response.json().get("errors")
+        return isinstance(errors, list) and any(isinstance(e, dict) and e.get("code_name") == "ResourceMissing" for e in errors)
+    except (ValueError, AttributeError):
+        return False
+
+
 def decode_members(document: dict, *, single: bool = False) -> list[dict]:
     try:
         data = [document["data"]] if single else document["data"]
@@ -102,6 +111,8 @@ class PatreonClient:
             raise PatreonError("patreon_http_failed") from None
         if response.status_code == 401:
             raise PatreonError("patreon_unauthorized")
+        if response.status_code == 404 and _resource_missing(response):
+            raise PatreonError("patreon_not_found")
         if not 200 <= response.status_code < 300:
             raise PatreonError("patreon_http_failed")
         try:

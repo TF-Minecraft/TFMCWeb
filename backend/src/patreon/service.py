@@ -374,7 +374,7 @@ def _sync_failure():
 
 
 def _run_fetch(*, config, client, member_id=None):
-    from .client import PatreonClient
+    from .client import PatreonClient, PatreonError
     owner = acquire_lease()
     if owner is None:
         return {"ok": False, "detail": "patreon_sync_busy"}
@@ -417,9 +417,14 @@ def _run_fetch(*, config, client, member_id=None):
             if lease["owner"] != owner or lease["expires_at"] <= utcnow():
                 raise ServiceError("patreon_lease_lost")
         return {"ok": True, "members": len(fetched), "brake_held": health(config)["brake_held"]}
-    except Exception:
+    except Exception as error:
+        if member_id and isinstance(error, PatreonError) and str(error) == "patreon_not_found":
+            # Patreon no longer serves this member by ID; the full sync still reconciles it.
+            return {"ok": False, "detail": "patreon_member_missing"}
+        # A full sync owns the failure count; a failed member refresh stays queued for retry.
+        if not member_id:
+            _sync_failure()
         # No raw exception strings: HTTP bodies and parse failures may contain PII.
-        _sync_failure()
         logger.warning("Patreon sync failed; stored entitlements retained")
         return {"ok": False, "detail": "patreon_sync_failed"}
     finally:

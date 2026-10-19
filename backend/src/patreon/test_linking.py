@@ -338,6 +338,14 @@ def test_webhook_busy_refresh_is_retained_and_retried(api, monkeypatch):
     assert testing.value("SELECT count(*) FROM patreon_webhook_members") == 0
 
 
+def test_webhook_missing_member_is_dropped(api, monkeypatch):
+    monkeypatch.setattr(s, "refresh_member", lambda member_id, **kwargs: {"ok": False, "detail": "patreon_member_missing"})
+    monkeypatch.setattr(linking, "build_client", lambda config=None: Stub())
+    linking.record_webhook_member("m9")
+    linking.retry_pending_webhooks()
+    assert testing.value("SELECT count(*) FROM patreon_webhook_members") == 0
+
+
 def test_public_callbacks_disabled(api, monkeypatch):
     monkeypatch.setenv("PATREON_ENABLED", "0")
     assert api.get("/patreon/oauth/callback", follow_redirects=False).status_code == 503
