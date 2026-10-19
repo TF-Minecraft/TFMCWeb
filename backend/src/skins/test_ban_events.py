@@ -15,6 +15,7 @@ if str(_BACKEND) not in sys.path:
 
 from src import database
 from src.skins.moderation import (
+    ModerationError,
     enqueue_ban_event,
     list_ban_sync,
     list_undelivered_moderation,
@@ -164,3 +165,19 @@ def test_an_older_ban_running_out_does_not_lift_a_later_one():
     # A staff /unban lifts whatever ban is recorded.
     _ban(now, 0)
     assert _unban("Mod", now - DAY, now + DAY)["mirrored"]
+
+
+def test_times_round_trip_exactly_and_out_of_range_times_are_rejected():
+    for ms in (1792352364123, 1792352364999, 1792438773975):
+        enqueue_ban_event("ban", player_uuid=UUID, banned_at_ms=ms, expires_at_ms=ms + DAY)
+        assert list_ban_sync()["bans"][0]["banned_at_ms"] == ms
+        _unban()
+    with pytest.raises(ModerationError):
+        _ban(_now_ms(), 2**63 - 1)
+
+
+def test_a_timed_report_fills_in_a_ban_first_reported_without_times():
+    now = _now_ms()
+    assert _ban(None, None)["mirrored"]
+    assert _ban(now, now + DAY)["duplicate"]
+    assert list_ban_sync()["bans"][0]["expires_at_ms"] == now + DAY

@@ -142,12 +142,15 @@ _SAME_BAN_WINDOW = timedelta(minutes=10)
 _UNBAN_SYNC_DAYS = 30
 
 
+_EPOCH = datetime(1970, 1, 1, tzinfo=timezone.utc)
+
+
 def _from_ms(value: int | None) -> datetime | None:
-    return None if value is None else datetime.fromtimestamp(value / 1000, timezone.utc)
+    return None if value is None else _EPOCH + timedelta(milliseconds=value)
 
 
 def _to_ms(value: datetime | None) -> int:
-    return 0 if value is None else int(value.timestamp() * 1000)
+    return 0 if value is None else (value - _EPOCH) // timedelta(milliseconds=1)
 
 
 def _same_ban(row, banned_at: datetime | None, expires_at: datetime | None, now: datetime) -> bool:
@@ -200,6 +203,12 @@ def _record_ban(
     now = _utcnow()
     if etype == "ban":
         if row is not None and _same_ban(row, banned_at, expires_at, now):
+            if row["banned_at"] is None and banned_at is not None:
+                # A server without times reported it first; keep the times so it can sync.
+                conn.execute(
+                    "UPDATE player_bans SET banned_at = %s, expires_at = %s WHERE player_uuid = %s",
+                    (banned_at, expires_at, uuid),
+                )
             return False
         conn.execute(
             """
@@ -283,8 +292,11 @@ def enqueue_ban_event(
         "duration": (duration or "").strip() or None,
         "staff_name": staff,
     }
-    banned_at = _from_ms(banned_at_ms) if banned_at_ms else None
-    expires_at = _from_ms(expires_at_ms) if banned_at and expires_at_ms else None
+    try:
+        banned_at = _from_ms(banned_at_ms) if banned_at_ms else None
+        expires_at = _from_ms(expires_at_ms) if banned_at and expires_at_ms else None
+    except (OverflowError, ValueError) as e:
+        raise ModerationError("ban times are out of range") from e
 
     with database.connect() as conn:
         if uuid and not _record_ban(
