@@ -143,6 +143,12 @@ export default function FactionsGovernmentPage() {
         split off with their share of the land and army. If they win, their demands apply. There is a 10-day break
         between civil wars, and civil wars never cost reparations.
       </Callout>
+      <Callout variant="note" title="Usurping your overlord">
+        A vassal cannot declare war on its overlord. Instead, the vassal&apos;s leader starts a movement in the
+        overlord&apos;s faction with the <strong>Usurp</strong> demand. If the overlord gives in, or the vassal wins the
+        civil war that follows, the vassal takes the overlord&apos;s highest title and its vassals, and the old overlord
+        becomes its vassal.
+      </Callout>
       <P>
         The Assembly law decides when the leader can order a movement to disband: from the Agitated phase, only when
         Rebellious, or at any time.

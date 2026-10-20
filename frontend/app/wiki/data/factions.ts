@@ -257,7 +257,10 @@ export const factionWarGoals: FactionWarGoal[] = [
     goal: "De Jure Annex",
     win: "You take the provinces of a title you hold or have land in. The loser keeps its settlements and the roads between them.",
   },
-  { goal: "Usurp", win: "You take the loser's highest title and its vassals. The loser becomes your vassal." },
+  {
+    goal: "Usurp",
+    win: "You take the loser's highest title and its vassals. The loser becomes your vassal. Not against your own overlord: that is a movement.",
+  },
   { goal: "Open Market", win: "The loser is forced into Free Trade and loses 25 stability." },
   { goal: "Change Government", win: "You set the loser's government and leadership laws. It loses 50 stability." },
   {
@@ -664,17 +667,14 @@ export const factionMercenaryCommands: CommandRow[] = [
   },
 ];
 
-/**
- * Coalition commands from the coalitions design. They are shown on the
- * coalitions page only and are not registered in the global command index.
- */
+/** Coalition commands, shown on the coalitions page. */
 export const factionCoalitionCommands: CommandRow[] = [
   {
-    command: "/coalition create <name> <target>",
+    command: "/coalition create <target> <name>",
     description: "Creates a coalition against a target, with your faction as its leader.",
     notes: "Faction leader of an independent faction that is in no coalition.",
   },
-  { command: "/coalition menu", description: "Opens your coalition's menu." },
+  { command: "/coalition", aliases: ["/coalition menu"], description: "Opens your coalition's menu." },
   { command: "/coalition list", description: "Shows every coalition." },
   { command: "/coalition invite <faction>", description: "Invites a faction.", notes: "Coalition leader only." },
   {
@@ -724,6 +724,7 @@ export const factionsCommands: WikiCommandSet = {
     ...factionInstallationCommands,
     ...factionWarCommands,
     ...factionMercenaryCommands,
+    ...factionCoalitionCommands,
   ],
 };
 

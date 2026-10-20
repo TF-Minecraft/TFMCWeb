@@ -13,8 +13,9 @@ export default function FactionsWarPage() {
         A war at a glance
       </WikiSectionHeading>
       <Steps>
+        <li>Look through the war goals you could pick, and what each would win you.</li>
         <li>Get a war code from staff in Discord.</li>
-        <li>The leader declares war and picks the war goal.</li>
+        <li>The leader declares war and picks the war goals.</li>
         <li>Both sides set their demands and call their allies.</li>
         <li>On each battle day, members vote on a start time and sign up through their warband.</li>
         <li>The winner of each battle pushes the front forward and occupies land.</li>
@@ -29,11 +30,15 @@ export default function FactionsWarPage() {
       </WikiSectionHeading>
       <Steps>
         <li>
-          Open a <strong>War Ticket</strong> in Discord. Staff give you a one-time war code for that target and goal. It
-          lasts 48 hours.
+          Faction menu, then Diplomacy, then the target, then <strong>Declare War</strong>. You can open this at any
+          time, without a code, to see every war goal you could pick against them and what it would win you, such as how
+          much a pillage would loot. Use it to decide whether the war is worth it.
         </li>
-        <li>Faction menu, then Diplomacy, then the target, then Declare War.</li>
-        <li>Type the code in chat, choose the goal&apos;s details, and confirm.</li>
+        <li>
+          Open a <strong>War Ticket</strong> in Discord. Staff give you a one-time war code that lets you attack that
+          faction. It lasts 48 hours.
+        </li>
+        <li>Click Declare War again, type the code in chat, pick your goals and confirm.</li>
       </Steps>
       <P>You can only declare if:</P>
       <Bullets>
@@ -45,8 +50,9 @@ export default function FactionsWarPage() {
         <li>if the route crosses the sea, you have a working port.</li>
       </Bullets>
       <P>
-        If the declaration fails, your code is not used up. You cannot declare war on your own overlord or vassals,
-        except to Usurp your overlord.
+        If the declaration fails, your code is not used up. You cannot declare war on your own overlord or vassals. A
+        vassal that wants to take its overlord&apos;s place starts a Usurp movement instead (see Government and
+        stability).
       </P>
 
       <WikiSectionHeading id="goals" intro="The goal is what the winner gets.">

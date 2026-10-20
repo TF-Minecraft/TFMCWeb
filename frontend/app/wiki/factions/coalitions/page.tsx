@@ -58,7 +58,7 @@ export default function FactionsCoalitionsPage() {
       </WikiSectionHeading>
       <Steps>
         <li>
-          <Cmd>/coalition create &lt;name&gt; &lt;target&gt;</Cmd> creates the coalition with you as leader.
+          <Cmd>/coalition create &lt;target&gt; &lt;name&gt;</Cmd> creates the coalition with you as leader.
         </li>
         <li>
           <Cmd>/coalition invite &lt;faction&gt;</Cmd> invites other factions. Invites last 7 days, so the other leader
@@ -68,7 +68,7 @@ export default function FactionsCoalitionsPage() {
           They accept with <Cmd>/coalition join &lt;coalition&gt;</Cmd>.
         </li>
         <li>
-          <Cmd>/coalition menu</Cmd> shows members, their cost, the target and any coalition wars.
+          <Cmd>/coalition</Cmd> opens the coalition menu: members, their cost, the target and any coalition wars.
         </li>
       </Steps>
       <P>
@@ -146,6 +146,10 @@ export default function FactionsCoalitionsPage() {
         <li>
           Both sides are warned before they commit. The target sees a warning when it declares war on a member, and a
           faction that calls the target in against a member is warned that the coalition can then join.
+        </li>
+        <li>
+          When you are the attacker, only members who were already in the coalition when the war started can be called,
+          and you must have been a member then too. Factions that join during a war can only help defend.
         </li>
         <li>If the target leaves the war, no more members can be called. Members who already joined stay.</li>
         <li>A war against only one of the target&apos;s vassals does not count.</li>
