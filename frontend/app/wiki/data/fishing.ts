@@ -16,7 +16,7 @@ export const fishingSection: WikiSection = {
     href: "/wiki/fishing",
     label: "Fishing",
     category: "gathering",
-    blurb: "Rod tiers, bait, hooks and a bite-timing minigame: then sell the catch.",
+    blurb: "Rod and hook tiers, bait, and the minigame that starts when a fish bites.",
   },
   commands: fishingCommands,
 };

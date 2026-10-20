@@ -16,7 +16,7 @@ export const cookingSection: WikiSection = {
     href: "/wiki/cooking",
     label: "Cooking",
     category: "food",
-    blurb: "Furniture cooking: pans, pots, ovens and a 1–5 star quality system.",
+    blurb: "Cook on placed furniture: pans, pots, ovens, cutting boards and more.",
   },
   commands: cookingCommands,
 };

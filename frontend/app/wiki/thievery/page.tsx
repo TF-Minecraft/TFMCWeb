@@ -63,8 +63,8 @@ export default function ThieveryPage() {
         <li>
           Hold a lockpick (the <WikiItemLink name="Basic Lockpick">Basic Lockpick</WikiItemLink> or the stronger{" "}
           <WikiItemLink name="Strong Lockpick">Strong Lockpick</WikiItemLink>, both made at the{" "}
-          <StationLink name="Tool Station" />) and right-click a closed, locked door within 3 blocks: or a lockable
-          container, display furniture (<WikiItemLink name="Artifact Display">artifact display</WikiItemLink>,{" "}
+          <StationLink name="Tool Station" />) and right-click something locked within 3 blocks: a closed door, a
+          lockable container, display furniture (<WikiItemLink name="Artifact Display">artifact display</WikiItemLink>,{" "}
           <WikiItemLink name="Pedestal">pedestal</WikiItemLink>), or entity (armor stand, item frame, glow item frame).
         </li>
         <li>

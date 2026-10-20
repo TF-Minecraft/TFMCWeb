@@ -12,7 +12,7 @@ export const harvestingSection: WikiSection = {
     href: "/wiki/harvesting",
     label: "Crop Harvesting",
     category: "gathering",
-    blurb: "Hoe-based area harvesting and auto-replanting for vanilla wheat, potato and carrot.",
+    blurb: "Harvest and replant vanilla crops over an area with a hoe.",
   },
   commands: harvestingCommands,
 };

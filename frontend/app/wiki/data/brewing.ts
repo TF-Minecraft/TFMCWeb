@@ -29,7 +29,7 @@ export const brewingSection: WikiSection = {
     href: "/wiki/brewing",
     label: "Brewing",
     category: "food",
-    blurb: "Ferment, distil and barrel-age real alcohol: with drunkenness that shows.",
+    blurb: "Ferment drinks in a cauldron, then distil them and age them in barrels.",
   },
   commands: brewingCommands,
 };

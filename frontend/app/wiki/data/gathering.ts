@@ -16,7 +16,7 @@ export const gatheringSection: WikiSection = {
     href: "/wiki/gathering",
     label: "Gathering",
     category: "professions",
-    blurb: "Hidden herb spots in the wild: walk close, notice them, right-click to harvest.",
+    blurb: "Notice hidden gathering spots in the wild and right-click them for loot.",
   },
   commands: gatheringCommands,
 };

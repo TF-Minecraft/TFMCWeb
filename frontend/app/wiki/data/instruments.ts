@@ -125,7 +125,7 @@ export const instrumentsSection: WikiSection = {
     href: "/wiki/musical-instruments",
     label: "Musical Instruments",
     category: "social",
-    blurb: "Nine instruments turn your hotbar into a keyboard. Only Bards can craft them - anyone can play one.",
+    blurb: "Nine instruments turn your hotbar into a keyboard. Only Bards can craft them, but anyone can play one.",
   },
   // `instrumentRecipes` are server recipes registered by `stationsSection`;
   // listing them again here would put them in the recipe index twice.

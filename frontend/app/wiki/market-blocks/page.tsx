@@ -9,9 +9,9 @@ export default function MarketBlocksPage() {
       title="Market Block"
       intro={
         <>
-          A Market Block is a shop you place yourself: right-click it and sell raw materials for denars. It only buys:
-          there is no way to purchase items back from it. The more of one material the block has already absorbed, the
-          less it pays for the next bundle, and that price slowly recovers if you leave it alone.
+          A Market Block is a shop you place yourself: right-click it and sell raw materials for denars. It only buys,
+          so you cannot purchase items back from it. The more of one material the block has already absorbed, the less
+          it pays for the next bundle, and that price slowly recovers if you leave it alone.
         </>
       }
       width="lg"

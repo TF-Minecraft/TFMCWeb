@@ -37,7 +37,7 @@ export default async function InstrumentDetailPage({ params }: { params: Promise
       intro={
         instrument.mode === "chord"
           ? "Keys 1-8 play a single note; hold Shift for the same eight notes as full chords."
-          : "Keys 1-8 play the base octave; hold Shift for the same eight notes one octave higher: sixteen notes total."
+          : "Keys 1-8 play the base octave; hold Shift for the same eight notes one octave higher, for sixteen notes in total."
       }
     >
       <WikiSectionHeading id="keyboard">Try it</WikiSectionHeading>

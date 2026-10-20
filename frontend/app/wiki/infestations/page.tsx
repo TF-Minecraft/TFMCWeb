@@ -6,9 +6,9 @@ export default function InfestationsPage() {
       title="Infestations"
       intro={
         <>
-          Whole map provinces can get overrun by monsters: on this server, every infestation you will meet is
-          swamp-flavoured and shown on the map as <strong>&quot;Bog Monsters&quot;</strong>. Walk into one and it spawns
-          ambient enemies around you on its own; place a{" "}
+          Whole map provinces can be overrun by monsters. Every infestation on this server is a swamp infestation, shown
+          on the map as <strong>&quot;Bog Monsters&quot;</strong>. Walk into one and it spawns ambient enemies around
+          you on its own; place a{" "}
           <WikiItemLink name="Lure">
             <strong>Lure</strong>
           </WikiItemLink>{" "}

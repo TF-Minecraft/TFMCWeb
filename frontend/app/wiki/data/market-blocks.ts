@@ -55,7 +55,7 @@ export const marketBlockSection: WikiSection = {
     href: "/wiki/market-blocks",
     label: "Market Block",
     category: "social",
-    blurb: "A sell-only shop block: dump raw materials for denars at a price that sags the more you sell.",
+    blurb: "A shop block that buys raw materials for denars. Its price drops the more of one item it has bought.",
   },
   recipes: [marketBlockRecipe],
   commands: marketBlockCommands,

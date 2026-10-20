@@ -122,7 +122,7 @@ export default function GamesPage() {
           <code className="text-[var(--tfmc-accent)]">/games bet max &lt;n&gt;</code>,{" "}
           <code className="text-[var(--tfmc-accent)]">/games bet open</code>,{" "}
           <code className="text-[var(--tfmc-accent)]">/games bet close</code>, then right-clicks the shoe. Some tables
-          deal themselves : betting opens automatically once the first real bet lands.
+          deal themselves. On those, betting opens automatically once the first real bet lands.
         </li>
       </ol>
 
@@ -189,10 +189,11 @@ export default function GamesPage() {
 
       <WikiSectionHeading id="commands">Commands</WikiSectionHeading>
       <p className="mt-2 text-sm text-[var(--tfmc-mist)]">
-        Everything else at a table: placing it, dealing, betting coins, drawing, discarding, revealing, taking the
-        free-play pot: is clicks and chat words, not commands. The chat words a table recognises, only on your turn, are{" "}
-        <code className="text-[var(--tfmc-accent)]">hit</code>, <code className="text-[var(--tfmc-accent)]">stand</code>
-        , <code className="text-[var(--tfmc-accent)]">double</code>,{" "}
+        Everything else at a table (placing it, dealing, betting coins, drawing, discarding, revealing, taking the
+        free-play pot) is done with clicks and chat words, not commands. The chat words a table recognises, only on your
+        turn, are <code className="text-[var(--tfmc-accent)]">hit</code>,{" "}
+        <code className="text-[var(--tfmc-accent)]">stand</code>,{" "}
+        <code className="text-[var(--tfmc-accent)]">double</code>,{" "}
         <code className="text-[var(--tfmc-accent)]">split</code>,{" "}
         <code className="text-[var(--tfmc-accent)]">check</code>,{" "}
         <code className="text-[var(--tfmc-accent)]">call</code>,{" "}

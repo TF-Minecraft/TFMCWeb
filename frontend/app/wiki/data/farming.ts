@@ -12,7 +12,7 @@ export const farmingSection: WikiSection = {
     href: "/wiki/farming",
     label: "Farming",
     category: "gathering",
-    blurb: "Watered pots, 30 custom crops, sprinklers and fertilisers: plant, water, harvest.",
+    blurb: "Grow 30 custom crops in watered pots, and speed them up with fertiliser.",
   },
   commands: farmingCommands,
 };

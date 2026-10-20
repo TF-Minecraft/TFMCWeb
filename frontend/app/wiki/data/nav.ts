@@ -16,52 +16,52 @@ export const overviewNavItem: WikiNavItem = {
 const CATEGORY_DEFS: Record<WikiCategoryKey, Omit<WikiCategory, "key">> = {
   "getting-started": {
     label: "Getting Started",
-    blurb: "First steps on the server: what to read before anything else.",
+    blurb: "Start here if you are new to the server.",
     order: 1,
   },
   character: {
     label: "Character & Identity",
-    blurb: "Who you are: classes, appearance, and the choices that stick with you.",
+    blurb: "Your character, class and chat, plus everyday roleplay tools.",
     order: 2,
   },
   professions: {
     label: "Professions & Crafting",
-    blurb: "Trades, skill trees, and the systems that turn raw goods into gear.",
+    blurb: "Smithing, woodworking, furniture and other crafting.",
     order: 3,
   },
   gathering: {
     label: "Gathering & Farming",
-    blurb: "Where raw materials come from: mining, harvesting, and husbandry.",
+    blurb: "Farming, fishing, harvesting and resource nodes.",
     order: 4,
   },
   food: {
     label: "Food & Drink",
-    blurb: "Cooking, brewing, and what the results actually do for you.",
+    blurb: "Livestock, cooking, brewing and custom drinks.",
     order: 5,
   },
   magic: {
     label: "Magic & Knowledge",
-    blurb: "Arcane systems, research, and the strange things buried in the world.",
+    blurb: "Magic, research, gems, archaeology and the Codex.",
     order: 6,
   },
   combat: {
     label: "Combat & Danger",
-    blurb: "Fighting, dying, and everything on the server that wants you dead.",
+    blurb: "Guns, thievery, infestations and card games.",
     order: 7,
   },
   vehicles: {
     label: "Vehicles & Machines",
-    blurb: "Mounts, transport, and the machinery that moves you and your cargo.",
+    blurb: "Building, driving and arming vehicles.",
     order: 8,
   },
   social: {
     label: "Society & Economy",
-    blurb: "Playing with other people: trade, performance, and community systems.",
+    blurb: "Money, factions, trade, cosmetics and music.",
     order: 9,
   },
   reference: {
     label: "Reference",
-    blurb: "Lookup tables: every material, every station, every number.",
+    blurb: "Materials, crafting stations and the command index.",
     order: 10,
   },
 };

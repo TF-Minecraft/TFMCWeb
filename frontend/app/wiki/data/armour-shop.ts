@@ -65,7 +65,7 @@ export const armourShopSection: WikiSection = {
     href: "/wiki/armour-shop",
     label: "Armour Shop",
     category: "social",
-    blurb: "Spend a Skin Scroll to restyle the armour or weapon you're holding: pure cosmetics, stats untouched.",
+    blurb: "Spend a Skin Scroll to change how the armour or weapon you're holding looks. Its stats stay the same.",
   },
   commands: armourShopCommands,
 };

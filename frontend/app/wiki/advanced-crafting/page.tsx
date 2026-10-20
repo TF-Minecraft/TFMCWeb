@@ -221,7 +221,7 @@ const clothTextures: Record<string, string> = {
 export default function AdvancedCraftingPage() {
   return (
     <WikiPage
-      lastModified="2026-09-27"
+      lastModified="2026-10-20"
       title="Advanced Crafting"
       intro={
         <>
@@ -229,9 +229,9 @@ export default function AdvancedCraftingPage() {
           <strong>
             <StationLink name="Forging Station" />
           </strong>
-          , feed it raw materials, then physically hammer, carve, etch or sew it with smithing tools. Every ingredient
-          you load adds a number of required hits per tool, and you work the station until each tool&apos;s counter is
-          full. The finished item has a quality grade, stats and socket slots. A second station, the{" "}
+          , feed it raw materials, then hammer, carve, etch or sew it with smithing tools. Every ingredient you load
+          needs a number of hits from each tool, and the closer you get to those numbers, the better the finished item.
+          It comes out with a quality grade, stats and socket slots. A second station, the{" "}
           <strong>
             <StationLink name="Alloy Forge" />
           </strong>
@@ -258,13 +258,19 @@ export default function AdvancedCraftingPage() {
           <em>types</em> and counts (e.g. &quot;metal ×4&quot;), so you choose which specific metal or wood to use.
         </li>
         <li>
-          Right-click the station while holding each required smithing tool to apply hits. Every ingredient you loaded
-          adds its own number of required hits per tool; an on-screen title tracks current/needed for each.
+          Once every ingredient is loaded, left-click the station while holding a smithing tool to apply a hit. Every
+          ingredient you loaded adds its own number of required hits per tool, and an on-screen title tracks your hits
+          against what is needed.
         </li>
-        <li>Finish the craft once every ingredient is loaded and every hit is completed.</li>
+        <li>
+          Left-click the station with a <WikiItemLink name="Forging Branding Tool" /> to finish the piece. You can
+          finish at any time once every ingredient is loaded. Right-click with the branding tool to check the project,
+          or sneak and left-click with it to cancel.
+        </li>
       </ol>
       <Callout variant="warning">
-        Breaking the station mid-craft cancels the project and drops everything you had already inserted.
+        Cancelling a project, or breaking the station mid-craft, ends the project and drops the ingredients you had
+        loaded.
       </Callout>
 
       <WikiSectionHeading
@@ -333,10 +339,15 @@ export default function AdvancedCraftingPage() {
       >
         Quality
       </WikiSectionHeading>
+      <p className="mt-3 text-sm text-[var(--tfmc-mist)]">
+        When you finish, the station shows your <strong>Hits %</strong>: how close your hits came to what the piece
+        needed, for each tool. Going over the needed hits lowers it just as much as stopping short, so more hits are not
+        always better. Only exact hits reach 100% and make a Masterwork.
+      </p>
       <DataTable
         className="mt-4"
         columns={[
-          { header: "Threshold", align: "right", nowrap: true },
+          { header: "Hits %", align: "right", nowrap: true },
           { header: "Quality" },
           { header: "Socket granted" },
         ]}
@@ -347,7 +358,7 @@ export default function AdvancedCraftingPage() {
         Ascendant Armor Rune, at the same thresholds. In both tracks the lowest grade, Rusted, grants no socket at all,
         so only the top four grades give you one.
       </Callout>
-      <WikiSectionHeading id="tools" intro="Right-click the station while holding one of these.">
+      <WikiSectionHeading id="tools" intro="Left-click the station while holding one of these.">
         Smithing tools
       </WikiSectionHeading>
       <ItemGallery items={smithingTools} centeredSelectors />

@@ -49,7 +49,7 @@ export const sittingSection: WikiSection = {
     href: "/wiki/sitting",
     label: "Sitting, Crawling & Posing",
     category: "character",
-    blurb: "Sit on stairs and slabs, crawl, or strike a pose, for roleplay, not for buffs.",
+    blurb: "Sit on stairs and slabs, lie down, crawl or strike a pose.",
   },
   commands: sittingCommands,
 };

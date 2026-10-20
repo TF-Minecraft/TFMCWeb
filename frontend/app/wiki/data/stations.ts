@@ -683,7 +683,7 @@ export const stations: StationInfo[] = [
   {
     slug: "bird-mailbox",
     name: "Bird Mailbox",
-    blurb: "Right-click it to send a written Letter to another character: the block behind the Bird Mail system.",
+    blurb: "Right-click it to send a written Letter to another character by Bird Mail.",
     icon: T("bird-mail/mailbox.png"),
     interaction: "Right click",
     guide: { href: "/wiki/bird-mail", label: "Bird Mail guide" },
