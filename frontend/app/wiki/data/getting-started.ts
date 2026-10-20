@@ -5,6 +5,6 @@ export const gettingStartedSection: WikiSection = {
     href: "/wiki/getting-started",
     label: "Getting Started",
     category: "getting-started",
-    blurb: "Create a character, claim your starter kit, find crafting stations, and learn about custom materials.",
+    blurb: "Link Discord, create a character, claim your starter kit and find your first crafting station.",
   },
 };

@@ -105,7 +105,7 @@ export const magicSection: WikiSection = {
     href: "/wiki/magic",
     label: "Magic",
     category: "magic",
-    blurb: "Mage weapon parts, spell runes and shrines.",
+    blurb: "Build a mage weapon, attune it at a shrine and meditate to raise your Resonance.",
   },
   recipes: magicRecipes,
   commands: magicCommands,

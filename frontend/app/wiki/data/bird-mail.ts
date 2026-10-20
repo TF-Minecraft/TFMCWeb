@@ -13,7 +13,7 @@ export const birdMailSection: WikiSection = {
     href: "/wiki/bird-mail",
     label: "Bird Mail",
     category: "character",
-    blurb: "Send a Letter to another character's bird coop and wait for it to arrive.",
+    blurb: "Send a Letter from a bird mailbox to another character, even one who is offline.",
   },
   commands: birdMailCommands,
 };

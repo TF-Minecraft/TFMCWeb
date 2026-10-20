@@ -49,10 +49,11 @@ export default function CharactersPage() {
       </p>
       <p className="mt-3 text-sm text-[var(--tfmc-mist)]">
         Once you have a character, <code className="text-[var(--tfmc-accent)]">/rpcharacter menu</code> opens a menu of
-        your characters so you can switch between them (on a cooldown: see below), and{" "}
+        your characters so you can switch between them (on a cooldown, see below), and{" "}
         <code className="text-[var(--tfmc-accent)]">/rpcharacter kit starter</code> claims your starting supplies: an{" "}
-        <WikiItemLink name="Iron Hunting Knife">iron hunting knife</WikiItemLink>, 32 gold coins, 256 bread, a writable
-        book, a bundle and a brown bed. The starter kit can only be claimed once per character, with a 48-hour cooldown.
+        <WikiItemLink name="Iron Hunting Knife">iron hunting knife</WikiItemLink>, 32 gold coins, 32 dry rations, a
+        writable book, a bundle and a brown bed. Each character can claim the starter kit once, and you must wait 48
+        hours between claims on different characters.
       </p>
 
       <StatGrid
@@ -104,8 +105,9 @@ export default function CharactersPage() {
         Reading a character card
       </WikiSectionHeading>
       <p className="text-sm text-[var(--tfmc-mist)]">
-        Sneak, hold nothing in your hand, and right-click a player to print their character card : name and whatever
-        they have chosen to show. It only works with an empty hand while sneaking, so it will not fire by accident.
+        Sneak, hold nothing in your hand, and right-click a player to see their character card, which shows their name
+        and whatever else they have chosen to show. It only works with an empty hand while sneaking, so it will not fire
+        by accident.
       </p>
 
       <WikiSectionHeading id="chat" intro="Plain typing talks in-character. Everything else is a command.">
@@ -129,10 +131,10 @@ export default function CharactersPage() {
           rows={[
             ["In-character speech", "/rp", "15 blocks", "Normal talking as your character"],
             ["Shout", "/shout", "24 blocks", "Raised voice"],
-            ["Yell", "/yell (/y)", "48 blocks", "Shouting at the top of your lungs: bold red"],
+            ["Yell", "/yell (/y)", "48 blocks", "Shouting at the top of your lungs, shown in bold red"],
             ["Whisper", "/whisper (/wh)", "2 blocks", "Quiet, only for someone right next to you"],
             ["Local OOC", "/looc", "20 blocks", "Out-of-character chatter with people nearby"],
-            ["Global OOC", "/ooc", "Unlimited", "Server-wide out-of-character chat: works with no character"],
+            ["Global OOC", "/ooc", "Unlimited", "Server-wide out-of-character chat. Works without a character"],
             ["Action", "/me", "20 blocks", "Emotes and actions, shown as narration"],
             ["Scene", "/scene", "20 blocks", "Scene-setting narration, no speech bubble"],
           ]}

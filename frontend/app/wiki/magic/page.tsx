@@ -23,92 +23,136 @@ import {
 export default function MagicPage() {
   return (
     <WikiPage
-      lastModified="2026-10-18"
+      lastModified="2026-10-20"
       title="Magic"
       width="lg"
       intro={
         <>
-          Magic is the mage path. You build a staff, wand or blade out of parts at a{" "}
-          <StationLink name="Magic Station" />, slot <strong>spell runes</strong> into it, and then{" "}
-          <strong>attune</strong> it to one of ten elements by feeding it magical energy you gathered from a shrine.
-          Your character also carries a personal <strong>Resonance</strong> score in every element, and a weapon will
-          simply refuse to fire if your Resonance is too low for what it holds.
+          Mages cast spells from <strong>runes</strong> set into a staff, wand or blade. You build the weapon at a{" "}
+          <StationLink name="Magic Station" />, attune it to an element with aura gathered at a shrine, and raise your
+          own <strong>Resonance</strong> by meditating. A spell only casts if your Resonance in its element is high
+          enough.
         </>
       }
     >
-      <WikiSectionHeading id="vocabulary" intro="Five words you need before anything else makes sense.">
-        The words
+      <WikiSectionHeading id="vocabulary" intro="Terms used on the rest of this page.">
+        Key terms
       </WikiSectionHeading>
       <DataTable
         columns={[{ header: "Term", nowrap: true, width: "11rem" }, { header: "What it means" }]}
         rows={[
           [
             "Element",
-            "One of ten flavours of magic: Cerrith, Oseni, Seithr, Mitlan, Bloodmagic, Spirit, Arcanum, Illusion, Necromancy, Shadowmancy.",
+            "A school of magic: Cerrith, Oseni, Seithr or Mitlan. Each element has its own runes, shrines and Resonance.",
           ],
           [
             "Resonance",
-            "A 0-100 score your character holds in each element separately. It decides whether a weapon will accept a charge, and it scales the mana cost, damage and cooldown of your spells.",
+            "Your character's skill in one element, from 0 to 100. Each spell needs a minimum Resonance in its element. Higher Resonance also lowers mana cost and cooldowns and raises damage.",
           ],
           [
             "Aura",
-            "The physical resource. It lives inside artifacts and charges, is gathered from shrines, and is spent to attune a weapon. Aura in an artifact never decays.",
+            "Magical energy stored in artifacts and charges. A shrine fills them with aura, and you spend a charge's aura to attune a weapon. Aura stored in an artifact never fades.",
           ],
           [
+            "Artifact",
+            "A magical object that holds aura. On a pedestal in a shrine it fills with aura. In a meditation ring it lets you meditate.",
+          ],
+          [
+            "Shrine",
+            "A pedestal and the blocks around it. The blocks you build around the pedestal decide which elements the shrine gives.",
+          ],
+          ["Enchanted Charge", "A single-use item. You fill it at a shrine, then spend it to attune a weapon."],
+          [
             "Socket",
-            "A hole in a finished weapon that one spell rune fits into. Sockets come in four sizes: Minor, Lesser, Greater and Ascendant, and a socket takes a rune of its own size or smaller.",
+            "A slot in a finished weapon that holds one spell rune. Sockets come in four sizes: Minor, Lesser, Greater and Ascendant. A socket takes a rune of its own size or smaller.",
           ],
           [
             "Attunement",
-            "Locking an element into a weapon by spending a charge on it. Until you do, the weapon holds no element and refuses to cast.",
+            "Locking an element into a weapon by spending a charge on it. A weapon with no element will not cast.",
+          ],
+          [
+            "Equilibrium",
+            "Your balance between Corruption and Tranquility, shown in /resonance. Your cast mode decides which way it moves.",
+          ],
+          [
+            "Rift",
+            "The chance, in percent, that a cast fails. A weapon gains Rift when you hit the wrong orbs while attuning it.",
           ],
         ]}
       />
 
-      <Callout variant="note" title="It is per character, not per account">
-        Resonance and Equilibrium are stored against your active RP character. A second character starts from zero.{" "}
-        <code className="text-[var(--tfmc-accent)]">/resonance</code> refuses to open at all without an active
-        character.
+      <Callout variant="note" title="Magic progress belongs to your character">
+        Resonance and Equilibrium are stored on your active character, so a second character starts from zero.{" "}
+        <code className="text-[var(--tfmc-accent)]">/resonance</code> does not open without an active character.
       </Callout>
 
-      <WikiSectionHeading id="loop">The loop</WikiSectionHeading>
+      <WikiSectionHeading id="loop">Getting started as a mage</WikiSectionHeading>
       <ol className="mt-4 list-decimal space-y-3 pl-5 text-sm text-[var(--tfmc-mist)]">
         <li>
-          <strong>Be a Mage.</strong> Only Mages can use Mage Staffs, Mage Wands, Mage Blades and Mage Armor. Its own
-          description warns that mages are expensive to gear.
+          <strong>Be a Mage.</strong> Only Mages can use Mage Staffs, Mage Wands, Mage Blades and Mage Armor. Mage gear
+          is expensive, so plan for the cost.
         </li>
         <li>
-          <strong>
-            Open <code className="text-[var(--tfmc-accent)]">/resonance</code>
-          </strong>{" "}
-          and pick a cast mode: Surge (&quot;Power now. Corruption later.&quot;) or Flow (&quot;Slow start. Stronger at
-          depth.&quot;). Flow is the default.
+          <strong>Build a weapon.</strong> Craft and place a <StationLink name="Magic Station" />, right-click it to
+          open the assembly menu, and put the parts together. See{" "}
+          <a href="#archetypes" className="text-[var(--tfmc-accent)] hover:underline">
+            Archetypes
+          </a>{" "}
+          for the parts each weapon needs.
         </li>
         <li>
-          <strong>
-            Craft and place a <StationLink name="Magic Station" />
-          </strong>
-          , then interact with it to open the assembly menu and build a weapon out of parts.
+          <strong>Add runes.</strong> Put spell runes into the weapon&apos;s sockets. Every spell comes from a rune, so
+          a weapon with no runes casts nothing.
         </li>
         <li>
-          <strong>Slot runes</strong> into the weapon&apos;s sockets. This is where spells come from; a weapon with no
-          runes casts nothing.
+          <strong>Fill a charge.</strong> Craft an Enchanted Charge at the <StationLink name="Rune Station" /> and place
+          it on a <WikiItemLink name="Pedestal">pedestal</WikiItemLink> in a shrine.
         </li>
         <li>
-          <strong>Build a shrine</strong> and put an artifact on a <WikiItemLink name="Pedestal">pedestal</WikiItemLink>{" "}
-          in it to soak up aura. The shrine reaches 4 blocks in each direction from the pedestal.
+          <strong>Attune the weapon.</strong> Hold the filled charge and right-click the weapon on its{" "}
+          <StationLink name="Magic Station" />. This starts the orb minigame, which decides how much of the charge the
+          weapon keeps.
         </li>
         <li>
-          <strong>Imprint and fill a charge</strong> on that same <WikiItemLink name="Pedestal">pedestal</WikiItemLink>.
+          <strong>Cast.</strong> Hold the weapon and use the rune&apos;s casting key. The default is right-click.
         </li>
         <li>
-          <strong>Spend the charge on the weapon at the station</strong>, which starts the orb minigame that decides how
-          much of the charge actually sticks.
-        </li>
-        <li>
-          <strong>Hold the weapon and use the rune&apos;s casting key</strong> to cast. The default is right-click.
+          <strong>Raise your Resonance</strong> by meditating, so you can cast stronger spells.
         </li>
       </ol>
+
+      <WikiSectionHeading id="cast-mode" intro="Choose a cast mode in /resonance. Flow is the default.">
+        Surge and Flow
+      </WikiSectionHeading>
+      <p className="mt-3 text-sm text-[var(--tfmc-mist)]">
+        Every spell you cast, and every orb you hit while meditating, moves your Equilibrium. In <strong>Surge</strong>{" "}
+        it moves toward Corruption, and in <strong>Flow</strong> toward Tranquility. Both sides make your spells
+        cheaper, stronger or quicker to recharge, and the effect grows the further you go.
+      </p>
+      <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-[var(--tfmc-mist)]">
+        <li>
+          <strong>Corruption</strong> gives its bonus early. Once you have any, it keeps growing on its own, faster the
+          deeper you are, and its bonus gets weaker again near the extreme.
+        </li>
+        <li>
+          <strong>Tranquility</strong> needs to build up before it helps much, but its bonus ends up stronger. It slowly
+          fades back toward neutral if you stop.
+        </li>
+      </ul>
+
+      <WikiSectionHeading id="shrines" intro="A shrine fills artifacts and charges with aura.">
+        Shrines
+      </WikiSectionHeading>
+      <p className="mt-3 text-sm text-[var(--tfmc-mist)]">
+        A shrine is a <WikiItemLink name="Pedestal" /> and everything within 4 blocks of it in every direction, above
+        and below included. Build that space with blocks that suit an element, and use a mix of different matching
+        blocks rather than one kind. A shrine scores each element separately, so one shrine can serve more than one.
+      </p>
+      <p className="mt-3 text-sm text-[var(--tfmc-mist)]">
+        Put an artifact or a charge on the pedestal and it starts filling with aura. A blank charge first takes on every
+        element the shrine gives. A weak shrine cannot fill a high-tier charge. A pedestal that is part of a meditation
+        ring does not fill anything.
+      </p>
 
       <WikiSectionHeading id="station" intro="A plain vanilla 3x3 craft. Anyone can make one.">
         The <StationLink name="Magic Station" />
@@ -213,10 +257,7 @@ export default function MagicPage() {
         ]}
       />
 
-      <WikiSectionHeading
-        id="charges"
-        intro="A charge is a consumable, not an artifact. Put it on a pedestal in a shrine and it is imprinted with every element that shrine scores, then filled from it."
-      >
+      <WikiSectionHeading id="charges" intro="A single-use item that carries aura from a shrine to your weapon.">
         Enchanted Charges
       </WikiSectionHeading>
       <p className="mt-3 text-sm text-[var(--tfmc-mist)]">
@@ -229,25 +270,35 @@ export default function MagicPage() {
         ))}
       </div>
       <p className="mt-3 text-sm text-[var(--tfmc-mist)]">
-        A weak shrine cannot fill a high-tier charge. The band printed on a charge (&quot;Cerrith II&quot;) is just a
-        readout of how much aura it holds: under 10 shows a dash, 10 is I, 35 is II, 65 is III, 95 is IV.
+        The band printed on a charge, such as &quot;Cerrith II&quot;, shows how much aura of that element it holds:
+        under 10 shows a dash, 10 is I, 35 is II, 65 is III and 95 is IV. Spells use the same bands for Resonance, so a
+        spell that needs Cerrith II needs at least 35 Cerrith Resonance.
       </p>
       <WikiSectionHeading
         id="orbs"
-        intro="Applying a charge to a weapon starts a timed minigame. The charge is spent up front, win or lose."
+        intro="Attuning a weapon starts a timed minigame. The charge is used up as soon as it starts."
       >
         The orb minigame
       </WikiSectionHeading>
       <p className="mt-3 text-sm text-[var(--tfmc-mist)]">
-        Orbs circle you. <strong>Pale blue orbs are good</strong>: hit enough of them before the window closes and the
-        weapon settles, holding a percentage of the charge. <strong>Rust-orange orbs tear the weapon</strong>: each one
-        you hit adds <strong>+5 persistent Rift</strong>, capped at 100. Missing a good orb costs 8% of the run.
-        Disconnecting mid-run ends it with whatever you had.
+        Hold the charge and right-click the weapon on its <StationLink name="Magic Station" />. Orbs then circle the
+        station. Look at an orb and left-click to hit it.
       </p>
-      <Callout title="A charge can exceed your Resonance">
-        Right-click the prepared weapon on its station with the charge to start. If the charge demands more Resonance
-        than you have, a warning lists each shortfall and asks you to right-click again to commit anyway. That second
-        click spends the charge.
+      <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-[var(--tfmc-mist)]">
+        <li>
+          <strong>Pale blue orbs are good.</strong> Each one you hit stores more of the charge in the weapon. Hit enough
+          before time runs out and the weapon keeps the whole charge.
+        </li>
+        <li>Each pale blue orb that fades before you hit it costs you 8% of the charge.</li>
+        <li>
+          <strong>Rust-orange orbs are bad.</strong> Each one you hit adds 5 Rift to the weapon, up to 100.
+        </li>
+        <li>Higher-tier charges have faster orbs and fewer good ones.</li>
+        <li>If you disconnect, the run ends and the weapon keeps what you had stored so far.</li>
+      </ul>
+      <Callout title="Using a charge above your Resonance">
+        If a charge needs more Resonance than you have, a warning lists what you are missing. Right-click again to use
+        it anyway. That second click spends the charge.
       </Callout>
       <StatGrid
         className="mt-4"
@@ -257,10 +308,9 @@ export default function MagicPage() {
           { label: "Rift removed per later recharge", value: "10", note: "never on the first charge" },
         ]}
       />
-      <Callout variant="warning" title="Rift persists until reduced by a later recharge">
-        Rift is the percentage chance a cast simply fails. A failed cast still spends the mana and still starts the
-        cooldown. You can only ever grind it back down 10 points at a time, and only on a <em>later</em> successful
-        charge.
+      <Callout variant="warning" title="Rift stays on the weapon">
+        A failed cast still uses its mana and starts its cooldown. Each later successful charge on the weapon removes 10
+        Rift. The first charge never removes any.
       </Callout>
 
       <WikiSectionHeading
@@ -278,7 +328,7 @@ export default function MagicPage() {
         rows={[
           [
             "*Whiff*",
-            'Your Rift rolled against you (or the rarer "Too many staffs" message).',
+            'The weapon\'s Rift made the cast fail, or you are carrying more than one staff ("Too many staffs").',
             "Mana and the cooldown, both already spent.",
           ],
           [
@@ -294,41 +344,63 @@ export default function MagicPage() {
         ]}
       />
       <p className="mt-4 text-sm text-[var(--tfmc-mist)]">
-        A refusal explains itself in chat, for example <em>&quot;This spell needs Cerrith II. You carry I.&quot;</em>,
-        but only once every 30 seconds per weapon and element, so do not expect a message on every click. To fix a{" "}
-        <em>Damaged</em> weapon, right-click an <strong>empty</strong> <StationLink name="Magic Station" />: it works
-        the loose runes free and hands them back.
+        A refusal tells you why in chat, for example <em>&quot;This spell needs Cerrith II. You carry I.&quot;</em>, but
+        at most once every 30 seconds for each weapon and element. To fix a <em>Damaged</em> weapon, right-click an{" "}
+        <strong>empty</strong> <StationLink name="Magic Station" /> with it. The station removes the loose runes and
+        gives them back.
       </p>
 
       <WikiSectionHeading
         id="meditation"
-        intro="Shrines do not only fill artifacts. Standing in one and meditating is how you raise your own Resonance."
+        intro="Meditating in a ring of artifacts is how you raise your own Resonance."
       >
         Meditation and Mental Points
       </WikiSectionHeading>
+      <ol className="mt-4 list-decimal space-y-2 pl-5 text-sm text-[var(--tfmc-mist)]">
+        <li>
+          Place 8 <WikiItemLink name="Pedestal">pedestals</WikiItemLink> in a ring, all on the same level as the centre
+          block: one 4 blocks north, south, east and west of the centre, and one on each diagonal, 3 blocks across and 3
+          blocks along.
+        </li>
+        <li>
+          Put artifacts on the pedestals. You gain Resonance in the elements those artifacts hold. The ring does not
+          need to be a shrine.
+        </li>
+        <li>
+          Sit down on the centre block, for example with <code className="text-[var(--tfmc-accent)]">/sit</code>.
+          Meditation starts by itself.
+        </li>
+        <li>
+          Orbs appear around you. Look at an orb and left-click to hit it. Each hit costs 1 Mental Point and raises your
+          Resonance.
+        </li>
+        <li>
+          Stand up to stop. &quot;Meditation complete at this site&quot; means this ring has nothing more to give you
+          for now.
+        </li>
+      </ol>
       <StatGrid
         columns={4}
         stats={[
-          { label: "Resonance per orb hit", value: "4.0" },
+          { label: "Resonance per orb hit", value: "Up to 4" },
           { label: "Mental Point cost per hit", value: "1" },
           { label: "Mental Point pool", value: "150", note: "shared with Research" },
           { label: "Regeneration", value: "+10 / hour", note: "offline too" },
         ]}
       />
       <p className="mt-4 text-sm text-[var(--tfmc-mist)]">
-        Mental Points (also called Focus) are a shared pool spent by both Magic meditation and Research experiments.
-        Wisdom adds +0.5 per hour per point and Intelligence +0.25. A full pool of 150 takes fifteen real hours to
-        refill and buys 150 orb hits. That is <strong>600 potential Resonance</strong> before element caps,
-        shared-artifact division and session limits.
+        Mental Points (also called Focus) are shared between meditation and Research experiments. Each point of Wisdom
+        adds 0.5 to your hourly regeneration, and each point of Intelligence adds 0.25. An empty pool takes 15 hours to
+        refill at the base rate.
       </p>
-      <Callout variant="warning" title="Resonance bleeds, and artifacts get tired of you">
-        Resonance decays at -0.02 per real hour, so a mage who stops meditating slowly slides back. Worse, an artifact
-        you meditate on gets <strong>muffled</strong>: it gives less and less over 24 hours of use, and takes a full 7
-        days to recover. If several people are attuned to one artifact, the yield is <em>divided</em> between them.
+      <Callout variant="warning" title="Resonance fades, and artifacts wear out">
+        Your Resonance drops by 0.02 every real hour, so it slowly falls if you stop meditating. An artifact you
+        meditate with also becomes <strong>muffled</strong>: it gives less over 24 hours of use and takes 7 days to
+        recover fully. If several people meditate with the same artifact, what it gives is split between them.
         <br />
-        <strong>Storing an artifact in a chest raises its muffle, silently.</strong> Safe places are your own inventory,
-        a <WikiItemLink name="Pedestal">pedestal</WikiItemLink>, an{" "}
-        <WikiItemLink name="Artifact Display">artifact display</WikiItemLink>, or an item frame.
+        <strong>Storing an artifact in a chest also muffles it, with no message.</strong> Keep artifacts in your
+        inventory, on a <WikiItemLink name="Pedestal">pedestal</WikiItemLink>, on an{" "}
+        <WikiItemLink name="Artifact Display">artifact display</WikiItemLink> or in an item frame.
       </Callout>
 
       <WikiSectionHeading id="commands" intro="View your Resonance profile and change a rune's casting key.">

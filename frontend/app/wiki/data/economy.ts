@@ -72,7 +72,7 @@ export const economySection: WikiSection = {
     href: "/wiki/economy",
     label: "Denar Economy",
     category: "social",
-    blurb: "Denars: the coins you carry in your pouch, bank at a faction vault, and drop in full when you die.",
+    blurb: "How denars work: your pouch, faction banks, coins, and what you lose when you die.",
   },
   commands: denarCommands,
 };

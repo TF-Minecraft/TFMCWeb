@@ -25,7 +25,7 @@ export default function BirdMailPage() {
             <strong>
               <StationLink name="Bird Mailbox">bird mailbox</StationLink>
             </strong>{" "}
-            and right-click it: standing still, not sneaking. Sneak-right-clicking does nothing.
+            and right-click it while standing still. Sneak-right-clicking does nothing.
           </li>
           <li>
             A small &quot;Bird Messenger&quot; window opens with one open slot. Place your letter into it, or
@@ -33,7 +33,7 @@ export default function BirdMailPage() {
           </li>
           <li>
             Closing that window with a valid letter in it opens a &quot;Send letter&quot; screen: a page of player-head
-            icons, one per character (your own characters are filtered out: you can&apos;t mail yourself).
+            icons, one per character (your own characters are left out, so you can&apos;t mail yourself).
           </li>
           <li>Click the head of the character you want to send to, then hit Confirm.</li>
           <li>
@@ -80,9 +80,9 @@ export default function BirdMailPage() {
       />
       <p className="mt-3 text-sm text-[var(--tfmc-mist)]">
         If the recipient is online and actively playing that exact character when the bird arrives, they get the letter
-        immediately with a message that a bird has landed at their feet. Otherwise your letter waits, for that character
-        to be played, or for that player to log in: with no expiry. You&apos;ll be told your letter is waiting rather
-        than delivered.
+        immediately with a message that a bird has landed at their feet. Otherwise your letter waits until that
+        character is played again, however long that takes. You&apos;ll be told your letter is waiting rather than
+        delivered.
       </p>
 
       <Callout variant="warning">

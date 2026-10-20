@@ -145,7 +145,7 @@ export const charactersCommands: WikiCommandSet = {
     {
       command: "/yell <message>",
       aliases: ["/y"],
-      description: "Your loudest in-character shout: renders bold red.",
+      description: "Your loudest in-character shout, shown in bold red.",
       notes: "48-block range.",
     },
     {
