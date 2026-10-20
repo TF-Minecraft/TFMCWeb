@@ -56,7 +56,7 @@ HATCH_EDGE_RGBA = (*INK_DARK[:3], 200)
 TARGET_WASH_RGBA = (*INK_DARK[:3], 110)
 # The target's border: red, the map's colour for hostility (fort zones of
 # control are hatched in it too).
-TARGET_BORDER_RGBA = (196, 38, 46, 255)
+TARGET_BORDER_RGBA = (152, 52, 46, 255)
 # Gaps narrower than this many pixels inside the target get no border.
 BORDER_CLOSE = 11
 # Used when neither the coalition nor its leader has a usable colour.
