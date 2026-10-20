@@ -403,13 +403,22 @@ def _run_promote_ledger_day(map_id: str, day: str) -> None:
 
 
 async def _refresh_coalition_map(map_name: str) -> None:
-    # Under the regeneration lock: both load the map geometry and write the
-    # coalition mode, and two at once would double the memory and race.
-    async with get_map_lock(map_name):
-        await asyncio.to_thread(run_coalition_mode, map_name)
-    from .tile_warm import warm_map_tiles
+    """Redraw the coalition mode after an upload.
 
-    warm_map_tiles(map_name)
+    A BackgroundTask must not raise: the tasks queued after it, the chronicle
+    capture among them, would not run. A failed redraw is logged and repaired
+    by the next upload or regeneration.
+    """
+    try:
+        # Under the regeneration lock: both load the map geometry and write
+        # the coalition mode, and two at once would double the memory and race.
+        async with get_map_lock(map_name):
+            await asyncio.to_thread(run_coalition_mode, map_name)
+        from .tile_warm import warm_map_tiles
+
+        warm_map_tiles(map_name)
+    except Exception:
+        logger.warning("Coalition map redraw failed for map '%s'", map_name, exc_info=True)
 
 
 @data_router.post("/{map_name}/data/upload/{mode}")
