@@ -337,7 +337,7 @@ export const factionStartCommands: CommandRow[] = [
   {
     command: "/faction accept",
     description: "Accepts the request waiting for you: diplomacy, call to arms, vehicle transfer and more.",
-    notes: "Requests last 60 seconds.",
+    notes: "Most requests last 60 seconds. Calls to arms last 5 minutes.",
   },
   {
     command: "/faction leave",

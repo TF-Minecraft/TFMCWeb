@@ -113,7 +113,7 @@ export default function FactionsGovernmentPage() {
       <DataTable
         columns={[{ header: "Event" }, { header: "Stability", align: "right" }]}
         rows={[
-          ["Turning down a call to arms (or not answering)", "-30"],
+          ["Declining a call to arms", "-30"],
           ["Losing a war that changed your government", "-50"],
           ["Losing a war that opened your market", "-25"],
           ["Rebels winning a civil war", "-75"],

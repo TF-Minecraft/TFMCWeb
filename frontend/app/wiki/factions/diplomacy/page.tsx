@@ -103,12 +103,15 @@ export default function FactionsDiplomacyPage() {
           During a war, the leader opens the war from <Cmd>/war list</Cmd> and clicks an ally who has not joined.
         </li>
         <li>
-          The ally&apos;s leader has 60 seconds to answer with <Cmd>/faction accept</Cmd>.
+          The ally&apos;s leader must be online and has 5 minutes to answer with <Cmd>/faction accept</Cmd> or{" "}
+          <Cmd>/faction decline</Cmd>.
         </li>
+        <li>If nobody answers in time, the call simply expires and you can send it again.</li>
         <li>An ally with a truce against a defender cannot be called into an attack. Defending is always allowed.</li>
       </Bullets>
       <Callout variant="warning">
-        Turning down a call to arms, or not answering in time, costs your faction 30 stability.
+        Declining a call to arms with <Cmd>/faction decline</Cmd> costs your faction 30 stability. Letting it expire
+        costs nothing.
       </Callout>
 
       <WikiSectionHeading id="truces">Truces</WikiSectionHeading>

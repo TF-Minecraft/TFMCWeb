@@ -68,7 +68,7 @@ export default function FactionsPage() {
           { label: "Provinces outside a county", value: "5 at most", note: "form a county to grow further" },
           { label: "The faction day", value: "24 hours", note: "taxes, upkeep and wages are paid once a day" },
           { label: "Truce after a war", value: "10 days" },
-          { label: "Requests", value: "60 seconds", note: "to answer with /faction accept" },
+          { label: "Requests", value: "60 seconds", note: "to answer with /faction accept (calls to arms: 5 minutes)" },
         ]}
       />
 

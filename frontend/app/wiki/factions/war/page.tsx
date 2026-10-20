@@ -86,8 +86,9 @@ export default function FactionsWarPage() {
         Allies
       </WikiSectionHeading>
       <P>
-        Open the war from <Cmd>/war list</Cmd> and click an ally to call it. Its leader has 60 seconds to answer.
-        Turning it down costs them 30 stability. Coalition members can be called the same way: see Coalitions.
+        Open the war from <Cmd>/war list</Cmd> and click an ally to call it. Its leader has 5 minutes to answer.
+        Declining costs them 30 stability, but a call that expires costs nothing and can be sent again. Coalition
+        members can be called the same way: see Coalitions.
       </P>
 
       <WikiSectionHeading id="campaign" intro="Open the war from /war list, then Campaign.">
