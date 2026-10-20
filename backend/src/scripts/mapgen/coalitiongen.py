@@ -21,7 +21,8 @@ import sys
 
 import numpy as np
 
-from ..util.border_paint import INK_DARK, dilate_square
+from ..province_id_grid import GRID_FILENAME, build_province_id_map, read_province_id_grid_file
+from ..util.border_paint import INK_DARK
 from ..util.dirs import defines_file, input_file, map_image, validate_map
 from ..util.display_colour import parchment_wash_rgb
 from .geometry_cache import MapGeometryCache
@@ -308,25 +309,54 @@ def load_coalition_by_province(map_name: str) -> dict[int, dict]:
 
 def _differs_from_neighbour(values: np.ndarray) -> np.ndarray:
     """Pixels whose value differs from a 4-neighbour. Off the array counts as 0,
-    so land at the map's edge is outlined as it is against the sea."""
-    padded = np.pad(values, 1, constant_values=0)
-    centre = padded[1:-1, 1:-1]
-    return (
-        (centre != padded[:-2, 1:-1])
-        | (centre != padded[2:, 1:-1])
-        | (centre != padded[1:-1, :-2])
-        | (centre != padded[1:-1, 2:])
-    )
+    so land at the map's edge is outlined as it is against the sea.
+
+    Works on views and boolean masks only: the map is 41M pixels, and a padded
+    copy of an integer array costs hundreds of MB.
+    """
+    out = np.zeros(values.shape, dtype=bool)
+    step = values[1:, :] != values[:-1, :]
+    out[1:, :] |= step
+    out[:-1, :] |= step
+    del step
+    step = values[:, 1:] != values[:, :-1]
+    out[:, 1:] |= step
+    out[:, :-1] |= step
+    del step
+    out[0, :] |= values[0, :] != 0
+    out[-1, :] |= values[-1, :] != 0
+    out[:, 0] |= values[:, 0] != 0
+    out[:, -1] |= values[:, -1] != 0
+    return out
+
+
+def _grow(mask: np.ndarray, radius: int) -> np.ndarray:
+    """`mask` grown by a (2r+1) square, with boolean shifts rather than the
+    int32 prefix sums `dilate_square` allocates."""
+    out = mask.copy()
+    for axis in (0, 1):
+        for _ in range(radius):
+            source = out.copy()
+            if axis == 0:
+                out[1:, :] |= source[:-1, :]
+                out[:-1, :] |= source[1:, :]
+            else:
+                out[:, 1:] |= source[:, :-1]
+                out[:, :-1] |= source[:, 1:]
+    return out
+
+
+def _small_uint(count: int) -> type:
+    return np.uint8 if count < 0xFF else np.uint16 if count < 0xFFFF else np.uint32
 
 
 def paint_coalition_overlay(province_id_map: np.ndarray, compiled: dict) -> np.ndarray:
     """The (H, W, 4) RGBA overlay for a compiled coalition map."""
     height, width = province_id_map.shape
-    out = np.zeros((height, width, 4), dtype=np.uint8)
     coalitions = compiled.get("coalitions") or []
     rows = compiled.get("provinces") or []
     if not coalitions or not rows:
-        return out
+        return np.zeros((height, width, 4), dtype=np.uint8)
 
     index = {c["id"]: i + 1 for i, c in enumerate(coalitions)}
     fills = np.zeros((len(coalitions) + 1, 4), dtype=np.uint8)
@@ -335,22 +365,30 @@ def paint_coalition_overlay(province_id_map: np.ndarray, compiled: dict) -> np.n
         fills[i] = c["fill_rgba"]
         hatches[i] = c["hatch_rgba"]
 
-    max_id = int(province_id_map.max())
-    member_lut = np.zeros(max_id + 1, dtype=np.int32)
-    owner_lut = np.zeros(max_id + 1, dtype=np.int32)
-    target_lut = np.zeros(max_id + 1, dtype=np.int32)
     owners: dict[str, int] = {}
     target_sets: dict[tuple[int, ...], int] = {}
+    max_id = int(province_id_map.max())
+    member_rows: list[tuple[int, int, int]] = []
+    target_rows: list[tuple[int, int]] = []
     for row in rows:
         pid = row["id"]
         if pid > max_id:
             continue
         if row.get("coalition") in index:
-            member_lut[pid] = index[row["coalition"]]
-            owner_lut[pid] = owners.setdefault(row.get("owner") or "", len(owners) + 1)
+            owner = owners.setdefault(row.get("owner") or "", len(owners) + 1)
+            member_rows.append((pid, index[row["coalition"]], owner))
         claims = tuple(index[c] for c in row.get("targeted_by") or [] if c in index)
         if claims:
-            target_lut[pid] = target_sets.setdefault(claims, len(target_sets) + 1)
+            target_rows.append((pid, target_sets.setdefault(claims, len(target_sets) + 1)))
+
+    member_lut = np.zeros(max_id + 1, dtype=_small_uint(len(coalitions) + 1))
+    owner_lut = np.zeros(max_id + 1, dtype=_small_uint(len(owners) + 1))
+    target_lut = np.zeros(max_id + 1, dtype=_small_uint(len(target_sets) + 1))
+    for pid, coalition, owner in member_rows:
+        member_lut[pid] = coalition
+        owner_lut[pid] = owner
+    for pid, set_index in target_rows:
+        target_lut[pid] = set_index
 
     member = member_lut[province_id_map]
     target = target_lut[province_id_map]
@@ -367,10 +405,12 @@ def paint_coalition_overlay(province_id_map: np.ndarray, compiled: dict) -> np.n
         claim_count[set_index] = len(claims)
     first_claim = claim_table[:, 0]
 
-    out[in_coalition] = fills[member[in_coalition]]
+    # Index 0 of `fills` is transparent, so this also clears every other pixel.
+    out = fills[member]
 
-    # Target land outside any coalition gets a light wash so the gaps between
-    # stripes still read as marked; target land inside one keeps its fill.
+    # Target land outside any coalition gets a light ink wash so the gaps
+    # between stripes still read as marked; target land inside one keeps its
+    # fill.
     washed = has_target & ~in_coalition
     out[washed] = (*INK_DARK[:3], TARGET_WASH_ALPHA)
 
@@ -387,20 +427,29 @@ def paint_coalition_overlay(province_id_map: np.ndarray, compiled: dict) -> np.n
         offset = diagonal % HATCH_PERIOD
         edge = (offset < HATCH_EDGE) | (offset >= HATCH_LINE - HATCH_EDGE)
         out[ys[edge], xs[edge]] = HATCH_EDGE_RGBA
+    del ys, xs
 
     # A faint seam between the realms inside one coalition.
-    owner = owner_lut[province_id_map]
-    seam = in_coalition & _differs_from_neighbour(owner) & ~_differs_from_neighbour(member)
+    member_edge = _differs_from_neighbour(member)
+    seam = _differs_from_neighbour(owner_lut[province_id_map])
+    seam &= in_coalition
+    seam &= ~member_edge
     out[seam] = _over(out[seam], REALM_SEAM_RGBA)
+    del seam
 
     # Ink around each coalition, drawn inside its own land.
-    edge = in_coalition & _differs_from_neighbour(member)
-    out[dilate_square(edge, OUTLINE_RADIUS) & in_coalition] = OUTLINE_RGBA
+    member_edge &= in_coalition
+    ring = _grow(member_edge, OUTLINE_RADIUS)
+    ring &= in_coalition
+    out[ring] = OUTLINE_RGBA
+    del member_edge, ring
 
     # Target realms outside a coalition are outlined in their first
     # claimant's ink.
-    target_edge = has_target & _differs_from_neighbour(target)
-    ring = dilate_square(target_edge, OUTLINE_RADIUS) & washed
+    target_edge = _differs_from_neighbour(target)
+    target_edge &= has_target
+    ring = _grow(target_edge, OUTLINE_RADIUS)
+    ring &= washed
     out[ring] = hatches[first_claim[target[ring]]]
 
     return out
@@ -414,6 +463,18 @@ def _over(pixels: np.ndarray, rgba: tuple[int, int, int, int]) -> np.ndarray:
     out = pixels.copy()
     out[:, :3] = np.round(pixels[:, :3] * (1 - t) + np.asarray(rgba[:3]) * t).astype(np.uint8)
     return out
+
+
+def _province_id_map(map_name: str, cache: MapGeometryCache | None) -> np.ndarray:
+    """The full-size province id grid, without decoding provinces.png when a
+    regeneration has already written it: the upload path runs inside the web
+    server, where the full geometry cache costs over a gigabyte."""
+    if cache is not None:
+        return cache.province_id_map
+    grid = defines_file(map_name, GRID_FILENAME)
+    if os.path.isfile(grid):
+        return read_province_id_grid_file(grid)[2]
+    return build_province_id_map(map_name)[2]
 
 
 def _read_json(path: str) -> object:
@@ -451,9 +512,7 @@ def create_coalition_map(
         return
     _write_json_atomic(compiled_path, compiled)
 
-    if cache is None:
-        cache = MapGeometryCache.load(map_name)
-    painted = paint_coalition_overlay(cache.province_id_map, compiled)
+    painted = paint_coalition_overlay(_province_id_map(map_name, cache), compiled)
 
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     tmp = f"{output_path}.tmp"
