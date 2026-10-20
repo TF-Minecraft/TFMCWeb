@@ -219,28 +219,70 @@ class CreateTests(unittest.TestCase):
     def test_an_unchanged_map_is_not_repainted(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             png = os.path.join(tmp, "coalition_map.png")
-            cache = mock.Mock(province_id_map=np.ones((4, 4), dtype=np.int32))
             with (
                 mock.patch.object(coalitiongen, "validate_map"),
                 mock.patch.object(coalitiongen, "load_coalitions", return_value=[coalition()]),
                 mock.patch.object(coalitiongen, "load_compiled_nations", return_value=NATIONS),
                 mock.patch.object(coalitiongen, "defines_file", lambda m, f: os.path.join(tmp, f)),
                 mock.patch.object(coalitiongen, "map_image", lambda m, f: png),
+                mock.patch.object(coalitiongen, "_province_id_map", return_value=np.ones((4, 4), dtype=np.int32)),
                 mock.patch.object(
                     coalitiongen, "paint_coalition_overlay", wraps=coalitiongen.paint_coalition_overlay
                 ) as paint,
             ):
-                coalitiongen.create_coalition_map("main", cache=cache)
-                coalitiongen.create_coalition_map("main", cache=cache)
+                coalitiongen.create_coalition_map("main")
+                coalitiongen.create_coalition_map("main")
                 self.assertEqual(paint.call_count, 1)
 
                 os.remove(png)
-                coalitiongen.create_coalition_map("main", cache=cache)
+                coalitiongen.create_coalition_map("main")
                 self.assertEqual(paint.call_count, 2)
 
                 with mock.patch.object(coalitiongen, "load_coalitions", return_value=[coalition(name="Renamed")]):
-                    coalitiongen.create_coalition_map("main", cache=cache)
+                    coalitiongen.create_coalition_map("main")
                 self.assertEqual(paint.call_count, 3)
+
+    def test_skips_only_uploads_with_an_unchanged_map(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            png = os.path.join(tmp, "coalition_map.png")
+            regen_cache = mock.Mock(province_id_map=np.ones((4, 4), dtype=np.int32))
+            with (
+                mock.patch.object(coalitiongen, "validate_map"),
+                mock.patch.object(coalitiongen, "load_coalitions", return_value=[coalition()]),
+                mock.patch.object(coalitiongen, "load_compiled_nations", return_value=NATIONS),
+                mock.patch.object(coalitiongen, "defines_file", lambda m, f: os.path.join(tmp, f)),
+                mock.patch.object(coalitiongen, "map_image", lambda m, f: png),
+                mock.patch.object(coalitiongen, "_province_id_map", return_value=np.ones((4, 4), dtype=np.int32)),
+                mock.patch.object(
+                    coalitiongen, "paint_coalition_overlay", wraps=coalitiongen.paint_coalition_overlay
+                ) as paint,
+            ):
+                coalitiongen.create_coalition_map("main")
+                coalitiongen.create_coalition_map("main")
+                self.assertEqual(paint.call_count, 1)
+                # A regeneration repaints even when nothing compiled changed.
+                coalitiongen.create_coalition_map("main", cache=regen_cache)
+                self.assertEqual(paint.call_count, 2)
+
+    def test_a_failed_paint_is_retried_by_the_next_upload(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            png = os.path.join(tmp, "coalition_map.png")
+            with open(png, "wb") as f:
+                f.write(b"stale")
+            with (
+                mock.patch.object(coalitiongen, "validate_map"),
+                mock.patch.object(coalitiongen, "load_coalitions", return_value=[coalition()]),
+                mock.patch.object(coalitiongen, "load_compiled_nations", return_value=NATIONS),
+                mock.patch.object(coalitiongen, "defines_file", lambda m, f: os.path.join(tmp, f)),
+                mock.patch.object(coalitiongen, "map_image", lambda m, f: png),
+                mock.patch.object(coalitiongen, "_province_id_map", return_value=np.ones((4, 4), dtype=np.int32)),
+            ):
+                with mock.patch.object(coalitiongen, "paint_coalition_overlay", side_effect=MemoryError):
+                    with self.assertRaises(MemoryError):
+                        coalitiongen.create_coalition_map("main")
+                coalitiongen.create_coalition_map("main")
+            with open(png, "rb") as f:
+                self.assertNotEqual(f.read(), b"stale")
 
     def test_tooltip_summary_names_coalition_member_and_targeters(self) -> None:
         compiled = compile_coalition_map(

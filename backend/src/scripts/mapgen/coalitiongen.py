@@ -501,16 +501,16 @@ def create_coalition_map(
     """Write `coalition_map.json` and the `coalition` raster for `map_name`.
 
     Runs with no coalitions too, so a coalition that ends clears its land.
-    Skips the paint when neither the coalitions nor their realms' land
-    changed, so a repeated upload costs only the compile.
+    Outside a regeneration (`cache` is None: an upload), skips the paint when
+    the compiled map is unchanged, so a repeated upload costs only the compile.
+    A regeneration always paints, since province shapes may have moved.
     """
     validate_map(map_name)
     compiled = compile_coalition_map(load_coalitions(map_name), load_compiled_nations(map_name))
     compiled_path = defines_file(map_name, COALITION_MAP_FILE)
     output_path = map_image(map_name, filename)
-    if os.path.isfile(output_path) and _read_json(compiled_path) == compiled:
+    if cache is None and os.path.isfile(output_path) and _read_json(compiled_path) == compiled:
         return
-    _write_json_atomic(compiled_path, compiled)
 
     painted = paint_coalition_overlay(_province_id_map(map_name, cache), compiled)
 
@@ -518,6 +518,9 @@ def create_coalition_map(
     tmp = f"{output_path}.tmp"
     rgba_array_to_image(painted).save(tmp, "PNG")
     os.replace(tmp, output_path)
+    # Written after the image: if the paint dies, the old file no longer
+    # matches and the next run paints again rather than skipping.
+    _write_json_atomic(compiled_path, compiled)
 
     print(
         f"Coalition map generated -> {output_path} | "
