@@ -131,6 +131,7 @@ function ArmourView({ row, files, fallback, children }: ViewProps) {
               helmet3d={Boolean(file("helmet_model") && file("helmet_texture"))}
               helmetModelFile={file("helmet_model")}
               helmetTextureFile={file("helmet_texture")}
+              helmetTextureMcmetaFile={file("helmet_texture_mcmeta")}
             />
           </Turnable>
         ) : (

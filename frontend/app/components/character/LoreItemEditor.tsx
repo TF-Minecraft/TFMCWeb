@@ -25,6 +25,7 @@ import {
   assertFileSize,
   expectedSizeForField,
   isModel3dKind,
+  isRanged3dKind,
   pairBudgetHint,
   type SkinKind,
 } from "../../../lib/skins/sizes";
@@ -48,6 +49,11 @@ const KNOWN_SKIN_KINDS = new Set<string>([
   "gun",
   "book",
 ]);
+
+/** Kinds whose skin is a model + texture (a 3D bow's standby model stands in for the bow). */
+function isModelSkinKind(kind: SkinKind): boolean {
+  return isModel3dKind(kind) || isRanged3dKind(kind);
+}
 
 function asSkinKind(raw: string | null | undefined, fallback: SkinKind): SkinKind {
   const k = String(raw || "").trim();
@@ -223,8 +229,20 @@ export default function LoreItemEditor({
     [item.pickable_skins, pickedSkinId],
   );
   const pickedIs3d = Boolean(
-    skinMode === "pick" && pickedSkin && isModel3dKind(asSkinKind(pickedSkin.kind, "item_3d")),
+    skinMode === "pick" && pickedSkin && isModelSkinKind(asSkinKind(pickedSkin.kind, "item_3d")),
   );
+
+  /** The 3D kind and model the preview shows, or null for the flat texture. */
+  const previewKind: SkinKind | null = pickedIs3d
+    ? asSkinKind(pickedSkin!.kind, "item_3d")
+    : skinMode === "upload" && allows3d && use3d && modelFile
+      ? threeDKind || "item_3d"
+      : null;
+  const previewModel = pickedIs3d
+    ? previewModelFile
+    : skinMode === "upload" && allows3d && use3d && modelFile
+      ? modelFile
+      : null;
 
   const isDirty = useMemo(() => {
     if (displayName.trim() !== baseline.displayName.trim()) return true;
@@ -398,7 +416,7 @@ export default function LoreItemEditor({
         }
         const file = await fetchAsFile(url, filename);
         let modelFile: File | null = null;
-        if (skinMode === "pick" && pickedSkin && isModel3dKind(asSkinKind(pickedSkin.kind, "item_3d"))) {
+        if (skinMode === "pick" && pickedSkin && isModelSkinKind(asSkinKind(pickedSkin.kind, "item_3d"))) {
           modelFile = await fetchAsFile(
             loreItemSkinModelUrl(pickedSkinId, item.base_set),
             `${pickedSkinId.trim()}.json`,
@@ -804,7 +822,7 @@ export default function LoreItemEditor({
                       <SkinThumb id={skin.id} baseSet={item.base_set} token={sessionToken} />
                       <span>
                         {skin.display_name || skin.id}
-                        {isModel3dKind(asSkinKind(skin.kind, "handheld")) ? (
+                        {isModelSkinKind(asSkinKind(skin.kind, "handheld")) ? (
                           <span className="ml-2 text-xs text-[var(--tfmc-stone)]">3D</span>
                         ) : null}
                         {skin.staff ? <span className="ml-2 text-xs text-[var(--tfmc-stone)]">staff</span> : null}
@@ -848,20 +866,9 @@ export default function LoreItemEditor({
                   : "Default skin"}
             </p>
             <ModelPreview
-              kind={
-                pickedIs3d
-                  ? asSkinKind(pickedSkin!.kind, "item_3d")
-                  : skinMode === "upload" && allows3d && use3d && modelFile
-                    ? threeDKind || "item_3d"
-                    : flatKind
-              }
-              modelFile={
-                pickedIs3d
-                  ? previewModelFile
-                  : skinMode === "upload" && allows3d && use3d && modelFile
-                    ? modelFile
-                    : null
-              }
+              kind={previewKind ?? flatKind}
+              modelFile={previewModel}
+              frameModels={previewKind && isRanged3dKind(previewKind) ? { texture: previewModel } : undefined}
               textureFile={previewTexture}
             />
           </div>

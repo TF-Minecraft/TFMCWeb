@@ -294,8 +294,24 @@ export default function UploadForm({
     setScroll("");
   }
 
+  // Rank perks can arrive after a tile was picked: re-pick the style if the chosen one is
+  // no longer allowed, or one became allowed (adjusting state during render, not in an effect).
+  const kindsKey = resolvedKinds == null ? "*" : resolvedKinds.join(",");
+  const [seenKindsKey, setSeenKindsKey] = useState(kindsKey);
+  if (kindsKey !== seenKindsKey) {
+    setSeenKindsKey(kindsKey);
+    if (target && (!kind || !kindAllowed(kind, resolvedKinds))) {
+      const next = firstAllowedKind(target, resolvedKinds);
+      if (next !== kind) {
+        setKind(next);
+        resetUploads();
+      }
+    }
+  }
+
   function selectTarget(next: SkinTarget) {
-    if (sameTarget(next, target)) return;
+    // Re-clicking the chosen tile only matters when it has no usable style yet.
+    if (sameTarget(next, target) && kind) return;
     setTarget(next);
     setKind(firstAllowedKind(next, resolvedKinds));
     setTiers(next.type === "single" ? [newTier(next.set)] : []);
@@ -952,6 +968,7 @@ export default function UploadForm({
                           helmet3d={previewTierEntry.helmet3d}
                           helmetModelFile={previewTierEntry.files.helmet_model ?? null}
                           helmetTextureFile={previewTierEntry.files.helmet_texture ?? null}
+                          helmetTextureMcmetaFile={previewTierEntry.files[mcmetaField("helmet_texture")] ?? null}
                         />
                       </div>
                     ) : null}

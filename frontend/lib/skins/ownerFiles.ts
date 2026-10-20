@@ -66,15 +66,17 @@ export function ownerFileNames(row: Pick<SubmissionPublic, "kind" | "slug" | "ti
 
 /**
  * Optional `.mcmeta` files beside a skin's textures (`<png>.mcmeta`), keyed `<field>_mcmeta`.
- * Armour is left out: its showcase draws the worn layers, which never animate.
+ * For armour only the 3D helmet texture is fetched: the showcase draws the worn layers,
+ * which never animate, and the helmet model needs its first frame.
  */
 export function ownerAnimationFileNames(
   row: Pick<SubmissionPublic, "kind" | "slug" | "tiers">,
 ): Record<string, string> {
-  if (row.kind === "armor_set") return {};
   const names: Record<string, string> = {};
   for (const [field, name] of Object.entries(ownerFileNames(row))) {
-    if (!isModelField(field) && name.endsWith(".png")) names[mcmetaField(field)] = `${name}.mcmeta`;
+    if (isModelField(field) || !name.endsWith(".png")) continue;
+    if (row.kind === "armor_set" && !field.endsWith("_helmet_texture")) continue;
+    names[mcmetaField(field)] = `${name}.mcmeta`;
   }
   return names;
 }

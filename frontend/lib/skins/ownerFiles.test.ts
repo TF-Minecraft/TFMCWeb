@@ -63,6 +63,6 @@ describe("ownerFileNames", () => {
         slug: "x",
         tiers: ["iron"],
       }),
-    ).toEqual({});
+    ).toEqual({ iron_helmet_texture_mcmeta: "iron_helmet_texture.png.mcmeta" });
   });
 });

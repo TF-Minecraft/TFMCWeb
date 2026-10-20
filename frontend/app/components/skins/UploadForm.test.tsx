@@ -88,4 +88,14 @@ describe("UploadForm item-first flow", () => {
     fireEvent.click(within(types).getByRole("button", { name: /Heavy Steel/ }));
     expect(screen.getAllByText(/^(Light|Heavy) Steel$/, { selector: "span" }).length).toBe(2);
   });
+
+  it("re-picks the style when rank perks change after the item was chosen", () => {
+    const view = render(<UploadForm sessionToken="t" skinKinds={["armor_set"]} onSubmitted={() => undefined} />);
+    fireEvent.click(screen.getByRole("radio", { name: /^Steel/ }));
+    expect(screen.getByRole("group", { name: "Set types" })).toBeTruthy();
+    view.rerender(<UploadForm sessionToken="t" skinKinds={[]} onSubmitted={() => undefined} />);
+    expect(screen.queryByRole("group", { name: "Set types" })).toBeNull();
+    view.rerender(<UploadForm sessionToken="t" skinKinds={["armor_set"]} onSubmitted={() => undefined} />);
+    expect(screen.getByRole("group", { name: "Set types" })).toBeTruthy();
+  });
 });

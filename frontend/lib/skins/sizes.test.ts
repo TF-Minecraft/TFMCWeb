@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  assert3dPairBudgets,
   assertRanged3dBudget,
   expectedSizeForField,
   fileFieldsForKind,
@@ -20,13 +21,13 @@ describe("pairBudgetHint", () => {
   });
 
   it("shows whole kilobytes, rounded down", () => {
-    expect(pairBudgetHint(262_144)).toBe("Model + texture: max 256 KB");
-    expect(pairBudgetHint(20_000)).toBe("Model + texture: max 19 KB");
+    expect(pairBudgetHint(262_144)).toBe("Model + texture (and its .mcmeta): max 256 KB");
+    expect(pairBudgetHint(20_000)).toBe("Model + texture (and its .mcmeta): max 19 KB");
   });
 
   it("keeps one decimal under 10 KB and bytes under 1 KB", () => {
-    expect(pairBudgetHint(5_000)).toBe("Model + texture: max 4.8 KB");
-    expect(pairBudgetHint(800)).toBe("Model + texture: max 800 bytes");
+    expect(pairBudgetHint(5_000)).toBe("Model + texture (and its .mcmeta): max 4.8 KB");
+    expect(pairBudgetHint(800)).toBe("Model + texture (and its .mcmeta): max 800 bytes");
   });
 });
 
@@ -76,5 +77,32 @@ describe("animation slots", () => {
     expect(mcmetaAllowed("pull_0_model")).toBe(false);
     expect(mcmetaAllowed("layer_1")).toBe(false);
     expect(mcmetaField("unsigned")).toBe("unsigned_mcmeta");
+  });
+});
+
+describe("3D pair budgets", () => {
+  it("counts the texture's .mcmeta toward its pair", () => {
+    const pair = { texture: fakeFile(500), model: fakeFile(400) };
+    expect(() => assert3dPairBudgets("item_3d", pair, 1000)).not.toThrow();
+    expect(() => assert3dPairBudgets("item_3d", { ...pair, texture_mcmeta: fakeFile(200) }, 1000)).toThrow("1100");
+    expect(() =>
+      assert3dPairBudgets(
+        "gun",
+        { texture: fakeFile(500), carry_model: fakeFile(400), texture_mcmeta: fakeFile(200) },
+        1000,
+      ),
+    ).toThrow("gun/carry_model");
+    expect(() =>
+      assert3dPairBudgets(
+        "armor_set",
+        {
+          light_iron_helmet_texture: fakeFile(500),
+          light_iron_helmet_model: fakeFile(400),
+          light_iron_helmet_texture_mcmeta: fakeFile(200),
+        },
+        1000,
+        ["light_iron"],
+      ),
+    ).toThrow("light_iron_helmet");
   });
 });

@@ -169,8 +169,15 @@ export async function assertFileSize(file: File, expected: Size, label: string):
   }
 }
 
-function assertPairBytes(texture: File | undefined, model: File | undefined, maxBytes: number, label: string): void {
-  const total = (texture?.size ?? 0) + (model?.size ?? 0);
+/** A texture's optional `.mcmeta` counts toward its pair (as backend size_limits.py). */
+function assertPairBytes(
+  texture: File | undefined,
+  model: File | undefined,
+  maxBytes: number,
+  label: string,
+  mcmeta?: File,
+): void {
+  const total = (texture?.size ?? 0) + (model?.size ?? 0) + (mcmeta?.size ?? 0);
   const cap = Math.max(0, Math.floor(maxBytes));
   if (total > cap) {
     throw new Error(`${label}: texture + model is ${total} bytes (limit ${cap} bytes)`);
@@ -198,13 +205,13 @@ export function assert3dPairBudgets(
   }
 
   if (isModel3dKind(kind)) {
-    assertPairBytes(files.texture, files.model, cap, kind);
+    assertPairBytes(files.texture, files.model, cap, kind, files.texture_mcmeta);
     return;
   }
 
   if (isGunKind(kind)) {
     for (const stem of ["carry_model", "reload_model", "aim_model"] as const) {
-      assertPairBytes(files.texture, files[stem], cap, `gun/${stem}`);
+      assertPairBytes(files.texture, files[stem], cap, `gun/${stem}`, files.texture_mcmeta);
     }
     return;
   }
@@ -213,7 +220,13 @@ export function assert3dPairBudgets(
     for (const tier of helmet3dTiers) {
       const t = (tier || "").trim();
       if (!t) continue;
-      assertPairBytes(files[`${t}_helmet_texture`], files[`${t}_helmet_model`], cap, `armor_set/${t}_helmet`);
+      assertPairBytes(
+        files[`${t}_helmet_texture`],
+        files[`${t}_helmet_model`],
+        cap,
+        `armor_set/${t}_helmet`,
+        files[`${t}_helmet_texture_mcmeta`],
+      );
     }
   }
 }
@@ -223,8 +236,8 @@ export function pairBudgetHint(maxBytes: number | undefined): string {
   if (!maxBytes || maxBytes <= 0) return "";
   // Round down so the hint never overstates the limit.
   const kb = Math.floor((maxBytes / 1024) * 10) / 10;
-  if (kb < 1) return `Model + texture: max ${maxBytes} bytes`;
-  return `Model + texture: max ${kb >= 10 ? Math.floor(kb) : kb} KB`;
+  if (kb < 1) return `Model + texture (and its .mcmeta): max ${maxBytes} bytes`;
+  return `Model + texture (and its .mcmeta): max ${kb >= 10 ? Math.floor(kb) : kb} KB`;
 }
 
 /** Upload fields that take a model JSON rather than a PNG. */

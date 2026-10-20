@@ -61,7 +61,20 @@ describe("parseTextureAnimation", () => {
     expect(() => parseTextureAnimation("{}")).toThrow('"animation"');
     expect(() => parseTextureAnimation('{"animation":{"frametime":0}}')).toThrow("frametime");
     expect(() => parseTextureAnimation('{"animation":{"frames":[-1]}}')).toThrow("frame");
-    expect(() => parseTextureAnimation('{"animation":{"width":1.5}}')).toThrow("width");
+    expect(() => parseTextureAnimation('{"animation":{"width":1.5}}')).toThrow("whole numbers");
+  });
+
+  it("is as strict as the skins API", () => {
+    expect(() => parseTextureAnimation("")).toThrow("empty");
+    expect(() => parseTextureAnimation('{"animation":{},"villager":{}}')).toThrow('only an "animation"');
+    expect(() => parseTextureAnimation('{"animation":{"speed":2}}')).toThrow("unsupported keys: speed");
+    expect(() => parseTextureAnimation('{"animation":{"frames":[{"time":2}]}}')).toThrow("index");
+    expect(() => parseTextureAnimation('{"animation":{"frames":[{"index":0,"loop":1}]}}')).toThrow("index");
+    expect(() => parseTextureAnimation('{"animation":{"frametime":2.0}}')).toThrow("whole numbers");
+    expect(() => parseTextureAnimation('{"animation":{"frames":[1e1]}}')).toThrow("whole numbers");
+    expect(parseTextureAnimation('\uFEFF{"animation":{"frames":[0,{"index":1,"time":3}]}}')).toEqual({
+      animation: { frames: [0, { index: 1, time: 3 }] },
+    });
   });
 });
 

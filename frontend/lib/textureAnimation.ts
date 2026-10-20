@@ -1,3 +1,5 @@
+import limits from "../../shared/skins/base_sets.json";
+
 /**
  * Minecraft `.png.mcmeta` texture animation: frame geometry, timing and validation.
  * Shared by the wiki station viewer and the skin previews; mirrors the skins API rules.
@@ -23,7 +25,18 @@ export type ScheduledFrame = { index: number; duration: number };
 export const TICK_MS = 50;
 
 /** Largest `.mcmeta` the skins API accepts (shared limits.mcmeta_max_bytes). */
-export const MCMETA_MAX_BYTES = 2048;
+export const MCMETA_MAX_BYTES: number = limits.limits.mcmeta_max_bytes;
+
+const ANIMATION_KEYS = new Set(["frametime", "interpolate", "width", "height", "frames"]);
+
+/**
+ * Every number an `.mcmeta` may hold is a whole number, so any number written with a
+ * decimal point or exponent (`1.0`, `2e1`) is rejected, as the API's JSON parser would.
+ */
+function hasNonIntegerNumber(text: string): boolean {
+  const outsideStrings = text.replace(/"(?:[^"\\]|\\.)*"/g, '""');
+  return /\d\s*[.eE]|\.\d/.test(outsideStrings);
+}
 
 /**
  * Frame size as Minecraft resolves it: both width and height given → that; only one →
@@ -130,20 +143,35 @@ function isIndex(value: unknown): value is number {
 
 /** Parse and check `.mcmeta` text; throws with a player-facing message. */
 export function parseTextureAnimation(text: string, label = "Animation"): TextureAnimationMetadata {
+  const body = text.replace(/^\uFEFF/, "");
+  if (!body.trim()) throw new Error(`${label}: .mcmeta file is empty`);
   let raw: unknown;
   try {
-    raw = JSON.parse(text);
+    raw = JSON.parse(body);
   } catch {
     throw new Error(`${label}: .mcmeta is not valid JSON`);
   }
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
     throw new Error(`${label}: .mcmeta must be a JSON object`);
   }
+  const keys = Object.keys(raw);
+  if (keys.length !== 1 || keys[0] !== "animation") {
+    throw new Error(`${label}: .mcmeta must be an object with only an "animation" section`);
+  }
   const animation = (raw as Record<string, unknown>).animation;
   if (!animation || typeof animation !== "object" || Array.isArray(animation)) {
     throw new Error(`${label}: .mcmeta needs an "animation" object`);
   }
   const a = animation as Record<string, unknown>;
+  const unknown = Object.keys(a)
+    .filter((key) => !ANIMATION_KEYS.has(key))
+    .sort();
+  if (unknown.length) {
+    throw new Error(`${label}: .mcmeta animation has unsupported keys: ${unknown.join(", ")}`);
+  }
+  if (hasNonIntegerNumber(body)) {
+    throw new Error(`${label}: .mcmeta numbers must be whole numbers (no decimals)`);
+  }
   const out: TextureAnimationMetadata["animation"] = {};
   if (a.frametime !== undefined) {
     if (!isPositiveInt(a.frametime)) throw new Error(`${label}: frametime must be a whole number of ticks, 1 or more`);
@@ -167,7 +195,8 @@ export function parseTextureAnimation(text: string, label = "Animation"): Textur
       if (isIndex(frame)) return frame;
       if (frame && typeof frame === "object" && !Array.isArray(frame)) {
         const f = frame as Record<string, unknown>;
-        if (isIndex(f.index) && (f.time === undefined || isPositiveInt(f.time))) {
+        const extra = Object.keys(f).some((key) => key !== "index" && key !== "time");
+        if (!extra && isIndex(f.index) && (f.time === undefined || isPositiveInt(f.time))) {
           return f.time === undefined ? { index: f.index } : { index: f.index, time: f.time };
         }
       }
