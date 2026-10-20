@@ -56,7 +56,9 @@ export default function FactionsMoneyPage() {
       <Bullets>
         <li>If the bank cannot cover the army, paid regiments are cut until it can. Free regiments cost nothing.</li>
         <li>An installation the bank cannot pay for loses a level. A level 1 installation is destroyed.</li>
-        <li>Resource nodes cost their guild 4 denars per level each day.</li>
+        <li>
+          Resource nodes cost their guild 4 denars per level each day, plus the upkeep of their production method.
+        </li>
       </Bullets>
 
       <WikiSectionHeading id="taxes" intro="Your tax laws set the allowed range. You pick the rate inside it.">

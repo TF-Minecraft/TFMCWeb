@@ -78,7 +78,10 @@ export default function FactionsGuildsPage() {
         <li>
           You must be in a guild. A one-person guild is enough. Each guild can own one node, and each chunk hold one.
         </li>
-        <li>Run it as an Ore Mine, Magical Mine, Farm, Plantation, Forestry or Quarry.</li>
+        <li>
+          Run it as an Ore Mine, Magical Mine, Farm, Plantation, Forestry or Quarry, then pick a production method.
+          Methods add their own upkeep, from 1 to 20 denars a day.
+        </li>
         <li>
           Levels 1 to 10 are paid from the guild bank, and each level costs 4 denars a day. Stop the node before
           changing it.
