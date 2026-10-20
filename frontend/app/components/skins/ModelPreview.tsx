@@ -553,9 +553,15 @@ export default function ModelPreview({
           root.name = "animatedItem";
           const textures = animated.frames.map(textureFromCanvas);
           const frameRoots = animated.frames.map((canvas, i) => {
-            const frameRoot = buildExtrudedItemGroup(canvasImageData(canvas), textures[i]!, {
-              center: !onMannequin,
-            });
+            let frameRoot: THREE.Object3D;
+            try {
+              frameRoot = buildExtrudedItemGroup(canvasImageData(canvas), textures[i]!, {
+                center: !onMannequin,
+              });
+            } catch {
+              // A blank frame is valid (blinks, flashes): the item disappears for it.
+              frameRoot = new THREE.Group();
+            }
             frameRoot.visible = false;
             root.add(frameRoot);
             return frameRoot;
