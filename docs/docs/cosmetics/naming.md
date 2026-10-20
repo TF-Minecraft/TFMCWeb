@@ -40,9 +40,9 @@ Filenames are **freeform** - the API only validates PNG magic bytes, max size, a
 
 ### `armor_set` (multi-tier)
 
-One submission holds **1-6 tiers** from the allowlist `iron | steel | abyssalite | mythril | mage | infantry`. Each tier needs all six multipart fields: `{tier}_helmet`, `{tier}_chestplate`, `{tier}_leggings`, `{tier}_boots`, `{tier}_layer_1`, `{tier}_layer_2`.
+One submission is one **metal line** — up to one set per type (`light`, `medium`, `heavy`, `infantry`, `mage`) of one metal (`iron`, `steel`, `bronze`, `abyssalite`, `mythril`), tier `{type}_{metal}`, ArmourShop set `{type} {metal}` — or exactly one **single set**: `leather`, `illusion`, `spiritual`, `arcanum`, `bloodmagic`, `necromancy`, `shadowmancy`, `light_mage`, `dark_mage`, `wild_mage` (ArmourShop set: underscores become spaces, e.g. `wild mage`). Single sets cannot be mixed with other sets. Each tier needs all six multipart fields: `{tier}_helmet`, `{tier}_chestplate`, `{tier}_leggings`, `{tier}_boots`, `{tier}_layer_1`, `{tier}_layer_2`.
 
-Plus a form field `tiers` - a JSON array, e.g. `["iron","steel"]`. Exact sizes: icons **16×16**; layers **64×32**. Every PNG in a submission must have distinct upload bytes (SHA-256).
+Plus a form field `tiers` - a JSON array, e.g. `["light_iron","heavy_iron"]` or `["wild_mage"]`. Exact sizes: icons **16×16**; layers **64×32**. Every PNG in a submission must have distinct upload bytes (SHA-256).
 
 *Legacy single-tier path:* unprefixed fields plus `base_set` still accepted for backward compatibility.
 
@@ -53,6 +53,14 @@ One `texture` field. Sizes: `handheld` **16×16**; `large_handheld` **32×32**. 
 ### `bow` / `large_bow` / `crossbow`
 
 Fields `texture`, `pull_0`, `pull_1`, `pull_2` (bow four + `charged` for crossbow). Sizes: `bow` **16×16**; `large_bow` **32×32**.
+
+### `bow_3d` / `crossbow_3d`
+
+One `texture` plus a Blockbench model per bow state: `model` (standby), `pull_0_model`, `pull_1_model`, `pull_2_model`, and `charged_model` for crossbows. Stored as `{id}.png`, `{id}.json`, `{id}_0.json`, `{id}_1.json`, `{id}_2.json`, `{id}_charged.json`, every model's textures pointing at `{id}`. All uploaded files together (texture, models, `.mcmeta`) may be at most **61440 bytes** for every rank. Missing display tabs take vanilla bow / crossbow hand poses.
+
+### Animated textures
+
+`{field}_mcmeta` beside any PNG field except armour layers; stored as `{stored png}.mcmeta` (e.g. `{id}.png.mcmeta`, `{id}_0.png.mcmeta`, `{tier}_chestplate.png.mcmeta`). A flat crossbow's `charged` animation is stored for both `{id}_charged.png` and `{id}_arrow.png`.
 
 ### `item_3d` / `shield` / `helmet_3d` / `mask` / `gun`
 

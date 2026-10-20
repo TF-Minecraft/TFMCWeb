@@ -14,10 +14,10 @@ const GUIDES: Record<SkinKind, KindGuide> = {
   armor_set: {
     title: "Armour set",
     summary:
-      "Submit one metal's skin line: up to 5 sets (Light, Medium, Heavy, Infantry and Mage) of that metal. Each set becomes its own shop listing under your name.",
+      "Submit one metal's skin line: up to 5 sets (Light, Medium, Heavy, Infantry and Mage) of that metal, or one single set such as Leather or a mage school. Each set becomes its own shop listing under your name.",
     steps: [
-      "Choose the metal (Iron, Steel, Bronze, Abyssalite or Mythril). Every set in the submission uses it.",
-      "Add at least one set type (Light, Medium, Heavy, Infantry or Mage).",
+      "Choose a metal (Iron, Steel, Bronze, Abyssalite or Mythril) or a single set. Every set in the submission uses it.",
+      "For a metal, pick at least one set type (Light, Medium, Heavy, Infantry or Mage). You can give each weight its own look, or make only one.",
       "Set name is optional if you want a custom name instead of the default label (e.g. Light Iron).",
       "Per set, upload helmet, chestplate, leggings, and boots icons (16×16 PNG).",
       "Upload Layer 1 and Layer 2 body textures (64×32 PNG) for that set.",
@@ -74,6 +74,30 @@ const GUIDES: Record<SkinKind, KindGuide> = {
       "Upload Standby texture, Pull 0, Pull 1, Pull 2 and Charged. All must be 16×16 PNG.",
       "Set the item name / colours, then submit.",
     ],
+  },
+  bow_3d: {
+    title: "3D bow",
+    summary: "One texture and four Blockbench models, so the bow bends as it's drawn.",
+    steps: [
+      "Choose Shortbows or Longbows.",
+      "Upload one texture PNG used by every model.",
+      "Export Standby, Pull 0, Pull 1 and Pull 2 as Java Block/Item JSON (File → Export → Export Block/Item Model; one-axis 22.5°/45° rotations only).",
+      "All five files together must be 60 KB or less.",
+      "Set the item name / colours, then submit.",
+    ],
+    notes: ["Use the frame buttons on the preview to check each draw stage in hand."],
+  },
+  crossbow_3d: {
+    title: "3D crossbow",
+    summary: "One texture and five Blockbench models: standby, three loading stages and charged.",
+    steps: [
+      "Choose Crossbows.",
+      "Upload one texture PNG used by every model.",
+      "Export Standby, Pull 0, Pull 1, Pull 2 and Charged as Java Block/Item JSON (one-axis 22.5°/45° rotations only).",
+      "All six files together must be 60 KB or less.",
+      "Set the item name / colours, then submit.",
+    ],
+    notes: ["The charged model is also used when a firework is loaded."],
   },
   item_3d: {
     title: "Item 3D",

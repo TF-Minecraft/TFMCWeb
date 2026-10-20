@@ -8,6 +8,8 @@ from __future__ import annotations
 
 import re
 
+from .base_sets import armor_single_sets
+
 SLUG_RE = re.compile(r"^[a-z][a-z0-9_]{1,47}$")
 
 RESERVED = frozenset(
@@ -39,14 +41,26 @@ def parse_armor_tier(tier: str) -> tuple[str, str] | None:
     return None
 
 
+def is_armor_single_set(tier: str) -> bool:
+    """A set that is its own line, like ``leather`` or ``wild_mage`` (shared base_sets.json)."""
+    return (tier or "") in armor_single_sets()
+
+
 def armor_tier_base_set(tier: str) -> str:
     """ArmourShop base set for a tier. Older bare tiers (``iron``, ``mage``) are their own set."""
     parsed = parse_armor_tier(tier)
-    return f"{parsed[0]} {parsed[1]}" if parsed else tier
+    if parsed:
+        return f"{parsed[0]} {parsed[1]}"
+    if is_armor_single_set(tier):
+        return tier.replace("_", " ")
+    return tier
 
 
 def armor_tier_label(tier: str) -> str:
     """Default display suffix: ``Light Iron`` (matches shop YAML like "Osenic Iron")."""
+    single = armor_single_sets().get(tier or "")
+    if single:
+        return single
     return " ".join(part.capitalize() for part in armor_tier_base_set(tier).split())
 
 
@@ -59,6 +73,11 @@ ARMOR_FIELDS = ARMOR_ICON_FIELDS + ARMOR_LAYER_FIELDS
 BOW_PULL_FIELDS = ("pull_0", "pull_1", "pull_2")
 BOW_FRAME_FIELDS = ("texture",) + BOW_PULL_FIELDS
 CROSSBOW_FRAME_FIELDS = BOW_FRAME_FIELDS + ("charged",)
+# 3D bows: one texture, a model per bow state.
+BOW_3D_MODEL_FIELDS = ("model", "pull_0_model", "pull_1_model", "pull_2_model")
+CROSSBOW_3D_MODEL_FIELDS = BOW_3D_MODEL_FIELDS + ("charged_model",)
+# Optional animation for a PNG field: ``{field}_mcmeta``. Never on armour layers.
+MCMETA_SUFFIX = "_mcmeta"
 BOOK_FIELDS = ("unsigned", "signed")
 
 

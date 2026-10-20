@@ -168,7 +168,9 @@ def test_an_older_ban_running_out_does_not_lift_a_later_one():
 
 
 def test_times_round_trip_exactly_and_out_of_range_times_are_rejected():
-    for ms in (1792352364123, 1792352364999, 1792438773975):
+    # Fixed millisecond parts near now: fixed past dates expire and drop out of the sync.
+    second = _now_ms() // 1000 * 1000
+    for ms in (second + 123, second + 999, second + 86_400_975):
         enqueue_ban_event("ban", player_uuid=UUID, banned_at_ms=ms, expires_at_ms=ms + DAY)
         assert list_ban_sync()["bans"][0]["banned_at_ms"] == ms
         _unban()

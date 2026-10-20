@@ -1,6 +1,11 @@
-"""Combined texture+model byte budgets for 3D skin kinds."""
+"""Combined texture+model byte budgets for 3D skin kinds.
+
+A texture's optional ``.mcmeta`` counts toward its pair.
+"""
 
 from __future__ import annotations
+
+from .base_sets import ranged_3d_total_bytes
 
 
 class SizeLimitError(ValueError):
@@ -17,8 +22,9 @@ def assert_pair(
     max_bytes: int,
     *,
     label: str,
+    mcmeta: bytes | None = None,
 ) -> None:
-    total = _pair_len(texture, model)
+    total = _pair_len(texture, model) + len(mcmeta or b"")
     cap = max(0, int(max_bytes))
     if total > cap:
         raise SizeLimitError(
@@ -38,12 +44,23 @@ def assert_3d_pair_budgets(
     k = (kind or "").strip()
     cap = max(0, int(max_bytes))
 
+    if k in ("bow_3d", "crossbow_3d"):
+        # One fixed budget for every rank, across all of the upload's files.
+        limit = ranged_3d_total_bytes()
+        total = sum(len(data or b"") for data in files_bytes.values())
+        if total > limit:
+            raise SizeLimitError(
+                f"{k}: texture + models is {total} bytes (limit {limit} bytes)"
+            )
+        return
+
     if k in ("item_3d", "shield", "helmet_3d", "mask"):
         assert_pair(
             files_bytes.get("texture"),
             files_bytes.get("model"),
             cap,
             label=k,
+            mcmeta=files_bytes.get("texture_mcmeta"),
         )
         return
 
@@ -55,6 +72,7 @@ def assert_3d_pair_budgets(
                 files_bytes.get(stem),
                 cap,
                 label=f"gun/{stem}",
+                mcmeta=files_bytes.get("texture_mcmeta"),
             )
         return
 
@@ -68,4 +86,5 @@ def assert_3d_pair_budgets(
                 files_bytes.get(f"{t}_helmet_model"),
                 cap,
                 label=f"armor_set/{t}_helmet",
+                mcmeta=files_bytes.get(f"{t}_helmet_texture_mcmeta"),
             )

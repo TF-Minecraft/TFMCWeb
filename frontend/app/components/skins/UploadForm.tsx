@@ -2,38 +2,54 @@
 
 import LoadingSkeleton from "@/app/components/shared/LoadingSkeleton";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useState, type ReactNode } from "react";
 import { createSubmission, checkSubmissionConflict, getCatalog, SkinsApiError } from "../../../lib/skins/api";
 import type { SkinsCatalog } from "../../../lib/skins/catalog";
 import { filterStaffCategories } from "../../../lib/skins/catalog";
 import { DEV_CATALOG_ENTITLEMENTS, DEV_SESSION_SKIN_KINDS } from "../../../lib/skins/entitlementsDev";
 import { setLastSubmissionId } from "../../../lib/skins/session";
 import {
+  ARMOR_SINGLE_SETS,
   ARMOR_TYPES,
+  RANGED_3D_TOTAL_BYTES,
   armorTier,
   armorTierLabel,
   baseSetLabel,
-  baseSetPickerTitle,
-  baseSetsForKind,
-  defaultBaseSet,
+  kindsForBaseSet,
 } from "../../../lib/skins/baseSets";
 import {
+  firstAllowedKind,
+  kindAllowed,
+  kindsForTarget,
+  rankForKind,
+  sameTarget,
+  type SkinTarget,
+} from "../../../lib/skins/kindAccess";
+import {
   assert3dPairBudgets,
-  assertFileSize,
+  assertRanged3dBudget,
+  assertTextureFile,
   expectedSizeForField,
   fileFieldsForKind,
-  isBowFrameKind,
+  formatBytes,
   isBookKind,
+  isGunKind,
   isLargeTextureKind,
   isModel3dKind,
-  isGunKind,
+  isModelField,
+  isRanged3dKind,
+  mcmetaAllowed,
+  mcmetaField,
   pairBudgetHint,
+  ranged3dTotalBytes,
   ARMOR_BODY_FIELDS,
   type SkinKind,
 } from "../../../lib/skins/sizes";
 import { NAME_STYLES, normalizePreviewHex, type NameStyle } from "../../../lib/skins/namePreview";
 import FancyCheckbox from "./FancyCheckbox";
+import FileSlot from "./FileSlot";
 import KindPicker from "./KindPicker";
+import SkinTargetPicker from "./SkinTargetPicker";
 import ModelPreview from "./ModelPreview";
 import ArmorPreview from "./ArmorPreview";
 import NameColourPicker from "../shared/NameColourPicker";
@@ -47,25 +63,6 @@ function isFlatPreviewKind(kind: SkinKind): boolean {
   return (
     kind === "handheld" || kind === "large_handheld" || kind === "bow" || kind === "large_bow" || kind === "crossbow"
   );
-}
-
-function resolveModelPreviewFiles(
-  kind: SkinKind,
-  files: Record<string, File | null>,
-): { model: File | null; texture: File | null } {
-  if (isModel3dKind(kind)) {
-    return {
-      model: files.model ?? null,
-      texture: files.texture ?? null,
-    };
-  }
-  if (isGunKind(kind) || isFlatPreviewKind(kind)) {
-    return {
-      model: null,
-      texture: files.texture ?? null,
-    };
-  }
-  return { model: null, texture: null };
 }
 
 type Props = {
@@ -84,7 +81,7 @@ type Props = {
 };
 
 type TierEntry = {
-  /** Armour type (light, medium, …); the tier id adds the chosen metal. */
+  /** Armour type (light, medium, …) of the metal line, or the single set id. */
   type: string;
   /** Display suffix for this set; empty means the default (Light Iron, …). */
   alias: string;
@@ -96,57 +93,71 @@ type TierEntry = {
 };
 
 const fieldLabel: Record<string, string> = {
-  helmet: "Helmet (16×16)",
-  helmet_texture: "Helmet texture (PNG)",
-  helmet_model: "Helmet model (JSON)",
-  chestplate: "Chestplate (16×16)",
-  leggings: "Leggings (16×16)",
-  boots: "Boots (16×16)",
-  layer_1: "Layer 1 (64×32)",
-  layer_2: "Layer 2 (64×32)",
-  texture: "Texture (PNG)",
-  model: "Model (JSON)",
-  carry_model: "Carry model (JSON)",
-  reload_model: "Reload model (JSON)",
-  aim_model: "Aim model (JSON)",
+  helmet: "Helmet icon",
+  helmet_texture: "Helmet texture",
+  helmet_model: "Helmet model",
+  chestplate: "Chestplate icon",
+  leggings: "Leggings icon",
+  boots: "Boots icon",
+  layer_1: "Layer 1",
+  layer_2: "Layer 2",
+  texture: "Texture",
+  model: "Model",
+  carry_model: "Carry model",
+  reload_model: "Reload model",
+  aim_model: "Aim model",
   pull_0: "Pull 0",
   pull_1: "Pull 1",
   pull_2: "Pull 2",
   charged: "Charged",
-  unsigned: "Unsigned cover (16×16)",
-  signed: "Signed cover (16×16)",
+  pull_0_model: "Pull 0 model",
+  pull_1_model: "Pull 1 model",
+  pull_2_model: "Pull 2 model",
+  charged_model: "Charged model",
+  unsigned: "Unsigned cover",
+  signed: "Signed cover",
 };
 
 function slotLabel(kind: SkinKind, field: string): string {
-  if (kind === "armor_set") {
-    return fieldLabel[field] || field;
+  if (field === "texture" && (kind === "bow" || kind === "large_bow" || kind === "crossbow")) {
+    return "Standby";
   }
-  if (isModel3dKind(kind) || isGunKind(kind) || isBookKind(kind)) {
-    return fieldLabel[field] || field;
+  if (field === "model" && isRanged3dKind(kind)) {
+    return "Standby model";
   }
-  const size = isLargeTextureKind(kind) ? "32×32" : "16×16";
-  const base = fieldLabel[field] || field;
-  if (field === "texture") {
-    return isBowFrameKind(kind) ? `Standby texture (${size})` : `Texture (${size})`;
-  }
-  if (isBowFrameKind(kind)) {
-    return `${base} (${size})`;
-  }
-  return `Texture (${size})`;
+  return fieldLabel[field] || field;
+}
+
+function slotHint(kind: SkinKind, field: string): string {
+  if (isModelField(field)) return "Java Block/Item JSON";
+  const size = expectedSizeForField(kind, field);
+  if (!size) return isRanged3dKind(kind) ? "PNG, any size · shared by every model" : "PNG, any size";
+  return `${size.w}×${size.h} PNG`;
 }
 
 function acceptForField(field: string): string {
-  if (
-    field === "model" ||
-    field.endsWith("_model") ||
-    field === "helmet_model" ||
-    field === "carry_model" ||
-    field === "reload_model" ||
-    field === "aim_model"
-  ) {
-    return "application/json,.json";
-  }
-  return "image/png,.png";
+  return isModelField(field) ? "application/json,.json" : "image/png,.png";
+}
+
+function Step({ n, title, children }: { n: number; title: string; children: ReactNode }) {
+  return (
+    <section className="flex flex-col gap-4 border-t border-[color-mix(in_srgb,var(--tfmc-cream)_10%,transparent)] pt-6 first:border-t-0 first:pt-0">
+      <h3 className="m-0 flex items-center gap-2.5 text-base font-semibold text-[var(--tfmc-cream)]">
+        <span
+          aria-hidden
+          className="flex h-6 w-6 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--tfmc-accent)_22%,var(--tfmc-forest))] text-xs text-[var(--tfmc-accent)]"
+        >
+          {n}
+        </span>
+        {title}
+      </h3>
+      {children}
+    </section>
+  );
+}
+
+function newTier(type: string): TierEntry {
+  return { type, alias: "", helmet3d: false, scroll: "", files: {} };
 }
 
 export default function UploadForm({
@@ -160,18 +171,10 @@ export default function UploadForm({
   onSubmitted,
 }: Props) {
   const resolvedKinds = skinKinds != null ? skinKinds : staff ? null : DEV_SESSION_SKIN_KINDS;
-  const initialKind = (
-    resolvedKinds == null
-      ? "armor_set"
-      : resolvedKinds.includes("armor_set")
-        ? "armor_set"
-        : resolvedKinds[0] || "handheld"
-  ) as SkinKind;
-  const [kind, setKind] = useState<SkinKind>(initialKind);
-  const [baseSet, setBaseSet] = useState(defaultBaseSet(initialKind));
+  const [target, setTarget] = useState<SkinTarget | null>(null);
+  const [kind, setKind] = useState<SkinKind | null>(null);
   const canUseArmor3dHelmet = staff || allowArmor3dHelmet;
   const [tiers, setTiers] = useState<TierEntry[]>([]);
-  const [tierToAdd, setTierToAdd] = useState<string>("");
   /** Which added set (by type) the armor mannequin preview shows. */
   const [previewArmorTier, setPreviewArmorTier] = useState<string>("");
   const [itemName, setItemName] = useState("");
@@ -192,16 +195,6 @@ export default function UploadForm({
   }>({ unsigned: null, signed: null });
 
   useEffect(() => {
-    setTiers([]);
-    setTierToAdd("");
-    setError(null);
-    setBaseSet(defaultBaseSet(kind));
-    setFiles({});
-    setCategory("");
-    setScroll("");
-  }, [kind]);
-
-  useEffect(() => {
     if (canUseArmor3dHelmet) return;
     setTiers((prev) => {
       if (!prev.some((t) => t.helmet3d)) return prev;
@@ -210,6 +203,7 @@ export default function UploadForm({
         const files = { ...t.files };
         delete files.helmet_model;
         delete files.helmet_texture;
+        delete files[mcmetaField("helmet_texture")];
         return { ...t, helmet3d: false, files };
       });
     });
@@ -245,6 +239,7 @@ export default function UploadForm({
   }, []);
 
   const catalogDefaults = catalog?.entitlements?.defaults;
+  const entitlements = catalog?.entitlements?.groups?.length ? catalog.entitlements : DEV_CATALOG_ENTITLEMENTS;
   const resolvedColourStops =
     nameColourStops !== undefined ? nameColourStops : (catalogDefaults?.name_colour_stops ?? 0);
   const resolvedPairBytes =
@@ -257,27 +252,33 @@ export default function UploadForm({
           : 0;
   const pairHint = pairBudgetHint(resolvedPairBytes);
 
-  const fileFields = fileFieldsForKind(kind);
-  const baseOptions = baseSetsForKind(kind);
-  const isArmor = kind === "armor_set";
-  const staffCategories = catalog ? filterStaffCategories(catalog.categories, kind) : [];
-  const staffScrolls = catalog?.scrolls ?? [];
-  const previewFiles = resolveModelPreviewFiles(kind, files);
+  /** Rank that unlocks a kind, or undefined when the player can already use it. */
+  const lockedByKind = (k: SkinKind): string | undefined =>
+    kindAllowed(k, resolvedKinds) ? undefined : (rankForKind(entitlements, k) ?? "Locked");
+  const lockedByKinds = (kinds: readonly SkinKind[]): string | undefined =>
+    kinds.length === 0 || kinds.some((k) => kindAllowed(k, resolvedKinds)) ? undefined : lockedByKind(kinds[0]!);
 
-  /** Armour's base-set picker is the metal; every set in the line uses it. */
-  const tierId = (entry: TierEntry) => armorTier(entry.type, baseSet);
+  const isArmor = kind === "armor_set";
+  const isSingleSet = target?.type === "single";
+  const metal = target?.type === "metal" ? target.metal : "";
+  const lineLabel =
+    target?.type === "metal"
+      ? baseSetLabel(target.metal)
+      : target?.type === "single"
+        ? (ARMOR_SINGLE_SETS.find((s) => s.id === target.set)?.label ?? target.set)
+        : "";
+  const baseSet = target?.type === "item" ? target.baseSet : "";
+  const fileFields = kind ? fileFieldsForKind(kind) : [];
+  const staffCategories = catalog && kind ? filterStaffCategories(catalog.categories, kind) : [];
+  const staffScrolls = catalog?.scrolls ?? [];
+
+  const tierId = (entry: TierEntry) => (isSingleSet ? entry.type : armorTier(entry.type, metal));
   const tierLabel = (entry: TierEntry) => armorTierLabel(tierId(entry));
-  const remainingTiers: string[] = ARMOR_TYPES.filter((t) => !tiers.some((entry) => entry.type === t));
-  const effectiveTierToAdd = remainingTiers.includes(tierToAdd) ? tierToAdd : (remainingTiers[0] ?? "");
 
   const previewTierEntry = tiers.find((e) => e.type === previewArmorTier) ?? tiers[0] ?? null;
 
   useEffect(() => {
-    if (!isArmor) {
-      setPreviewArmorTier("");
-      return;
-    }
-    if (tiers.length === 0) {
+    if (!isArmor || tiers.length === 0) {
       setPreviewArmorTier("");
       return;
     }
@@ -286,70 +287,95 @@ export default function UploadForm({
     }
   }, [isArmor, tiers, previewArmorTier]);
 
+  function resetUploads() {
+    setFiles({});
+    setError(null);
+    setCategory("");
+    setScroll("");
+  }
+
+  // Rank perks can arrive after a tile was picked: re-pick the style if the chosen one is
+  // no longer allowed, or one became allowed (adjusting state during render, not in an effect).
+  const kindsKey = resolvedKinds == null ? "*" : resolvedKinds.join(",");
+  const [seenKindsKey, setSeenKindsKey] = useState(kindsKey);
+  if (kindsKey !== seenKindsKey) {
+    setSeenKindsKey(kindsKey);
+    if (target && (!kind || !kindAllowed(kind, resolvedKinds))) {
+      const next = firstAllowedKind(target, resolvedKinds);
+      if (next !== kind) {
+        setKind(next);
+        resetUploads();
+      }
+    }
+  }
+
+  function selectTarget(next: SkinTarget) {
+    // Re-clicking the chosen tile only matters when it has no usable style yet.
+    if (sameTarget(next, target) && kind) return;
+    setTarget(next);
+    setKind(firstAllowedKind(next, resolvedKinds));
+    setTiers(next.type === "single" ? [newTier(next.set)] : []);
+    resetUploads();
+  }
+
+  function selectKind(next: SkinKind) {
+    if (next === kind) return;
+    setKind(next);
+    resetUploads();
+  }
+
   function setFile(field: string, file: File | null) {
     setFiles((prev) => ({ ...prev, [field]: file }));
   }
 
-  /** Ignore cancel / empty picker so an existing selection is kept. */
-  function onPickedFile(fileList: FileList | null, apply: (file: File) => void) {
-    const file = fileList?.[0];
-    if (file) apply(file);
-  }
-
-  function addTier(type: string) {
-    if (!type || tiers.some((entry) => entry.type === type)) return;
-    if (tiers.length >= MAX_SETS) return;
-    setTiers((prev) => [
-      ...prev,
-      {
-        type,
-        alias: "",
-        helmet3d: false,
-        scroll: "",
-        files: {},
-      },
-    ]);
-    setTierToAdd("");
+  function toggleType(type: string) {
     setError(null);
+    setTiers((prev) => {
+      if (prev.some((entry) => entry.type === type)) return prev.filter((entry) => entry.type !== type);
+      if (prev.length >= MAX_SETS) return prev;
+      // Keep sets in Light → Mage order.
+      return [...prev, newTier(type)].sort((a, b) => ARMOR_TYPES.indexOf(a.type) - ARMOR_TYPES.indexOf(b.type));
+    });
   }
 
-  function removeTier(type: string) {
-    setTiers((prev) => prev.filter((entry) => entry.type !== type));
-  }
-
-  function setTierAlias(type: string, alias: string) {
-    setTiers((prev) => prev.map((entry) => (entry.type === type ? { ...entry, alias } : entry)));
-  }
-
-  function setTierScroll(type: string, scrollId: string) {
-    setTiers((prev) => prev.map((entry) => (entry.type === type ? { ...entry, scroll: scrollId } : entry)));
+  function updateTier(type: string, change: (entry: TierEntry) => TierEntry) {
+    setTiers((prev) => prev.map((entry) => (entry.type === type ? change(entry) : entry)));
   }
 
   function setTierHelmet3d(type: string, helmet3d: boolean) {
-    setTiers((prev) =>
-      prev.map((entry) => {
-        if (entry.type !== type) return entry;
-        const files = { ...entry.files };
-        if (helmet3d) {
-          delete files.helmet;
-        } else {
-          delete files.helmet_model;
-          delete files.helmet_texture;
-        }
-        return { ...entry, helmet3d, files };
-      }),
-    );
+    updateTier(type, (entry) => {
+      const files = { ...entry.files };
+      if (helmet3d) {
+        delete files.helmet;
+        delete files[mcmetaField("helmet")];
+      } else {
+        delete files.helmet_model;
+        delete files.helmet_texture;
+        delete files[mcmetaField("helmet_texture")];
+      }
+      return { ...entry, helmet3d, files };
+    });
   }
 
   function setTierFile(type: string, field: string, file: File | null) {
-    setTiers((prev) =>
-      prev.map((entry) => (entry.type === type ? { ...entry, files: { ...entry.files, [field]: file } } : entry)),
-    );
+    updateTier(type, (entry) => ({
+      ...entry,
+      files: { ...entry.files, [field]: file },
+    }));
   }
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
+
+    if (!target || !kind) {
+      setError(target ? "Choose a style" : "Choose what you're skinning");
+      return;
+    }
+    if (!kindAllowed(kind, resolvedKinds)) {
+      setError(`That style unlocks at ${lockedByKind(kind)}.`);
+      return;
+    }
 
     const name = itemName.trim();
     if (!name) {
@@ -380,15 +406,13 @@ export default function UploadForm({
           return;
         }
       }
-    }
-
-    if (!baseSet || !baseOptions.includes(baseSet)) {
-      setError(`Choose a ${baseSetPickerTitle(kind).toLowerCase()}`);
+    } else if (!baseSet || !kindsForBaseSet(baseSet).includes(kind)) {
+      setError("Choose an item type");
       return;
     }
 
     if (isArmor && tiers.length < 1) {
-      setError("Add at least 1 armour set");
+      setError("Pick at least 1 armour set");
       return;
     }
 
@@ -426,55 +450,51 @@ export default function UploadForm({
 
     const uploadFiles: Record<string, File> = {};
 
-    if (isArmor) {
-      try {
+    /** Check one slot and add it (and its optional animation) to the upload. */
+    async function addSlot(
+      key: string,
+      field: string,
+      file: File | null | undefined,
+      mcmeta: File | null | undefined,
+      label: string,
+    ) {
+      if (!file) throw new Error(`Missing ${label}`);
+      if (isModelField(field)) {
+        await assertVanillaJavaBlockModelFile(file);
+      } else {
+        const animation = mcmetaAllowed(field) ? mcmeta : null;
+        await assertTextureFile(file, expectedSizeForField(kind!, field), animation, label);
+        if (animation) uploadFiles[mcmetaField(key)] = animation;
+      }
+      uploadFiles[key] = file;
+    }
+
+    try {
+      if (isArmor) {
         for (const entry of tiers) {
-          const setLabel = tierLabel(entry);
           const helmetFields = entry.helmet3d ? (["helmet_model", "helmet_texture"] as const) : (["helmet"] as const);
-          const fields = [...helmetFields, ...ARMOR_BODY_FIELDS];
-          for (const field of fields) {
-            const file = entry.files[field];
-            const label = fieldLabel[field] || field;
-            if (!file) {
-              throw new Error(`Missing ${label} for the ${setLabel} set`);
-            }
-            const expected = expectedSizeForField(kind, field);
-            if (expected) {
-              await assertFileSize(file, expected, `${setLabel} ${label}`);
-            }
-            if (field === "helmet_model") {
-              await assertVanillaJavaBlockModelFile(file);
-            }
-            uploadFiles[`${tierId(entry)}_${field}`] = file;
+          for (const field of [...helmetFields, ...ARMOR_BODY_FIELDS]) {
+            await addSlot(
+              `${tierId(entry)}_${field}`,
+              field,
+              entry.files[field],
+              entry.files[mcmetaField(field)],
+              `${tierLabel(entry)} ${fieldLabel[field] || field}`,
+            );
           }
         }
         const h3d = tiers.filter((t) => t.helmet3d).map(tierId);
         assert3dPairBudgets(kind, uploadFiles, resolvedPairBytes, h3d);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "File validation failed");
-        return;
-      }
-    } else {
-      try {
+      } else {
         for (const field of fileFields) {
-          const file = files[field];
-          if (!file) {
-            throw new Error(`Missing file: ${fieldLabel[field] || field}`);
-          }
-          const expected = expectedSizeForField(kind, field);
-          if (expected) {
-            await assertFileSize(file, expected, fieldLabel[field] || field);
-          }
-          if (field === "model" || field.endsWith("_model")) {
-            await assertVanillaJavaBlockModelFile(file);
-          }
-          uploadFiles[field] = file;
+          await addSlot(field, field, files[field], files[mcmetaField(field)], slotLabel(kind, field));
         }
         assert3dPairBudgets(kind, uploadFiles, resolvedPairBytes);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "File validation failed");
-        return;
+        assertRanged3dBudget(kind, uploadFiles);
       }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "File validation failed");
+      return;
     }
 
     if (colours.length > 0) {
@@ -539,6 +559,40 @@ export default function UploadForm({
     setStyles((prev) => (prev.includes(style) ? prev.filter((s) => s !== style) : [...prev, style]));
   }
 
+  /** Upload card for one field; textures get an optional animation slot. */
+  function slot(
+    field: string,
+    label: string,
+    picked: Record<string, File | null>,
+    pick: (field: string, file: File | null) => void,
+  ) {
+    return (
+      <FileSlot
+        key={field}
+        label={label}
+        hint={slotHint(kind!, field)}
+        accept={acceptForField(field)}
+        file={picked[field]}
+        disabled={loading}
+        onPick={(file) => pick(field, file)}
+        animation={
+          mcmetaAllowed(field)
+            ? {
+                file: picked[mcmetaField(field)],
+                onPick: (file) => pick(mcmetaField(field), file),
+                onClear: () => pick(mcmetaField(field), null),
+              }
+            : undefined
+        }
+      />
+    );
+  }
+
+  const ranged3d = kind ? isRanged3dKind(kind) : false;
+  const rangedTotal = ranged3d ? ranged3dTotalBytes(files) : 0;
+  const styleKinds = target?.type === "item" ? kindsForTarget(target) : [];
+  const detailsStep = target?.type === "item" ? 3 : 2;
+
   return (
     <div className="relative">
       {loading ? (
@@ -555,458 +609,487 @@ export default function UploadForm({
         </div>
       ) : null}
       <form onSubmit={onSubmit} className="mt-8 flex w-full flex-col gap-6">
-        <KindPicker value={kind} onChange={setKind} disabled={loading} allowedKinds={resolvedKinds} />
+        <Step n={1} title="What are you skinning?">
+          <SkinTargetPicker value={target} onChange={selectTarget} disabled={loading} lockedBy={lockedByKinds} />
+        </Step>
 
-        {pairHint && (isModel3dKind(kind) || isGunKind(kind) || kind === "armor_set") ? (
-          <p className="text-sm text-[var(--tfmc-mist)]">{pairHint}</p>
+        {target?.type === "item" ? (
+          <Step n={2} title={`Style for ${baseSetLabel(target.baseSet)}`}>
+            <KindPicker
+              kinds={styleKinds}
+              value={kind}
+              onChange={selectKind}
+              disabled={loading}
+              lockedBy={lockedByKind}
+            />
+          </Step>
         ) : null}
 
-        {staff ? (
-          <fieldset className="flex flex-col gap-4 border-0 p-0">
-            <legend className="text-sm font-medium text-[var(--tfmc-stone)]">Shop landing</legend>
-            {catalogError ? (
-              <p className="text-sm text-[#e8a0a0]" role="alert">
-                {catalogError}
-              </p>
-            ) : !catalog ? (
-              <LoadingSkeleton variant="form" label="Loading catalog…" />
-            ) : (
-              <>
-                <label className="flex flex-col gap-2 text-left">
-                  <span className="text-sm font-medium text-[var(--tfmc-stone)]">Category</span>
-                  <select
-                    value={category}
-                    disabled={loading || staffCategories.length < 1}
-                    onChange={(e) => setCategory(e.target.value)}
-                    className={inputClass}
-                    required
-                  >
-                    <option value="">Select category…</option>
-                    {staffCategories.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name || c.id}
-                      </option>
-                    ))}
-                  </select>
-                  {staffCategories.length < 1 ? (
-                    <span className="text-xs text-[#e8a0a0]">
-                      No categories for this kind (catalog may be empty or only ps_*).
-                    </span>
-                  ) : null}
-                </label>
-                {!isArmor ? (
-                  <label className="flex flex-col gap-2 text-left">
-                    <span className="text-sm font-medium text-[var(--tfmc-stone)]">Scroll</span>
-                    <select
-                      value={scroll}
-                      disabled={loading || staffScrolls.length < 1}
-                      onChange={(e) => setScroll(e.target.value)}
-                      className={inputClass}
-                      required
-                    >
-                      <option value="">Select scroll…</option>
-                      {staffScrolls.map((s) => (
-                        <option key={s.id} value={s.id}>
-                          {s.label || s.id}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
+        {kind ? (
+          <Step n={detailsStep} title="Details">
+            {staff ? (
+              <fieldset className="flex flex-col gap-4 border-0 p-0">
+                <legend className="text-sm font-medium text-[var(--tfmc-stone)]">Shop landing</legend>
+                {catalogError ? (
+                  <p className="text-sm text-[#e8a0a0]" role="alert">
+                    {catalogError}
+                  </p>
+                ) : !catalog ? (
+                  <LoadingSkeleton variant="form" label="Loading catalog…" />
                 ) : (
-                  <p className="text-xs text-[var(--tfmc-mist)]">Choose a scroll on each armour set below.</p>
-                )}
-              </>
-            )}
-          </fieldset>
-        ) : null}
-
-        <label className="flex flex-col gap-2 text-left">
-          <span className="text-sm font-medium text-[var(--tfmc-stone)]">{baseSetPickerTitle(kind)}</span>
-          {isArmor ? (
-            <span className="text-xs text-[var(--tfmc-mist)]">
-              One submission is one metal&apos;s skin line. Every set below uses this metal.
-            </span>
-          ) : null}
-          <select
-            value={baseSet}
-            disabled={loading}
-            onChange={(e) => setBaseSet(e.target.value)}
-            className={inputClass}
-            required
-          >
-            {baseOptions.map((id) => (
-              <option key={id} value={id}>
-                {baseSetLabel(id)}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label className="flex flex-col gap-2 text-left">
-          <span className="text-sm font-medium text-[var(--tfmc-stone)]">Item name</span>
-          <span className="text-xs text-[var(--tfmc-mist)]">
-            {isArmor
-              ? "Base name before the set label (e.g. Norain becomes Norain Light Iron). Spaces and capitals are fine."
-              : "Shown in the armour shop."}{" "}
-            Allowed: {DISPLAY_NAME_HINT}.
-          </span>
-          <input
-            type="text"
-            value={itemName}
-            disabled={loading}
-            onChange={(e) => setItemName(e.target.value)}
-            className={inputClass}
-            maxLength={24}
-            placeholder="Blue Knight"
-          />
-          {itemName.trim() &&
-          displayNameError(itemName, {
-            minLen: 1,
-            maxLen: 24,
-            field: "item name",
-          }) ? (
-            <span className="text-xs text-[#e8a0a0]">
-              {displayNameError(itemName, {
-                minLen: 1,
-                maxLen: 24,
-                field: "item name",
-              })}
-            </span>
-          ) : null}
-        </label>
-
-        <label className="flex cursor-pointer items-start gap-2.5 text-sm text-[var(--tfmc-cream)]">
-          <FancyCheckbox checked={applyName} disabled={loading} onChange={setApplyName} />
-          <span>
-            Rename the item to this name
-            <span className="mt-0.5 block text-xs text-[var(--tfmc-mist)]">When off, the item keeps its own name.</span>
-          </span>
-        </label>
-
-        <fieldset className="flex flex-col gap-4 border-0 p-0">
-          <legend className="sr-only">Name colours and styles</legend>
-
-          <NameColourPicker
-            colours={colours}
-            onChange={setColours}
-            previewText={itemName.trim() || "Preview"}
-            maxStops={resolvedColourStops}
-            disabled={loading}
-            previewStyles={styles}
-            onError={setError}
-            lockedMessage={colourLockedMessage || "Name colours require a donator rank"}
-          />
-
-          <div className="flex flex-col gap-2">
-            <span className="text-sm font-medium text-[var(--tfmc-stone)]">Styles</span>
-            <div className="flex flex-wrap gap-3">
-              {NAME_STYLES.map((s) => (
-                <label key={s} className="flex cursor-pointer items-center gap-2.5 text-sm text-[var(--tfmc-cream)]">
-                  <FancyCheckbox
-                    checked={styles.includes(s)}
-                    disabled={loading}
-                    onChange={() => toggleStyle(s)}
-                    className="mt-0"
-                  />
-                  {s}
-                </label>
-              ))}
-            </div>
-          </div>
-        </fieldset>
-
-        {kind === "large_handheld" ? (
-          <fieldset className="flex flex-col gap-2">
-            <legend className="text-sm font-medium text-[var(--tfmc-stone)]">Grip height</legend>
-            <label className="flex items-center gap-3 text-sm text-[var(--tfmc-cream)]">
-              <span className="shrink-0 text-xs text-[var(--tfmc-mist)]">Low</span>
-              <input
-                type="range"
-                min={GRIP_Y_MIN}
-                max={GRIP_Y_MAX}
-                step={0.1}
-                value={gripY}
-                disabled={loading}
-                onChange={(e) => setGripY(Number(e.target.value))}
-                className="min-w-0 flex-1 accent-[var(--tfmc-accent)]"
-                aria-label="Grip height"
-              />
-              <span className="shrink-0 text-xs text-[var(--tfmc-mist)]">High</span>
-              <span className="w-10 shrink-0 tabular-nums text-xs text-[var(--tfmc-cream)]">{gripY.toFixed(1)}</span>
-            </label>
-          </fieldset>
-        ) : null}
-
-        {isArmor ? (
-          <fieldset className="flex flex-col gap-4 border-0 p-0">
-            <legend className="text-sm font-medium text-[var(--tfmc-stone)]">Armour sets</legend>
-            <p className="text-xs text-[var(--tfmc-mist)]">
-              Add up to {MAX_SETS} sets, one of each type, all in {baseSetLabel(baseSet)}. Each needs a helmet,
-              chestplate, leggings, boots and both layers.
-            </p>
-
-            {tiers.length > 0 ? (
-              <div className="flex flex-col gap-4">
-                {tiers.map((entry) => {
-                  const helmetFields = entry.helmet3d
-                    ? (["helmet_model", "helmet_texture"] as const)
-                    : (["helmet"] as const);
-                  const tierFields = [...helmetFields, ...ARMOR_BODY_FIELDS];
-                  return (
-                    <div
-                      key={entry.type}
-                      className="flex flex-col gap-3 rounded-sm border border-[color-mix(in_srgb,var(--tfmc-cream)_15%,transparent)] p-4"
-                    >
-                      <div className="flex items-center justify-between gap-3">
-                        <span className="text-sm font-semibold text-[var(--tfmc-cream)]">{tierLabel(entry)}</span>
-                        <button
-                          type="button"
-                          disabled={loading}
-                          onClick={() => removeTier(entry.type)}
-                          className="text-xs text-[#e8a0a0] hover:underline"
-                        >
-                          Remove set
-                        </button>
-                      </div>
-                      <label className="flex flex-col gap-2 text-left">
-                        <span className="text-sm font-medium text-[var(--tfmc-stone)]">Set name (optional)</span>
-                        <input
-                          type="text"
-                          value={entry.alias}
-                          disabled={loading}
-                          maxLength={32}
-                          placeholder={tierLabel(entry)}
-                          onChange={(e) => setTierAlias(entry.type, e.target.value)}
-                          className={inputClass}
-                        />
-                        <span className="text-xs text-[var(--tfmc-mist)]">
-                          In-game: {(itemName.trim() || "Name") + " " + (entry.alias.trim() || tierLabel(entry))}{" "}
-                          Chestplate
-                        </span>
-                        {entry.alias.trim() &&
-                        displayNameError(entry.alias, {
-                          minLen: 1,
-                          maxLen: 32,
-                          field: "set name",
-                        }) ? (
-                          <span className="text-xs text-[#e8a0a0]">
-                            {displayNameError(entry.alias, {
-                              minLen: 1,
-                              maxLen: 32,
-                              field: "set name",
-                            })}
-                          </span>
-                        ) : null}
-                      </label>
-                      {staff ? (
-                        <label className="flex flex-col gap-2 text-left">
-                          <span className="text-sm font-medium text-[var(--tfmc-stone)]">Scroll</span>
-                          <select
-                            value={entry.scroll}
-                            disabled={loading || staffScrolls.length < 1}
-                            onChange={(e) => setTierScroll(entry.type, e.target.value)}
-                            className={inputClass}
-                            required
-                          >
-                            <option value="">Select scroll…</option>
-                            {staffScrolls.map((s) => (
-                              <option key={s.id} value={s.id}>
-                                {s.label || s.id}
-                              </option>
-                            ))}
-                          </select>
-                        </label>
-                      ) : null}
-                      {canUseArmor3dHelmet ? (
-                        <label className="flex cursor-pointer items-center gap-2.5 text-sm text-[var(--tfmc-cream)]">
-                          <FancyCheckbox
-                            checked={entry.helmet3d}
-                            disabled={loading}
-                            onChange={(checked) => setTierHelmet3d(entry.type, checked)}
-                            className="mt-0"
-                          />
-                          3D Helmet
-                        </label>
-                      ) : null}
-                      <div className="flex flex-col gap-4">
-                        {tierFields.map((field) => (
-                          <label key={field} className="flex flex-col gap-2 text-left">
-                            <span className="text-sm font-medium text-[var(--tfmc-stone)]">
-                              {slotLabel(kind, field)}
-                            </span>
-                            <input
-                              type="file"
-                              accept={acceptForField(field)}
-                              disabled={loading}
-                              onChange={(e) =>
-                                onPickedFile(e.target.files, (file) => setTierFile(entry.type, field, file))
-                              }
-                              className="text-sm text-[var(--tfmc-mist)] file:mr-3 file:rounded-sm file:border-0 file:bg-[var(--tfmc-moss)] file:px-3 file:py-1.5 file:text-[var(--tfmc-cream)]"
-                            />
-                            {entry.files[field] ? (
-                              <span className="text-xs text-[var(--tfmc-cream)]">
-                                Selected: {entry.files[field]!.name}
-                              </span>
-                            ) : null}
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-                  );
-                })}
-                {previewTierEntry ? (
-                  <div className="flex flex-col gap-2 rounded-sm border border-[color-mix(in_srgb,var(--tfmc-cream)_15%,transparent)] p-4">
-                    <label className="flex flex-col gap-1 text-left sm:max-w-xs">
-                      <span className="text-sm font-medium text-[var(--tfmc-stone)]">Preview set</span>
+                  <>
+                    <label className="flex flex-col gap-2 text-left">
+                      <span className="text-sm font-medium text-[var(--tfmc-stone)]">Category</span>
                       <select
-                        value={previewTierEntry.type}
-                        disabled={loading}
-                        onChange={(e) => setPreviewArmorTier(e.target.value)}
+                        value={category}
+                        disabled={loading || staffCategories.length < 1}
+                        onChange={(e) => setCategory(e.target.value)}
                         className={inputClass}
+                        required
                       >
-                        {tiers.map((e) => (
-                          <option key={e.type} value={e.type}>
-                            {tierLabel(e)}
-                            {e.alias.trim() && e.alias.trim() !== tierLabel(e) ? ` (${e.alias.trim()})` : ""}
+                        <option value="">Select category…</option>
+                        {staffCategories.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.name || c.id}
                           </option>
                         ))}
                       </select>
+                      {staffCategories.length < 1 ? (
+                        <span className="text-xs text-[#e8a0a0]">
+                          No categories for this kind (catalog may be empty or only ps_*).
+                        </span>
+                      ) : null}
                     </label>
-                    <ArmorPreview
-                      layer1File={previewTierEntry.files.layer_1 ?? null}
-                      layer2File={previewTierEntry.files.layer_2 ?? null}
-                      helmet3d={previewTierEntry.helmet3d}
-                      helmetModelFile={previewTierEntry.files.helmet_model ?? null}
-                      helmetTextureFile={previewTierEntry.files.helmet_texture ?? null}
-                    />
+                    {!isArmor ? (
+                      <label className="flex flex-col gap-2 text-left">
+                        <span className="text-sm font-medium text-[var(--tfmc-stone)]">Scroll</span>
+                        <select
+                          value={scroll}
+                          disabled={loading || staffScrolls.length < 1}
+                          onChange={(e) => setScroll(e.target.value)}
+                          className={inputClass}
+                          required
+                        >
+                          <option value="">Select scroll…</option>
+                          {staffScrolls.map((s) => (
+                            <option key={s.id} value={s.id}>
+                              {s.label || s.id}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    ) : (
+                      <p className="text-xs text-[var(--tfmc-mist)]">Choose a scroll on each armour set below.</p>
+                    )}
+                  </>
+                )}
+              </fieldset>
+            ) : null}
+
+            <label className="flex flex-col gap-2 text-left">
+              <span className="text-sm font-medium text-[var(--tfmc-stone)]">Item name</span>
+              <span className="text-xs text-[var(--tfmc-mist)]">
+                {isArmor
+                  ? `Base name before the set label (e.g. Norain becomes Norain ${
+                      isSingleSet ? lineLabel : "Light Iron"
+                    }). Spaces and capitals are fine.`
+                  : "Shown in the armour shop."}{" "}
+                Allowed: {DISPLAY_NAME_HINT}.
+              </span>
+              <input
+                type="text"
+                value={itemName}
+                disabled={loading}
+                onChange={(e) => setItemName(e.target.value)}
+                className={inputClass}
+                maxLength={24}
+                placeholder="Blue Knight"
+              />
+              {itemName.trim() &&
+              displayNameError(itemName, {
+                minLen: 1,
+                maxLen: 24,
+                field: "item name",
+              }) ? (
+                <span className="text-xs text-[#e8a0a0]">
+                  {displayNameError(itemName, {
+                    minLen: 1,
+                    maxLen: 24,
+                    field: "item name",
+                  })}
+                </span>
+              ) : null}
+            </label>
+
+            <label className="flex cursor-pointer items-start gap-2.5 text-sm text-[var(--tfmc-cream)]">
+              <FancyCheckbox checked={applyName} disabled={loading} onChange={setApplyName} />
+              <span>
+                Rename the item to this name
+                <span className="mt-0.5 block text-xs text-[var(--tfmc-mist)]">
+                  When off, the item keeps its own name.
+                </span>
+              </span>
+            </label>
+
+            <fieldset className="flex flex-col gap-4 border-0 p-0">
+              <legend className="sr-only">Name colours and styles</legend>
+
+              <NameColourPicker
+                colours={colours}
+                onChange={setColours}
+                previewText={itemName.trim() || "Preview"}
+                maxStops={resolvedColourStops}
+                disabled={loading}
+                previewStyles={styles}
+                onError={setError}
+                lockedMessage={colourLockedMessage || "Name colours require a donator rank"}
+              />
+
+              <div className="flex flex-col gap-2">
+                <span className="text-sm font-medium text-[var(--tfmc-stone)]">Styles</span>
+                <div className="flex flex-wrap gap-3">
+                  {NAME_STYLES.map((s) => (
+                    <label
+                      key={s}
+                      className="flex cursor-pointer items-center gap-2.5 text-sm text-[var(--tfmc-cream)]"
+                    >
+                      <FancyCheckbox
+                        checked={styles.includes(s)}
+                        disabled={loading}
+                        onChange={() => toggleStyle(s)}
+                        className="mt-0"
+                      />
+                      {s}
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </fieldset>
+
+            {kind === "large_handheld" ? (
+              <fieldset className="flex flex-col gap-2">
+                <legend className="text-sm font-medium text-[var(--tfmc-stone)]">Grip height</legend>
+                <label className="flex items-center gap-3 text-sm text-[var(--tfmc-cream)]">
+                  <span className="shrink-0 text-xs text-[var(--tfmc-mist)]">Low</span>
+                  <input
+                    type="range"
+                    min={GRIP_Y_MIN}
+                    max={GRIP_Y_MAX}
+                    step={0.1}
+                    value={gripY}
+                    disabled={loading}
+                    onChange={(e) => setGripY(Number(e.target.value))}
+                    className="min-w-0 flex-1 accent-[var(--tfmc-accent)]"
+                    aria-label="Grip height"
+                  />
+                  <span className="shrink-0 text-xs text-[var(--tfmc-mist)]">High</span>
+                  <span className="w-10 shrink-0 tabular-nums text-xs text-[var(--tfmc-cream)]">
+                    {gripY.toFixed(1)}
+                  </span>
+                </label>
+              </fieldset>
+            ) : null}
+          </Step>
+        ) : null}
+
+        {kind ? (
+          <Step n={detailsStep + 1} title={isArmor ? `${lineLabel} armour` : "Files"}>
+            <p className="m-0 text-xs text-[var(--tfmc-mist)]">
+              Any texture except armour layers can be animated: add its Minecraft <code>.mcmeta</code> and stack the
+              frames in the PNG
+              {isLargeTextureKind(kind) ? " (each frame 32×32)" : ""}.
+            </p>
+            {pairHint && (isModel3dKind(kind) || isGunKind(kind) || isArmor) ? (
+              <p className="m-0 text-sm text-[var(--tfmc-mist)]">{pairHint}</p>
+            ) : null}
+            {ranged3d ? (
+              <p
+                className={`m-0 text-sm ${rangedTotal > RANGED_3D_TOTAL_BYTES ? "text-[#e8a0a0]" : "text-[var(--tfmc-mist)]"}`}
+                aria-live="polite"
+              >
+                All files together: {formatBytes(rangedTotal)} of {formatBytes(RANGED_3D_TOTAL_BYTES)}
+              </p>
+            ) : null}
+
+            {isArmor ? (
+              <fieldset className="flex flex-col gap-4 border-0 p-0">
+                {isSingleSet ? (
+                  <p className="m-0 text-xs text-[var(--tfmc-mist)]">
+                    One set: a helmet, chestplate, leggings, boots and both layers.
+                  </p>
+                ) : (
+                  <>
+                    <legend className="sr-only">Armour sets</legend>
+                    <p className="m-0 text-xs text-[var(--tfmc-mist)]">
+                      Pick up to {MAX_SETS} sets, all in {lineLabel}. Light, medium and heavy can each have their own
+                      look, or skin just one. Each set needs a helmet, chestplate, leggings, boots and both layers.
+                    </p>
+                    <div role="group" aria-label="Set types" className="flex flex-wrap gap-2">
+                      {ARMOR_TYPES.map((type) => {
+                        const on = tiers.some((entry) => entry.type === type);
+                        return (
+                          <button
+                            key={type}
+                            type="button"
+                            aria-pressed={on}
+                            disabled={loading}
+                            onClick={() => toggleType(type)}
+                            className={`rounded-sm border px-3 py-1.5 text-sm transition ${
+                              on
+                                ? "border-[var(--tfmc-accent)] bg-[color-mix(in_srgb,var(--tfmc-accent)_20%,var(--tfmc-forest))] text-[var(--tfmc-cream)]"
+                                : "border-[color-mix(in_srgb,var(--tfmc-cream)_20%,transparent)] text-[var(--tfmc-mist)] hover:border-[var(--tfmc-accent)] hover:text-[var(--tfmc-cream)]"
+                            }`}
+                          >
+                            {on ? "✓ " : "+ "}
+                            {armorTierLabel(armorTier(type, metal))}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
+
+                {tiers.length > 0 ? (
+                  <div className="flex flex-col gap-4">
+                    {tiers.map((entry) => {
+                      const helmetFields = entry.helmet3d
+                        ? (["helmet_model", "helmet_texture"] as const)
+                        : (["helmet"] as const);
+                      const tierFields = [...helmetFields, ...ARMOR_BODY_FIELDS];
+                      return (
+                        <div
+                          key={entry.type}
+                          className="flex flex-col gap-3 rounded-sm border border-[color-mix(in_srgb,var(--tfmc-cream)_15%,transparent)] p-4"
+                        >
+                          <span className="text-sm font-semibold text-[var(--tfmc-cream)]">{tierLabel(entry)}</span>
+                          <label className="flex flex-col gap-2 text-left">
+                            <span className="text-sm font-medium text-[var(--tfmc-stone)]">Set name (optional)</span>
+                            <input
+                              type="text"
+                              value={entry.alias}
+                              disabled={loading}
+                              maxLength={32}
+                              placeholder={tierLabel(entry)}
+                              onChange={(e) =>
+                                updateTier(entry.type, (t) => ({
+                                  ...t,
+                                  alias: e.target.value,
+                                }))
+                              }
+                              className={inputClass}
+                            />
+                            <span className="text-xs text-[var(--tfmc-mist)]">
+                              In-game: {(itemName.trim() || "Name") + " " + (entry.alias.trim() || tierLabel(entry))}{" "}
+                              Chestplate
+                            </span>
+                            {entry.alias.trim() &&
+                            displayNameError(entry.alias, {
+                              minLen: 1,
+                              maxLen: 32,
+                              field: "set name",
+                            }) ? (
+                              <span className="text-xs text-[#e8a0a0]">
+                                {displayNameError(entry.alias, {
+                                  minLen: 1,
+                                  maxLen: 32,
+                                  field: "set name",
+                                })}
+                              </span>
+                            ) : null}
+                          </label>
+                          {staff ? (
+                            <label className="flex flex-col gap-2 text-left">
+                              <span className="text-sm font-medium text-[var(--tfmc-stone)]">Scroll</span>
+                              <select
+                                value={entry.scroll}
+                                disabled={loading || staffScrolls.length < 1}
+                                onChange={(e) =>
+                                  updateTier(entry.type, (t) => ({
+                                    ...t,
+                                    scroll: e.target.value,
+                                  }))
+                                }
+                                className={inputClass}
+                                required
+                              >
+                                <option value="">Select scroll…</option>
+                                {staffScrolls.map((s) => (
+                                  <option key={s.id} value={s.id}>
+                                    {s.label || s.id}
+                                  </option>
+                                ))}
+                              </select>
+                            </label>
+                          ) : null}
+                          {canUseArmor3dHelmet ? (
+                            <label className="flex cursor-pointer items-center gap-2.5 text-sm text-[var(--tfmc-cream)]">
+                              <FancyCheckbox
+                                checked={entry.helmet3d}
+                                disabled={loading}
+                                onChange={(checked) => setTierHelmet3d(entry.type, checked)}
+                                className="mt-0"
+                              />
+                              3D Helmet
+                            </label>
+                          ) : null}
+                          <div className="grid gap-3 sm:grid-cols-2">
+                            {tierFields.map((field) =>
+                              slot(field, fieldLabel[field] || field, entry.files, (f, file) =>
+                                setTierFile(entry.type, f, file),
+                              ),
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                    {previewTierEntry ? (
+                      <div className="flex flex-col gap-2 rounded-sm border border-[color-mix(in_srgb,var(--tfmc-cream)_15%,transparent)] p-4">
+                        {tiers.length > 1 ? (
+                          <label className="flex flex-col gap-1 text-left sm:max-w-xs">
+                            <span className="text-sm font-medium text-[var(--tfmc-stone)]">Preview set</span>
+                            <select
+                              value={previewTierEntry.type}
+                              disabled={loading}
+                              onChange={(e) => setPreviewArmorTier(e.target.value)}
+                              className={inputClass}
+                            >
+                              {tiers.map((e) => (
+                                <option key={e.type} value={e.type}>
+                                  {tierLabel(e)}
+                                  {e.alias.trim() && e.alias.trim() !== tierLabel(e) ? ` (${e.alias.trim()})` : ""}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                        ) : null}
+                        <ArmorPreview
+                          layer1File={previewTierEntry.files.layer_1 ?? null}
+                          layer2File={previewTierEntry.files.layer_2 ?? null}
+                          helmet3d={previewTierEntry.helmet3d}
+                          helmetModelFile={previewTierEntry.files.helmet_model ?? null}
+                          helmetTextureFile={previewTierEntry.files.helmet_texture ?? null}
+                          helmetTextureMcmetaFile={previewTierEntry.files[mcmetaField("helmet_texture")] ?? null}
+                        />
+                      </div>
+                    ) : null}
+                  </div>
+                ) : (
+                  <p className="text-sm text-[var(--tfmc-mist)]">No sets picked yet.</p>
+                )}
+              </fieldset>
+            ) : (
+              <div className="flex flex-col gap-4">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {fileFields.map((field) => slot(field, slotLabel(kind, field), files, setFile))}
+                </div>
+                {isBookKind(kind) ? (
+                  <div className="flex flex-col gap-4">
+                    <div className="flex flex-wrap gap-4">
+                      {(
+                        [
+                          ["unsigned", "Unsigned", bookPreviewUrls.unsigned],
+                          ["signed", "Signed", bookPreviewUrls.signed],
+                        ] as const
+                      ).map(([key, label, url]) => (
+                        <div key={key} className="flex flex-col gap-1.5">
+                          <span className="text-xs font-medium text-[var(--tfmc-stone)]">{label}</span>
+                          <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-sm border border-[color-mix(in_srgb,var(--tfmc-cream)_20%,transparent)] bg-[color-mix(in_srgb,var(--tfmc-forest)_70%,black)]">
+                            {url ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={url}
+                                alt={`${label} cover preview`}
+                                className="h-full w-full object-contain object-top [image-rendering:pixelated]"
+                              />
+                            ) : (
+                              <span className="px-2 text-center text-[10px] text-[var(--tfmc-mist)]">No file</span>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="grid gap-6 sm:grid-cols-2">
+                      {(["unsigned", "signed"] as const).map((cover) =>
+                        files[cover] ? (
+                          <div key={cover}>
+                            <p className="mb-2 text-xs font-medium uppercase tracking-wide text-[var(--tfmc-stone)]">
+                              {cover === "unsigned" ? "Unsigned" : "Signed"} 3D
+                            </p>
+                            <ModelPreview
+                              kind="book"
+                              textureFile={files[cover]}
+                              flatMcmeta={{
+                                texture: files[mcmetaField(cover)] ?? null,
+                              }}
+                            />
+                          </div>
+                        ) : null,
+                      )}
+                    </div>
                   </div>
                 ) : null}
-              </div>
-            ) : (
-              <p className="text-sm text-[var(--tfmc-mist)]">No sets added yet.</p>
-            )}
-
-            {remainingTiers.length > 0 ? (
-              <div className="flex flex-wrap items-center gap-2">
-                <select
-                  value={effectiveTierToAdd}
-                  disabled={loading}
-                  onChange={(e) => setTierToAdd(e.target.value)}
-                  className={inputClass}
-                >
-                  {remainingTiers.map((t) => (
-                    <option key={t} value={t}>
-                      {armorTierLabel(armorTier(t, baseSet))}
-                    </option>
-                  ))}
-                </select>
-                <button
-                  type="button"
-                  disabled={loading}
-                  onClick={() => addTier(effectiveTierToAdd)}
-                  className="rounded-sm bg-[var(--tfmc-moss)] px-3 py-2 text-sm text-[var(--tfmc-cream)]"
-                >
-                  Add set
-                </button>
-              </div>
-            ) : (
-              <p className="text-xs text-[var(--tfmc-mist)]">All {MAX_SETS} sets added.</p>
-            )}
-          </fieldset>
-        ) : (
-          <div className="flex flex-col gap-4">
-            {fileFields.map((field) => (
-              <label key={field} className="flex flex-col gap-2 text-left">
-                <span className="text-sm font-medium text-[var(--tfmc-stone)]">{slotLabel(kind, field)}</span>
-                <input
-                  type="file"
-                  accept={acceptForField(field)}
-                  disabled={loading}
-                  onChange={(e) => onPickedFile(e.target.files, (file) => setFile(field, file))}
-                  className="text-sm text-[var(--tfmc-mist)] file:mr-3 file:rounded-sm file:border-0 file:bg-[var(--tfmc-moss)] file:px-3 file:py-1.5 file:text-[var(--tfmc-cream)]"
-                />
-                {files[field] ? (
-                  <span className="text-xs text-[var(--tfmc-cream)]">Selected: {files[field]!.name}</span>
+                {isModel3dKind(kind) || isGunKind(kind) || isFlatPreviewKind(kind) || ranged3d ? (
+                  <ModelPreview
+                    modelFile={isModel3dKind(kind) ? (files.model ?? null) : null}
+                    textureFile={files.texture ?? null}
+                    textureMcmetaFile={files[mcmetaField("texture")] ?? null}
+                    gunModels={
+                      isGunKind(kind)
+                        ? {
+                            carry: files.carry_model ?? null,
+                            reload: files.reload_model ?? null,
+                            aim: files.aim_model ?? null,
+                          }
+                        : undefined
+                    }
+                    frameModels={
+                      ranged3d
+                        ? {
+                            texture: files.model ?? null,
+                            pull_0: files.pull_0_model ?? null,
+                            pull_1: files.pull_1_model ?? null,
+                            pull_2: files.pull_2_model ?? null,
+                            charged: files.charged_model ?? null,
+                          }
+                        : undefined
+                    }
+                    flatTextureFile={isFlatPreviewKind(kind) ? (files.texture ?? null) : null}
+                    flatFrames={
+                      isFlatPreviewKind(kind)
+                        ? {
+                            texture: files.texture ?? null,
+                            pull_0: files.pull_0 ?? null,
+                            pull_1: files.pull_1 ?? null,
+                            pull_2: files.pull_2 ?? null,
+                            charged: files.charged ?? null,
+                          }
+                        : undefined
+                    }
+                    flatMcmeta={
+                      isFlatPreviewKind(kind)
+                        ? {
+                            texture: files[mcmetaField("texture")] ?? null,
+                            pull_0: files[mcmetaField("pull_0")] ?? null,
+                            pull_1: files[mcmetaField("pull_1")] ?? null,
+                            pull_2: files[mcmetaField("pull_2")] ?? null,
+                            charged: files[mcmetaField("charged")] ?? null,
+                          }
+                        : undefined
+                    }
+                    gripY={kind === "large_handheld" ? gripY : null}
+                    kind={kind}
+                  />
                 ) : null}
-              </label>
-            ))}
-            {isBookKind(kind) ? (
-              <div className="flex flex-col gap-4">
-                <div className="flex flex-wrap gap-4">
-                  {(
-                    [
-                      ["unsigned", "Unsigned", bookPreviewUrls.unsigned],
-                      ["signed", "Signed", bookPreviewUrls.signed],
-                    ] as const
-                  ).map(([key, label, url]) => (
-                    <div key={key} className="flex flex-col gap-1.5">
-                      <span className="text-xs font-medium text-[var(--tfmc-stone)]">{label}</span>
-                      <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-sm border border-[color-mix(in_srgb,var(--tfmc-cream)_20%,transparent)] bg-[color-mix(in_srgb,var(--tfmc-forest)_70%,black)]">
-                        {url ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            src={url}
-                            alt={`${label} cover preview`}
-                            className="h-full w-full object-contain [image-rendering:pixelated]"
-                          />
-                        ) : (
-                          <span className="px-2 text-center text-[10px] text-[var(--tfmc-mist)]">No file</span>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <div className="grid gap-6 sm:grid-cols-2">
-                  {files.unsigned ? (
-                    <div>
-                      <p className="mb-2 text-xs font-medium uppercase tracking-wide text-[var(--tfmc-stone)]">
-                        Unsigned 3D
-                      </p>
-                      <ModelPreview kind="book" textureFile={files.unsigned} />
-                    </div>
-                  ) : null}
-                  {files.signed ? (
-                    <div>
-                      <p className="mb-2 text-xs font-medium uppercase tracking-wide text-[var(--tfmc-stone)]">
-                        Signed 3D
-                      </p>
-                      <ModelPreview kind="book" textureFile={files.signed} />
-                    </div>
-                  ) : null}
-                </div>
               </div>
-            ) : null}
-            {isModel3dKind(kind) || isGunKind(kind) || isFlatPreviewKind(kind) ? (
-              <ModelPreview
-                modelFile={previewFiles.model}
-                textureFile={previewFiles.texture}
-                gunModels={
-                  isGunKind(kind)
-                    ? {
-                        carry: files.carry_model ?? null,
-                        reload: files.reload_model ?? null,
-                        aim: files.aim_model ?? null,
-                      }
-                    : undefined
-                }
-                flatTextureFile={isFlatPreviewKind(kind) ? (files.texture ?? null) : null}
-                flatFrames={
-                  isFlatPreviewKind(kind)
-                    ? {
-                        texture: files.texture ?? null,
-                        pull_0: files.pull_0 ?? null,
-                        pull_1: files.pull_1 ?? null,
-                        pull_2: files.pull_2 ?? null,
-                        charged: files.charged ?? null,
-                      }
-                    : undefined
-                }
-                gripY={kind === "large_handheld" ? gripY : null}
-                kind={kind}
-              />
-            ) : null}
-          </div>
-        )}
+            )}
+          </Step>
+        ) : target && !kind ? (
+          <p className="text-sm text-[var(--tfmc-mist)]">
+            {lockedByKinds(kindsForTarget(target))
+              ? `Skins for this unlock at ${lockedByKinds(kindsForTarget(target))}.`
+              : "Choose a style to continue."}
+          </p>
+        ) : null}
 
         {error ? (
           <p className="text-sm text-[#e8a0a0]" role="alert">
@@ -1014,19 +1097,23 @@ export default function UploadForm({
           </p>
         ) : null}
 
-        <p className="text-sm text-[var(--tfmc-mist)]">
-          {staff
-            ? "Staff uploads auto-approve and land in the curated shop pack (no Discord review)."
-            : "You'll get a Discord DM within 5 minutes confirming it's in review."}
-        </p>
+        {kind ? (
+          <>
+            <p className="text-sm text-[var(--tfmc-mist)]">
+              {staff
+                ? "Staff uploads auto-approve and land in the curated shop pack (no Discord review)."
+                : "You'll get a Discord DM within 5 minutes confirming it's in review."}
+            </p>
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="inline-flex items-center justify-center rounded-sm bg-[var(--tfmc-accent)] px-5 py-2.5 text-sm font-semibold text-[var(--tfmc-forest-deep)] transition-opacity hover:opacity-90 disabled:opacity-50"
-        >
-          {loading ? "Uploading…" : "Submit"}
-        </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="inline-flex items-center justify-center rounded-sm bg-[var(--tfmc-accent)] px-5 py-2.5 text-sm font-semibold text-[var(--tfmc-forest-deep)] transition-opacity hover:opacity-90 disabled:opacity-50"
+            >
+              {loading ? "Uploading…" : "Submit"}
+            </button>
+          </>
+        ) : null}
       </form>
     </div>
   );

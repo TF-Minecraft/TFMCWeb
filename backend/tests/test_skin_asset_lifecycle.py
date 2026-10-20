@@ -19,6 +19,8 @@ from src.skins import storage, submissions
         ("helmet_3d", [""]),
         ("mask", [""]),
         ("gun", ["_carry", "_reload", "_aim", "_aim_charged"]),
+        ("bow_3d", ["", "_0", "_1", "_2"]),
+        ("crossbow_3d", ["", "_0", "_1", "_2", "_charged"]),
     ],
 )
 def test_upload_writes_downloadable_models(tmp_path, monkeypatch, kind, suffixes):
@@ -35,6 +37,11 @@ def test_upload_writes_downloadable_models(tmp_path, monkeypatch, kind, suffixes
         files.update({f"pull_{i}": png.getvalue() for i in range(3)})
     elif kind == "gun":
         files.update({f"{pose}_model": model for pose in ("carry", "reload", "aim")})
+    elif kind in ("bow_3d", "crossbow_3d"):
+        files["model"] = model
+        files.update({f"pull_{i}_model": model for i in range(3)})
+        if kind == "crossbow_3d":
+            files["charged_model"] = model
     elif kind != "large_handheld":
         files["model"] = model
     folder = storage.write_submission_files(

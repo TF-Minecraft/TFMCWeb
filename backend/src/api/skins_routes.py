@@ -669,16 +669,17 @@ async def post_submissions(
             tiers_list = [tier]
             remapped: dict[str, bytes] = {}
             remapped_names: dict[str, str | None] = {}
-            for field in ARMOR_FIELDS:
+            legacy = ARMOR_FIELDS + tuple(f"{f}_mcmeta" for f in ARMOR_FIELDS)
+            for field in legacy:
                 if field in files_bytes:
                     tier_key = f"{tier}_{field}"
                     remapped[tier_key] = files_bytes[field]
                     remapped_names[tier_key] = filenames.get(field)
             files_bytes = {
-                k: v for k, v in files_bytes.items() if k not in ARMOR_FIELDS
+                k: v for k, v in files_bytes.items() if k not in legacy
             }
             filenames = {
-                k: v for k, v in filenames.items() if k not in ARMOR_FIELDS
+                k: v for k, v in filenames.items() if k not in legacy
             }
             files_bytes.update(remapped)
             filenames.update(remapped_names)
@@ -820,7 +821,8 @@ def get_thumbnail(
 
 
 # The owner's uploads only; staff sheets and server files stay staff-side.
-_OWNER_FILE_SUFFIXES = (".png", ".json")
+# An animated texture has a sibling `<name>.png.mcmeta`; it 404s when the PNG is still.
+_OWNER_FILE_SUFFIXES = (".png", ".json", ".png.mcmeta")
 _OWNER_HIDDEN_FILES = frozenset({"meta.json", "review_sheet.png", "name_preview.png"})
 
 

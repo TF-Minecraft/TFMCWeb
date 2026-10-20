@@ -8,6 +8,7 @@ from pathlib import Path
 import numpy as np
 from PIL import Image
 
+from .animation import first_frame_png
 from .db import SKINS_DIR
 from .preview_3d import PREVIEW_NAMES
 
@@ -28,7 +29,7 @@ def _without_backdrop(path: Path) -> bytes:
 
 
 def skin_thumbnail(submission_id: str, slug: str) -> bytes | None:
-    """A rendered preview without its backdrop, else the flat texture, else None.
+    """A rendered preview without its backdrop, else the flat texture (first frame), else None.
 
     Only reads files the review sheet already made; it never starts a render.
     """
@@ -40,5 +41,5 @@ def skin_thumbnail(submission_id: str, slug: str) -> bytes | None:
     for name in (f"{slug}.png", f"{slug}_unsigned.png"):
         path = out_dir / name
         if path.is_file():
-            return path.read_bytes()
+            return first_frame_png(path) or path.read_bytes()
     return None

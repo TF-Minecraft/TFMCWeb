@@ -13,6 +13,7 @@ from PIL import Image, ImageDraw, ImageFont
 
 from src import database
 
+from .animation import first_frame, frame_count
 from .db import SKINS_DIR
 from .name_preview import render_name_preview_png
 from .naming import ARMOR_FIELDS
@@ -33,6 +34,7 @@ from .storage import (
     GUN_KIND,
     ITEM_KINDS,
     MODEL_3D_KINDS,
+    RANGED_3D_KINDS,
 )
 
 TILE_DISPLAY = 128
@@ -67,12 +69,19 @@ def _font(size: int = 14) -> ImageFont.ImageFont:
 
 
 def _load_rgba(path: Path) -> Image.Image:
+    """The PNG, or for an animated texture the frame Minecraft shows first."""
     try:
         img = Image.open(path)
         img.load()
-        return img.convert("RGBA")
+        return first_frame(path, img.convert("RGBA"))
     except OSError as e:
         raise ReviewSheetError(f"Cannot read image: {path.name}") from e
+
+
+def _animated_note(path: Path) -> str:
+    """`` · animated · N frames`` for a PNG with an .mcmeta, else empty."""
+    frames = frame_count(path)
+    return f" · animated · {frames} frames" if frames > 1 else ""
 
 
 def _scale_nn(img: Image.Image, max_side: int) -> Image.Image:
@@ -208,6 +217,7 @@ def _armor_tier_strip(tier: str, out_dir: Path) -> Image.Image:
         label = "helmet_3d" if field == "helmet" and path.name.endswith(
             "_helmet_texture.png"
         ) else field
+        label += _animated_note(path)
         bbox = draw.textbbox((0, 0), label, font=font)
         tw = bbox[2] - bbox[0]
         draw.text(
@@ -265,7 +275,7 @@ def _single_texture_body(
         raise ReviewSheetError(f"Missing file: {path.name}")
 
     display = ITEM_DISPLAY
-    caption = f"kind={kind}"
+    caption = f"kind={kind}{_animated_note(path)}"
     if base_set:
         caption += f"  base={base_set}"
     if grip_preset:
@@ -339,6 +349,7 @@ def _bow_body(
         _paste_centered(
             canvas, tile, (x0, y0, x0 + BOW_DISPLAY, y0 + BOW_DISPLAY)
         )
+        label += _animated_note(path)
         bbox = draw.textbbox((0, 0), label, font=font)
         tw = bbox[2] - bbox[0]
         draw.text(
@@ -400,6 +411,7 @@ def _book_body(
         _paste_centered(
             canvas, tile, (x0, y0, x0 + BOW_DISPLAY, y0 + BOW_DISPLAY)
         )
+        label += _animated_note(path)
         bbox = draw.textbbox((0, 0), label, font=font)
         tw = bbox[2] - bbox[0]
         draw.text(
@@ -436,6 +448,8 @@ _PREVIEW_LABELS = {
     "body": "full body",
     "book_unsigned": "3D unsigned",
     "book_signed": "3D signed",
+    "pull_2": "3D pull 2",
+    "charged": "3D charged",
 }
 
 
@@ -499,7 +513,12 @@ def _compose_full_sheet(row, out_dir: Path) -> Image.Image:
         if base_set:
             caption_bits.append(f"base={base_set}")
         body = _book_body(slug, base_set, out_dir)
-    elif kind in ITEM_KINDS or kind in MODEL_3D_KINDS or kind == GUN_KIND:
+    elif (
+        kind in ITEM_KINDS
+        or kind in MODEL_3D_KINDS
+        or kind in RANGED_3D_KINDS
+        or kind == GUN_KIND
+    ):
         if base_set:
             caption_bits.append(f"base={base_set}")
         if grip:

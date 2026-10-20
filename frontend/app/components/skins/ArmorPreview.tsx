@@ -11,6 +11,7 @@ import {
   loadTextureFromFile,
   parseJavaModelJson,
 } from "../../../lib/skins/javaModel";
+import { loadAnimatedFrames } from "../../../lib/skins/animatedTexture";
 import {
   applySteveArmPose,
   attachSteveArmorOverlay,
@@ -28,6 +29,8 @@ type Props = {
   helmet3d?: boolean;
   helmetModelFile?: File | null;
   helmetTextureFile?: File | null;
+  /** Optional `.mcmeta` for the 3D helmet texture; the preview shows its first frame. */
+  helmetTextureMcmetaFile?: File | null;
   /** Fills its parent on a transparent background, without the editor's label and skin controls. */
   stage?: boolean;
   className?: string;
@@ -44,6 +47,7 @@ export default function ArmorPreview({
   helmet3d = false,
   helmetModelFile = null,
   helmetTextureFile = null,
+  helmetTextureMcmetaFile = null,
   stage = false,
   className = "",
 }: Props) {
@@ -132,7 +136,15 @@ export default function ArmorPreview({
           const modelText = await helmetModelFile.text();
           if (cancelled) return;
           const json = parseJavaModelJson(modelText);
-          const loaded = await loadTextureFromFile(helmetTextureFile);
+          let loaded: { texture: THREE.Texture; width: number; height: number };
+          if (helmetTextureMcmetaFile) {
+            // Animated: the model's UVs cover one frame, so show the first one.
+            const animated = await loadAnimatedFrames(helmetTextureFile, helmetTextureMcmetaFile);
+            const canvas = animated.frames[animated.schedule[0]!.index]!;
+            loaded = { texture: new THREE.Texture(canvas), width: canvas.width, height: canvas.height };
+          } else {
+            loaded = await loadTextureFromFile(helmetTextureFile);
+          }
           helmetItemTex = loaded.texture;
           if (cancelled) {
             helmetItemTex.dispose();
@@ -223,7 +235,17 @@ export default function ArmorPreview({
       renderer?.dispose();
       host.replaceChildren();
     };
-  }, [layer1File, layer2File, helmet3d, helmetModelFile, helmetTextureFile, playerSkinFile, use3dHelm, hasLayers]);
+  }, [
+    layer1File,
+    layer2File,
+    helmet3d,
+    helmetModelFile,
+    helmetTextureFile,
+    helmetTextureMcmetaFile,
+    playerSkinFile,
+    use3dHelm,
+    hasLayers,
+  ]);
 
   if (!hasLayers) {
     return <p className={`text-xs text-[var(--tfmc-mist)] ${className}`}>Upload a layer to preview.</p>;
