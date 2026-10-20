@@ -64,7 +64,8 @@ Structure, in this order:
    Add a `## ` subtitle naming the biggest change only when one change clearly stands out. Most weeks need none.
    Then one or two sentences introducing the week.
 2. `# Balance Changes`: classes, attributes, skills and spells, new skills, and number changes that
-   matter in a fight (damage, health, armour, cooldowns, weapon stats).
+   matter in a fight (damage, health, armour, cooldowns, weapon stats). Act changes never go here;
+   see "The Act System" below.
 3. `# Gameplay Changes`: anything that changes how an existing system works, such as a node producing
    faster, something dropping more, a new mechanic, crafting, professions, farming, animals, factions, trade.
 4. `# Fixes`: only the fixes players will notice most, as short bullets.
@@ -106,6 +107,32 @@ _GLOSSARY = """Reading the facts:
   and fixes in plain words.
 """
 
+_ACT_SYSTEM = """The Act System:
+- A season moves through acts. Each act raises the class level cap, sets the standard metal most players
+  can make all their gear from, and adds a small, rare trickle of the next act's materials:
+
+  | Act | Class level cap | Standard metal | Trickle of the next act |
+  | Prologue | 6 | Iron | Ignitium |
+  | Act 1 | 11 | Steel | Raw tin and abyssalite fragments |
+  | Act 2 | 16 | Abyssalite | Mythril fragments and mythrilite |
+  | Act 3 | 21 | Mythril | none yet |
+
+- These are act changes, not balance changes:
+  - a class `max-level` rising to the next act's cap (for example 6 --> 11);
+  - skill slots and skill points at levels 7, 12 and 17, the first levels of Acts 1, 2 and 3;
+  - the next act's materials starting to drop, or a drop list or reward pool switching to the new act
+    (lucky miner, Geiger counters, activity rewards, fishing treasure, world bosses);
+  - metal steal values being recalculated for the new act's supply;
+  - a one-time class EXP catch-up for discoveries made while players were at the old cap.
+- Never list act changes under Balance Changes and never call them a buff or a nerf. A higher level cap
+  means the season moved on, not that a class got stronger.
+- On an act change week, describe them together in the act section as what the new act brings.
+- On any other week, if the facts show a class cap rising to the next act's cap, treat it as that act
+  starting: describe it in its own short section named after the act, before Balance Changes.
+- Changing how much of an act material drops within the same act is a Gameplay change. Explain it in act
+  terms: the next act's materials stay rare on purpose until that act arrives.
+"""
+
 POST_SCHEMA = {
     "type": "object",
     "additionalProperties": False,
@@ -133,7 +160,8 @@ def _title_rule(label: str, act: str | None) -> str:
     if act:
         return (
             f"This is an act change week: start with `# {act}`, then `## Update {label}`. "
-            f"Explain what the new act changes for players in its own short section before Balance Changes."
+            "Explain what the new act changes for players in its own short section before Balance Changes, "
+            "following the Act System below."
         )
     return f"Start with `# Update {label}`."
 
@@ -222,7 +250,7 @@ def compose_prompt(
         page_url=f"{page_url.rstrip('/')}/{week}",
         target=TARGET_MESSAGES,
     )
-    parts = [guide, _GLOSSARY, "Facts:", render_facts(facts)]
+    parts = [guide, _GLOSSARY, _ACT_SYSTEM, "Facts:", render_facts(facts)]
     if previous and feedback:
         parts += [
             "Current post:",

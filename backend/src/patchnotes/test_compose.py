@@ -67,6 +67,13 @@ class PromptTest(unittest.TestCase):
         prompt = compose.compose_prompt(_FACTS, week="2026-W41", label="5.3", act="Act 1", page_url="x")
         self.assertIn("start with `# Act 1`, then `## Update 5.3`", prompt)
 
+    def test_prompt_explains_the_act_system(self) -> None:
+        prompt = compose.compose_prompt(_FACTS, week="2026-W41", label="5.3", act=None, page_url="x")
+        self.assertIn("The Act System:", prompt)
+        self.assertIn("| Act 1 | 11 | Steel | Raw tin and abyssalite fragments |", prompt)
+        self.assertIn("Never list act changes under Balance Changes", prompt)
+        self.assertLess(prompt.index("The Act System:"), prompt.index("Facts:"))
+
     def test_feedback_rewrites_the_current_post(self) -> None:
         prompt = compose.compose_prompt(
             _FACTS, week="2026-W41", label="5.3", act=None, page_url="x",
