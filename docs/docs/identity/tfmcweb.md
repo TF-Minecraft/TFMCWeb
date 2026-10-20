@@ -87,22 +87,32 @@ Link tables live in the site PostgreSQL database (`discord_links`, `discord_link
 
 ## War declare codes
 
-One-time codes that gate an in-game war declaration. Staff mint one in Discord (`tfmc_bot` `factions` cog, `/warcode`), the attacking leader types it in SimpleFactions, and it pins the war goal. Rows live in `war_declaration_codes`, realm-scoped, hashed with **no plaintext column**: staff see the code once and a lost code is revoked and reminted.
+One-time codes that gate an in-game war declaration or coalition offensive. Staff mint one in Discord (`tfmc_bot` `factions` cog, `/warcode`) and the leader types it in SimpleFactions. Rows live in `war_declaration_codes`, realm-scoped, hashed with **no plaintext column**: staff see the code once and a lost code is revoked and reminted.
+
+Each code has a `kind`:
+
+| `kind` | `attacker_faction_id` | `defender_faction_id` | `goal` |
+|--------|-----------------------|-----------------------|--------|
+| `war_declare` (default) | Attacking faction | Defending faction | Optional; the leader picks goals in game. Codes minted before 0005 may still carry one |
+| `coalition_offensive` | Coalition leader faction | Coalition target faction | Always `null`; refused at mint |
 
 | Route | Auth | Role |
 |-------|------|------|
-| `POST /wars/declare-codes` | Staff (bot) | Mint; returns `{id, code, expires_at}` once |
-| `POST /wars/declare-codes/validate` | Plugin | Non-consuming; returns the pinned goal |
-| `POST /wars/declare-codes/redeem` | Plugin | Consuming; sets `redeemed_at` and `redeemed_war_id` |
-| `GET /wars/declare-codes` | Staff (bot) | Outstanding codes; ids and metadata, never a code |
+| `POST /wars/declare-codes` | Staff (bot) | Mint; body `attacker_faction_id`, `defender_faction_id`, optional `kind`, `goal`, `realm_id`, `created_by_discord_id`, `ttl_hours`. Returns `{id, code, realm_id, attacker_faction_id, defender_faction_id, kind, goal, expires_at}` once |
+| `POST /wars/declare-codes/validate` | Plugin | Non-consuming; body `code`, `attacker_faction_id`, `defender_faction_id`, optional `kind`, `realm_id`. Returns `{valid, id, kind, goal, realm_id, attacker_faction_id, defender_faction_id, expires_at}` |
+| `POST /wars/declare-codes/redeem` | Plugin | Consuming; body as validate plus optional `war_id`. Sets `redeemed_at` and `redeemed_war_id`; returns `{ok, id, kind, goal, realm_id, redeemed_at, war_id}` |
+| `GET /wars/declare-codes` | Staff (bot) | Outstanding codes with `kind` and `goal`; ids and metadata, never a code |
 | `POST /wars/declare-codes/revoke` | Staff (bot) | Revoke by id |
-| `GET /wars/declare-codes/goals` | Staff (bot) | The nine declarable goals |
+| `GET /wars/declare-codes/goals` | Staff (bot) | The eight declarable goals. Kept for older bots; the bot no longer pins a goal |
 
 Rules:
 
-- Validate and redeem are separate calls because `WarManager.declareWar` can still refuse after the code was accepted. Redemption happens only once a war exists, so a rejection does not burn a staff-approved ticket.
+- Validate and redeem are separate calls because `WarManager.declareWar` can still refuse after the code was accepted. Redemption happens only once a war (or offensive) exists, so a rejection does not burn a staff-approved ticket.
+- `kind` on validate and redeem defaults to `war_declare`, so a request that omits it keeps its old meaning. A code of the other kind is refused with HTTP 400 and `That code is a coalition code, not a war declaration code.` or `That code is a war declaration code, not a coalition code.` This is checked after the realm and before the faction pairing, and does not spend the code.
 - Both re-check attacker, defender and realm against the row, so a code minted for one pairing cannot be spent on another.
-- **Goal allowlist:** nine of the thirteen `WarGoalType` values. `overthrow`, `change_law`, `change_tax` and `force_peace` are raised by a political movement, never declared, and are refused at mint.
+- `war_id` on redeem is optional; a coalition offensive may not have one.
+- **Goal allowlist** (when a `war_declare` code is given a goal): eight of the thirteen `WarGoalType` values. `overthrow`, `change_law`, `change_tax` and `force_peace` are raised by a political movement, never declared, and are refused at mint, as is the retired `war`.
+- `goal` is `null` in responses when the code has none. Plugin builds from before kinds expect a goal and will reject such a code.
 - `realm_id` on the two plugin routes is injected by **TFMCWeb**, not sent by SimpleFactions, which does not know its own realm.
 - TTL from `WAR_CODE_TTL_HOURS` (default 48, mint may override up to 720).
 
