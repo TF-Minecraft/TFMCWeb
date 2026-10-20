@@ -119,6 +119,30 @@ class CompileTests(unittest.TestCase):
         compiled = compile_coalition_map([coalition(leader="A", members=["A"], target="")], nations)
         self.assertEqual({row["id"] for row in compiled["provinces"]}, {1, 2})
 
+    def test_the_plugin_upload_format(self) -> None:
+        """The payload SimpleFactions sends, verbatim: faction ids, not names."""
+        payload = {
+            "coalitions": [
+                {
+                    "id": "c3f9a1b2c4d",
+                    "name": "Free Alliance",
+                    "rgb": "120,40,40",
+                    "leader": "Thalendor",
+                    "target": "TheHolyOrder",
+                    "offensive": False,
+                    "members": ["Thalendor", "FIG"],
+                    "banner": ["WHITE.BASE", "RED.CROSS"],
+                }
+            ]
+        }
+        compiled = compile_coalition_map(coalition_rows(payload), NATIONS)
+        row = compiled["coalitions"][0]
+        self.assertEqual(row["id"], "c3f9a1b2c4d")
+        self.assertEqual(row["rgb"], "120,40,40")
+        self.assertEqual(row["target_name"], "The Holy Order")
+        self.assertEqual(row["banner"], ["WHITE.BASE", "RED.CROSS"])
+        self.assertEqual(by_id(compiled)[4]["coalition"], "c3f9a1b2c4d")
+
     def test_upload_shapes(self) -> None:
         self.assertEqual(coalition_rows({"coalitions": [{"id": "a"}, 3]}), [{"id": "a"}])
         self.assertEqual(coalition_rows([{"id": "a"}]), [{"id": "a"}])
