@@ -192,8 +192,77 @@ class WarDeclareCodesTest(unittest.TestCase):
             self._mint(goal="conquer_everything")
         with self.assertRaises(WarDeclareCodeError):
             self._mint(goal="war")
+
+    def test_war_code_without_goal(self) -> None:
+        from wars.declare_codes import redeem, validate
+
+        for goal in (None, "", "  "):
+            minted = self._mint(goal=goal)
+            self.assertEqual(minted["kind"], "war_declare")
+            self.assertIsNone(minted["goal"])
+        checked = validate(minted["code"], ATTACKER, DEFENDER)
+        self.assertEqual((checked["kind"], checked["goal"]), ("war_declare", None))
+        spent = redeem(minted["code"], ATTACKER, DEFENDER, war_id="7", kind="war_declare")
+        self.assertEqual((spent["kind"], spent["goal"]), ("war_declare", None))
+
+    def test_coalition_code_round_trip(self) -> None:
+        from wars.declare_codes import redeem, validate
+
+        minted = self._mint(goal=None, kind="coalition_offensive")
+        self.assertEqual(minted["kind"], "coalition_offensive")
+        self.assertIsNone(minted["goal"])
+
+        checked = validate(minted["code"], ATTACKER, DEFENDER, kind="coalition_offensive")
+        self.assertTrue(checked["valid"])
+        self.assertEqual((checked["kind"], checked["goal"]), ("coalition_offensive", None))
+
+        # An offensive may have no war id to report.
+        spent = redeem(minted["code"], ATTACKER, DEFENDER, kind=" Coalition_Offensive ")
+        self.assertTrue(spent["ok"])
+        self.assertEqual(spent["kind"], "coalition_offensive")
+        self.assertIsNone(spent["war_id"])
+
+    def test_coalition_code_refuses_a_goal_and_its_own_leader(self) -> None:
+        from wars.declare_codes import WarDeclareCodeError
+
+        with self.assertRaises(WarDeclareCodeError) as caught:
+            self._mint(goal="subjugate", kind="coalition_offensive")
+        self.assertIn("cannot carry a war goal", str(caught.exception))
+        with self.assertRaises(WarDeclareCodeError) as caught:
+            self._mint(goal=None, kind="coalition_offensive", defender_faction_id=ATTACKER)
+        self.assertIn("own leader", str(caught.exception))
+
+    def test_unknown_kind_refused(self) -> None:
+        from wars.declare_codes import WarDeclareCodeError, validate
+
+        with self.assertRaises(WarDeclareCodeError) as caught:
+            self._mint(kind="truce")
+        self.assertIn("kind must be one of", str(caught.exception))
+        minted = self._mint()
         with self.assertRaises(WarDeclareCodeError):
-            self._mint(goal="")
+            validate(minted["code"], ATTACKER, DEFENDER, kind="truce")
+
+    def test_kind_mismatch_rejected_without_spending(self) -> None:
+        from wars.declare_codes import WarDeclareCodeError, redeem, validate
+
+        war = self._mint(goal=None)
+        coalition = self._mint(goal=None, kind="coalition_offensive")
+        war_msg = "That code is a war declaration code, not a coalition code."
+        coalition_msg = "That code is a coalition code, not a war declaration code."
+        for call in (validate, redeem):
+            with self.assertRaises(WarDeclareCodeError) as caught:
+                call(war["code"], ATTACKER, DEFENDER, kind="coalition_offensive")
+            self.assertEqual(str(caught.exception), war_msg)
+            with self.assertRaises(WarDeclareCodeError) as caught:
+                call(coalition["code"], ATTACKER, DEFENDER)
+            self.assertEqual(str(caught.exception), coalition_msg)
+        # The kind is checked before the pairing, so a wrong prompt says so first.
+        with self.assertRaises(WarDeclareCodeError) as caught:
+            validate(coalition["code"], "faction-bystander", DEFENDER, kind="war_declare")
+        self.assertEqual(str(caught.exception), coalition_msg)
+        self.assertEqual(len(self._outstanding()), 2)
+        self.assertTrue(validate(war["code"], ATTACKER, DEFENDER)["valid"])
+        self.assertTrue(validate(coalition["code"], ATTACKER, DEFENDER, kind="coalition_offensive")["valid"])
 
     def test_goal_is_case_insensitive_on_mint(self) -> None:
         self.assertEqual(self._mint(goal="  De_Jure_Annex ")["goal"], "de_jure_annex")
@@ -228,11 +297,27 @@ class WarDeclareCodesTest(unittest.TestCase):
         rows = self._outstanding()
         self.assertEqual([row["id"] for row in rows], [live["id"]])
         self.assertEqual(rows[0]["goal"], "open_market")
+        self.assertEqual(rows[0]["kind"], "war_declare")
         self.assertEqual(rows[0]["created_by_discord_id"], "staff-1")
         self.assertNotIn("code", rows[0])
         self.assertNotIn("code_hash", rows[0])
 
         self.assertEqual(len(self._outstanding(realm_id="dev")), 1)
+
+    def test_outstanding_list_shows_kind(self) -> None:
+        coalition = self._mint(goal=None, kind="coalition_offensive")
+        rows = self._outstanding()
+        self.assertEqual([(r["id"], r["kind"], r["goal"]) for r in rows],
+                         [(coalition["id"], "coalition_offensive", None)])
+
+    def test_revoke_coalition_code(self) -> None:
+        from wars.declare_codes import WarDeclareCodeError, revoke, validate
+
+        minted = self._mint(goal=None, kind="coalition_offensive")
+        self.assertEqual(revoke(minted["id"])["kind"], "coalition_offensive")
+        with self.assertRaises(WarDeclareCodeError) as caught:
+            validate(minted["code"], ATTACKER, DEFENDER, kind="coalition_offensive")
+        self.assertIn("revoked", str(caught.exception))
 
     def test_outstanding_limit_is_capped(self) -> None:
         for _ in range(3):

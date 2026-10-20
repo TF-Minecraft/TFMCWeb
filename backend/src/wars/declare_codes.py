@@ -1,8 +1,13 @@
 """One-time war declare codes: staff mint, the plugin validates then redeems.
 
-Staff mint a code in Discord bound to an attacker faction, a defender faction and
-a war goal. SimpleFactions validates it without consuming it, pins the declare GUI
-to the code's goal, and only redeems once ``WarManager.declareWar`` returned a war.
+Staff mint a code in Discord bound to two factions. A ``war_declare`` code binds an
+attacker and a defender; the leader picks the war goals in game. A
+``coalition_offensive`` code binds a coalition leader faction (stored as the
+attacker) and the coalition's target (stored as the defender), and never carries
+a goal. SimpleFactions validates a code without consuming it and only redeems
+once the war or offensive actually exists.
+
+Codes minted before kinds existed may still carry a goal; it is returned as-is.
 
 No plaintext is stored, following ``discord_link_codes`` rather than ``codes``:
 staff see the code once on mint, and a lost code is revoked and reminted.
@@ -26,12 +31,25 @@ class WarDeclareCodeError(ValueError):
     """Invalid, expired, revoked, already-redeemed, or mismatched declare code."""
 
 
-# Goals the in-game declare GUI actually offers. The other four WarGoalType values
-# (OVERTHROW, CHANGE_LAW, CHANGE_TAX, FORCE_PEACE) are movement-origin only: they
-# are raised by a political movement, never declared. Rejecting them at mint is a
-# security boundary, not a convenience, so a code can never carry a goal the GUI
-# would refuse to route. "war" is retired too: the loser of every war now pays
-# reparations, so a goal with no outcome of its own no longer exists in game.
+KIND_WAR_DECLARE = "war_declare"
+KIND_COALITION_OFFENSIVE = "coalition_offensive"
+CODE_KINDS = (KIND_WAR_DECLARE, KIND_COALITION_OFFENSIVE)
+
+# Shown to the leader who typed a code into the wrong prompt.
+_KIND_MISMATCH = {
+    KIND_WAR_DECLARE: "That code is a war declaration code, not a coalition code.",
+    KIND_COALITION_OFFENSIVE: "That code is a coalition code, not a war declaration code.",
+}
+
+
+# Goals the in-game declare GUI actually offers. A war_declare code no longer has
+# to name one, but one that does is still checked against this list. The other
+# four WarGoalType values (OVERTHROW, CHANGE_LAW, CHANGE_TAX, FORCE_PEACE) are
+# movement-origin only: they are raised by a political movement, never declared.
+# Rejecting them at mint is a security boundary, not a convenience, so a code can
+# never carry a goal the GUI would refuse to route. "war" is retired too: the loser
+# of every war now pays reparations, so a goal with no outcome of its own no longer
+# exists in game.
 DECLARABLE_GOALS = (
     "de_jure_annex",
     "subjugate",
@@ -78,10 +96,22 @@ def _normalize_faction_id(value: str | None, label: str) -> str:
     return raw
 
 
-def _normalize_goal(value: str | None) -> str:
+def _normalize_kind(value: str | None) -> str:
+    """Omitted means war_declare, which is what every caller sent before kinds."""
     raw = (value or "").strip().lower()
     if not raw:
-        raise WarDeclareCodeError("goal is required")
+        return KIND_WAR_DECLARE
+    if raw not in CODE_KINDS:
+        raise WarDeclareCodeError(f"kind must be one of: {', '.join(CODE_KINDS)}")
+    return raw
+
+
+def _normalize_goal(value: str | None, kind: str) -> str | None:
+    raw = (value or "").strip().lower()
+    if not raw:
+        return None
+    if kind == KIND_COALITION_OFFENSIVE:
+        raise WarDeclareCodeError("A coalition code cannot carry a war goal")
     if raw in MOVEMENT_ORIGIN_GOALS:
         raise WarDeclareCodeError(
             f"'{raw}' is raised by a political movement, not declared, "
@@ -99,14 +129,15 @@ def _row_to_summary(row) -> dict:
         "realm_id": str(row["realm_id"] or "main"),
         "attacker_faction_id": str(row["attacker_faction_id"]),
         "defender_faction_id": str(row["defender_faction_id"]),
-        "goal": str(row["goal"]),
+        "kind": str(row["kind"]),
+        "goal": row["goal"],
         "created_by_discord_id": row["created_by_discord_id"],
         "created_at": api_time(row["created_at"]),
         "expires_at": api_time(row["expires_at"]),
     }
 
 
-def _load_usable(conn, code_hash: str, attacker: str, defender: str, realm: str):
+def _load_usable(conn, code_hash: str, attacker: str, defender: str, realm: str, kind: str):
     """Fetch a row and assert it is spendable by this exact pairing in this realm.
 
     Every rejection says "Invalid war code" for the not-found case so a caller
@@ -117,15 +148,19 @@ def _load_usable(conn, code_hash: str, attacker: str, defender: str, realm: str)
         "SELECT * FROM war_declaration_codes WHERE code_hash = %s",
         (code_hash,),
     ).fetchone()
-    _refuse_unusable(row, attacker, defender, realm)
+    _refuse_unusable(row, attacker, defender, realm, kind)
     return row
 
 
-def _refuse_unusable(row, attacker: str, defender: str, realm: str) -> None:
+def _refuse_unusable(row, attacker: str, defender: str, realm: str, kind: str) -> None:
     if row is None:
         raise WarDeclareCodeError("Invalid war code")
     if str(row["realm_id"] or "main").strip().lower() != realm:
         raise WarDeclareCodeError("Invalid war code")
+    # Before the faction checks: for a coalition code they mean leader and target,
+    # so "not minted for your faction" would mislead someone in the wrong prompt.
+    if row["kind"] != kind:
+        raise WarDeclareCodeError(_KIND_MISMATCH[row["kind"]])
     if row["attacker_faction_id"] != attacker:
         raise WarDeclareCodeError("This code was not minted for your faction")
     if row["defender_faction_id"] != defender:
@@ -141,17 +176,25 @@ def _refuse_unusable(row, attacker: str, defender: str, realm: str) -> None:
 def mint(
     attacker_faction_id: str,
     defender_faction_id: str,
-    goal: str,
+    goal: str | None = None,
     realm_id: str | None = None,
     created_by_discord_id: str | None = None,
     ttl_hours: int | None = None,
+    kind: str | None = None,
 ) -> dict:
-    """Create a code. The plaintext is returned once here and never stored."""
+    """Create a code. The plaintext is returned once here and never stored.
+
+    For a coalition_offensive code the attacker is the coalition leader faction
+    and the defender the coalition's target.
+    """
+    normalized_kind = _normalize_kind(kind)
     attacker = _normalize_faction_id(attacker_faction_id, "attacker_faction_id")
     defender = _normalize_faction_id(defender_faction_id, "defender_faction_id")
     if attacker == defender:
+        if normalized_kind == KIND_COALITION_OFFENSIVE:
+            raise WarDeclareCodeError("A coalition cannot target its own leader")
         raise WarDeclareCodeError("A faction cannot declare war on itself")
-    normalized_goal = _normalize_goal(goal)
+    normalized_goal = _normalize_goal(goal, normalized_kind)
     realm = normalize_realm_id(realm_id)
 
     hours = _ttl_hours() if ttl_hours is None else int(ttl_hours)
@@ -170,10 +213,10 @@ def mint(
             """
             INSERT INTO war_declaration_codes (
                 code_hash, realm_id, attacker_faction_id, defender_faction_id,
-                goal, created_by_discord_id, created_at, expires_at,
+                kind, goal, created_by_discord_id, created_at, expires_at,
                 redeemed_at, redeemed_war_id, revoked
             )
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, NULL, NULL, false)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, NULL, NULL, false)
             RETURNING id
             """,
             (
@@ -181,6 +224,7 @@ def mint(
                 realm,
                 attacker,
                 defender,
+                normalized_kind,
                 normalized_goal,
                 creator,
                 now,
@@ -194,6 +238,7 @@ def mint(
         "realm_id": realm,
         "attacker_faction_id": attacker,
         "defender_faction_id": defender,
+        "kind": normalized_kind,
         "goal": normalized_goal,
         "expires_at": expires_at,
     }
@@ -204,6 +249,7 @@ def validate(
     attacker_faction_id: str,
     defender_faction_id: str,
     realm_id: str | None = None,
+    kind: str | None = None,
 ) -> dict:
     """Read-only check. Never consumes: the declare can still fail after this.
 
@@ -217,14 +263,16 @@ def validate(
     attacker = _normalize_faction_id(attacker_faction_id, "attacker_faction_id")
     defender = _normalize_faction_id(defender_faction_id, "defender_faction_id")
     realm = normalize_realm_id(realm_id)
+    expected_kind = _normalize_kind(kind)
 
     with database.connect() as conn:
-        row = _load_usable(conn, hash_secret(plaintext), attacker, defender, realm)
+        row = _load_usable(conn, hash_secret(plaintext), attacker, defender, realm, expected_kind)
 
     return {
         "valid": True,
         "id": int(row["id"]),
-        "goal": str(row["goal"]),
+        "kind": str(row["kind"]),
+        "goal": row["goal"],
         "realm_id": str(row["realm_id"] or "main"),
         "attacker_faction_id": str(row["attacker_faction_id"]),
         "defender_faction_id": str(row["defender_faction_id"]),
@@ -238,14 +286,19 @@ def redeem(
     defender_faction_id: str,
     realm_id: str | None = None,
     war_id: str | None = None,
+    kind: str | None = None,
 ) -> dict:
-    """Consume the code. Called only once the war exists."""
+    """Consume the code. Called only once the war (or coalition offensive) exists.
+
+    ``war_id`` is optional, which a coalition offensive may not have.
+    """
     plaintext = (code or "").strip()
     if not plaintext:
         raise WarDeclareCodeError("code is required")
     attacker = _normalize_faction_id(attacker_faction_id, "attacker_faction_id")
     defender = _normalize_faction_id(defender_faction_id, "defender_faction_id")
     realm = normalize_realm_id(realm_id)
+    expected_kind = _normalize_kind(kind)
     code_hash = hash_secret(plaintext)
 
     with database.connect() as conn:
@@ -259,15 +312,15 @@ def redeem(
             UPDATE war_declaration_codes
             SET redeemed_at = %s, redeemed_war_id = %s
             WHERE code_hash = %s AND lower(trim(realm_id)) = %s
-              AND attacker_faction_id = %s AND defender_faction_id = %s
+              AND attacker_faction_id = %s AND defender_faction_id = %s AND kind = %s
               AND NOT revoked AND redeemed_at IS NULL AND expires_at >= %s
             RETURNING *
             """,
             (_parse_iso(redeemed_at), (war_id or "").strip() or None, code_hash, realm,
-             attacker, defender, now),
+             attacker, defender, expected_kind, now),
         ).fetchone()
         if row is None:
-            _load_usable(conn, code_hash, attacker, defender, realm)
+            _load_usable(conn, code_hash, attacker, defender, realm, expected_kind)
             raise WarDeclareCodeError("This code has already been used")
         if row["expires_at"] < _utcnow():
             raise WarDeclareCodeError("This code has expired")
@@ -275,7 +328,8 @@ def redeem(
     return {
         "ok": True,
         "id": int(row["id"]),
-        "goal": str(row["goal"]),
+        "kind": str(row["kind"]),
+        "goal": row["goal"],
         "realm_id": str(row["realm_id"] or "main"),
         "redeemed_at": redeemed_at,
         "war_id": (war_id or "").strip() or None,

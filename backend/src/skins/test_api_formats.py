@@ -151,11 +151,57 @@ def test_war_redemption_and_single_use_bytes(api, monkeypatch):
     request = {"code": issued["code"], "attacker_faction_id": "attack", "defender_faction_id": "defend",
                "realm_id": "main", "war_id": "war-1"}
     response = api.post("/wars/declare-codes/redeem", json=request, headers=PLUGIN)
-    assert response.content == body({"ok": True, "id": issued["id"], "goal": "subjugate", "realm_id": "main",
-                                     "redeemed_at": "2099-03-01T10:00:00Z", "war_id": "war-1"})
+    assert response.content == body({"ok": True, "id": issued["id"], "kind": "war_declare", "goal": "subjugate",
+                                     "realm_id": "main", "redeemed_at": "2099-03-01T10:00:00Z", "war_id": "war-1"})
     again = api.post("/wars/declare-codes/redeem", json=request, headers=PLUGIN)
     assert again.status_code == 400
     assert again.content == body({"detail": "This code has already been used"})
+
+
+def test_coalition_code_over_http(api, monkeypatch):
+    from src.wars import declare_codes
+    monkeypatch.setattr(declare_codes, "_utcnow", lambda: datetime(2099, 3, 1, 10, tzinfo=timezone.utc))
+    minted = api.post("/wars/declare-codes", json={"attacker_faction_id": "leader", "defender_faction_id": "target",
+                                                   "kind": "coalition_offensive"}, headers=STAFF)
+    assert minted.status_code == 200
+    issued = minted.json()
+    assert (issued["kind"], issued["goal"]) == ("coalition_offensive", None)
+    pairing = {"code": issued["code"], "attacker_faction_id": "leader", "defender_faction_id": "target"}
+
+    # An old plugin build sends no kind and so asks for a war declaration.
+    for path in ("/wars/declare-codes/validate", "/wars/declare-codes/redeem"):
+        wrong = api.post(path, json=pairing, headers=PLUGIN)
+        assert wrong.status_code == 400
+        assert wrong.content == body({"detail": "That code is a coalition code, not a war declaration code."})
+
+    checked = api.post("/wars/declare-codes/validate", json={**pairing, "kind": "coalition_offensive"}, headers=PLUGIN)
+    assert checked.content == body({"valid": True, "id": issued["id"], "kind": "coalition_offensive", "goal": None,
+                                    "realm_id": "main", "attacker_faction_id": "leader",
+                                    "defender_faction_id": "target", "expires_at": "2099-03-03T10:00:00Z"})
+    spent = api.post("/wars/declare-codes/redeem", json={**pairing, "kind": "coalition_offensive"}, headers=PLUGIN)
+    assert spent.content == body({"ok": True, "id": issued["id"], "kind": "coalition_offensive", "goal": None,
+                                  "realm_id": "main", "redeemed_at": "2099-03-01T10:00:00Z", "war_id": None})
+
+    goal = api.post("/wars/declare-codes", json={"attacker_faction_id": "leader", "defender_faction_id": "target",
+                                                 "kind": "coalition_offensive", "goal": "subjugate"}, headers=STAFF)
+    assert goal.status_code == 400
+    assert goal.content == body({"detail": "A coalition code cannot carry a war goal"})
+
+
+def test_war_code_without_goal_over_http(api):
+    minted = api.post("/wars/declare-codes", json={"attacker_faction_id": "a", "defender_faction_id": "d"},
+                      headers=STAFF)
+    assert minted.status_code == 200
+    issued = minted.json()
+    assert (issued["kind"], issued["goal"]) == ("war_declare", None)
+    pairing = {"code": issued["code"], "attacker_faction_id": "a", "defender_faction_id": "d"}
+    wrong = api.post("/wars/declare-codes/validate", json={**pairing, "kind": "coalition_offensive"}, headers=PLUGIN)
+    assert wrong.status_code == 400
+    assert wrong.content == body({"detail": "That code is a war declaration code, not a coalition code."})
+    checked = api.post("/wars/declare-codes/validate", json=pairing, headers=PLUGIN).json()
+    assert (checked["kind"], checked["goal"]) == ("war_declare", None)
+    bad = api.post("/wars/declare-codes/validate", json={**pairing, "kind": "truce"}, headers=PLUGIN)
+    assert bad.status_code == 400
 
 
 def test_approved_skins_for_the_plugin(api):
@@ -215,6 +261,6 @@ def test_war_codes_for_staff(api):
     response = api.get("/wars/declare-codes", headers=STAFF)
     assert response.content == body({"codes": [{
         "id": minted["id"], "realm_id": "main", "attacker_faction_id": "a", "defender_faction_id": "d",
-        "goal": "subjugate", "created_by_discord_id": None, "created_at": "2026-03-01T10:00:00Z",
+        "kind": "war_declare", "goal": "subjugate", "created_by_discord_id": None, "created_at": "2026-03-01T10:00:00Z",
         "expires_at": "2099-03-03T10:00:00Z",
     }]})
