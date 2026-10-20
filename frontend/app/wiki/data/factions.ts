@@ -292,11 +292,11 @@ export const factionRegiments: FactionRegiment[] = [
 
 export type FactionInstallation = { type: string; upkeep: string; build: string; holds: string };
 
-/** Live `installations.yml`. Every installation covers an 80-block radius. */
+/** `installations.yml`. Every installation covers an 80-block radius. */
 export const factionInstallations: FactionInstallation[] = [
-  { type: "Fort", upkeep: "50", build: "5 days", holds: "8 static emplacements, 2 land vehicles" },
-  { type: "Port", upkeep: "20", build: "3 days", holds: "8 ships" },
-  { type: "Airport", upkeep: "35", build: "3 days", holds: "10 aircraft" },
+  { type: "Fort", upkeep: "30", build: "5 days", holds: "8 static emplacements, 2 land vehicles" },
+  { type: "Port", upkeep: "15", build: "3 days", holds: "8 ships" },
+  { type: "Airport", upkeep: "20", build: "3 days", holds: "10 aircraft" },
   { type: "Train station (level 1)", upkeep: "5", build: "3 days", holds: "2 static emplacements" },
   { type: "Train station (level 2)", upkeep: "35", build: "3 days", holds: "3 static emplacements" },
   { type: "Train station (level 3)", upkeep: "100", build: "5 days", holds: "4 static emplacements" },
