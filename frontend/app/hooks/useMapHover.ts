@@ -349,7 +349,11 @@ export function useMapHover(props: UseMapHoverProps) {
     if (provincePicked !== undefined) {
       const provinceId = current.provinceNote ? provinceIdAt(current, coords.x, coords.y) : null;
       const note = provinceId !== null ? current.provinceNote!(provinceId) : null;
-      if (note && !provincePicked) {
+      // The pick reaches a few pixels for the nearest region to bridge water
+      // cut out of a shape. Target land under the pointer is not a cutout:
+      // say whose target it is rather than naming the region next door.
+      const onTargetOnly = note !== null && provinceId !== null && !current.provinceRegionIndex?.has(provinceId);
+      if (note && (!provincePicked || onTargetOnly)) {
         current.setHoveredOverlay(null);
         current.setSelectedRegionId(null);
         current.setCursorTooltip({ x: coords.screenX, y: coords.screenY, text: note.text, hint: note.hint });
