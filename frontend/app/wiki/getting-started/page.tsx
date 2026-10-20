@@ -50,15 +50,17 @@ export default function GettingStartedPage() {
           knife, 32 gold coins, 32 dry rations, a book, a bundle and a bed.
         </li>
         <li>
-          <strong>Learn how chat works.</strong> Anything you type without a command is spoken by your character and
-          heard within 15 blocks. Use <code className={code}>/ooc</code> to talk out of character to the whole server.{" "}
+          <strong>Learn how chat works.</strong> By default, anything you type without a command is spoken by your
+          character and heard within 15 blocks. Use <code className={code}>/ooc</code> to talk out of character to the
+          whole server.{" "}
           <Link href="/wiki/characters#chat" className={link}>
             Chat channels
           </Link>
         </li>
         <li>
           <strong>Find a crafting station.</strong> Most custom items are made at stations: ordinary-looking blocks that
-          open a custom menu when you right-click them. Every recipe in this guide names the station that makes it.{" "}
+          open a custom menu when you right-click them, or sneak and right-click for a few of them. Every recipe in this
+          guide names the station that makes it, and the stations guide shows how to open each one.{" "}
           <Link href="/wiki/stations" className={link}>
             Crafting Stations
           </Link>
