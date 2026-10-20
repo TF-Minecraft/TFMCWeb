@@ -101,23 +101,27 @@ export default function MagicPage() {
           for the parts each weapon needs.
         </li>
         <li>
-          <strong>Add runes.</strong> Put spell runes into the weapon&apos;s sockets. Every spell comes from a rune, so
-          a weapon with no runes casts nothing.
-        </li>
-        <li>
           <strong>Fill a charge.</strong> Craft an Enchanted Charge at the <StationLink name="Rune Station" /> and place
           it on a <WikiItemLink name="Pedestal">pedestal</WikiItemLink> in a shrine.
         </li>
         <li>
           <strong>Attune the weapon.</strong> Hold the filled charge and right-click the weapon on its{" "}
           <StationLink name="Magic Station" />. This starts the orb minigame, which decides how much of the charge the
-          weapon keeps.
+          weapon keeps. The station keeps a new weapon until it has been attuned.
+        </li>
+        <li>
+          <strong>Take the weapon.</strong> Right-click the station with an empty hand.
+        </li>
+        <li>
+          <strong>Add runes.</strong> Put spell runes into the weapon&apos;s sockets. Every spell comes from a rune, so
+          a weapon with no runes casts nothing.
+        </li>
+        <li>
+          <strong>Raise your Resonance</strong> by meditating. A new character starts with none, and even the weakest
+          spells need some.
         </li>
         <li>
           <strong>Cast.</strong> Hold the weapon and use the rune&apos;s casting key. The default is right-click.
-        </li>
-        <li>
-          <strong>Raise your Resonance</strong> by meditating, so you can cast stronger spells.
         </li>
       </ol>
 
@@ -125,9 +129,14 @@ export default function MagicPage() {
         Surge and Flow
       </WikiSectionHeading>
       <p className="mt-3 text-sm text-[var(--tfmc-mist)]">
-        Every spell you cast, and every orb you hit while meditating, moves your Equilibrium. In <strong>Surge</strong>{" "}
-        it moves toward Corruption, and in <strong>Flow</strong> toward Tranquility. Both sides make your spells
-        cheaper, stronger or quicker to recharge, and the effect grows the further you go.
+        Every spell you cast moves your Equilibrium. In <strong>Surge</strong> it moves toward Corruption, and in{" "}
+        <strong>Flow</strong> toward Tranquility. Meditation moves it too, but there the orb you hit decides the
+        direction, not your cast mode (see{" "}
+        <a href="#meditation" className="text-[var(--tfmc-accent)] hover:underline">
+          Meditation
+        </a>
+        ). Both sides make your spells cheaper, stronger or quicker to recharge, and the effect grows the further you
+        go.
       </p>
       <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-[var(--tfmc-mist)]">
         <li>
@@ -371,8 +380,12 @@ export default function MagicPage() {
           Meditation starts by itself.
         </li>
         <li>
-          Orbs appear around you. Look at an orb and left-click to hit it. Each hit costs 1 Mental Point and raises your
-          Resonance.
+          A white orb appears where you are looking. Hit it (look at it and left-click) to begin. More orbs then circle
+          you. Each hit costs 1 Mental Point and raises your Resonance.
+        </li>
+        <li>
+          Blue orbs move your Equilibrium toward Tranquility, and red orbs toward Corruption. Hitting a red orb turns
+          the orbs red for a few seconds.
         </li>
         <li>
           Stand up to stop. &quot;Meditation complete at this site&quot; means this ring has nothing more to give you
@@ -393,14 +406,15 @@ export default function MagicPage() {
         adds 0.5 to your hourly regeneration, and each point of Intelligence adds 0.25. An empty pool takes 15 hours to
         refill at the base rate.
       </p>
-      <Callout variant="warning" title="Resonance fades, and artifacts wear out">
-        Your Resonance drops by 0.02 every real hour, so it slowly falls if you stop meditating. An artifact you
-        meditate with also becomes <strong>muffled</strong>: it gives less over 24 hours of use and takes 7 days to
-        recover fully. If several people meditate with the same artifact, what it gives is split between them.
+      <Callout variant="warning" title="Resonance fades, and stored artifacts get muffled">
+        Your Resonance drops by 0.02 every real hour, so it slowly falls if you stop meditating. If several people
+        meditate with the same artifact, what it gives is split between them.
         <br />
-        <strong>Storing an artifact in a chest also muffles it, with no message.</strong> Keep artifacts in your
-        inventory, on a <WikiItemLink name="Pedestal">pedestal</WikiItemLink>, on an{" "}
-        <WikiItemLink name="Artifact Display">artifact display</WikiItemLink> or in an item frame.
+        <strong>An artifact holding aura becomes muffled if you keep it in a chest or other container</strong>, with no
+        message. A muffled artifact gives less when you meditate, and it is fully muffled after 24 hours. Keep artifacts
+        in your inventory, on a <WikiItemLink name="Pedestal">pedestal</WikiItemLink>, on an{" "}
+        <WikiItemLink name="Artifact Display">artifact display</WikiItemLink> or in an item frame. There they recover
+        fully over 7 days.
       </Callout>
 
       <WikiSectionHeading id="commands" intro="View your Resonance profile and change a rune's casting key.">
