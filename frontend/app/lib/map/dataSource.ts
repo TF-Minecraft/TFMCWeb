@@ -50,6 +50,7 @@ export const CHRONICLE_MODE_SOURCE: Partial<Record<MapMode, ChronicleFileName>> 
   nation: "nation",
   trade: "trade",
   empire: "empire",
+  coalition: "coalition",
   county: "county",
   duchy: "duchy",
   kingdom: "kingdom",

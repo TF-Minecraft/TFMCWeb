@@ -16,12 +16,12 @@ from __future__ import annotations
 from pathlib import Path
 
 from ..scripts.util.dirs import input_file, map_image
-from ..scripts.util.regen_types import MODES as REGION_MODES
+from ..scripts.util.regen_types import REGION_LAYER_MODES as REGION_MODES
 from . import region_composite, tile_cache
 
 # The full-map rasters the viewer tiles as `mapdata-{mode}`, except the
 # province map, which is the unchanging input pick map (see file_routes).
-RASTER_MODES = ("terrain", "fertility", "prosperity", "infestation", "coalition")
+RASTER_MODES = ("terrain", "fertility", "prosperity", "infestation")
 
 
 def warm_map_tiles(map_name: str) -> None:

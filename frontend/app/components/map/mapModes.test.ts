@@ -47,7 +47,7 @@ describe("mapModeTileLayer", () => {
     expect(mapModeTileLayer("trade")).toBe("regions-trade");
     expect(mapModeTileLayer("terrain")).toBe("mapdata-terrain");
     expect(mapModeTileLayer("province")).toBe("mapdata-province");
-    expect(mapModeTileLayer("coalition")).toBe("mapdata-coalition");
+    expect(mapModeTileLayer("coalition")).toBe("regions-coalition");
     for (const mode of ALL_MODES) {
       if (mode !== "plain") expect(mapModeTileLayer(mode)).not.toBeNull();
     }

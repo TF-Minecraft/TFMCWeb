@@ -43,7 +43,7 @@ _DEFINES_SOURCES = frozenset(
         "nation",
         "trade",
         "zoc_overlays",
-        "coalition_map",
+        "coalition",
         "empire",
         "county",
         "duchy",

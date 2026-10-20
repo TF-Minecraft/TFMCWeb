@@ -1,15 +1,17 @@
-"""Coalition map mode: SimpleFactions coalitions painted over the base map.
+"""Coalition map mode: SimpleFactions coalitions as regions, like the realm map.
 
-Members' realms (each member plus its subjects, all the way down) take the
-coalition's colour; the realm a coalition is aimed at is hatched in that colour,
-striped in turns when several coalitions share one target. Each coalition's land
-is outlined in ink, with a fainter line between the realms inside it, so the
-members stay readable.
+Each coalition is one region: the land of every member's realm (the member and
+all its subjects), in the coalition's colour. It goes through the same
+pipeline as the realm map (`create_map` for the pick map, `generate_regions`
+for the washed fills, ink borders and hover variants), so the viewer gives it
+the realm map's labels, hover and click for free.
 
-Besides the raster, this writes `defines/{map}/coalition_map.json`: the
-coalitions resolved against today's realms and a per-province summary. The
-province tooltip reads it, and the chronicle captures it so a stored day can
-paint its own coalitions.
+What the realm map has no equivalent for is the target. Each coalition also
+gets `{rgb}_target.png`: its target's realm, hatched in the coalition's colour,
+which the viewer lays over the map while that coalition is selected.
+
+The region records go to `defines/{map}/coalition.json`, the file every region
+mode reads its names, colours and provinces from.
 """
 
 from __future__ import annotations
@@ -20,36 +22,38 @@ import os
 import sys
 
 import numpy as np
+from PIL import Image
 
-from ..province_id_grid import GRID_FILENAME, build_province_id_map, read_province_id_grid_file
-from ..util.border_paint import INK_DARK
-from ..util.dirs import defines_file, input_file, map_image, validate_map
-from ..util.display_colour import parchment_wash_rgb
+from ..bannergen.bannergen import create_banner
+from ..loader.nations import load_nations
+from ..util.border_paint import INK_DARK, border_thickness, stroke_opaque_union_array
+from ..util.dirs import (
+    banner_image,
+    defines_file,
+    input_file,
+    region_image,
+    region_overlay_file,
+    validate_map,
+)
+from ..util.display_colour import hover_rgb
+from ..util.overlay_metadata import crop_to_content
 from .geometry_cache import MapGeometryCache
-from .map_paint_numpy import rgba_array_to_image
+from .mapgen import create_map
+from .regiongen import generate_regions, sanitize_filename
 
-COALITION_MAP_FILE = "coalition_map.json"
+MODE = "coalition"
+REGIONS_FILE = f"{MODE}.json"
 
-FILL_ALPHA = 215
-# Target land: a light ink wash under the stripes, so the gaps between them
-# still read as marked whatever the terrain beneath.
-TARGET_WASH_ALPHA = 70
-HATCH_ALPHA = 235
-# A stored day paints with one colour per province, so its target has no
-# stripes; this alpha keeps it lighter than member land, as the stripes do.
-DAY_TARGET_ALPHA = 120
-# Darkens a coalition's colour a little for its hatch and target outline,
-# keeping it saturated enough to stand out from the terrain.
-HATCH_INK_BLEND = 0.15
 HATCH_PERIOD = 36
-HATCH_LINE = 13
-# Each stripe is the coalition's pale fill between two thin ink edges, which
-# reads on dark forest and pale sand alike.
+HATCH_LINE = 14
+# Each stripe is the coalition's map colour between two ink edges, so it reads
+# on dark forest and pale sand alike.
 HATCH_EDGE = 2
-HATCH_EDGE_RGBA = (*INK_DARK[:3], 190)
-OUTLINE_RADIUS = 2
-OUTLINE_RGBA = (*INK_DARK[:3], 230)
-REALM_SEAM_RGBA = (*INK_DARK[:3], 120)
+HATCH_ALPHA = 235
+HATCH_EDGE_RGBA = (*INK_DARK[:3], 200)
+# A dark wash under the stripes, so the coalition's own colour stands out even
+# where the land beneath is the same hue.
+TARGET_WASH_RGBA = (*INK_DARK[:3], 110)
 # Used when neither the coalition nor its leader has a usable colour.
 FALLBACK_RGB = (150, 140, 120)
 
@@ -70,10 +74,6 @@ def _parse_rgb(value: object) -> tuple[int, int, int] | None:
     if not all(0 <= channel <= 255 for channel in rgb):
         return None
     return rgb  # type: ignore[return-value]
-
-
-def _blend(a: tuple[int, int, int], b: tuple[int, int, int], t: float) -> tuple[int, int, int]:
-    return tuple(int(round(a[i] + (b[i] - a[i]) * t)) for i in range(3))  # type: ignore[return-value]
 
 
 def _province_ids(raw: object) -> list[int]:
@@ -132,6 +132,21 @@ def load_compiled_nations(map_name: str) -> dict:
     return data if isinstance(data, dict) else {}
 
 
+def load_banner_patterns(map_name: str) -> dict[str, list[str]]:
+    """Each realm's banner patterns, from the uploaded (not compiled) nations:
+    the compiled file keeps only the rendered banner's file name."""
+    try:
+        nations = load_nations(map_name)
+    except (OSError, ValueError):
+        return {}
+    out: dict[str, list[str]] = {}
+    for key, value in nations.items():
+        banner = value.get("banner") if isinstance(value, dict) else None
+        if isinstance(banner, list) and all(isinstance(p, str) for p in banner):
+            out[key] = banner
+    return out
+
+
 class _Nations:
     """Compiled realms, looked up without case as SimpleFactions does."""
 
@@ -153,6 +168,10 @@ class _Nations:
         name = self.nations[key].get("name")
         return name if isinstance(name, str) and name else key
 
+    def rgb(self, faction_id: str) -> tuple[int, int, int] | None:
+        key = self.key(faction_id)
+        return None if key is None else _parse_rgb(self.nations[key].get("rgb"))
+
     def realm(self, faction_id: str) -> list[str]:
         """The faction and every subject below it, overlord first."""
         start = self.key(faction_id)
@@ -173,39 +192,56 @@ class _Nations:
                     stack.append(key)
         return order
 
-    def provinces(self, faction_id: str) -> list[int]:
-        key = self.key(faction_id)
-        return [] if key is None else _province_ids(self.nations[key].get("provinces"))
+    def realm_provinces(self, faction_id: str) -> list[int]:
+        out: list[int] = []
+        for owner in self.realm(faction_id):
+            out.extend(_province_ids(self.nations[owner].get("provinces")))
+        return out
 
 
-def _colours(rgb: tuple[int, int, int]) -> dict:
-    fill = parchment_wash_rgb(rgb)
-    hatch = _blend(rgb, INK_DARK[:3], HATCH_INK_BLEND)
-    return {
-        "fill_rgba": [*fill, FILL_ALPHA],
-        "hatch_rgba": [*hatch, HATCH_ALPHA],
-    }
+def _rgb_text(rgb: tuple[int, int, int] | None) -> str | None:
+    return ",".join(map(str, rgb)) if rgb else None
 
 
-def compile_coalition_map(coalitions: list[dict], nations: dict) -> dict:
-    """Resolve uploaded coalitions against compiled realms.
+def _unique_rgb(rgb: tuple[int, int, int], used: set[tuple[int, int, int]]) -> tuple[int, int, int]:
+    """`rgb`, nudged until no other coalition has it: regions are keyed by
+    colour, so two coalitions sharing one would merge into one shape. Black is
+    the pick map's "nothing here", so it is never handed out either."""
+    candidate = rgb
+    step = 0
+    while candidate in used or candidate == (0, 0, 0):
+        step += 1
+        delta = (step + 1) // 2 * (1 if step % 2 else -1)
+        candidate = tuple(min(255, max(0, c + delta)) for c in rgb)  # type: ignore[assignment]
+    used.add(candidate)
+    return candidate
+
+
+def compile_coalition_regions(
+    coalitions: list[dict],
+    nations: dict,
+    banner_patterns: dict[str, list[str]] | None = None,
+) -> dict[str, dict]:
+    """Region records for the coalition map mode, keyed by coalition id.
 
     A province belongs to at most one coalition: the first one listing a realm
-    that holds it. It can also be targeted by any number of coalitions. Members
-    and targets missing from the realm data keep their id as their name and
-    paint nothing.
+    that holds it. Members and targets missing from the realm data keep their
+    id as their name and contribute no land.
+
+    Each record carries its banner under `banner patterns`, the coalition's
+    own or else its leader's; `run_coalition_mode` renders it and replaces it
+    with the file name, as the nation compiler does.
     """
     realms = _Nations(nations)
-    resolved: list[dict] = []
-    member_of: dict[int, tuple[str, str, str]] = {}
-    targeted_by: dict[int, list[str]] = {}
-    seen_ids: set[str] = set()
+    banner_patterns = banner_patterns or {}
+    records: dict[str, dict] = {}
+    claimed: set[int] = set()
+    used_rgbs: set[tuple[int, int, int]] = set()
 
     for row in coalitions:
         cid = str(row.get("id") or "").strip()
-        if not cid or cid in seen_ids:
+        if not cid or cid in records:
             continue
-        seen_ids.add(cid)
 
         leader = str(row.get("leader") or "")
         target = str(row.get("target") or "")
@@ -213,279 +249,117 @@ def compile_coalition_map(coalitions: list[dict], nations: dict) -> dict:
         if leader and not any(m.lower() == leader.lower() for m in member_ids):
             member_ids.insert(0, leader)
 
-        rgb = _parse_rgb(row.get("rgb"))
-        leader_key = realms.key(leader)
-        if rgb is None and leader_key is not None:
-            rgb = _parse_rgb(realms.nations[leader_key].get("rgb"))
-        if rgb is None or rgb == (0, 0, 0):
-            rgb = FALLBACK_RGB
+        rgb = _parse_rgb(row.get("rgb")) or realms.rgb(leader) or FALLBACK_RGB
+        rgb = _unique_rgb(rgb, used_rgbs)
 
-        banner = row.get("banner")
-        resolved.append(
-            {
-                "id": cid,
-                "name": str(row.get("name") or cid),
-                "rgb": ",".join(str(c) for c in rgb),
-                **_colours(rgb),
-                "leader": realms.key(leader) or leader,
-                "leader_name": realms.name(leader) if leader else "",
-                "target": realms.key(target) or target,
-                "target_name": realms.name(target) if target else "",
-                "offensive": bool(row.get("offensive")),
-                "members": [
-                    {"id": realms.key(m) or m, "name": realms.name(m)} for m in member_ids
-                ],
-                "banner": banner if isinstance(banner, list) else None,
-            }
-        )
-
+        provinces: list[int] = []
         for member in member_ids:
-            member_key = realms.key(member)
-            if member_key is None:
-                continue
-            for owner in realms.realm(member_key):
-                for pid in realms.provinces(owner):
-                    member_of.setdefault(pid, (cid, member_key, owner))
+            for pid in realms.realm_provinces(member):
+                if pid not in claimed:
+                    claimed.add(pid)
+                    provinces.append(pid)
 
-        if target:
-            for owner in realms.realm(target):
-                for pid in realms.provinces(owner):
-                    claims = targeted_by.setdefault(pid, [])
-                    if cid not in claims:
-                        claims.append(cid)
+        patterns = row.get("banner")
+        if not (isinstance(patterns, list) and patterns and all(isinstance(p, str) for p in patterns)):
+            patterns = banner_patterns.get(realms.key(leader) or leader)
 
-    provinces = []
-    for pid in sorted(set(member_of) | set(targeted_by)):
-        entry: dict = {"id": pid}
-        if pid in member_of:
-            cid, member, owner = member_of[pid]
-            entry.update({"coalition": cid, "member": member, "owner": owner})
-        if pid in targeted_by:
-            entry["targeted_by"] = targeted_by[pid]
-        provinces.append(entry)
+        records[cid] = {
+            "id": cid,
+            "name": str(row.get("name") or cid),
+            # What the hover tooltip says beside the name.
+            "tier": f"Coalition against {realms.name(target)}" if target else "Coalition",
+            "rgb": _rgb_text(rgb),
+            "leader": realms.key(leader) or leader,
+            "leader_name": realms.name(leader) if leader else "",
+            "target": realms.key(target) or target,
+            "target_name": realms.name(target) if target else "",
+            "target_rgb": _rgb_text(realms.rgb(target)) if target else None,
+            "target_provinces": sorted(set(realms.realm_provinces(target))) if target else [],
+            "offensive": bool(row.get("offensive")),
+            "members": [
+                {
+                    "id": realms.key(m) or m,
+                    "name": realms.name(m),
+                    "rgb": _rgb_text(realms.rgb(m)),
+                    "size": len(realms.realm_provinces(m)),
+                }
+                for m in member_ids
+            ],
+            "provinces": provinces,
+            "size": len(provinces),
+            "banner patterns": patterns if isinstance(patterns, list) else None,
+        }
+    return records
 
-    return {"coalitions": resolved, "provinces": provinces}
 
-
-def load_coalition_by_province(map_name: str) -> dict[int, dict]:
-    """Province id -> what the province tooltip says about coalitions there."""
-    path = defines_file(map_name, COALITION_MAP_FILE)
+def color_mapping(map_name: str, provinces: dict) -> dict:
+    """Province RGB -> coalition RGB, for `build_color_mapping`."""
+    path = defines_file(map_name, REGIONS_FILE)
     if not os.path.exists(path):
         return {}
     with open(path, encoding="utf-8") as f:
-        compiled = json.load(f)
-    if not isinstance(compiled, dict):
+        records = json.load(f)
+    if not isinstance(records, dict):
         return {}
-    coalitions = {c.get("id"): c for c in compiled.get("coalitions") or [] if isinstance(c, dict)}
-    members = {}
-    for c in coalitions.values():
-        for m in c.get("members") or []:
-            if isinstance(m, dict):
-                members[(c.get("id"), m.get("id"))] = m.get("name")
-
-    out: dict[int, dict] = {}
-    for row in compiled.get("provinces") or []:
-        if not isinstance(row, dict) or not isinstance(row.get("id"), int):
+    id_to_rgb = {pid: rgb for rgb, pid in provinces.items()}
+    out = {}
+    for record in records.values():
+        rgb = _parse_rgb(record.get("rgb")) if isinstance(record, dict) else None
+        if rgb is None:
             continue
-        entry: dict = {}
-        own = coalitions.get(row.get("coalition"))
-        if own is not None:
-            entry.update(
-                {
-                    "coalition": own.get("name"),
-                    "coalition_member": members.get((own.get("id"), row.get("member")), row.get("member")),
-                    "coalition_leader": own.get("leader_name"),
-                    "coalition_target": own.get("target_name"),
-                    "coalition_offensive": bool(own.get("offensive")),
-                }
-            )
-        targeted = [coalitions[c].get("name") for c in row.get("targeted_by") or [] if c in coalitions]
-        if targeted:
-            entry["coalition_targeted_by"] = targeted
-        if entry:
-            out[row["id"]] = entry
+        for pid in _province_ids(record.get("provinces")):
+            prov_rgb = id_to_rgb.get(pid)
+            if prov_rgb is not None:
+                out[prov_rgb] = rgb
     return out
 
 
-def _differs_from_neighbour(values: np.ndarray) -> np.ndarray:
-    """Pixels whose value differs from a 4-neighbour. Off the array counts as 0,
-    so land at the map's edge is outlined as it is against the sea.
-
-    Works on views and boolean masks only: the map is 41M pixels, and a padded
-    copy of an integer array costs hundreds of MB.
-    """
-    out = np.zeros(values.shape, dtype=bool)
-    step = values[1:, :] != values[:-1, :]
-    out[1:, :] |= step
-    out[:-1, :] |= step
-    del step
-    step = values[:, 1:] != values[:, :-1]
-    out[:, 1:] |= step
-    out[:, :-1] |= step
-    del step
-    out[0, :] |= values[0, :] != 0
-    out[-1, :] |= values[-1, :] != 0
-    out[:, 0] |= values[:, 0] != 0
-    out[:, -1] |= values[:, -1] != 0
-    return out
-
-
-def _grow(mask: np.ndarray, radius: int) -> np.ndarray:
-    """`mask` grown by a (2r+1) square, with boolean shifts rather than the
-    int32 prefix sums `dilate_square` allocates."""
-    out = mask.copy()
-    for axis in (0, 1):
-        for _ in range(radius):
-            source = out.copy()
-            if axis == 0:
-                out[1:, :] |= source[:-1, :]
-                out[:-1, :] |= source[1:, :]
-            else:
-                out[:, 1:] |= source[:, :-1]
-                out[:, :-1] |= source[:, 1:]
-    return out
-
-
-def _small_uint(count: int) -> type:
-    return np.uint8 if count < 0xFF else np.uint16 if count < 0xFFFF else np.uint32
-
-
-def paint_coalition_overlay(province_id_map: np.ndarray, compiled: dict) -> np.ndarray:
-    """The (H, W, 4) RGBA overlay for a compiled coalition map."""
-    height, width = province_id_map.shape
-    coalitions = compiled.get("coalitions") or []
-    rows = compiled.get("provinces") or []
-    if not coalitions or not rows:
-        return np.zeros((height, width, 4), dtype=np.uint8)
-
-    index = {c["id"]: i + 1 for i, c in enumerate(coalitions)}
-    fills = np.zeros((len(coalitions) + 1, 4), dtype=np.uint8)
-    hatches = np.zeros((len(coalitions) + 1, 4), dtype=np.uint8)
-    for i, c in enumerate(coalitions, start=1):
-        fills[i] = c["fill_rgba"]
-        hatches[i] = c["hatch_rgba"]
-
-    owners: dict[str, int] = {}
-    target_sets: dict[tuple[int, ...], int] = {}
-    max_id = int(province_id_map.max())
-    member_rows: list[tuple[int, int, int]] = []
-    target_rows: list[tuple[int, int]] = []
-    for row in rows:
-        pid = row["id"]
-        if pid > max_id:
-            continue
-        if row.get("coalition") in index:
-            owner = owners.setdefault(row.get("owner") or "", len(owners) + 1)
-            member_rows.append((pid, index[row["coalition"]], owner))
-        claims = tuple(index[c] for c in row.get("targeted_by") or [] if c in index)
-        if claims:
-            target_rows.append((pid, target_sets.setdefault(claims, len(target_sets) + 1)))
-
-    member_lut = np.zeros(max_id + 1, dtype=_small_uint(len(coalitions) + 1))
-    owner_lut = np.zeros(max_id + 1, dtype=_small_uint(len(owners) + 1))
-    target_lut = np.zeros(max_id + 1, dtype=_small_uint(len(target_sets) + 1))
-    for pid, coalition, owner in member_rows:
-        member_lut[pid] = coalition
-        owner_lut[pid] = owner
-    for pid, set_index in target_rows:
-        target_lut[pid] = set_index
-
-    member = member_lut[province_id_map]
-    target = target_lut[province_id_map]
-    in_coalition = member > 0
-    has_target = target > 0
-
-    # Each target set's claimants in stripe order, padded; stripe k of a pixel
-    # takes claimant k modulo the set's size.
-    longest = max((len(claims) for claims in target_sets), default=1)
-    claim_table = np.zeros((len(target_sets) + 1, longest), dtype=np.int32)
-    claim_count = np.ones(len(target_sets) + 1, dtype=np.int32)
-    for claims, set_index in target_sets.items():
-        claim_table[set_index, : len(claims)] = claims
-        claim_count[set_index] = len(claims)
-    first_claim = claim_table[:, 0]
-
-    # Index 0 of `fills` is transparent, so this also clears every other pixel.
-    out = fills[member]
-
-    # Target land outside any coalition gets a light ink wash so the gaps
-    # between stripes still read as marked; target land inside one keeps its
-    # fill.
-    washed = has_target & ~in_coalition
-    out[washed] = (*INK_DARK[:3], TARGET_WASH_ALPHA)
-
-    ys, xs = np.nonzero(has_target)
-    if ys.size:
-        diagonal = xs + ys
-        on_line = (diagonal % HATCH_PERIOD) < HATCH_LINE
-        ys, xs, diagonal = ys[on_line], xs[on_line], diagonal[on_line]
-        sets = target[ys, xs]
-        stripe = (diagonal // HATCH_PERIOD) % claim_count[sets]
-        stripe_fill = fills[claim_table[sets, stripe]]
-        stripe_fill[:, 3] = HATCH_ALPHA
-        out[ys, xs] = stripe_fill
-        offset = diagonal % HATCH_PERIOD
-        edge = (offset < HATCH_EDGE) | (offset >= HATCH_LINE - HATCH_EDGE)
-        out[ys[edge], xs[edge]] = HATCH_EDGE_RGBA
-    del ys, xs
-
-    # A faint seam between the realms inside one coalition.
-    member_edge = _differs_from_neighbour(member)
-    seam = _differs_from_neighbour(owner_lut[province_id_map])
-    seam &= in_coalition
-    seam &= ~member_edge
-    out[seam] = _over(out[seam], REALM_SEAM_RGBA)
-    del seam
-
-    # Ink around each coalition, drawn inside its own land.
-    member_edge &= in_coalition
-    ring = _grow(member_edge, OUTLINE_RADIUS)
-    ring &= in_coalition
-    out[ring] = OUTLINE_RGBA
-    del member_edge, ring
-
-    # Target realms outside a coalition are outlined in their first
-    # claimant's ink.
-    target_edge = _differs_from_neighbour(target)
-    target_edge &= has_target
-    ring = _grow(target_edge, OUTLINE_RADIUS)
-    ring &= washed
-    out[ring] = hatches[first_claim[target[ring]]]
-
-    return out
-
-
-def _over(pixels: np.ndarray, rgba: tuple[int, int, int, int]) -> np.ndarray:
-    """`rgba` composited over opaque-ish `pixels`, keeping their alpha."""
-    if pixels.size == 0:
-        return pixels
-    t = rgba[3] / 255.0
-    out = pixels.copy()
-    out[:, :3] = np.round(pixels[:, :3] * (1 - t) + np.asarray(rgba[:3]) * t).astype(np.uint8)
-    return out
-
-
-def _province_id_map(map_name: str, cache: MapGeometryCache | None) -> np.ndarray:
-    """The full-size province id grid, without decoding provinces.png when a
-    regeneration has already written it: the upload path runs inside the web
-    server, where the full geometry cache costs over a gigabyte."""
-    if cache is not None:
-        return cache.province_id_map
-    grid = defines_file(map_name, GRID_FILENAME)
-    if os.path.isfile(grid):
-        return read_province_id_grid_file(grid)[2]
-    return build_province_id_map(map_name)[2]
-
-
-def _read_json(path: str) -> object:
-    try:
-        with open(path, encoding="utf-8") as f:
-            return json.load(f)
-    except (OSError, ValueError):
+def paint_target_hatch(
+    province_id_map: np.ndarray,
+    target_ids: list[int],
+    rgb: tuple[int, int, int],
+) -> tuple[Image.Image, dict[str, int]] | None:
+    """The target's realm darkened, hatched in a light tint of the coalition's
+    map colour and outlined in ink, cropped to its land, with the crop box on the full map. None when the
+    target holds no land."""
+    if not target_ids:
         return None
+    mask = np.isin(province_id_map, np.asarray(target_ids, dtype=province_id_map.dtype))
+    rows = np.flatnonzero(mask.any(axis=1))
+    if rows.size == 0:
+        return None
+    cols = np.flatnonzero(mask.any(axis=0))
+    margin = border_thickness + 3
+    height, width = province_id_map.shape
+    y0, y1 = max(0, int(rows[0]) - margin), min(height, int(rows[-1]) + 1 + margin)
+    x0, x1 = max(0, int(cols[0]) - margin), min(width, int(cols[-1]) + 1 + margin)
+    window = mask[y0:y1, x0:x1]
+    del mask
+
+    out = np.zeros((y1 - y0, x1 - x0, 4), dtype=np.uint8)
+    out[window] = TARGET_WASH_RGBA
+    ys, xs = np.nonzero(window)
+    # Measured on the full map, so the stripes line up however it is cropped.
+    offset = (xs + x0 + ys + y0) % HATCH_PERIOD
+    on_line = offset < HATCH_LINE
+    out[ys[on_line], xs[on_line]] = (*hover_rgb(rgb), HATCH_ALPHA)
+    edge = on_line & ((offset < HATCH_EDGE) | (offset >= HATCH_LINE - HATCH_EDGE))
+    out[ys[edge], xs[edge]] = HATCH_EDGE_RGBA
+
+    # The realm's outline, so its edge reads between the stripes too.
+    outline = np.zeros_like(out)
+    outline[window] = (0, 0, 0, 255)
+    stroke_opaque_union_array(outline, INK_DARK, border_thickness)
+    ring = (outline[:, :, 3] != 0) & ~window
+    out[ring] = INK_DARK
+
+    img, meta = crop_to_content(Image.fromarray(out, mode="RGBA"))
+    if meta is None:
+        return None
+    return img, {**meta, "x": meta["x"] + x0, "y": meta["y"] + y0}
 
 
-def _write_json_atomic(path: str, payload: dict) -> None:
+def _write_json_atomic(path: str, payload: object) -> None:
     os.makedirs(os.path.dirname(path), exist_ok=True)
     tmp = f"{path}.tmp"
     with open(tmp, "w", encoding="utf-8") as f:
@@ -493,46 +367,82 @@ def _write_json_atomic(path: str, payload: dict) -> None:
     os.replace(tmp, path)
 
 
-def create_coalition_map(
-    map_name: str,
-    filename: str = "coalition",
-    cache: MapGeometryCache | None = None,
-) -> None:
-    """Write `coalition_map.json` and the `coalition` raster for `map_name`.
+def _render_banners(map_name: str, records: dict[str, dict]) -> None:
+    folder = os.path.dirname(banner_image(map_name, MODE, "banner.png"))
+    os.makedirs(folder, exist_ok=True)
+    for name in os.listdir(folder):
+        if name.endswith(".png"):
+            os.remove(os.path.join(folder, name))
+    for record in records.values():
+        patterns = record.pop("banner patterns", None)
+        banner_id = record["rgb"].replace(",", "_")
+        if patterns:
+            create_banner(map_name, MODE, banner_id, patterns)
+            record["banner"] = banner_id
+        else:
+            record["banner"] = None
 
-    Runs with no coalitions too, so a coalition that ends clears its land.
-    Outside a regeneration (`cache` is None: an upload), skips the paint when
-    the compiled map is unchanged, so a repeated upload costs only the compile.
-    A regeneration always paints, since province shapes may have moved.
+
+def _clear_regions(map_name: str) -> None:
+    """Remove the mode's overlays and empty, rather than delete, their crop-box
+    sidecar: the composite needs one to know the mode is drawn, and empty."""
+    folder = os.path.dirname(region_image(map_name, MODE, "region.png"))
+    os.makedirs(folder, exist_ok=True)
+    for name in os.listdir(folder):
+        if name.endswith(".png"):
+            os.remove(os.path.join(folder, name))
+    sidecar = region_overlay_file(map_name, MODE)
+    os.makedirs(os.path.dirname(sidecar), exist_ok=True)
+    _write_json_atomic(sidecar, {})
+
+
+def run_coalition_mode(map_name: str, cache: MapGeometryCache | None = None) -> dict[str, dict]:
+    """Compile the uploaded coalitions and draw the coalition map mode.
+
+    Runs with no coalitions too, so a coalition that ends leaves the map.
     """
     validate_map(map_name)
-    compiled = compile_coalition_map(load_coalitions(map_name), load_compiled_nations(map_name))
-    compiled_path = defines_file(map_name, COALITION_MAP_FILE)
-    output_path = map_image(map_name, filename)
-    if cache is None and os.path.isfile(output_path) and _read_json(compiled_path) == compiled:
-        return
-
-    painted = paint_coalition_overlay(_province_id_map(map_name, cache), compiled)
-
-    os.makedirs(os.path.dirname(output_path), exist_ok=True)
-    tmp = f"{output_path}.tmp"
-    rgba_array_to_image(painted).save(tmp, "PNG")
-    os.replace(tmp, output_path)
-    # Written after the image: if the paint dies, the old file no longer
-    # matches and the next run paints again rather than skipping.
-    _write_json_atomic(compiled_path, compiled)
-
-    print(
-        f"Coalition map generated -> {output_path} | "
-        f"coalitions: {len(compiled['coalitions'])} | provinces: {len(compiled['provinces'])}"
+    records = compile_coalition_regions(
+        load_coalitions(map_name), load_compiled_nations(map_name), load_banner_patterns(map_name)
     )
+    _render_banners(map_name, records)
+    # Written first: the pick map and the region overlays read it.
+    _write_json_atomic(defines_file(map_name, REGIONS_FILE), records)
+
+    if cache is None:
+        cache = MapGeometryCache.load(map_name)
+    create_map(map_name, MODE, f"{MODE}_map", cache=cache)
+    if any(record["provinces"] for record in records.values()):
+        generate_regions(map_name, MODE, borders=True, cache=cache)
+    else:
+        # generate_regions skips a mode with nothing to draw, which would
+        # leave the last coalitions' overlays behind.
+        _clear_regions(map_name)
+
+    # After generate_regions, which empties the mode's folder on a full run.
+    for record in records.values():
+        rgb = _parse_rgb(record["rgb"])
+        painted = paint_target_hatch(cache.province_id_map, record["target_provinces"], rgb) if rgb else None
+        if painted is None:
+            continue
+        img, meta = painted
+        file_name = f"{sanitize_filename(rgb)}_target.png"
+        path = region_image(map_name, MODE, file_name)
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        img.save(path, "PNG")
+        record["target_path"] = file_name
+        record["target_overlay"] = meta
+    _write_json_atomic(defines_file(map_name, REGIONS_FILE), records)
+
+    print(f"Coalition map generated for '{map_name}': {len(records)} coalition(s)")
+    return records
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Generate the coalition map mode")
     parser.add_argument("--map", default="main")
     args = parser.parse_args(argv)
-    create_coalition_map(args.map)
+    run_coalition_mode(args.map)
     return 0
 
 

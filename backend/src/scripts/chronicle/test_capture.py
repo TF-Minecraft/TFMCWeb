@@ -456,7 +456,7 @@ def test_empty_json_containers_are_still_captured(env: Path, payload: str) -> No
 # --- empire + infestation_data: optional sources added to the captured set ---
 
 
-_NEW_FILES = ("empire", "infestation_data", "coalition_map")
+_NEW_FILES = ("empire", "infestation_data", "coalition")
 
 
 def test_new_optional_sources_are_captured_when_present(env: Path) -> None:
@@ -492,12 +492,12 @@ def test_empire_is_read_from_defines_not_input(env: Path) -> None:
             env / "defines" / MAP / f"{name}.json"
         )
         assert name not in store.OPTIONAL_CHRONICLE_FILES
-    # The coalition map is compiled from the coalitions upload, so it lives
-    # beside the other compiled files; a map with no coalitions has none.
-    assert capture_mod._source_path(MAP, "coalition_map") == str(
-        env / "defines" / MAP / "coalition_map.json"
+    # The coalition regions are compiled from the coalitions upload, so they
+    # live beside the other region files; a map with no coalitions has none.
+    assert capture_mod._source_path(MAP, "coalition") == str(
+        env / "defines" / MAP / "coalition.json"
     )
-    assert "coalition_map" in store.OPTIONAL_CHRONICLE_FILES
+    assert "coalition" in store.OPTIONAL_CHRONICLE_FILES
     # infestation_data is an upload, so it stays in input/.
     assert "infestation_data" not in capture_mod._DEFINES_SOURCES
     assert capture_mod._source_path(MAP, "infestation_data") == str(

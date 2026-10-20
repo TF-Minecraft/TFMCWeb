@@ -29,7 +29,7 @@ CHRONICLE_FILES: tuple[str, ...] = (
     "county",
     "duchy",
     "kingdom",
-    "coalition_map",
+    "coalition",
 )
 
 # Sources a map may legitimately never have. `empire.json` only exists once
@@ -47,7 +47,7 @@ OPTIONAL_CHRONICLE_FILES: frozenset[str] = frozenset(
     {
         "empire",
         "infestation_data",
-        "coalition_map",
+        "coalition",
     }
 )
 

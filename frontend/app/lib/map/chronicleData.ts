@@ -29,7 +29,7 @@ export const CHRONICLE_FILE_NAMES = [
   "county",
   "duchy",
   "kingdom",
-  "coalition_map",
+  "coalition",
 ] as const;
 
 export type ChronicleFileName = (typeof CHRONICLE_FILE_NAMES)[number];

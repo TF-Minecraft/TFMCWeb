@@ -6,6 +6,11 @@ from dataclasses import dataclass
 
 MODES = ["nation", "duchy", "kingdom", "county", "empire", "trade"]
 
+# Every mode drawn as region overlays, which the API serves and tiles alike.
+# `coalition` is not in MODES: it is drawn from the coalitions upload by
+# `coalitiongen.run_coalition_mode`, not by a regen type of its own.
+REGION_LAYER_MODES = [*MODES, "coalition"]
+
 
 @dataclass(frozen=True)
 class RegenSpec:

@@ -24,7 +24,15 @@ export {
   type LabelArcQuadratic,
 };
 
-export const LABEL_MAP_MODES = new Set<MapMode>(["nation", "county", "duchy", "kingdom", "empire", "trade"]);
+export const LABEL_MAP_MODES = new Set<MapMode>([
+  "nation",
+  "coalition",
+  "county",
+  "duchy",
+  "kingdom",
+  "empire",
+  "trade",
+]);
 
 export const TITLE_LABEL_MODES = new Set<MapMode>(["county", "duchy", "kingdom", "empire"]);
 
@@ -689,7 +697,8 @@ export function provincesForRegionLabelGeometry(
     return { provinces, scope: "full" };
   }
 
-  if (mapType === "county") {
+  // Counties and coalitions list their own provinces.
+  if (mapType === "county" || mapType === "coalition") {
     const provinces = regionData[regionId]?.provinces ?? [];
     if (!provinces.length) return null;
     return { provinces, scope: "full" };

@@ -4,7 +4,6 @@ import { useCallback, useEffect, useRef } from "react";
 import type { MapId } from "../components/map/types";
 import { fetchMapJson } from "@/lib/map/api";
 import { fetchCompiledProvinces } from "../lib/map/compiledProvinces";
-import { coalitionTooltipLines } from "../lib/map/chronicleCoalition";
 import { fetchChronicleDayFile } from "../lib/map/chronicleData";
 import { buildProvinceCountyNames, type CountyNameEntry } from "../lib/map/provinceCounty";
 
@@ -94,7 +93,7 @@ export type ProvinceHoverResult = {
 };
 
 /** Live modes whose hover reads `/compiled_data/provinces`. */
-const PROVINCE_FIGURE_MODES = new Set(["terrain", "fertility", "prosperity", "infestation", "coalition", "trade"]);
+const PROVINCE_FIGURE_MODES = new Set(["terrain", "fertility", "prosperity", "infestation", "trade"]);
 
 export function useProvinceHover({
   mapId,
@@ -186,7 +185,6 @@ export function useProvinceHover({
       mapType === "fertility" ||
       mapType === "prosperity" ||
       mapType === "infestation" ||
-      mapType === "coalition" ||
       mapType === "trade" ||
       mapType === "province";
 
@@ -195,7 +193,6 @@ export function useProvinceHover({
       mapType === "fertility" ||
       mapType === "prosperity" ||
       mapType === "infestation" ||
-      mapType === "coalition" ||
       mapType === "province";
 
     if (!active) return { consumed: false, lines: null };
@@ -219,8 +216,6 @@ export function useProvinceHover({
           lines.push("Infestation: None");
         }
       }
-
-      if (mapType === "coalition") lines.push(...coalitionTooltipLines(data));
 
       if ((mapType === "trade" || mapType === "prosperity") && data.trade_shares) {
         const entries = Object.entries(data.trade_shares as Record<string, number>).sort((a, b) => b[1] - a[1]);
