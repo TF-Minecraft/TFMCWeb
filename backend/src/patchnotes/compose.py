@@ -63,13 +63,15 @@ Structure, in this order:
 1. Title. {title_rule} Then `-# {week_line}` on its own line.
    Add a `## ` subtitle naming the biggest change only when one change clearly stands out. Most weeks need none.
    Then one or two sentences introducing the week.
-2. `# Balance Changes`: classes, attributes, skills and spells, new skills, and number changes that
-   matter in a fight (damage, health, armour, cooldowns, weapon stats). Act changes never go here;
-   see "The Act System" below.
-3. `# Gameplay Changes`: anything that changes how an existing system works, such as a node producing
+2. `# <act> Changes`, for example `# Act 2 Changes`: only when an act starts this week, meaning an act
+   change week or a week whose facts show a class cap rising to the next act's cap. It holds the act
+   changes described in "The Act System" below. Leave it out on every other week.
+3. `# Balance Changes`: classes, attributes, skills and spells, new skills, and number changes that
+   matter in a fight (damage, health, armour, cooldowns, weapon stats). Act changes never go here.
+4. `# Gameplay Changes`: anything that changes how an existing system works, such as a node producing
    faster, something dropping more, a new mechanic, crafting, professions, farming, animals, factions, trade.
-4. `# Fixes`: only the fixes players will notice most, as short bullets.
-5. End with exactly this line: `-# Smaller and technical changes are on the website: <{page_url}>`
+5. `# Fixes`: only the fixes players will notice most, as short bullets.
+6. End with exactly this line: `-# Smaller and technical changes are on the website: <{page_url}>`
 
 Rules:
 - Use `## ` and `### ` subheadings inside a section to group related changes, bullets with `- `, and
@@ -126,9 +128,9 @@ _ACT_SYSTEM = """The Act System:
   - a one-time class EXP catch-up for discoveries made while players were at the old cap.
 - Never list act changes under Balance Changes and never call them a buff or a nerf. A higher level cap
   means the season moved on, not that a class got stronger.
-- On an act change week, describe them together in the act section as what the new act brings.
-- On any other week, if the facts show a class cap rising to the next act's cap, treat it as that act
-  starting: describe it in its own short section named after the act, before Balance Changes.
+- When an act starts, describe them together in the `# <act> Changes` section as what the new act brings.
+  An act starts on an act change week, or on any other week whose facts show a class cap rising to the
+  next act's cap.
 - Changing how much of an act material drops within the same act is a Gameplay change. Explain it in act
   terms: the next act's materials stay rare on purpose until that act arrives.
 """
@@ -160,8 +162,7 @@ def _title_rule(label: str, act: str | None) -> str:
     if act:
         return (
             f"This is an act change week: start with `# {act}`, then `## Update {label}`. "
-            "Explain what the new act changes for players in its own short section before Balance Changes, "
-            "following the Act System below."
+            f"Explain what the new act changes for players in `# {act} Changes`, before Balance Changes."
         )
     return f"Start with `# Update {label}`."
 
