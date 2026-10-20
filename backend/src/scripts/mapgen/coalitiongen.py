@@ -22,7 +22,7 @@ import os
 import sys
 
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageFilter
 
 from ..bannergen.bannergen import create_banner
 from ..loader.nations import load_nations
@@ -54,6 +54,11 @@ HATCH_EDGE_RGBA = (*INK_DARK[:3], 200)
 # A dark wash under the stripes, so the coalition's own colour stands out even
 # where the land beneath is the same hue.
 TARGET_WASH_RGBA = (*INK_DARK[:3], 110)
+# The target's border: red, the map's colour for hostility (fort zones of
+# control are hatched in it too).
+TARGET_BORDER_RGBA = (196, 38, 46, 255)
+# Gaps narrower than this many pixels inside the target get no border.
+BORDER_CLOSE = 11
 # Used when neither the coalition nor its leader has a usable colour.
 FALLBACK_RGB = (150, 140, 120)
 
@@ -320,7 +325,7 @@ def paint_target_hatch(
     rgb: tuple[int, int, int],
 ) -> tuple[Image.Image, dict[str, int]] | None:
     """The target's realm darkened, hatched in a light tint of the coalition's
-    map colour and outlined in ink, cropped to its land, with the crop box on the full map. None when the
+    map colour and outlined in red, cropped to its land, with the crop box on the full map. None when the
     target holds no land."""
     if not target_ids:
         return None
@@ -346,12 +351,17 @@ def paint_target_hatch(
     edge = on_line & ((offset < HATCH_EDGE) | (offset >= HATCH_LINE - HATCH_EDGE))
     out[ys[edge], xs[edge]] = HATCH_EDGE_RGBA
 
-    # The realm's outline, so its edge reads between the stripes too.
+    # A red border around the realm, drawn on both sides of its edge so it
+    # reads over the land and over whatever lies outside.
+    # Outlined from a closed copy of the land: the province map leaves a few
+    # stray unowned pixels inside realms, each of which would get a red ring.
+    # Real gaps, rivers and lakes, are wider than the close and keep theirs.
+    closed = Image.fromarray(window.astype(np.uint8) * 255, mode="L")
+    closed = closed.filter(ImageFilter.MaxFilter(BORDER_CLOSE)).filter(ImageFilter.MinFilter(BORDER_CLOSE))
     outline = np.zeros_like(out)
-    outline[window] = (0, 0, 0, 255)
-    stroke_opaque_union_array(outline, INK_DARK, border_thickness)
-    ring = (outline[:, :, 3] != 0) & ~window
-    out[ring] = INK_DARK
+    outline[np.asarray(closed) > 0] = (0, 0, 0, 255)
+    stroke_opaque_union_array(outline, TARGET_BORDER_RGBA, border_thickness)
+    out[np.all(outline == TARGET_BORDER_RGBA, axis=-1)] = TARGET_BORDER_RGBA
 
     img, meta = crop_to_content(Image.fromarray(out, mode="RGBA"))
     if meta is None:

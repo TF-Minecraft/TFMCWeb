@@ -52,6 +52,7 @@ import MapZoomControls from "./map/shell/MapZoomControls";
 import MapLayersMenu, { type MapLayerToggle } from "./map/shell/MapLayersMenu";
 import MapDrillBreadcrumb from "./map/shell/MapDrillBreadcrumb";
 import { CoalitionPanelContent, type CoalitionRecord } from "./map/shell/CoalitionPanel";
+import { buildCoalitionTargetNotes } from "@/app/lib/map/coalitionTargets";
 import { RealmPanelContent } from "./map/shell/RealmPanel";
 import { PlacePanelContent } from "./map/shell/PlacePanel";
 import { GuildPanelContent } from "./map/shell/GuildPanel";
@@ -747,6 +748,12 @@ const MapViewer = ({ mapId, day = null, dayBar, dayActions }: MapViewerProps) =>
     setPickReadyFor(pickKey);
   }, [day, accessChecked, gateReason, mapCanvasMounted, chronicleGrid, regionData, pickKey]);
 
+  /** On the coalition map, target land says whose target it is. */
+  const coalitionTargetNote = useMemo(
+    () => (mapType === "coalition" ? buildCoalitionTargetNotes(regionData, selectedId) : undefined),
+    [mapType, regionData, selectedId],
+  );
+
   const {
     onMouseMove,
     onMouseLeave: onHoverLeave,
@@ -766,6 +773,7 @@ const MapViewer = ({ mapId, day = null, dayBar, dayActions }: MapViewerProps) =>
     provinceRunIndexRef,
     provinceRegionIndex,
     provincePickReady: provincePickActive && pickReadyFor === pickKey,
+    provinceNote: coalitionTargetNote,
     viewportCoordsRef,
     guildNameCacheRef,
     sessionToken: authToken,

@@ -10,7 +10,8 @@ import {
   type ProvinceRegionIndex,
   type RegionPickResult,
 } from "./regionPick";
-import type { ProvinceRunIndex } from "../lib/map/editor/buildProvinceIndex";
+import { provinceAt, type ProvinceRunIndex } from "../lib/map/editor/buildProvinceIndex";
+import type { ProvinceNote } from "../lib/map/coalitionTargets";
 import type { MapId, MapMode, MapObject, RegionRecord, FortMarker } from "../components/map/types";
 import type { HoverOverlay } from "../components/map/types";
 import type { MapMarker } from "../lib/mapMarkers";
@@ -37,6 +38,12 @@ type UseMapHoverProps = {
   provinceRegionIndex?: ProvinceRegionIndex | null;
   /** Flips when the run index becomes ready, so a still pointer re-hovers. */
   provincePickReady?: boolean;
+  /**
+   * Extra words about the province under the pointer, where province picking
+   * is active: shown on their own over land no region covers, and added to
+   * the region's tooltip over land one does. Coalitions use it for targets.
+   */
+  provinceNote?: (provinceId: number) => ProvinceNote | null;
   viewportCoordsRef: React.MutableRefObject<MapPickViewport | null>;
   guildNameCacheRef: React.MutableRefObject<Record<string, string>> | null;
   sessionToken?: string | null;
@@ -120,6 +127,16 @@ function provincePickAt(props: UseMapHoverProps, x: number, y: number): RegionPi
     props.mapId,
     props.regionData,
   );
+}
+
+/** The province under a map point, where province picking is active. */
+function provinceIdAt(props: UseMapHoverProps, x: number, y: number): number | null {
+  const runs = props.provinceRunIndexRef?.current;
+  if (!props.provinceRegionIndex || !runs) return null;
+  const point = mapPixelToPickCanvas(x, y, props.viewportCoordsRef.current?.mapSize, runs);
+  if (!point) return null;
+  const provinceId = provinceAt(runs, point.x, point.y);
+  return provinceId > 0 ? provinceId : null;
 }
 
 export function useMapHover(props: UseMapHoverProps) {
@@ -330,13 +347,26 @@ export function useMapHover(props: UseMapHoverProps) {
 
     const provincePicked = provincePickAt(current, coords.x, coords.y);
     if (provincePicked !== undefined) {
+      const provinceId = current.provinceNote ? provinceIdAt(current, coords.x, coords.y) : null;
+      const note = provinceId !== null ? current.provinceNote!(provinceId) : null;
+      if (note && !provincePicked) {
+        current.setHoveredOverlay(null);
+        current.setSelectedRegionId(null);
+        current.setCursorTooltip({ x: coords.screenX, y: coords.screenY, text: note.text, hint: note.hint });
+        setIsHoveringClickable(false);
+        return;
+      }
+      const notedTooltip: typeof setTooltip = note
+        ? (tooltip) =>
+            setTooltip(tooltip ? { ...tooltip, hint: [note.hint, tooltip.hint].filter(Boolean).join("\n") } : tooltip)
+        : setTooltip;
       const clickable = handleRegionHoverRef.current(
         surface,
         0,
         0,
         coords.screenX,
         coords.screenY,
-        setTooltip,
+        notedTooltip,
         undefined,
         provincePicked,
       );

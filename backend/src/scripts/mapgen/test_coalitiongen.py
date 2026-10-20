@@ -11,13 +11,13 @@ from .coalitiongen import (
     FALLBACK_RGB,
     HATCH_ALPHA,
     HATCH_EDGE_RGBA,
+    TARGET_BORDER_RGBA,
     TARGET_WASH_RGBA,
     coalition_rows,
     color_mapping,
     compile_coalition_regions,
     paint_target_hatch,
 )
-from ..util.border_paint import INK_DARK
 from ..util.display_colour import hover_rgb
 
 NATIONS = {
@@ -194,8 +194,9 @@ class TargetHatchTests(unittest.TestCase):
         self.assertIn((*hover_rgb((45, 105, 65)), HATCH_ALPHA), land)
         self.assertIn(HATCH_EDGE_RGBA, land)
         self.assertIn(TARGET_WASH_RGBA, land)
-        # The ink outline sits just outside the land.
-        self.assertEqual(tuple(out[oy + 20, ox - 1]), INK_DARK)
+        # The red border straddles the land's edge.
+        self.assertEqual(tuple(out[oy + 20, ox - 1]), TARGET_BORDER_RGBA)
+        self.assertEqual(tuple(out[oy + 20, ox + 1]), TARGET_BORDER_RGBA)
 
     def test_crop_box_is_on_the_full_map(self) -> None:
         _, meta = paint_target_hatch(self.ids, [5], (45, 105, 65))
