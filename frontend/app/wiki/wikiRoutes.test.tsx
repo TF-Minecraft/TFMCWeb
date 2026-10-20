@@ -8,7 +8,7 @@ import { describe, expect, it } from "vitest";
 
 import * as wikiComponents from "@/app/components/wiki";
 import WikiOverviewPage from "./page";
-import { navItems, overviewNavItem, wikiSections } from "./data";
+import { factionGuidePages, navItems, overviewNavItem, wikiSections } from "./data";
 
 type PageModule = { default: () => React.ReactNode | Promise<React.ReactNode> };
 
@@ -49,7 +49,11 @@ describe("public wiki page entry points", () => {
       /<time dateTime="\d{4}-\d{2}-\d{2}">\d{1,2} [A-Z][a-z]{2,3} \d{4}<\/time>/,
     );
 
-    const publicRoutes = new Set([overviewNavItem.href, ...discoveredPages.map((page) => page.href)]);
+    const publicRoutes = new Set([
+      overviewNavItem.href,
+      ...discoveredPages.map((page) => page.href),
+      ...factionGuidePages.map((page) => page.href),
+    ]);
     const links = [...html.matchAll(/href="(\/wiki(?:\/[^":#]*):)/g)].map((match) => match[1]);
     for (const target of links) {
       const normalized = target.replace(/\/$/, "");
@@ -94,7 +98,8 @@ describe("public wiki page entry points", () => {
     expect(pageFiles.length).toBeGreaterThan(1);
     for (const pageFile of pageFiles) {
       const source = readFileSync(pageFile, "utf8");
-      expect(source, `${pageFile} must use WikiPage`).toMatch(/<WikiPage\b/);
+      // Factions guide subpages use FactionsGuidePage, which renders WikiPage.
+      expect(source, `${pageFile} must use WikiPage`).toMatch(/<(?:WikiPage|FactionsGuidePage)\b/);
     }
   });
 
