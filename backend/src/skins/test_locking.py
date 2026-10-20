@@ -296,7 +296,7 @@ def test_a_grace_expiry_does_not_remove_a_rejoined_player(env):
 
 
 def test_a_war_code_redeemed_meanwhile_is_not_revoked(env, monkeypatch):
-    minted = declare_codes.mint("attackers", "defenders", "war")
+    minted = declare_codes.mint("attackers", "defenders", "subjugate")
     gate = Gate(monkeypatch, "UPDATE war_declaration_codes")
     one, two = race(gate, lambda: declare_codes.redeem(minted["code"], "attackers", "defenders", war_id="9"),
                     lambda: declare_codes.revoke(minted["id"]), ROW)
@@ -306,7 +306,7 @@ def test_a_war_code_redeemed_meanwhile_is_not_revoked(env, monkeypatch):
 
 
 def test_a_war_code_is_redeemed_once(env, monkeypatch):
-    minted = declare_codes.mint("attackers", "defenders", "war")
+    minted = declare_codes.mint("attackers", "defenders", "subjugate")
     gate = Gate(monkeypatch, "UPDATE war_declaration_codes")
     redeem = lambda: declare_codes.redeem(minted["code"], "attackers", "defenders")  # noqa: E731
     made, errors = outcome(*race(gate, redeem, redeem, ROW))

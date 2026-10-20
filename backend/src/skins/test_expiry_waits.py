@@ -192,7 +192,7 @@ def test_drink_rechecks_expiry_after_texture_row_wait(env):
 
 @pytest.mark.parametrize("wait_on", ["row", "update"])
 def test_war_redemption_rechecks_expiry_after_every_wait(env, wait_on):
-    issued = declare_codes.mint("attack", "defend", "war")
+    issued = declare_codes.mint("attack", "defend", "subjugate")
     expiry = deadline("war_declaration_codes")
     hold = lambda c: c.execute("SELECT id FROM war_declaration_codes FOR UPDATE" if wait_on == "row" else
                                "LOCK TABLE war_declaration_codes IN SHARE MODE")
