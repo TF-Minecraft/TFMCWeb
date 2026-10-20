@@ -14,6 +14,8 @@ import {
 import { buildExtrudedItemGroup, loadImageDataFromFile } from "../../../lib/skins/extrudeItem";
 import { resolveFlatDisplayTab, type FlatDisplayKind } from "../../../lib/skins/flatItemDisplay";
 import { resolveShieldBlockingTab } from "../../../lib/skins/shieldBlockingDisplay";
+import { loadAnimatedFrames } from "../../../lib/skins/animatedTexture";
+import { frameIndexAt, prefersReducedMotion, type ScheduledFrame } from "../../../lib/textureAnimation";
 import {
   buildJavaModelGroup,
   disposeObject3D,
@@ -41,6 +43,9 @@ export type FlatFrameId = "texture" | "pull_0" | "pull_1" | "pull_2" | "charged"
 
 export type FlatFrames = Partial<Record<FlatFrameId, File | null>>;
 
+/** 3D bow / crossbow: one model per draw stage, keyed like the flat frames. */
+export type FrameModels = Partial<Record<FlatFrameId, File | null>>;
+
 type ItemSlot = "model" | "thirdperson_righthand" | "thirdperson_lefthand" | "head";
 
 type GunSlot = "model" | "carry_right" | "carry_left" | "reload_right" | "reload_left" | "aim_right" | "aim_left";
@@ -57,6 +62,12 @@ type Props = {
   /** Standby / single PNG for flat kinds (optional if flatFrames.texture set). */
   flatTextureFile?: File | null;
   flatFrames?: FlatFrames;
+  /** Optional `.mcmeta` for each flat frame texture. */
+  flatMcmeta?: FlatFrames;
+  /** Optional `.mcmeta` animating `textureFile` on a 3D model. */
+  textureMcmetaFile?: File | null;
+  /** 3D bow / crossbow models per draw stage (all share `textureFile`). */
+  frameModels?: FrameModels;
   /** Thirdperson grip Y for large_handheld (2.5–5.5). */
   gripY?: number | null;
   /** Tinted potion preview color (#RRGGBB); avoids rebuilding mesh on each change. */
@@ -91,7 +102,28 @@ type ContentRefs = {
   steveTexture: THREE.Texture | null;
   potionCanvas: HTMLCanvasElement | null;
   floatingRoot: THREE.Group | null;
+  animation: PreviewAnimation | null;
 };
+
+/** A built animated texture: shows source frame `index` when asked. */
+type PreviewAnimation = {
+  schedule: ScheduledFrame[];
+  show: (index: number) => void;
+  dispose: () => void;
+  current: number;
+  startedAt: number;
+};
+
+const EMPTY_CONTENT = (): ContentRefs => ({
+  itemRoot: null,
+  itemTexture: null,
+  javaJson: null,
+  steveRoot: null,
+  steveTexture: null,
+  potionCanvas: null,
+  floatingRoot: null,
+  animation: null,
+});
 
 const FRAME_CHIPS: { id: FlatFrameId; label: string }[] = [
   { id: "texture", label: "Standby" },
@@ -121,8 +153,19 @@ function flatDisplayKind(kind?: DisplayKind, preset?: FlatDisplayKind): FlatDisp
   return preset ?? kind ?? "handheld";
 }
 
+function isRanged3dKind(kind?: DisplayKind): boolean {
+  return kind === "bow_3d" || kind === "crossbow_3d";
+}
+
 function isMultiFrameKind(kind?: DisplayKind): boolean {
-  return kind === "bow" || kind === "large_bow" || kind === "crossbow";
+  return kind === "bow" || kind === "large_bow" || kind === "crossbow" || isRanged3dKind(kind);
+}
+
+/** Flat pose family for a 3D bow / crossbow. */
+function poseKind(kind?: DisplayKind): DisplayKind | undefined {
+  if (kind === "bow_3d") return "bow";
+  if (kind === "crossbow_3d") return "crossbow";
+  return kind;
 }
 
 function fileIdentity(file: File | null | undefined): string {
@@ -197,6 +240,8 @@ function disposeContent(content: ContentRefs, scene?: THREE.Scene): void {
   content.itemTexture = null;
   content.javaJson = null;
   content.potionCanvas = null;
+  content.animation?.dispose();
+  content.animation = null;
 }
 
 function itemSlotsForKind(kind?: DisplayKind): { id: ItemSlot; label: string }[] {
@@ -288,12 +333,14 @@ function availableFrames(
   flatFrames?: FlatFrames,
   flatTextureFile?: File | null,
   textureFile?: File | null,
+  frameModels?: FrameModels,
 ): FlatFrameId[] {
   if (!isMultiFrameKind(kind)) return ["texture"];
   const ids: FlatFrameId[] =
-    kind === "crossbow"
+    kind === "crossbow" || kind === "crossbow_3d"
       ? ["texture", "pull_0", "pull_1", "pull_2", "charged"]
       : ["texture", "pull_0", "pull_1", "pull_2"];
+  if (isRanged3dKind(kind)) return ids.filter((id) => Boolean(frameModels?.[id]));
   return ids.filter((id) => Boolean(resolveFlatTextureFile(id, flatFrames, flatTextureFile, textureFile)));
 }
 
@@ -361,6 +408,9 @@ export default function ModelPreview({
   flatDisplayPreset,
   flatTextureFile = null,
   flatFrames,
+  flatMcmeta,
+  textureMcmetaFile = null,
+  frameModels,
   gripY = null,
   potionTintColor = null,
   onPreviewError,
@@ -375,15 +425,7 @@ export default function ModelPreview({
 
   const hostRef = useRef<HTMLDivElement>(null);
   const runtimeRef = useRef<ViewerRuntime | null>(null);
-  const contentRef = useRef<ContentRefs>({
-    itemRoot: null,
-    itemTexture: null,
-    javaJson: null,
-    steveRoot: null,
-    steveTexture: null,
-    potionCanvas: null,
-    floatingRoot: null,
-  });
+  const contentRef = useRef<ContentRefs>(EMPTY_CONTENT());
   const heldItemRef = useRef<THREE.Group | null>(null);
   const heldMirrorLeftRef = useRef(false);
   const steveLiveRef = useRef<SteveMannequin | null>(null);
@@ -408,8 +450,8 @@ export default function ModelPreview({
   showOuterLayerRef.current = showOuterLayer;
 
   const frameOptions = useMemo(
-    () => availableFrames(kind, flatFrames, flatTextureFile, textureFile),
-    [kind, flatFrames, flatTextureFile, textureFile],
+    () => availableFrames(kind, flatFrames, flatTextureFile, textureFile, frameModels),
+    [kind, flatFrames, flatTextureFile, textureFile, frameModels],
   );
 
   const previewSlots = useMemo(() => {
@@ -419,9 +461,13 @@ export default function ModelPreview({
 
   const pipelineKey = `${Number(gun)}-${Number(flat)}-${kind ?? ""}-${displayKind}`;
 
-  const activeModelFile = resolveActiveModelFile(gun, slot, modelFile, gunModels);
+  const ranged3d = isRanged3dKind(kind);
+  const activeModelFile = ranged3d
+    ? (frameModels?.[frame] ?? null)
+    : resolveActiveModelFile(gun, slot, modelFile, gunModels);
 
   const activeFlatTexture = flat ? resolveFlatTextureFile(frame, flatFrames, flatTextureFile, textureFile) : null;
+  const activeMcmeta = flat ? (flatMcmeta?.[frame] ?? null) : textureMcmetaFile;
 
   const hasPreview = flat ? Boolean(activeFlatTexture) || potionTintMode : Boolean(activeModelFile && textureFile);
 
@@ -431,10 +477,10 @@ export default function ModelPreview({
     const placement = meshOnMannequin ? "m" : "f";
     if (potionTintMode) return "potion:generated";
     if (flat) {
-      return `flat:${fileIdentity(activeFlatTexture)}:${placement}`;
+      return `flat:${fileIdentity(activeFlatTexture)}:${fileIdentity(activeMcmeta)}:${placement}`;
     }
-    return `3d:${fileIdentity(activeModelFile)}:${fileIdentity(textureFile)}:${placement}`;
-  }, [potionTintMode, flat, activeFlatTexture, activeModelFile, textureFile, meshOnMannequin]);
+    return `3d:${fileIdentity(activeModelFile)}:${fileIdentity(textureFile)}:${fileIdentity(activeMcmeta)}:${placement}`;
+  }, [potionTintMode, flat, activeFlatTexture, activeModelFile, textureFile, activeMcmeta, meshOnMannequin]);
 
   const layoutSignature = `${slot}:${frame}:${shieldMode}:${fileIdentity(playerSkinFile)}`;
 
@@ -482,6 +528,7 @@ export default function ModelPreview({
       texture: THREE.Texture;
       javaJson: JavaModelJson | null;
       canvas: HTMLCanvasElement | null;
+      animation: PreviewAnimation | null;
     }> => {
       if (flat) {
         if (potionTintMode && tintColor) {
@@ -494,10 +541,45 @@ export default function ModelPreview({
           const root = buildExtrudedItemGroup(imageData, texture, {
             center: !onMannequin,
           });
-          return { root, texture, javaJson: null, canvas };
+          return { root, texture, javaJson: null, canvas, animation: null };
         }
         if (!activeFlatTexture) {
           throw new Error("No texture for selected frame");
+        }
+        if (activeMcmeta) {
+          // The outline can change per frame, so each frame gets its own mesh.
+          const animated = await loadAnimatedFrames(activeFlatTexture, activeMcmeta);
+          const root = new THREE.Group();
+          root.name = "animatedItem";
+          const textures = animated.frames.map(textureFromCanvas);
+          const frameRoots = animated.frames.map((canvas, i) => {
+            const frameRoot = buildExtrudedItemGroup(canvasImageData(canvas), textures[i]!, {
+              center: !onMannequin,
+            });
+            frameRoot.visible = false;
+            root.add(frameRoot);
+            return frameRoot;
+          });
+          const animation: PreviewAnimation = {
+            schedule: animated.schedule,
+            current: -1,
+            startedAt: performance.now(),
+            show(index) {
+              frameRoots.forEach((frameRoot, i) => {
+                frameRoot.visible = i === index;
+              });
+              this.current = index;
+            },
+            dispose() {},
+          };
+          animation.show(animated.schedule[0]!.index);
+          return {
+            root,
+            texture: textures[0]!,
+            javaJson: null,
+            canvas: null,
+            animation,
+          };
         }
         const loaded = await loadImageDataFromFile(activeFlatTexture);
         const root = buildExtrudedItemGroup(loaded.imageData, loaded.texture, {
@@ -508,6 +590,7 @@ export default function ModelPreview({
           texture: loaded.texture,
           javaJson: null,
           canvas: null,
+          animation: null,
         };
       }
       if (!activeModelFile || !textureFile) {
@@ -515,11 +598,49 @@ export default function ModelPreview({
       }
       const modelText = await activeModelFile.text();
       const javaJson = parseJavaModelJson(modelText);
+      if (activeMcmeta) {
+        // Model UVs span one frame, so swapping whole frame images animates it.
+        const animated = await loadAnimatedFrames(textureFile, activeMcmeta);
+        const textures = animated.frames.map((canvas) => {
+          const texture = new THREE.Texture(canvas);
+          texture.magFilter = THREE.NearestFilter;
+          texture.minFilter = THREE.NearestFilter;
+          texture.generateMipmaps = false;
+          texture.colorSpace = THREE.SRGBColorSpace;
+          texture.needsUpdate = true;
+          return texture;
+        });
+        const firstIndex = animated.schedule[0]!.index;
+        const first = textures[firstIndex]!;
+        const root = buildJavaModelGroup(javaJson, first, first.image.width, first.image.height, {
+          center: !onMannequin,
+        });
+        const animation: PreviewAnimation = {
+          schedule: animated.schedule,
+          current: firstIndex,
+          startedAt: performance.now(),
+          show(index) {
+            const texture = textures[index];
+            if (texture) updateMeshTexture(root, texture);
+            this.current = index;
+          },
+          dispose() {
+            textures.forEach((texture) => texture.dispose());
+          },
+        };
+        return { root, texture: first, javaJson, canvas: null, animation };
+      }
       const loaded = await loadTextureFromFile(textureFile);
       const root = buildJavaModelGroup(javaJson, loaded.texture, loaded.width, loaded.height, { center: !onMannequin });
-      return { root, texture: loaded.texture, javaJson, canvas: null };
+      return {
+        root,
+        texture: loaded.texture,
+        javaJson,
+        canvas: null,
+        animation: null,
+      };
     },
-    [flat, potionTintMode, activeFlatTexture, activeModelFile, textureFile],
+    [flat, potionTintMode, activeFlatTexture, activeModelFile, textureFile, activeMcmeta],
   );
 
   const applyLayout = useCallback(
@@ -565,8 +686,8 @@ export default function ModelPreview({
 
         let pose: SteveArmPose;
         let chargeProgress: number | undefined;
-        if (flat) {
-          const resolved = resolveFlatArmPose(kind, frame, leftHand);
+        if (flat || ranged3d) {
+          const resolved = resolveFlatArmPose(poseKind(kind), frame, leftHand);
           pose = resolved.pose;
           chargeProgress = resolved.chargeProgress;
         } else if (kind === "shield" && slot !== "head") {
@@ -652,7 +773,7 @@ export default function ModelPreview({
         restoreOrbit(camera, controls, orbitStateRef.current);
       }
     },
-    [slot, gun, flat, kind, frame, shieldMode, displayKind, playerSkinFile],
+    [slot, gun, flat, ranged3d, kind, frame, shieldMode, displayKind, playerSkinFile],
   );
 
   // Viewer lifecycle: renderer + camera + controls persist until pipeline changes.
@@ -673,13 +794,17 @@ export default function ModelPreview({
     reportError(null);
 
     const transparent = stageRef.current;
+    const reducedMotion = prefersReducedMotion();
     const scene = new THREE.Scene();
     scene.background = transparent ? null : new THREE.Color(0x0f1c16);
     scene.add(new THREE.AmbientLight(0xffffff, 1.1));
 
     const widthPx = host.clientWidth || 320;
     const heightPx = (transparent && host.clientHeight) || 240;
-    const renderer = new THREE.WebGLRenderer({ antialias: false, alpha: transparent });
+    const renderer = new THREE.WebGLRenderer({
+      antialias: false,
+      alpha: transparent,
+    });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.setSize(widthPx, heightPx, false);
     renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -715,6 +840,11 @@ export default function ModelPreview({
     const tick = () => {
       if (cancelled) return;
       runtime.raf = requestAnimationFrame(tick);
+      const animation = contentRef.current.animation;
+      if (animation && !reducedMotion) {
+        const index = frameIndexAt(animation.schedule, performance.now() - animation.startedAt);
+        if (index !== animation.current) animation.show(index);
+      }
       controls.update();
       renderer.render(scene, camera);
     };
@@ -728,15 +858,7 @@ export default function ModelPreview({
       runtime.renderer.dispose();
       runtimeRef.current = null;
       disposeContent(contentRef.current, runtime.scene);
-      contentRef.current = {
-        itemRoot: null,
-        itemTexture: null,
-        javaJson: null,
-        steveRoot: null,
-        steveTexture: null,
-        potionCanvas: null,
-        floatingRoot: null,
-      };
+      contentRef.current = EMPTY_CONTENT();
       heldItemRef.current = null;
       steveLiveRef.current = null;
       orbitInitializedRef.current = false;
@@ -764,6 +886,7 @@ export default function ModelPreview({
         if (gen !== syncGenRef.current) {
           disposeObject3D(built.root);
           built.texture.dispose();
+          built.animation?.dispose();
           return;
         }
 
@@ -777,6 +900,7 @@ export default function ModelPreview({
           steveTexture: null,
           potionCanvas: built.canvas,
           floatingRoot: null,
+          animation: built.animation,
         };
         setContentVersion((v) => v + 1);
         reportError(null);
@@ -864,7 +988,7 @@ export default function ModelPreview({
   }
 
   const mannequinPreview = isMannequinSlot(slot, gun);
-  const showFrameChips = flat && isMultiFrameKind(kind) && frameOptions.length > 1;
+  const showFrameChips = (flat || ranged3d) && isMultiFrameKind(kind) && frameOptions.length > 1;
   const showShieldMode = kind === "shield" && mannequinPreview;
 
   return (

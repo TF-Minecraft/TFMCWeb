@@ -11,6 +11,7 @@ from src import database
 
 from .db import SKINS_DIR
 from .codes import CodeError, SCOPE_LORE_UPLOAD, api_time, lock_code_for_submission, mark_code_consumed
+from .base_sets import base_sets_by_kind
 from .discord_link import get_link_for_uuid
 from .naming import (
     ARMOR_METALS,
@@ -23,6 +24,7 @@ from .naming import (
     SlugError,
     armor_tier_base_set,
     armor_tier_label,
+    is_armor_single_set,
     build_staff_submission_id,
     build_submission_id,
     build_submission_id_for_realm,
@@ -37,7 +39,9 @@ from .storage import (
     CROSSBOW_KINDS,
     GUN_KIND,
     GUN_MODEL_FIELDS,
+    RANGED_3D_KINDS,
     StorageError,
+    ranged_3d_model_fields,
     write_submission_files,
 )
 from src.name_colours import NameColourError, validate_name_colours
@@ -50,23 +54,6 @@ _BLOCK_STATUSES = ("pending", "approved")
 ALLOWED_STYLES = frozenset(
     {"bold", "italic", "underline", "underlined", "strikethrough", "strike"}
 )
-_HANDHELD_BASES = frozenset(
-    {
-        "swords",
-        "lutes",
-        "battleaxes",
-        "daggers",
-        "warhammers",
-        "shortswords",
-        "hatchets",
-        "hoes",
-        "knives",
-    }
-)
-_LARGE_HANDHELD_BASES = frozenset(
-    {"spears", "polearms", "greathammers", "staffs"}
-)
-
 ALLOWED_KINDS = frozenset(
     {
         "armor_set",
@@ -75,6 +62,8 @@ ALLOWED_KINDS = frozenset(
         "bow",
         "large_bow",
         "crossbow",
+        "bow_3d",
+        "crossbow_3d",
         "item_3d",
         "shield",
         "helmet_3d",
@@ -84,19 +73,8 @@ ALLOWED_KINDS = frozenset(
     }
 )
 # Armour has no base_set: its sets come from tiers (see _validate_tiers).
-BASE_SETS: dict[str, frozenset[str]] = {
-    "handheld": _HANDHELD_BASES,
-    "large_handheld": _LARGE_HANDHELD_BASES,
-    "bow": frozenset({"shortbows"}),
-    "large_bow": frozenset({"longbows"}),
-    "crossbow": frozenset({"crossbows"}),
-    "item_3d": _HANDHELD_BASES | _LARGE_HANDHELD_BASES,
-    "shield": frozenset({"shields"}),
-    "helmet_3d": frozenset({"helmets"}),
-    "mask": frozenset({"masks"}),
-    "gun": frozenset({"rifles", "pistols", "shotguns", "launchers"}),
-    "book": frozenset({"books"}),
-}
+# Everything else comes from shared/skins/base_sets.json.
+BASE_SETS: dict[str, frozenset[str]] = base_sets_by_kind()
 MODEL_3D_KINDS = frozenset({"item_3d", "shield", "helmet_3d", "mask"})
 GUN_FIELDS = ("texture",) + GUN_MODEL_FIELDS
 GRIP_Y_MIN = 0.0
@@ -282,9 +260,17 @@ def _validate_base_set(kind: str, base_set: str | None) -> str:
 
 
 def _validate_tiers(raw: list[str] | None) -> list[str]:
-    """One metal line: ``{type}_{metal}`` tiers, at most one per type, one metal."""
+    """One metal line (``{type}_{metal}`` tiers, at most one per type) or one single set."""
     if not raw:
         raise SubmissionError(f"armor_set requires 1–{MAX_ARMOR_SETS} sets")
+    singles = [t for t in raw if is_armor_single_set((t or "").strip().lower())]
+    if singles:
+        if len(raw) != 1:
+            raise SubmissionError(
+                f"'{singles[0].strip().lower()}' is a set of its own; "
+                "upload it without other armour sets"
+            )
+        return [singles[0].strip().lower()]
     if len(raw) > MAX_ARMOR_SETS:
         raise SubmissionError(f"at most {MAX_ARMOR_SETS} armor sets")
     out: list[str] = []
@@ -593,8 +579,8 @@ def create_submission(
         raise SubmissionError("kind 'item' is disabled")
     if kind not in ALLOWED_KINDS:
         raise SubmissionError(
-            "kind must be armor_set, handheld, large_handheld, "
-            "bow, large_bow, crossbow, item_3d, shield, helmet_3d, mask, gun, or book"
+            "kind must be armor_set, handheld, large_handheld, bow, large_bow, "
+            "crossbow, bow_3d, crossbow_3d, item_3d, shield, helmet_3d, mask, gun, or book"
         )
 
     try:
@@ -717,6 +703,14 @@ def create_submission(
                 raise SubmissionError("Missing file: texture")
             if "model" not in files_bytes:
                 raise SubmissionError("Missing file: model")
+        elif kind in RANGED_3D_KINDS:
+            missing = [
+                f
+                for f in ("texture",) + ranged_3d_model_fields(kind)
+                if f not in files_bytes
+            ]
+            if missing:
+                raise SubmissionError(f"Missing files: {', '.join(missing)}")
         elif kind == GUN_KIND:
             missing = [f for f in GUN_FIELDS if f not in files_bytes]
             if missing:
@@ -1090,7 +1084,7 @@ def _get_row(submission_id: str) -> dict | None:
 
 
 def _list_asset_files(submission_id: str) -> list[str]:
-    """PNG + model JSON for plugin download (excludes meta.json)."""
+    """PNG, .png.mcmeta and model JSON for plugin download (excludes meta.json)."""
     out_dir = SKINS_DIR / submission_id
     if not out_dir.is_dir():
         return []
@@ -1100,6 +1094,7 @@ def _list_asset_files(submission_id: str) -> list[str]:
         if p.is_file()
         and (
             p.suffix.lower() == ".png"
+            or p.name.lower().endswith(".png.mcmeta")
             or (
                 p.suffix.lower() == ".json"
                 and p.name.lower() != "meta.json"

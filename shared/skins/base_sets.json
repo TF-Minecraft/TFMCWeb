@@ -1,0 +1,78 @@
+{
+  "comment": "What a player skin can apply to. id is the ArmourShop base-sets.yml key, kinds are the upload kinds that may target it. Read by backend/src/skins/base_sets.py and frontend/lib/skins/baseSets.ts.",
+  "groups": [
+    { "id": "melee", "label": "Melee" },
+    { "id": "magic", "label": "Magic" },
+    { "id": "ranged", "label": "Ranged" },
+    { "id": "tools", "label": "Tools" },
+    { "id": "other", "label": "Other" }
+  ],
+  "base_sets": [
+    { "id": "swords", "label": "Swords", "group": "melee", "kinds": ["handheld", "item_3d"] },
+    { "id": "shortswords", "label": "Shortswords", "group": "melee", "kinds": ["handheld", "item_3d"] },
+    { "id": "longswords", "label": "Longswords", "group": "melee", "kinds": ["large_handheld", "item_3d"] },
+    { "id": "daggers", "label": "Daggers", "group": "melee", "kinds": ["handheld", "item_3d"] },
+    { "id": "battleaxes", "label": "Battleaxes", "group": "melee", "kinds": ["handheld", "item_3d"] },
+    { "id": "greataxes", "label": "Greataxes", "group": "melee", "kinds": ["large_handheld", "item_3d"] },
+    { "id": "warhammers", "label": "Warhammers", "group": "melee", "kinds": ["handheld", "item_3d"] },
+    { "id": "greathammers", "label": "Greathammers", "group": "melee", "kinds": ["large_handheld", "item_3d"] },
+    { "id": "spears", "label": "Spears", "group": "melee", "kinds": ["large_handheld", "item_3d"] },
+    { "id": "polearms", "label": "Polearms", "group": "melee", "kinds": ["large_handheld", "item_3d"] },
+    { "id": "staffs", "label": "Staffs", "group": "magic", "kinds": ["large_handheld", "item_3d"] },
+    { "id": "wands", "label": "Wands", "group": "magic", "kinds": ["handheld", "item_3d"] },
+    { "id": "mage blades", "label": "Mage blades", "group": "magic", "kinds": ["handheld", "item_3d"] },
+    { "id": "shortbows", "label": "Shortbows", "group": "ranged", "kinds": ["bow", "bow_3d"] },
+    { "id": "longbows", "label": "Longbows", "group": "ranged", "kinds": ["large_bow", "bow_3d"] },
+    { "id": "crossbows", "label": "Crossbows", "group": "ranged", "kinds": ["crossbow", "crossbow_3d"] },
+    { "id": "rifles", "label": "Rifles", "group": "ranged", "kinds": ["gun"] },
+    { "id": "pistols", "label": "Pistols", "group": "ranged", "kinds": ["gun"] },
+    { "id": "shotguns", "label": "Shotguns", "group": "ranged", "kinds": ["gun"] },
+    { "id": "launchers", "label": "Launchers", "group": "ranged", "kinds": ["gun"] },
+    { "id": "hatchets", "label": "Hatchets", "group": "tools", "kinds": ["handheld", "item_3d"] },
+    { "id": "hoes", "label": "Hoes", "group": "tools", "kinds": ["handheld", "item_3d"] },
+    { "id": "pickaxes", "label": "Pickaxes", "group": "tools", "kinds": ["handheld", "item_3d"] },
+    { "id": "shovels", "label": "Shovels", "group": "tools", "kinds": ["handheld", "item_3d"] },
+    { "id": "knives", "label": "Knives", "group": "tools", "kinds": ["handheld", "item_3d"] },
+    { "id": "fishing rods", "label": "Fishing rods", "group": "tools", "kinds": ["handheld", "item_3d"] },
+    { "id": "shields", "label": "Shields", "group": "other", "kinds": ["shield"] },
+    { "id": "helmets", "label": "Helmets", "group": "other", "kinds": ["helmet_3d"] },
+    { "id": "masks", "label": "Masks", "group": "other", "kinds": ["mask"] },
+    { "id": "battle standards", "label": "Battle standards", "group": "other", "kinds": ["item_3d"] },
+    { "id": "lutes", "label": "Lutes", "group": "other", "kinds": ["handheld", "item_3d"] },
+    { "id": "instruments", "label": "Instruments", "group": "other", "kinds": ["handheld", "item_3d"] },
+    { "id": "books", "label": "Books", "group": "other", "kinds": ["book"] }
+  ],
+  "armor": {
+    "comment": "Metal lines pick up to one set per type of one metal (tier light_iron, base set 'light iron'). Single sets are one tier each; their base set is the tier with underscores as spaces.",
+    "types": [
+      { "id": "light", "label": "Light" },
+      { "id": "medium", "label": "Medium" },
+      { "id": "heavy", "label": "Heavy" },
+      { "id": "infantry", "label": "Infantry" },
+      { "id": "mage", "label": "Mage" }
+    ],
+    "metals": [
+      { "id": "iron", "label": "Iron" },
+      { "id": "steel", "label": "Steel" },
+      { "id": "bronze", "label": "Bronze" },
+      { "id": "abyssalite", "label": "Abyssalite" },
+      { "id": "mythril", "label": "Mythril" }
+    ],
+    "single_sets": [
+      { "id": "leather", "label": "Leather", "detail": "Leather armour" },
+      { "id": "illusion", "label": "Illusion", "detail": "Illusion mage robes" },
+      { "id": "spiritual", "label": "Spiritual", "detail": "Spiritual mage robes" },
+      { "id": "arcanum", "label": "Arcanum", "detail": "Arcanum mage robes" },
+      { "id": "bloodmagic", "label": "Bloodmagic", "detail": "Bloodmagic mage robes" },
+      { "id": "necromancy", "label": "Necromancy", "detail": "Necromancy mage robes" },
+      { "id": "shadowmancy", "label": "Shadowmancy", "detail": "Shadowmancy mage robes" },
+      { "id": "light_mage", "label": "Light Mage", "detail": "Illusion, spiritual and arcanum robes" },
+      { "id": "dark_mage", "label": "Dark Mage", "detail": "Bloodmagic, necromancy and shadowmancy robes" },
+      { "id": "wild_mage", "label": "Wild Mage", "detail": "All six school robes" }
+    ]
+  },
+  "limits": {
+    "ranged_3d_total_bytes": 61440,
+    "mcmeta_max_bytes": 2048
+  }
+}

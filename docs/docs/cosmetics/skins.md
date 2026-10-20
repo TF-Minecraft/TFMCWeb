@@ -6,7 +6,7 @@ End-to-end design for donator texture submissions on **TFMCWeb** (store + review
 
 ## Goals
 
-- Donators submit **armor sets** (2D, optional per-tier 3D helmet), **weapon/tool skins** (`handheld` / `large_handheld` / `bow` / `large_bow` / `crossbow`), **3D kinds** (`item_3d` / `shield` / `helmet_3d` / `mask`), **guns** (`gun`), and **books** (`book`; unsigned + signed covers).
+- Donators submit **armor sets** (2D, optional per-tier 3D helmet), **weapon/tool skins** (`handheld` / `large_handheld` / `bow` / `large_bow` / `crossbow`), **3D kinds** (`item_3d` / `shield` / `helmet_3d` / `mask` / `bow_3d` / `crossbow_3d`), **guns** (`gun`), and **books** (`book`; unsigned + signed covers).
 - Players start a skin from the Profile wardrobe ([below](#profile-wardrobe)) or with a TFMCWeb code (`/token create skin` or **`/token create skin staff`**); either is bound to the player UUID.
 - **Player:** staff approve/deny in Discord; ArmourShop writes **`tfmc_submissions`** + `ps_*` + LP.
 - **Staff curated:** auto-approve (no bot); category + scroll on upload; writes **`tfmc_armorshop`** into real ArmourShop categories.
@@ -22,6 +22,8 @@ End-to-end design for donator texture submissions on **TFMCWeb** (store + review
 | `bow` | `texture`, `pull_0`, `pull_1`, `pull_2` | **16×16** | |
 | `large_bow` | same four fields | **32×32** | |
 | `crossbow` | bow four + `charged` | **16×16** | |
+| `bow_3d` | `texture` + `model`, `pull_0_model`, `pull_1_model`, `pull_2_model` | All files together ≤ **61440 bytes**, every rank | `shortbows` / `longbows`; `BOW` + `model_path` |
+| `crossbow_3d` | `bow_3d` fields + `charged_model` | Same fixed total | `crossbows`; `CROSSBOW` + `model_path` |
 | `item` | - | - | **Disabled** for upload |
 | `item_3d` | `texture` + `model` | Pair byte budget from entitlements | `generate: false` |
 | `shield` | `texture` + `model` | Same pair budget | Blocking clone at apply |
@@ -29,6 +31,12 @@ End-to-end design for donator texture submissions on **TFMCWeb** (store + review
 | `mask` | `texture` + `model` | Same pair budget | `set: masks`. Wearing the skinned mask hides identity in RPCharacters |
 | `gun` | `texture` + carry/reload/aim models | Three pair checks | GaG `skins.yml` `ia.…` |
 | `book` | `unsigned` + `signed` | Both **16×16** | `base_set: books` |
+
+Which item types each kind may target (`base_set`) lives in [`shared/skins/base_sets.json`](../../../shared/skins/base_sets.json), read by both the API and the upload page.
+
+### Animated textures (`.mcmeta`)
+
+Any PNG field may send an optional `{field}_mcmeta` (Minecraft `.png.mcmeta` JSON, ≤ 2048 bytes), except armour layers (`{tier}_layer_1` / `{tier}_layer_2`). Only an `animation` section is accepted (`frametime`, `interpolate`, `width`, `height`, `frames`). With an `.mcmeta`, a fixed-size slot takes a whole grid of frames of that size (e.g. a 16×64 handheld strip of four frames). The API stores it beside the PNG as `{png name}.mcmeta`, lists it for the plugin, and ArmourShop copies it into the pack. Review sheets and 3D preview tiles show the first frame and label the tile `animated · N frames`. For 3D kinds the `.mcmeta` counts toward the byte budget.
 
 Upload **filenames are ignored** for identity - the API validates PNG/JSON and writes fixed stems from the submission id. See [naming.md](naming.md).
 
@@ -88,7 +96,7 @@ Configured in TFMCWeb `config.yml` `player-meta.skins`; pushed on join/reload vi
 | defaults / no rank | disallowed | none | false |
 | Noble | 28 days | handheld, large_handheld, bow, large_bow, crossbow, book | false |
 | Gilded | 21 days | + armor_set | false |
-| Ascended | 14 days | + item_3d, shield, helmet_3d, mask, gun | true |
+| Ascended | 14 days | + item_3d, shield, helmet_3d, mask, gun, bow_3d, crossbow_3d | true |
 | Legacy | 7 days | (same as Ascended) | true |
 
 ## Discord link (MC ↔ Discord)

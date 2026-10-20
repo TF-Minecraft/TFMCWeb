@@ -4,130 +4,155 @@ import { useState } from "react";
 import type { SkinKind } from "../../../lib/skins/sizes";
 import { KindHelpPanel, KindHelpToggle, useKindHelpId } from "./KindHelp";
 
-const OPTIONS: {
-  value: SkinKind;
-  label: string;
-  detail: string;
-}[] = [
-  { value: "armor_set", label: "Armour set", detail: "One metal, up to 5 sets" },
-  { value: "handheld", label: "Handheld", detail: "16×16 texture" },
-  {
-    value: "large_handheld",
-    label: "Large handheld",
-    detail: "32×32",
+const KINDS: Record<SkinKind, { label: string; style: string; detail: string }> = {
+  armor_set: {
+    label: "Armour set",
+    style: "Armour",
+    detail: "Icons + body layers per set",
   },
-  { value: "bow", label: "Bow", detail: "16×16 · 4 frames" },
-  { value: "large_bow", label: "Large bow", detail: "32×32 · 4 frames" },
-  { value: "crossbow", label: "Crossbow", detail: "16×16 · 5 frames" },
-  { value: "item_3d", label: "Item 3D", detail: "Model + texture" },
-  { value: "shield", label: "Shield 3D", detail: "Model + texture" },
-  { value: "helmet_3d", label: "Helmet 3D", detail: "Model + texture" },
-  { value: "mask", label: "Mask", detail: "3D helmet · hides identity" },
-  { value: "gun", label: "Gun", detail: "Carry · reload · aim" },
-  {
-    value: "book",
+  handheld: { label: "Handheld", style: "Flat", detail: "16×16 texture" },
+  large_handheld: {
+    label: "Large handheld",
+    style: "Flat (large)",
+    detail: "32×32 + grip slider",
+  },
+  bow: { label: "Bow", style: "Flat frames", detail: "16×16 · 4 frames" },
+  large_bow: {
+    label: "Large bow",
+    style: "Flat frames (large)",
+    detail: "32×32 · 4 frames",
+  },
+  crossbow: {
+    label: "Crossbow",
+    style: "Flat frames",
+    detail: "16×16 · 5 frames",
+  },
+  bow_3d: {
+    label: "3D bow",
+    style: "3D model",
+    detail: "1 texture + 4 models · 60 KB total",
+  },
+  crossbow_3d: {
+    label: "3D crossbow",
+    style: "3D model",
+    detail: "1 texture + 5 models · 60 KB total",
+  },
+  item_3d: { label: "Item 3D", style: "3D model", detail: "Model + texture" },
+  shield: {
+    label: "Shield 3D",
+    style: "3D model",
+    detail: "Model + texture · idle and blocking",
+  },
+  helmet_3d: {
+    label: "Helmet 3D",
+    style: "3D model",
+    detail: "Model + texture",
+  },
+  mask: {
+    label: "Mask",
+    style: "3D mask",
+    detail: "3D helmet · hides identity",
+  },
+  gun: { label: "Gun", style: "3D model", detail: "Carry · reload · aim" },
+  book: {
     label: "Book",
+    style: "Flat covers",
     detail: "Unsigned + signed · 16×16",
   },
-];
+};
 
 /** Player-facing label for a skin kind. */
 export function kindLabel(kind: string): string {
-  return OPTIONS.find((opt) => opt.value === kind)?.label ?? kind;
+  return KINDS[kind as SkinKind]?.label ?? kind;
+}
+
+/** Short style name and file summary for a kind (e.g. "3D model", "Model + texture"). */
+export function kindStyle(kind: SkinKind): { style: string; detail: string } {
+  return KINDS[kind];
 }
 
 type Props = {
-  value: SkinKind;
+  /** Styles the chosen item supports. */
+  kinds: readonly SkinKind[];
+  value: SkinKind | null;
   onChange: (kind: SkinKind) => void;
   disabled?: boolean;
-  /** When set, only these kinds are shown. Empty = none. Omit/undefined = all. */
-  allowedKinds?: string[] | null;
+  /** Rank name that unlocks a kind the player can't use, or undefined when it's usable. */
+  lockedBy: (kind: SkinKind) => string | undefined;
 };
 
-export default function KindPicker({ value, onChange, disabled, allowedKinds }: Props) {
+/** Step 2: choose how the chosen item is skinned (flat, 3D…). */
+export default function KindPicker({ kinds, value, onChange, disabled, lockedBy }: Props) {
   const [helpOpen, setHelpOpen] = useState(false);
   const helpId = useKindHelpId();
-  const options =
-    allowedKinds == null
-      ? OPTIONS
-      : OPTIONS.filter((opt) => allowedKinds.map((k) => k.toLowerCase()).includes(opt.value));
 
   return (
     <fieldset className="flex flex-col gap-3 border-0 p-0">
-      <div className="flex items-center gap-2">
-        <legend className="float-none w-auto px-0 text-sm font-medium text-[var(--tfmc-stone)]">Type</legend>
-        <KindHelpToggle open={helpOpen} panelId={helpId} onToggle={() => setHelpOpen((v) => !v)} />
-      </div>
+      <legend className="sr-only">Style</legend>
+      {value ? (
+        <div className="flex items-center gap-2">
+          <KindHelpToggle open={helpOpen} panelId={helpId} onToggle={() => setHelpOpen((v) => !v)} />
+          <span className="text-xs text-[var(--tfmc-mist)]">How {kindLabel(value).toLowerCase()} skins work</span>
+        </div>
+      ) : null}
 
-      {options.length === 0 ? (
-        <p className="text-sm text-[var(--tfmc-mist)]">Nothing available for your rank.</p>
-      ) : (
-        <div role="radiogroup" aria-label="Skin type" className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-          {options.map((opt) => {
-            const selected = value === opt.value;
-            return (
-              <button
-                key={opt.value}
-                type="button"
-                role="radio"
-                aria-checked={selected}
-                disabled={disabled}
-                onClick={() => onChange(opt.value)}
-                className={`group relative overflow-hidden rounded-sm border px-3.5 py-3 text-left transition duration-200 ease-out disabled:cursor-not-allowed disabled:opacity-50 ${
-                  selected
-                    ? "animate-kind-tile-in border-[var(--tfmc-accent)] bg-[color-mix(in_srgb,var(--tfmc-accent)_18%,var(--tfmc-forest))] shadow-[inset_3px_0_0_0_var(--tfmc-accent)]"
-                    : "border-[color-mix(in_srgb,var(--tfmc-cream)_16%,transparent)] bg-[color-mix(in_srgb,var(--tfmc-forest)_55%,transparent)] hover:-translate-y-0.5 hover:border-[color-mix(in_srgb,var(--tfmc-accent)_45%,var(--tfmc-cream))] hover:bg-[color-mix(in_srgb,var(--tfmc-moss)_55%,var(--tfmc-forest))] hover:shadow-[0_6px_16px_color-mix(in_srgb,black_28%,transparent)] active:translate-y-0 active:scale-[0.99]"
-                } focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tfmc-accent)]`}
-              >
-                <span
-                  aria-hidden
-                  className={`pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[color-mix(in_srgb,var(--tfmc-cream)_35%,transparent)] to-transparent opacity-0 transition duration-200 ${
-                    selected ? "opacity-70" : "group-hover:opacity-50"
-                  }`}
-                />
-                <span className="flex items-start justify-between gap-2">
-                  <span className="min-w-0">
-                    <span className="block text-sm font-medium text-[var(--tfmc-cream)]">{opt.label}</span>
-                    <span
-                      className={`mt-0.5 block text-xs transition-colors ${
-                        selected
-                          ? "text-[color-mix(in_srgb,var(--tfmc-cream)_75%,var(--tfmc-mist))]"
-                          : "text-[var(--tfmc-mist)]"
-                      }`}
-                    >
-                      {opt.detail}
-                    </span>
+      <div role="radiogroup" aria-label="Skin style" className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        {kinds.map((kind) => {
+          const selected = value === kind;
+          const lock = lockedBy(kind);
+          const { style, detail } = kindStyle(kind);
+          return (
+            <button
+              key={kind}
+              type="button"
+              role="radio"
+              aria-checked={selected}
+              aria-disabled={Boolean(lock)}
+              disabled={disabled || Boolean(lock)}
+              onClick={() => onChange(kind)}
+              title={lock ? `Unlocks at ${lock}` : undefined}
+              className={`group relative overflow-hidden rounded-sm border px-3.5 py-3 text-left transition duration-200 ease-out disabled:cursor-not-allowed ${
+                lock ? "opacity-60" : "disabled:opacity-50"
+              } ${
+                selected
+                  ? "animate-kind-tile-in border-[var(--tfmc-accent)] bg-[color-mix(in_srgb,var(--tfmc-accent)_18%,var(--tfmc-forest))] shadow-[inset_3px_0_0_0_var(--tfmc-accent)]"
+                  : "border-[color-mix(in_srgb,var(--tfmc-cream)_16%,transparent)] bg-[color-mix(in_srgb,var(--tfmc-forest)_55%,transparent)] enabled:hover:-translate-y-0.5 enabled:hover:border-[color-mix(in_srgb,var(--tfmc-accent)_45%,var(--tfmc-cream))] enabled:hover:bg-[color-mix(in_srgb,var(--tfmc-moss)_55%,var(--tfmc-forest))]"
+              } focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tfmc-accent)]`}
+            >
+              <span className="flex items-start justify-between gap-2">
+                <span className="min-w-0">
+                  <span className="block text-sm font-medium text-[var(--tfmc-cream)]">{style}</span>
+                  <span className="mt-0.5 block text-xs text-[var(--tfmc-mist)]">{detail}</span>
+                </span>
+                {lock ? (
+                  <span className="shrink-0 rounded-sm border border-[color-mix(in_srgb,var(--tfmc-accent)_45%,transparent)] px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--tfmc-accent)]">
+                    <LockIcon /> {lock}
                   </span>
+                ) : (
                   <span
                     aria-hidden
-                    className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition duration-200 ${
+                    className={`mt-0.5 h-4 w-4 shrink-0 rounded-full border transition ${
                       selected
-                        ? "scale-100 border-[var(--tfmc-accent)] bg-[var(--tfmc-accent)]"
-                        : "scale-90 border-[color-mix(in_srgb,var(--tfmc-cream)_30%,transparent)] bg-transparent group-hover:scale-100 group-hover:border-[color-mix(in_srgb,var(--tfmc-accent)_60%,var(--tfmc-cream))]"
+                        ? "border-[var(--tfmc-accent)] bg-[var(--tfmc-accent)]"
+                        : "border-[color-mix(in_srgb,var(--tfmc-cream)_30%,transparent)]"
                     }`}
-                  >
-                    <svg
-                      viewBox="0 0 12 12"
-                      className={`h-2.5 w-2.5 text-[var(--tfmc-forest-deep)] transition-opacity duration-150 ${
-                        selected ? "opacity-100" : "opacity-0"
-                      }`}
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2.2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M2.5 6.2 4.8 8.5 9.5 3.5" />
-                    </svg>
-                  </span>
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      )}
+                  />
+                )}
+              </span>
+            </button>
+          );
+        })}
+      </div>
 
-      <KindHelpPanel kind={value} open={helpOpen} id={helpId} />
+      {value ? <KindHelpPanel kind={value} open={helpOpen} id={helpId} /> : null}
     </fieldset>
+  );
+}
+
+export function LockIcon() {
+  return (
+    <svg viewBox="0 0 12 12" aria-hidden className="mb-px inline h-2.5 w-2.5" fill="currentColor">
+      <path d="M3.5 5V3.75a2.5 2.5 0 0 1 5 0V5h.5a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h.5Zm1 0h3V3.75a1.5 1.5 0 0 0-3 0V5Z" />
+    </svg>
   );
 }

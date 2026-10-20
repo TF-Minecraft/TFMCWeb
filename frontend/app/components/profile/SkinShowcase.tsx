@@ -7,7 +7,7 @@ import { kindLabel } from "../skins/KindPicker";
 import { getSubmissionFile, type SubmissionPublic } from "../../../lib/skins/api";
 import { armorTierLabel, baseSetLabel } from "../../../lib/skins/baseSets";
 import { previewColourStopRuns } from "../../../lib/skins/namePreview";
-import { ownerFileNames } from "../../../lib/skins/ownerFiles";
+import { ownerAnimationFileNames, ownerFileNames } from "../../../lib/skins/ownerFiles";
 import { ARMOR_ICON_FIELDS } from "../../../lib/skins/sizes";
 import { SkinPicture } from "./WardrobePictures";
 import {
@@ -28,7 +28,12 @@ import {
 type Files = Record<string, File | null>;
 
 const FLAT_KINDS = ["handheld", "large_handheld", "bow", "large_bow", "crossbow"];
-const ICON_LABELS: Record<string, string> = { helmet: "Helmet", chestplate: "Chest", leggings: "Legs", boots: "Boots" };
+const ICON_LABELS: Record<string, string> = {
+  helmet: "Helmet",
+  chestplate: "Chest",
+  leggings: "Legs",
+  boots: "Boots",
+};
 
 function statusMessage(row: SubmissionPublic): string {
   switch (row.status) {
@@ -58,10 +63,10 @@ function useOwnerFiles(row: SubmissionPublic, sessionToken: string): Files | nul
   // Checking the status again returns a new row; the files only change with the skin.
   const { kind, slug } = row;
   const tiers = (row.tiers ?? []).join(",");
-  const names = useMemo(
-    () => ownerFileNames({ kind, slug, tiers: tiers ? tiers.split(",") : [] }),
-    [kind, slug, tiers],
-  );
+  const names = useMemo(() => {
+    const row = { kind, slug, tiers: tiers ? tiers.split(",") : [] };
+    return { ...ownerFileNames(row), ...ownerAnimationFileNames(row) };
+  }, [kind, slug, tiers]);
   useEffect(() => {
     let live = true;
     setFiles(null);
@@ -99,7 +104,12 @@ function Turnable({ children }: { children: ReactNode }) {
   );
 }
 
-type ViewProps = { row: SubmissionPublic; files: Files; fallback: ReactNode; children: ReactNode };
+type ViewProps = {
+  row: SubmissionPublic;
+  files: Files;
+  fallback: ReactNode;
+  children: ReactNode;
+};
 
 function ArmourView({ row, files, fallback, children }: ViewProps) {
   const tiers = row.tiers ?? [];
@@ -132,13 +142,19 @@ function ArmourView({ row, files, fallback, children }: ViewProps) {
           {tiers.length > 1 ? (
             <Segmented
               label="Armour set"
-              options={tiers.map((t) => ({ id: t, label: row.tier_aliases?.[t] || armorTierLabel(t) }))}
+              options={tiers.map((t) => ({
+                id: t,
+                label: row.tier_aliases?.[t] || armorTierLabel(t),
+              }))}
               value={tier}
               onChange={setTier}
             />
           ) : null}
           <IconSlots
-            icons={ARMOR_ICON_FIELDS.map((field, i) => ({ label: ICON_LABELS[field]!, src: iconUrls[i] ?? null }))}
+            icons={ARMOR_ICON_FIELDS.map((field, i) => ({
+              label: ICON_LABELS[field]!,
+              src: iconUrls[i] ?? null,
+            }))}
           />
         </>
       }
@@ -156,7 +172,14 @@ function BookView({ files, fallback, children }: Omit<ViewProps, "row">) {
       stage={
         texture ? (
           <Turnable>
-            <ModelPreview key={cover} stage kind="book" textureFile={texture} className="h-full p-3" />
+            <ModelPreview
+              key={cover}
+              stage
+              kind="book"
+              textureFile={texture}
+              flatMcmeta={{ texture: files[`${cover}_mcmeta`] ?? null }}
+              className="h-full p-3"
+            />
           </Turnable>
         ) : (
           fallback
@@ -185,6 +208,8 @@ function ItemView({ row, files, fallback, children }: ViewProps) {
   const [failed, setFailed] = useState(false);
   const { kind } = row;
   const flat = FLAT_KINDS.includes(kind);
+  const ranged3d = kind === "bow_3d" || kind === "crossbow_3d";
+  const mcmeta = (field: string) => files[`${field}_mcmeta`] ?? null;
   const grip = row.grip_preset != null ? Number(row.grip_preset) : NaN;
   const stage =
     files.texture && !failed ? (
@@ -194,10 +219,26 @@ function ItemView({ row, files, fallback, children }: ViewProps) {
           className="h-full p-3"
           kind={kind}
           textureFile={files.texture}
-          modelFile={files.model ?? null}
+          modelFile={ranged3d ? null : (files.model ?? null)}
+          textureMcmetaFile={mcmeta("texture")}
+          frameModels={
+            ranged3d
+              ? {
+                  texture: files.model ?? null,
+                  pull_0: files.pull_0_model ?? null,
+                  pull_1: files.pull_1_model ?? null,
+                  pull_2: files.pull_2_model ?? null,
+                  charged: files.charged_model ?? null,
+                }
+              : undefined
+          }
           gunModels={
             kind === "gun"
-              ? { carry: files.carry_model ?? null, reload: files.reload_model ?? null, aim: files.aim_model ?? null }
+              ? {
+                  carry: files.carry_model ?? null,
+                  reload: files.reload_model ?? null,
+                  aim: files.aim_model ?? null,
+                }
               : undefined
           }
           flatTextureFile={flat ? files.texture : null}
@@ -209,6 +250,17 @@ function ItemView({ row, files, fallback, children }: ViewProps) {
                   pull_1: files.pull_1 ?? null,
                   pull_2: files.pull_2 ?? null,
                   charged: files.charged ?? null,
+                }
+              : undefined
+          }
+          flatMcmeta={
+            flat
+              ? {
+                  texture: mcmeta("texture"),
+                  pull_0: mcmeta("pull_0"),
+                  pull_1: mcmeta("pull_1"),
+                  pull_2: mcmeta("pull_2"),
+                  charged: mcmeta("charged"),
                 }
               : undefined
           }
@@ -267,7 +319,12 @@ export default function SkinShowcase({
       {row.add_name || row.name_colours?.length ? <Tooltip name={name} /> : null}
       <Facts
         facts={[
-          sets ? { label: row.tiers!.length === 1 ? "Armour set" : "Armour sets", value: sets } : null,
+          sets
+            ? {
+                label: row.tiers!.length === 1 ? "Armour set" : "Armour sets",
+                value: sets,
+              }
+            : null,
           formatDay(row.created_at) ? { label: "Made", value: formatDay(row.created_at) } : null,
           formatDay(row.reviewed_at) ? { label: "Reviewed", value: formatDay(row.reviewed_at) } : null,
           formatDay(row.applied_at) ? { label: "Live since", value: formatDay(row.applied_at) } : null,

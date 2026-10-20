@@ -90,6 +90,57 @@ _SHIELD_DEFAULTS: dict[str, Any] = {
     "fixed": {"scale": [2.5, 2.5, 2.5]},
 }
 
+# Vanilla item/bow.json and item/crossbow.json hand poses (autofill holes only).
+_BOW_3D_DEFAULTS: dict[str, Any] = {
+    **copy.deepcopy(_DEFAULT_TAB),
+    "thirdperson_righthand": {
+        "rotation": [-80, 260, -40],
+        "translation": [-1, -2, 2.5],
+        "scale": [0.9, 0.9, 0.9],
+    },
+    "thirdperson_lefthand": {
+        "rotation": [-80, -280, 40],
+        "translation": [-1, -2, 2.5],
+        "scale": [0.9, 0.9, 0.9],
+    },
+    "firstperson_righthand": {
+        "rotation": [0, -90, 25],
+        "translation": [1.13, 3.2, 1.13],
+        "scale": [0.68, 0.68, 0.68],
+    },
+    "firstperson_lefthand": {
+        "rotation": [0, 90, -25],
+        "translation": [1.13, 3.2, 1.13],
+        "scale": [0.68, 0.68, 0.68],
+    },
+}
+_CROSSBOW_3D_DEFAULTS: dict[str, Any] = {
+    **copy.deepcopy(_DEFAULT_TAB),
+    "thirdperson_righthand": {
+        "rotation": [-90, 0, -60],
+        "translation": [2, 0.1, -3],
+        "scale": [0.9, 0.9, 0.9],
+    },
+    "thirdperson_lefthand": {
+        "rotation": [-90, 0, 30],
+        "translation": [2, 0.1, -3],
+        "scale": [0.9, 0.9, 0.9],
+    },
+    "firstperson_righthand": {
+        "rotation": [-90, 0, -55],
+        "translation": [1.13, 3.2, 1.13],
+        "scale": [0.68, 0.68, 0.68],
+    },
+    "firstperson_lefthand": {
+        "rotation": [-90, 0, 35],
+        "translation": [1.13, 3.2, 1.13],
+        "scale": [0.68, 0.68, 0.68],
+    },
+}
+
+# Held 3D kinds: hand/ground/gui/fixed tabs, no head unless the player adds one.
+_HELD_KINDS = ("item_3d", "gun", "bow_3d", "crossbow_3d")
+
 
 class DisplayError(ValueError):
     """Invalid or incomplete model display after merge."""
@@ -182,7 +233,7 @@ def validate_java_block_model(model: dict[str, Any]) -> None:
 def required_tabs(kind: str) -> tuple[str, ...]:
     if kind in ("shield", "helmet_3d", "armor_helmet_3d", "mask"):
         return COMMON_TABS + (HEAD_TAB,)
-    if kind in ("item_3d", "gun"):
+    if kind in _HELD_KINDS:
         return COMMON_TABS
     raise DisplayError(f"Unknown 3D kind for display: {kind}")
 
@@ -190,6 +241,10 @@ def required_tabs(kind: str) -> tuple[str, ...]:
 def defaults_for_kind(kind: str) -> dict[str, Any]:
     if kind == "shield":
         return copy.deepcopy(_SHIELD_DEFAULTS)
+    if kind == "bow_3d":
+        return copy.deepcopy(_BOW_3D_DEFAULTS)
+    if kind == "crossbow_3d":
+        return copy.deepcopy(_CROSSBOW_3D_DEFAULTS)
     return copy.deepcopy(_DEFAULT_TAB)
 
 
@@ -203,8 +258,8 @@ def merge_display(
         for key, value in submitted.items():
             if isinstance(value, dict):
                 out[key] = copy.deepcopy(value)
-    # Drop head from item_3d/gun defaults unless player supplied it.
-    if kind in ("item_3d", "gun") and HEAD_TAB not in (submitted or {}):
+    # Drop head from held-item defaults unless player supplied it.
+    if kind in _HELD_KINDS and HEAD_TAB not in (submitted or {}):
         out.pop(HEAD_TAB, None)
     return out
 

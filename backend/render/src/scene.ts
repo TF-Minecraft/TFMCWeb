@@ -209,10 +209,12 @@ export async function renderPreviewJob(
         scene.add(worn);
         frameObject(camera, worn);
         out[view] = capture(renderer, scene, camera);
-      } else if (view === "model") {
+      } else if (view === "model" || view === "pull_2" || view === "charged") {
+        // 3D bows also show their drawn (and crossbows their loaded) model.
+        const modelKey = view !== "model" ? view : kind === "gun" ? "carry" : "model";
         const { root } = await buildItemRoot(kind, assets, {
           center: true,
-          modelKey: kind === "gun" ? "carry" : "model",
+          modelKey,
         });
         scene.add(root);
         const box = new THREE.Box3().setFromObject(root);

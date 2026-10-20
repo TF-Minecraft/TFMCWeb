@@ -14,6 +14,7 @@ import subprocess
 import tempfile
 from pathlib import Path
 
+from .animation import first_frame_png, mcmeta_path
 from .storage import (
     BOOK_KIND,
     BOW_KINDS,
@@ -21,6 +22,7 @@ from .storage import (
     GUN_KIND,
     ITEM_KINDS,
     MODEL_3D_KINDS,
+    RANGED_3D_KINDS,
 )
 
 log = logging.getLogger("skins.preview_3d")
@@ -42,6 +44,8 @@ PREVIEW_NAMES = {
     "body": "preview_body.png",
     "book_unsigned": "preview_book_unsigned.png",
     "book_signed": "preview_book_signed.png",
+    "pull_2": "preview_pull_2.png",
+    "charged": "preview_charged.png",
 }
 
 
@@ -97,8 +101,9 @@ def _mtime(path: Path) -> float:
 
 
 def _preview_inputs(files: dict[str, str]) -> list[Path]:
-    """Model/texture paths plus the renderer bundle, so a rebuild refreshes tiles."""
+    """Model/texture paths (and their .mcmeta) plus the renderer bundle, so a rebuild refreshes tiles."""
     inputs = [Path(p) for p in files.values()]
+    inputs += [mcmeta_path(p) for p in inputs if p.suffix.lower() == ".png"]
     if isinstance(BUNDLE, Path):
         inputs.append(BUNDLE)
     return inputs
@@ -185,6 +190,24 @@ def _job_for_kind(kind: str, slug: str, out_dir: Path, tiers: list[str]) -> dict
             views.append("hat")
         return {"kind": kind, "views": views, "files": files}
 
+    if kind in RANGED_3D_KINDS:
+        if "texture" not in files:
+            return None
+        model = out_dir / f"{slug}.json"
+        if model.is_file():
+            files["model"] = str(model)
+        views = ["model"]
+        # Fully drawn, and loaded for crossbows: the states that differ most from standby.
+        extra = [("pull_2", "_2")]
+        if kind == "crossbow_3d":
+            extra.append(("charged", "_charged"))
+        for view, suffix in extra:
+            path = out_dir / f"{slug}{suffix}.json"
+            if path.is_file():
+                files[view] = str(path)
+                views.append(view)
+        return {"kind": kind, "views": views, "files": files}
+
     if kind == GUN_KIND:
         if "texture" not in files:
             return None
@@ -197,6 +220,22 @@ def _job_for_kind(kind: str, slug: str, out_dir: Path, tiers: list[str]) -> dict
         return {"kind": kind, "views": views, "files": files}
 
     return None
+
+
+def _first_frame_files(files: dict[str, str], tmp_dir: Path) -> dict[str, str]:
+    """Swap animated textures for a crop of the frame Minecraft shows first."""
+    out = dict(files)
+    for key, raw in files.items():
+        path = Path(raw)
+        if path.suffix.lower() != ".png":
+            continue
+        frame = first_frame_png(path)
+        if frame is None:
+            continue
+        crop = tmp_dir / path.name
+        crop.write_bytes(frame)
+        out[key] = str(crop)
+    return out
 
 
 def ensure_preview_tiles(
@@ -239,14 +278,15 @@ def ensure_preview_tiles(
         log.warning("3D sheet renderer unavailable: backend/render/dist/browser.js missing")
         return tiles, "3D renderer unavailable: run npm install in backend/render"
 
-    payload = {
-        "kind": job["kind"],
-        "views": job["views"],
-        "files": job["files"],
-        "outDir": str(out_dir),
-    }
     render_error: str | None = None
     try:
+        frame_dir = tempfile.TemporaryDirectory()
+        payload = {
+            "kind": job["kind"],
+            "views": job["views"],
+            "files": _first_frame_files(job["files"], Path(frame_dir.name)),
+            "outDir": str(out_dir),
+        }
         with tempfile.NamedTemporaryFile(
             "w", suffix=".json", delete=False, encoding="utf-8"
         ) as tmp:
@@ -265,6 +305,7 @@ def ensure_preview_tiles(
                 os.unlink(tmp_path)
             except OSError:
                 pass
+            frame_dir.cleanup()
         if result.returncode != 0:
             err = (result.stderr or result.stdout or "").strip()
             render_error = (

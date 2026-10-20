@@ -74,12 +74,15 @@ Namespace: **`tfmc_submissions`**.
 | `handheld` | `generate: true` + `parent: item/handheld` |
 | `large_handheld` | `generate: false` + grip template model |
 | `bow` / `large_bow` / `crossbow` | ArmourShop writers; pull/draw frames |
+| `bow_3d` / `crossbow_3d` | `generate: false` + `model_path`; web-built `{slug}.json`, `_0`, `_1`, `_2` (+ `_charged`, firework copy at apply) |
 | `book` | `{slug}` (`WRITABLE_BOOK`) + `{slug}_signed` (`WRITTEN_BOOK`); shop lists `{slug}` only |
 | `item_3d` | `generate: false` + donor JSON (`PAPER`) |
 | `helmet_3d` | `CARVED_PUMPKIN` + `behaviours.hat: true` (armor-set 3D helmets use the same) |
 | `mask` | Same hat item as `helmet_3d`; ArmourShop also upserts `ia.{namespace}:{slug}` into RPCharacters `custom-masks.yml` |
 | `shield` | Donor JSON + ArmourShop blocking clone |
 | `gun` | STONE_HOE carry/reload + CROSSBOW aim; GaG `skins.yml` |
+
+A PNG may arrive with a sibling `{png name}.mcmeta` (animated texture); writers copy it next to the pack PNG.
 
 Never add new skins via manual `custom_model_data` lists in legacy `tfmc_pack`.
 

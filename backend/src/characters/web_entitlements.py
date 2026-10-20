@@ -17,6 +17,8 @@ _STAFF_SKIN_KINDS = (
     "bow",
     "large_bow",
     "crossbow",
+    "bow_3d",
+    "crossbow_3d",
     "item_3d",
     "shield",
     "helmet_3d",

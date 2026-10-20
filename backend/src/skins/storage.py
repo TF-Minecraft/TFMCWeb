@@ -8,13 +8,17 @@ import struct
 from datetime import datetime, timezone
 from pathlib import Path
 
+from .animation import AnimationError, mcmeta_bytes, parse_mcmeta
 from .db import SKINS_DIR
 from .display import DisplayError, parse_and_merge_model
 from .naming import (
     ARMOR_LAYER_FIELDS,
     BOOK_FIELDS,
+    BOW_3D_MODEL_FIELDS,
     BOW_FRAME_FIELDS,
+    CROSSBOW_3D_MODEL_FIELDS,
     CROSSBOW_FRAME_FIELDS,
+    MCMETA_SUFFIX,
 )
 from .pack_models.gun import build_gun_models
 from .pack_models.large_bow import bow_file_suffix, build_large_bow_models
@@ -42,6 +46,16 @@ CROSSBOW_SIZE = (16, 16)
 
 BOW_KINDS = frozenset({"bow", "large_bow"})
 CROSSBOW_KINDS = frozenset({"crossbow"})
+# One texture and a model per bow state; see naming.BOW_3D_MODEL_FIELDS.
+RANGED_3D_KINDS = frozenset({"bow_3d", "crossbow_3d"})
+# Model field → file suffix after the slug ({slug}.json, {slug}_0.json, …).
+RANGED_3D_MODEL_SUFFIX = {
+    "model": "",
+    "pull_0_model": "_0",
+    "pull_1_model": "_1",
+    "pull_2_model": "_2",
+    "charged_model": "_charged",
+}
 ITEM_KINDS = frozenset({"handheld", "large_handheld", "item"})
 MODEL_3D_KINDS = frozenset({"item_3d", "shield", "helmet_3d", "mask"})
 GUN_KIND = "gun"
@@ -90,6 +104,58 @@ def validate_model_json_size(data: bytes) -> None:
         )
 
 
+def ranged_3d_model_fields(kind: str) -> tuple[str, ...]:
+    return CROSSBOW_3D_MODEL_FIELDS if kind == "crossbow_3d" else BOW_3D_MODEL_FIELDS
+
+
+def check_mcmeta_fields(files: dict[str, bytes]) -> None:
+    """Every ``{field}_mcmeta`` needs an uploaded PNG ``field`` that is not an armour layer."""
+    for key in files:
+        if not key.endswith(MCMETA_SUFFIX):
+            continue
+        field = key[: -len(MCMETA_SUFFIX)]
+        if any(field.endswith(f"_{layer}") or field == layer for layer in ARMOR_LAYER_FIELDS):
+            raise StorageError(
+                f"{key}: armour layer textures cannot be animated"
+            )
+        data = files.get(field)
+        if not data or not data.startswith(PNG_MAGIC):
+            raise StorageError(f"{key}: no PNG '{field}' to animate")
+
+
+def _write_png(
+    out_dir: Path,
+    files: dict[str, bytes],
+    field: str,
+    names: tuple[str, ...],
+    expected: tuple[int, int] | None = None,
+) -> None:
+    """Validate ``field`` and write it as each of ``names``, with ``{name}.mcmeta`` if animated.
+
+    An animated PNG with a fixed ``expected`` size must be a grid of frames that size.
+    """
+    if field not in files:
+        raise StorageError(f"Missing file field: {field}")
+    data = files[field]
+    meta = files.get(field + MCMETA_SUFFIX)
+    clean: bytes | None = None
+    if meta is None:
+        validate_png(data, expected)
+    else:
+        validate_png(data)
+        try:
+            parsed, _ = parse_mcmeta(
+                meta, png_dimensions(data), expected, label=field
+            )
+        except AnimationError as e:
+            raise StorageError(str(e)) from e
+        clean = mcmeta_bytes(parsed)
+    for name in names:
+        (out_dir / name).write_bytes(data)
+        if clean is not None:
+            (out_dir / f"{name}.mcmeta").write_bytes(clean)
+
+
 def _iso_now() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
@@ -111,19 +177,16 @@ def _write_bow_frames(
 ) -> None:
     size = _expected_bow_size(kind)
     for field in fields:
-        if field not in files:
-            raise StorageError(f"Missing file field: {field}")
-        validate_png(files[field], size)
         if field == "texture":
-            (out_dir / f"{slug}.png").write_bytes(files[field])
+            names: tuple[str, ...] = (f"{slug}.png",)
         elif field.startswith("pull_"):
             n = field.split("_", 1)[1]
-            (out_dir / f"{slug}_{n}.png").write_bytes(files[field])
+            names = (f"{slug}_{n}.png",)
         elif field == "charged":
-            (out_dir / f"{slug}_charged.png").write_bytes(files[field])
-            (out_dir / f"{slug}_arrow.png").write_bytes(files[field])
+            names = (f"{slug}_charged.png", f"{slug}_arrow.png")
         else:
             raise StorageError(f"Unknown bow field: {field}")
+        _write_png(out_dir, files, field, names, size)
 
 
 def _write_model_3d(
@@ -133,13 +196,12 @@ def _write_model_3d(
         raise StorageError("Missing file field: texture")
     if "model" not in files:
         raise StorageError("Missing file field: model")
-    validate_png(files["texture"])
     validate_model_json_size(files["model"])
     try:
         model = parse_and_merge_model(files["model"], kind)
     except DisplayError as e:
         raise StorageError(str(e)) from e
-    (out_dir / f"{slug}.png").write_bytes(files["texture"])
+    _write_png(out_dir, files, "texture", (f"{slug}.png",))
     if kind == "shield":
         idle, blocking = build_shield_models(model, slug)
         (out_dir / f"{slug}.json").write_bytes(pack_model_to_bytes(idle))
@@ -151,11 +213,28 @@ def _write_model_3d(
         (out_dir / f"{slug}.json").write_bytes(pack_model_to_bytes(normalized))
 
 
+def _write_ranged_3d(
+    out_dir: Path, slug: str, kind: str, files: dict[str, bytes]
+) -> None:
+    """3D bow / crossbow: {slug}.png plus {slug}.json, _0, _1, _2 (and _charged)."""
+    built: dict[str, bytes] = {}
+    for field in ranged_3d_model_fields(kind):
+        if field not in files:
+            raise StorageError(f"Missing file field: {field}")
+        validate_model_json_size(files[field])
+        try:
+            model = parse_and_merge_model(files[field], kind)
+        except DisplayError as e:
+            raise StorageError(f"{field}: {e}") from e
+        name = f"{slug}{RANGED_3D_MODEL_SUFFIX[field]}.json"
+        built[name] = pack_model_to_bytes(normalize_textures(model, slug))
+    _write_png(out_dir, files, "texture", (f"{slug}.png",))
+    for name, data in built.items():
+        (out_dir / name).write_bytes(data)
+
+
 def _write_gun(out_dir: Path, slug: str, files: dict[str, bytes]) -> None:
-    if "texture" not in files:
-        raise StorageError("Missing file field: texture")
-    validate_png(files["texture"])
-    (out_dir / f"{slug}.png").write_bytes(files["texture"])
+    _write_png(out_dir, files, "texture", (f"{slug}.png",))
     merged: dict[str, dict] = {}
     for field, stem in zip(GUN_MODEL_FIELDS, GUN_MODEL_STEMS, strict=True):
         if field not in files:
@@ -173,14 +252,11 @@ def _write_gun(out_dir: Path, slug: str, files: dict[str, bytes]) -> None:
 def _write_large_handheld(
     out_dir: Path, slug: str, files: dict[str, bytes], grip_preset: str | None
 ) -> None:
-    if "texture" not in files:
-        raise StorageError("Missing file field: texture")
-    validate_png(files["texture"], LARGE_HANDHELD_SIZE)
     try:
         grip = parse_grip_preset(grip_preset)
     except ValueError as e:
         raise StorageError(str(e)) from e
-    (out_dir / f"{slug}.png").write_bytes(files["texture"])
+    _write_png(out_dir, files, "texture", (f"{slug}.png",), LARGE_HANDHELD_SIZE)
     (out_dir / f"{slug}.json").write_bytes(
         pack_model_to_bytes(build_large_handheld_model(slug, grip))
     )
@@ -209,10 +285,7 @@ def _write_armor(
 
         for field in ("chestplate", "leggings", "boots"):
             key = f"{tier}_{field}"
-            if key not in files:
-                raise StorageError(f"Missing file field: {key}")
-            validate_png(files[key], ICON_SIZE)
-            (out_dir / f"{tier}_{field}.png").write_bytes(files[key])
+            _write_png(out_dir, files, key, (f"{key}.png",), ICON_SIZE)
 
         if tier in helmet_3d:
             model_key = f"{tier}_helmet_model"
@@ -221,7 +294,6 @@ def _write_armor(
                 raise StorageError(f"Missing file field: {model_key}")
             if tex_key not in files:
                 raise StorageError(f"Missing file field: {tex_key}")
-            validate_png(files[tex_key])
             validate_model_json_size(files[model_key])
             try:
                 model = parse_and_merge_model(
@@ -229,9 +301,7 @@ def _write_armor(
                 )
             except DisplayError as e:
                 raise StorageError(str(e)) from e
-            (out_dir / f"{tier}_helmet_texture.png").write_bytes(
-                files[tex_key]
-            )
+            _write_png(out_dir, files, tex_key, (f"{tex_key}.png",))
             # Pack slug at apply is {submission_id}_{tier}; texture id matches.
             texture_id = f"{out_dir.name}_{tier}_helmet"
             normalized = normalize_textures(model, texture_id)
@@ -240,10 +310,7 @@ def _write_armor(
             )
         else:
             key = f"{tier}_helmet"
-            if key not in files:
-                raise StorageError(f"Missing file field: {key}")
-            validate_png(files[key], ICON_SIZE)
-            (out_dir / f"{tier}_helmet.png").write_bytes(files[key])
+            _write_png(out_dir, files, key, (f"{key}.png",), ICON_SIZE)
 
 
 def write_submission_files(
@@ -271,6 +338,7 @@ def write_submission_files(
     h3d = list(helmet_3d_tiers or [])
 
     try:
+        check_mcmeta_fields(files)
         if kind == "armor_set":
             tier_list = list(tiers or [])
             if not tier_list:
@@ -279,10 +347,7 @@ def write_submission_files(
         elif kind == "large_handheld":
             _write_large_handheld(out_dir, slug, files, grip_preset)
         elif kind == "handheld":
-            if "texture" not in files:
-                raise StorageError("Missing file field: texture")
-            validate_png(files["texture"], ITEM_SIZE)
-            (out_dir / f"{slug}.png").write_bytes(files["texture"])
+            _write_png(out_dir, files, "texture", (f"{slug}.png",), ITEM_SIZE)
         elif kind == "large_bow":
             _write_bow_frames(out_dir, slug, kind, files, BOW_FRAME_FIELDS)
             _write_large_bow_models(out_dir, slug)
@@ -294,14 +359,15 @@ def write_submission_files(
             )
         elif kind in MODEL_3D_KINDS:
             _write_model_3d(out_dir, slug, kind, files)
+        elif kind in RANGED_3D_KINDS:
+            _write_ranged_3d(out_dir, slug, kind, files)
         elif kind == GUN_KIND:
             _write_gun(out_dir, slug, files)
         elif kind == BOOK_KIND:
             for field in BOOK_FIELDS:
-                if field not in files:
-                    raise StorageError(f"Missing file field: {field}")
-                validate_png(files[field], ITEM_SIZE)
-                (out_dir / f"{slug}_{field}.png").write_bytes(files[field])
+                _write_png(
+                    out_dir, files, field, (f"{slug}_{field}.png",), ITEM_SIZE
+                )
         else:
             raise StorageError(f"Unsupported kind: {kind}")
 
