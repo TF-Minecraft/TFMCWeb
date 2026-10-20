@@ -30,12 +30,12 @@ class WarDeclareCodeError(ValueError):
 # (OVERTHROW, CHANGE_LAW, CHANGE_TAX, FORCE_PEACE) are movement-origin only: they
 # are raised by a political movement, never declared. Rejecting them at mint is a
 # security boundary, not a convenience, so a code can never carry a goal the GUI
-# would refuse to route.
+# would refuse to route. "war" is retired too: the loser of every war now pays
+# reparations, so a goal with no outcome of its own no longer exists in game.
 DECLARABLE_GOALS = (
     "de_jure_annex",
     "subjugate",
     "transfer_subject",
-    "war",
     "tributary",
     "usurp",
     "open_market",

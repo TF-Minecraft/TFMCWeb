@@ -179,7 +179,8 @@ class WarDeclareCodesTest(unittest.TestCase):
     def test_every_declarable_goal_mints(self) -> None:
         from wars.declare_codes import DECLARABLE_GOALS
 
-        self.assertEqual(len(DECLARABLE_GOALS), 9)
+        self.assertEqual(len(DECLARABLE_GOALS), 8)
+        self.assertNotIn("war", DECLARABLE_GOALS)
         for goal in DECLARABLE_GOALS:
             minted = self._mint(goal=goal)
             self.assertEqual(minted["goal"], goal)
@@ -189,6 +190,8 @@ class WarDeclareCodesTest(unittest.TestCase):
 
         with self.assertRaises(WarDeclareCodeError):
             self._mint(goal="conquer_everything")
+        with self.assertRaises(WarDeclareCodeError):
+            self._mint(goal="war")
         with self.assertRaises(WarDeclareCodeError):
             self._mint(goal="")
 
@@ -213,7 +216,7 @@ class WarDeclareCodesTest(unittest.TestCase):
     def test_outstanding_list_is_realm_scoped_and_hides_the_code(self) -> None:
         from wars.declare_codes import redeem, revoke
 
-        live = self._mint(goal="war", created_by_discord_id="staff-1")
+        live = self._mint(goal="open_market", created_by_discord_id="staff-1")
         self._mint(realm_id="dev")
         spent = self._mint(goal="pillage")
         killed = self._mint(goal="tributary")
@@ -224,7 +227,7 @@ class WarDeclareCodesTest(unittest.TestCase):
 
         rows = self._outstanding()
         self.assertEqual([row["id"] for row in rows], [live["id"]])
-        self.assertEqual(rows[0]["goal"], "war")
+        self.assertEqual(rows[0]["goal"], "open_market")
         self.assertEqual(rows[0]["created_by_discord_id"], "staff-1")
         self.assertNotIn("code", rows[0])
         self.assertNotIn("code_hash", rows[0])
