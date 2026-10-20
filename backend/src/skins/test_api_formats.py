@@ -147,11 +147,11 @@ def test_link_completion_and_single_use_bytes(api, monkeypatch):
 def test_war_redemption_and_single_use_bytes(api, monkeypatch):
     from src.wars import declare_codes
     monkeypatch.setattr(declare_codes, "_utcnow", lambda: datetime(2099, 3, 1, 10, tzinfo=timezone.utc))
-    issued = declare_codes.mint("attack", "defend", "war")
+    issued = declare_codes.mint("attack", "defend", "subjugate")
     request = {"code": issued["code"], "attacker_faction_id": "attack", "defender_faction_id": "defend",
                "realm_id": "main", "war_id": "war-1"}
     response = api.post("/wars/declare-codes/redeem", json=request, headers=PLUGIN)
-    assert response.content == body({"ok": True, "id": issued["id"], "goal": "war", "realm_id": "main",
+    assert response.content == body({"ok": True, "id": issued["id"], "goal": "subjugate", "realm_id": "main",
                                      "redeemed_at": "2099-03-01T10:00:00Z", "war_id": "war-1"})
     again = api.post("/wars/declare-codes/redeem", json=request, headers=PLUGIN)
     assert again.status_code == 400
@@ -209,12 +209,12 @@ def test_drinks_pending_apply(api):
 
 def test_war_codes_for_staff(api):
     minted = api.post("/wars/declare-codes", json={"attacker_faction_id": "a", "defender_faction_id": "d",
-                                                   "goal": "war"}, headers=STAFF).json()
+                                                   "goal": "subjugate"}, headers=STAFF).json()
     testing.execute("UPDATE war_declaration_codes SET created_at = '2026-03-01T10:00:00.9Z', "
                     "expires_at = '2099-03-03T10:00:00Z'")
     response = api.get("/wars/declare-codes", headers=STAFF)
     assert response.content == body({"codes": [{
         "id": minted["id"], "realm_id": "main", "attacker_faction_id": "a", "defender_faction_id": "d",
-        "goal": "war", "created_by_discord_id": None, "created_at": "2026-03-01T10:00:00Z",
+        "goal": "subjugate", "created_by_discord_id": None, "created_at": "2026-03-01T10:00:00Z",
         "expires_at": "2099-03-03T10:00:00Z",
     }]})
