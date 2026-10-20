@@ -20,6 +20,8 @@ export type MapModeOption = {
  */
 const MODE_OPTIONS: MapModeOption[] = [
   { value: "nation", label: "Realms", group: "realms" },
+  // Coalitions over the base map: members filled, the realm they oppose hatched.
+  { value: "coalition", label: "Coalitions", group: "realms" },
   { value: "empire", label: "Empires", group: "titles" },
   { value: "kingdom", label: "Kingdoms", group: "titles" },
   { value: "duchy", label: "Duchies", group: "titles" },

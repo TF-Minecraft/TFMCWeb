@@ -3,6 +3,7 @@ export type MapId = string;
 
 export type MapMode =
   | "nation"
+  | "coalition"
   | "county"
   | "duchy"
   | "kingdom"

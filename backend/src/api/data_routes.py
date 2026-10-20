@@ -39,6 +39,7 @@ from ..scripts.loader.markers import build_markers_response
 from ..scripts.util.maplock import MapLockBusy
 from ..scripts.util.overlay_metadata import load_overlay_metadata
 from ..scripts.util.regen_types import MODES as REGION_MODES
+from ..scripts.mapgen.coalitiongen import create_coalition_map, load_coalition_by_province
 from ..scripts.mapgen.infestationgen import create_infestation_map, load_infestation_by_id
 from ..scripts.loader.province_metadata import load_province_metadata
 from ..scripts.mapgen.zocgen import generate_zoc_overlays
@@ -90,6 +91,13 @@ def compute_trade_shares(trade: dict):
     return shares, dominant, best / total
 
 
+def _int_or_none(value) -> int | None:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
 def build_compiled_provinces(map_name: str):
     meta = load_province_metadata(map_name)
 
@@ -98,6 +106,7 @@ def build_compiled_provinces(map_name: str):
 
     by_id = {p["id"]: p for p in pdata}
     infest = load_infestation_by_id(map_name)
+    coalition_by_id = load_coalition_by_province(map_name)
     out = {}
 
     for pid, m in meta.items():
@@ -128,6 +137,13 @@ def build_compiled_provinces(map_name: str):
             "infestation_severity": inf.get("severity") if inf else None,
             "infestation_group": inf.get("group") if inf else None,
             "infestation_display": (inf.get("display") or inf.get("group")) if inf else None,
+            "coalition": None,
+            "coalition_member": None,
+            "coalition_leader": None,
+            "coalition_target": None,
+            "coalition_offensive": None,
+            "coalition_targeted_by": [],
+            **coalition_by_id.get(_int_or_none(pid), {}),
         }
     return out
 
@@ -399,6 +415,16 @@ def _run_promote_ledger_day(map_id: str, day: str) -> None:
         )
 
 
+def _refresh_coalition_map(map_name: str) -> None:
+    create_coalition_map(map_name)
+    # The province tooltip reads the compiled file; do not serve the old one
+    # for the rest of the cache's lifetime.
+    clear_province_cache(map_name)
+    from .tile_warm import warm_map_tiles
+
+    warm_map_tiles(map_name)
+
+
 @data_router.post("/{map_name}/data/upload/{mode}")
 async def upload_region_data(
     map_name: str,
@@ -537,7 +563,8 @@ async def upload_region_data(
 
     builder = (
         input_file
-        if mode in {"nation", "guilds", "province_data", "queue", "map_markers", "infestation_data"}
+        if mode
+        in {"nation", "guilds", "province_data", "queue", "map_markers", "infestation_data", "coalitions"}
         else defines_file
     )
     path = resolve_within(_map_dir(builder, map_name), builder(map_name, f"{mode}.json"))
@@ -571,6 +598,9 @@ async def upload_region_data(
         background_tasks.add_task(create_infestation_map, map_name)
         from .tile_warm import warm_map_tiles
         background_tasks.add_task(warm_map_tiles, map_name)
+    if mode_norm == "coalitions":
+        # Before capture_if_due, which snapshots the compiled coalition_map.json.
+        background_tasks.add_task(_refresh_coalition_map, map_name)
 
     # ORDER MATTERS - keep capture_if_due last. BackgroundTasks run in the order
     # they were added, and the chronicle snapshots defines/{map}/zoc_overlays.json

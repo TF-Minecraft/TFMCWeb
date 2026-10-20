@@ -18,6 +18,7 @@ from ..mapgen.previewgen import (
     create_map_preview,
     map_preview_path,
 )
+from ..mapgen.coalitiongen import create_coalition_map
 from ..mapgen.infestationgen import create_infestation_map
 from ..mapgen.prosperitygen import create_prosperity_map
 from ..mapgen.regiongen import generate_regions
@@ -582,6 +583,11 @@ def _sync_regeneration(map_name: str, regen_type: str):
 
         with timings.timed("map.infestation"):
             create_infestation_map(map_name, "infestation_map", cache=cache)
+
+        # Realm territory and subjects come from the nation compile above, so
+        # coalition land follows every regeneration.
+        with timings.timed("map.coalition"):
+            create_coalition_map(map_name, cache=cache)
 
     run_derived_artifacts(map_name, timings)
 

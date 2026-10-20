@@ -26,6 +26,7 @@ const ALL_MODES: MapMode[] = [
   "trade",
   "prosperity",
   "infestation",
+  "coalition",
   "plain",
 ];
 
@@ -71,7 +72,7 @@ describe("chronicleProvincePaintSource", () => {
   });
 
   it("keeps every raster mode live on the live map", () => {
-    for (const mode of ["terrain", "fertility", "province", "prosperity", "infestation"] as MapMode[]) {
+    for (const mode of ["terrain", "fertility", "province", "prosperity", "infestation", "coalition"] as MapMode[]) {
       expect(chronicleProvincePaintSource(mode, null)).toEqual({ kind: "live" });
     }
   });
@@ -99,6 +100,16 @@ describe("chronicleProvincePaintSource", () => {
     expect(showsLiveProvinceRaster("prosperity", DAY)).toBe(false);
     expect(showsLiveProvinceRaster("infestation", DAY)).toBe(false);
   });
+
+  it("day-scopes coalitions to that day's compiled coalition map", () => {
+    expect(chronicleProvincePaintSource("coalition", DAY)).toEqual({
+      kind: "day",
+      day: DAY,
+      mapType: "coalition",
+      file: "coalition_map",
+    });
+    expect(showsLiveProvinceRaster("coalition", DAY)).toBe(false);
+  });
 });
 
 describe("chronicleProvincePaintLut", () => {
@@ -112,6 +123,14 @@ describe("chronicleProvincePaintLut", () => {
   it("paints infestation through the severity palette", () => {
     const lut = chronicleProvincePaintLut("infestation", [{ id: 2, severity: "severe" }]);
     expect(lut[2]! >>> 0).toBe(((180 << 24) | (20 << 16) | (20 << 8) | 240) >>> 0);
+  });
+
+  it("paints coalitions from their compiled fill", () => {
+    const lut = chronicleProvincePaintLut("coalition", {
+      coalitions: [{ id: "c1", fill_rgba: [1, 2, 3, 215], hatch_rgba: [4, 5, 6, 235] }],
+      provinces: [{ id: 2, coalition: "c1" }],
+    });
+    expect(lut[2]! >>> 0).toBe(((1 << 24) | (2 << 16) | (3 << 8) | 215) >>> 0);
   });
 
   it("returns an empty LUT for a mode with no ramp rather than throwing", () => {

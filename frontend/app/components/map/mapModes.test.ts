@@ -5,6 +5,7 @@ import type { MapMode } from "./types";
 
 const ALL_MODES: MapMode[] = [
   "nation",
+  "coalition",
   "empire",
   "kingdom",
   "duchy",
@@ -21,15 +22,15 @@ const ALL_MODES: MapMode[] = [
 describe("mapModeOptions", () => {
   it("offers every map mode for each map", () => {
     const values = mapModeOptions().map((opt) => opt.value);
-    expect(values).toHaveLength(12);
+    expect(values).toHaveLength(13);
     expect(values).toEqual(ALL_MODES);
   });
 
   it("puts realms first, then the title tiers from the top, then the world modes", () => {
     const groups = mapModeOptions().map((opt) => opt.group);
-    expect(groups[0]).toBe("realms");
-    expect(groups.slice(1, 5).every((group) => group === "titles")).toBe(true);
-    expect(groups.slice(5).every((group) => group === "world")).toBe(true);
+    expect(groups.slice(0, 2).every((group) => group === "realms")).toBe(true);
+    expect(groups.slice(2, 6).every((group) => group === "titles")).toBe(true);
+    expect(groups.slice(6).every((group) => group === "world")).toBe(true);
   });
 });
 
@@ -46,6 +47,7 @@ describe("mapModeTileLayer", () => {
     expect(mapModeTileLayer("trade")).toBe("regions-trade");
     expect(mapModeTileLayer("terrain")).toBe("mapdata-terrain");
     expect(mapModeTileLayer("province")).toBe("mapdata-province");
+    expect(mapModeTileLayer("coalition")).toBe("mapdata-coalition");
     for (const mode of ALL_MODES) {
       if (mode !== "plain") expect(mapModeTileLayer(mode)).not.toBeNull();
     }

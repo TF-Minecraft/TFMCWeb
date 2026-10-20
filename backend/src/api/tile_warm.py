@@ -21,7 +21,7 @@ from . import region_composite, tile_cache
 
 # The full-map rasters the viewer tiles as `mapdata-{mode}`, except the
 # province map, which is the unchanging input pick map (see file_routes).
-RASTER_MODES = ("terrain", "fertility", "prosperity", "infestation")
+RASTER_MODES = ("terrain", "fertility", "prosperity", "infestation", "coalition")
 
 
 def warm_map_tiles(map_name: str) -> None:

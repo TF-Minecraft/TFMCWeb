@@ -119,6 +119,7 @@ const PROVINCE_TOOLTIP_MODES = new Set<MapMode>([
   "terrain",
   "fertility",
   "infestation",
+  "coalition",
   "province",
 ]);
 

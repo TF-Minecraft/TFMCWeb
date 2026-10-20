@@ -2,6 +2,7 @@ import type { MapMode } from "@/app/components/map/types";
 
 import type { ChronicleFileName } from "./chronicleData";
 import type { NationColorLut } from "./chroniclePaint";
+import { buildCoalitionColorLut } from "./chronicleCoalition";
 import { buildInfestationColorLut } from "./chronicleInfestation";
 import { buildProsperityColorLut } from "./chronicleProsperity";
 
@@ -57,6 +58,7 @@ export const PROVINCE_RASTER_MODES: ReadonlySet<MapMode> = new Set<MapMode>([
   "province",
   "prosperity",
   "infestation",
+  "coalition",
 ]);
 
 /**
@@ -75,6 +77,7 @@ export const PROVINCE_RASTER_MODES: ReadonlySet<MapMode> = new Set<MapMode>([
 export const CHRONICLE_PROVINCE_PAINT_SOURCE: Partial<Record<MapMode, ChronicleFileName>> = {
   prosperity: "province_data",
   infestation: "infestation_data",
+  coalition: "coalition_map",
 };
 
 /**
@@ -129,5 +132,6 @@ export function usesChronicleProvincePaint(mapType: MapMode | string, day: strin
 export function chronicleProvincePaintLut(mapType: MapMode | string, payload: unknown): NationColorLut {
   if (mapType === "prosperity") return buildProsperityColorLut(payload);
   if (mapType === "infestation") return buildInfestationColorLut(payload);
+  if (mapType === "coalition") return buildCoalitionColorLut(payload);
   return new Uint32Array(0);
 }

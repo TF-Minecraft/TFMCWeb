@@ -149,6 +149,10 @@ def upload_env(tmp_path, monkeypatch, postgres):
     monkeypatch.setattr(
         "src.api.data_routes.create_infestation_map", lambda map_name: None
     )
+    monkeypatch.setattr(
+        "src.api.data_routes._refresh_coalition_map",
+        lambda map_name: captures.append(f"coalitions:{map_name}"),
+    )
 
     skins_db.ensure_directories()
     try:
@@ -184,6 +188,18 @@ def test_input_mode_bytes_are_unchanged(client, upload_env):
     assert path.read_text(encoding="utf-8") == _expected_bytes(payload)
     # The legacy path resolves the map from the raw segment, not the registry.
     assert upload_env["captures"] == ["main"]
+
+
+def test_coalitions_upload_is_an_input_mode_redrawn_before_capture(client, upload_env):
+    """The chronicle snapshots the compiled coalition map, so the redraw must
+    be queued ahead of the capture."""
+    payload = {"coalitions": [{"id": "c1", "name": "Free Alliance", "members": ["a"]}]}
+    res = client.post("/main/data/upload/coalitions", json=payload)
+    assert res.status_code == 200
+
+    path = upload_env["root"] / "input" / "main" / "coalitions.json"
+    assert path.read_text(encoding="utf-8") == _expected_bytes(payload)
+    assert upload_env["captures"] == ["coalitions:main", "main"]
 
 
 def test_defines_mode_bytes_are_unchanged(client, upload_env):
