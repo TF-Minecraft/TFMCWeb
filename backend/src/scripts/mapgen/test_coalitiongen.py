@@ -11,6 +11,7 @@ from .coalitiongen import (
     FALLBACK_RGB,
     HATCH_ALPHA,
     HATCH_EDGE_RGBA,
+    HATCH_RGB,
     TARGET_BORDER_RGBA,
     TARGET_WASH_RGBA,
     coalition_rows,
@@ -18,7 +19,6 @@ from .coalitiongen import (
     compile_coalition_regions,
     paint_target_hatch,
 )
-from ..util.display_colour import hover_rgb
 
 NATIONS = {
     "Thalendor": {"id": "Thalendor", "name": "Thalendor", "rgb": "45,105,65", "provinces": [1, 2], "subjects": []},
@@ -186,12 +186,12 @@ class TargetHatchTests(unittest.TestCase):
         self.ids[10:50, 40:100] = 5
 
     def test_stripes_wash_and_outline(self) -> None:
-        img, meta = paint_target_hatch(self.ids, [5], (45, 105, 65))
+        img, meta = paint_target_hatch(self.ids, [5])
         out = np.array(img)
         # Where the target's land starts, inside the crop.
         oy, ox = 10 - meta["y"], 40 - meta["x"]
         land = {tuple(px) for px in out[oy + 5 : oy + 35, ox + 5 : ox + 55].reshape(-1, 4)}
-        self.assertIn((*hover_rgb((45, 105, 65)), HATCH_ALPHA), land)
+        self.assertIn((*HATCH_RGB, HATCH_ALPHA), land)
         self.assertIn(HATCH_EDGE_RGBA, land)
         self.assertIn(TARGET_WASH_RGBA, land)
         # The red border straddles the land's edge.
@@ -199,15 +199,15 @@ class TargetHatchTests(unittest.TestCase):
         self.assertEqual(tuple(out[oy + 20, ox + 1]), TARGET_BORDER_RGBA)
 
     def test_crop_box_is_on_the_full_map(self) -> None:
-        _, meta = paint_target_hatch(self.ids, [5], (45, 105, 65))
+        _, meta = paint_target_hatch(self.ids, [5])
         self.assertLessEqual(meta["x"], 40)
         self.assertLessEqual(meta["y"], 10)
         self.assertGreaterEqual(meta["x"] + meta["w"], 100)
         self.assertGreaterEqual(meta["y"] + meta["h"], 50)
 
     def test_no_land_no_overlay(self) -> None:
-        self.assertIsNone(paint_target_hatch(self.ids, [], (1, 2, 3)))
-        self.assertIsNone(paint_target_hatch(self.ids, [77], (1, 2, 3)))
+        self.assertIsNone(paint_target_hatch(self.ids, []))
+        self.assertIsNone(paint_target_hatch(self.ids, [77]))
 
 
 class RunTests(unittest.TestCase):

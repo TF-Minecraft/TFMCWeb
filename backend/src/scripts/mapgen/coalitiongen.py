@@ -35,7 +35,6 @@ from ..util.dirs import (
     region_overlay_file,
     validate_map,
 )
-from ..util.display_colour import hover_rgb
 from ..util.overlay_metadata import crop_to_content
 from .geometry_cache import MapGeometryCache
 from .mapgen import create_map
@@ -50,6 +49,9 @@ HATCH_LINE = 14
 # on dark forest and pale sand alike.
 HATCH_EDGE = 2
 HATCH_ALPHA = 235
+# One reddish brown for every target's stripes, to go with the red border: a
+# target reads as a target whichever coalition is open.
+HATCH_RGB = (189, 129, 132)
 HATCH_EDGE_RGBA = (*INK_DARK[:3], 200)
 # A dark wash under the stripes, so the coalition's own colour stands out even
 # where the land beneath is the same hue.
@@ -322,10 +324,9 @@ def color_mapping(map_name: str, provinces: dict) -> dict:
 def paint_target_hatch(
     province_id_map: np.ndarray,
     target_ids: list[int],
-    rgb: tuple[int, int, int],
 ) -> tuple[Image.Image, dict[str, int]] | None:
-    """The target's realm darkened, hatched in a light tint of the coalition's
-    map colour and outlined in red, cropped to its land, with the crop box on the full map. None when the
+    """The target's realm darkened, hatched in reddish brown and outlined in
+    red, cropped to its land, with the crop box on the full map. None when the
     target holds no land."""
     if not target_ids:
         return None
@@ -347,7 +348,7 @@ def paint_target_hatch(
     # Measured on the full map, so the stripes line up however it is cropped.
     offset = (xs + x0 + ys + y0) % HATCH_PERIOD
     on_line = offset < HATCH_LINE
-    out[ys[on_line], xs[on_line]] = (*hover_rgb(rgb), HATCH_ALPHA)
+    out[ys[on_line], xs[on_line]] = (*HATCH_RGB, HATCH_ALPHA)
     edge = on_line & ((offset < HATCH_EDGE) | (offset >= HATCH_LINE - HATCH_EDGE))
     out[ys[edge], xs[edge]] = HATCH_EDGE_RGBA
 
@@ -432,7 +433,7 @@ def run_coalition_mode(map_name: str, cache: MapGeometryCache | None = None) -> 
     # After generate_regions, which empties the mode's folder on a full run.
     for record in records.values():
         rgb = _parse_rgb(record["rgb"])
-        painted = paint_target_hatch(cache.province_id_map, record["target_provinces"], rgb) if rgb else None
+        painted = paint_target_hatch(cache.province_id_map, record["target_provinces"])
         if painted is None:
             continue
         img, meta = painted
