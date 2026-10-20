@@ -51,6 +51,8 @@ import MapSearch from "./map/shell/MapSearch";
 import MapZoomControls from "./map/shell/MapZoomControls";
 import MapLayersMenu, { type MapLayerToggle } from "./map/shell/MapLayersMenu";
 import MapDrillBreadcrumb from "./map/shell/MapDrillBreadcrumb";
+import { CoalitionPanelContent, type CoalitionRecord } from "./map/shell/CoalitionPanel";
+import { buildCoalitionTargetNotes } from "@/app/lib/map/coalitionTargets";
 import { RealmPanelContent } from "./map/shell/RealmPanel";
 import { PlacePanelContent } from "./map/shell/PlacePanel";
 import { GuildPanelContent } from "./map/shell/GuildPanel";
@@ -564,7 +566,7 @@ const MapViewer = ({ mapId, day = null, dayBar, dayActions }: MapViewerProps) =>
 
   const provinceRegionIndex = useMemo(() => {
     if (!provincePickActive || !regionData) return null;
-    if (mapType === "nation") return buildProvinceRegionIndex(regionData);
+    if (mapType === "nation" || mapType === "coalition") return buildProvinceRegionIndex(regionData);
     if (mapType === "trade") {
       const loaded = tradeWaterMask?.key === `${mapId}\n${authToken ?? ""}` ? tradeWaterMask.mask : undefined;
       if (loaded === undefined || loaded === null) return EMPTY_PROVINCE_REGION_INDEX;
@@ -746,6 +748,12 @@ const MapViewer = ({ mapId, day = null, dayBar, dayActions }: MapViewerProps) =>
     setPickReadyFor(pickKey);
   }, [day, accessChecked, gateReason, mapCanvasMounted, chronicleGrid, regionData, pickKey]);
 
+  /** On the coalition map, target land says whose target it is. */
+  const coalitionTargetNote = useMemo(
+    () => (mapType === "coalition" ? buildCoalitionTargetNotes(regionData, selectedId) : undefined),
+    [mapType, regionData, selectedId],
+  );
+
   const {
     onMouseMove,
     onMouseLeave: onHoverLeave,
@@ -765,6 +773,7 @@ const MapViewer = ({ mapId, day = null, dayBar, dayActions }: MapViewerProps) =>
     provinceRunIndexRef,
     provinceRegionIndex,
     provincePickReady: provincePickActive && pickReadyFor === pickKey,
+    provinceNote: coalitionTargetNote,
     viewportCoordsRef,
     guildNameCacheRef,
     sessionToken: authToken,
@@ -1078,6 +1087,21 @@ const MapViewer = ({ mapId, day = null, dayBar, dayActions }: MapViewerProps) =>
   }, [chronicle, litRegionId, regionData, getHoverRegion, mapType, mapId, mapObjects, focusRealmId]);
 
   /**
+   * A selected coalition's target, hatched over the map. Live only: the image
+   * is drawn from today's realms, so a stored day must not show it.
+   */
+  const coalitionTarget =
+    mapType === "coalition" && selectedId
+      ? (regionData?.[selectedId] as CoalitionRecord & { target_path?: unknown })
+      : undefined;
+  const coalitionTargetOverlay = useMemo<HoverOverlay | null>(() => {
+    if (chronicle || !coalitionTarget) return null;
+    const { target_path: file, target_overlay: overlay } = coalitionTarget;
+    if (typeof file !== "string" || !overlay) return null;
+    return { url: `/${mapId}/regions/coalition/${encodeURIComponent(file.replace(/\.png$/, ""))}`, overlay };
+  }, [chronicle, coalitionTarget, mapId]);
+
+  /**
    * What the canvas keeps lit. An opened realm: its whole shape, with its own
    * layers drawn inside. Otherwise the selected region alone.
    */
@@ -1305,6 +1329,17 @@ const MapViewer = ({ mapId, day = null, dayBar, dayActions }: MapViewerProps) =>
       onClose={clearSelection}
       onSelectGuild={(key) => select({ guild: key })}
     />
+  ) : mapType === "coalition" && selectedId && regionData && selectedRegion ? (
+    <CoalitionPanelContent
+      mapId={mapId}
+      regionId={selectedId}
+      regionData={regionData}
+      sessionToken={authToken}
+      onOpenRealm={openRealm}
+      onFocusRegion={selectedRegion.overlay ? () => focusRegion(selectedId) : undefined}
+      onFocusTarget={coalitionTargetOverlay?.overlay ? () => focusRect(coalitionTargetOverlay.overlay!) : undefined}
+      onClose={clearSelection}
+    />
   ) : selectedId && regionData && selectedRegion ? (
     <RealmPanelContent
       mapId={mapId}
@@ -1405,6 +1440,7 @@ const MapViewer = ({ mapId, day = null, dayBar, dayActions }: MapViewerProps) =>
         mapObjects={loading ? [] : mapObjects}
         hoveredOverlay={hoveredOverlay}
         selectedOverlay={selectedOverlay}
+        targetOverlay={coalitionTargetOverlay}
         hoveredFortZoc={hoveredFortZoc}
         cursorTooltip={cursorTooltip}
         labels={regionLabels}

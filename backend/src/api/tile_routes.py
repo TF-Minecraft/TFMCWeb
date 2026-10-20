@@ -11,7 +11,7 @@ from . import file_routes, map_routes, region_composite
 from .http_headers import add_cors, conditional_json_response
 from .map_access import ensure_map_access
 from .tile_cache import ready_manifest, tile_file, valid_version, run_manifest
-from ..scripts.util.regen_types import MODES as REGION_MODES
+from ..scripts.util.regen_types import REGION_LAYER_MODES as REGION_MODES
 
 tile_router = APIRouter()
 

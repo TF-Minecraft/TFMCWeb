@@ -20,6 +20,9 @@ export type MapModeOption = {
  */
 const MODE_OPTIONS: MapModeOption[] = [
   { value: "nation", label: "Realms", group: "realms" },
+  // Each coalition as one shape over its members' realms; selecting one
+  // hatches the realm it opposes.
+  { value: "coalition", label: "Coalitions", group: "realms" },
   { value: "empire", label: "Empires", group: "titles" },
   { value: "kingdom", label: "Kingdoms", group: "titles" },
   { value: "duchy", label: "Duchies", group: "titles" },
@@ -52,6 +55,7 @@ export const REGION_TILE_MODES: ReadonlySet<MapMode> = new Set<MapMode>([
   "kingdom",
   "empire",
   "trade",
+  "coalition",
 ]);
 
 /**

@@ -73,6 +73,7 @@ describe("map data source routing", () => {
       nation: "nation",
       trade: "trade",
       empire: "empire",
+      coalition: "coalition",
       county: "county",
       duchy: "duchy",
       kingdom: "kingdom",

@@ -56,6 +56,7 @@ describe("chronicle data", () => {
       "county",
       "duchy",
       "kingdom",
+      "coalition",
     ]);
   });
 

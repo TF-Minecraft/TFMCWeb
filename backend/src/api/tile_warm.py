@@ -16,7 +16,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from ..scripts.util.dirs import input_file, map_image
-from ..scripts.util.regen_types import MODES as REGION_MODES
+from ..scripts.util.regen_types import REGION_LAYER_MODES as REGION_MODES
 from . import region_composite, tile_cache
 
 # The full-map rasters the viewer tiles as `mapdata-{mode}`, except the

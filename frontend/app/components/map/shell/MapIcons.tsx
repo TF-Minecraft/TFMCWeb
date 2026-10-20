@@ -32,6 +32,14 @@ export const RealmIcon = (props: IconProps) => (
   </Icon>
 );
 
+/** Coalitions: two realms' shields, side by side and overlapping. */
+export const CoalitionIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d="M2.5 5h10v5.2c0 3.4-2.3 5.7-5 6.8-2.7-1.1-5-3.4-5-6.8V5Z" />
+    <path d="M11.5 7h10v5.2c0 3.4-2.3 5.7-5 6.8-2.7-1.1-5-3.4-5-6.8V7Z" />
+  </Icon>
+);
+
 /*
  * The title tiers, as one family of crowns that grows with rank, the way CK3
  * marks them: a county's low coronet of pearls, a duchy's taller one of leaves,
@@ -320,6 +328,7 @@ export const ChartIcon = (props: IconProps) => (
 
 export const MAP_MODE_ICONS: Record<MapMode, (props: IconProps) => ReactNode> = {
   nation: RealmIcon,
+  coalition: CoalitionIcon,
   county: CountyIcon,
   duchy: DuchyIcon,
   kingdom: KingdomIcon,

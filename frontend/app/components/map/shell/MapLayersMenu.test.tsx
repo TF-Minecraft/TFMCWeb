@@ -198,7 +198,7 @@ describe("MapLayersMenu on a desktop", () => {
       toggles: [{ id: "paint", label: "War planning", icon: () => null, desktopOnly: true, checked: false, onChange }],
     });
     const strip = screen.getByRole("group", { name: "Map type and details" });
-    expect(strip.querySelectorAll("button[aria-pressed]")).toHaveLength(12);
+    expect(strip.querySelectorAll("button[aria-pressed]")).toHaveLength(13);
     fireEvent.click(screen.getByRole("button", { name: "Duchies" }));
     expect(onMapTypeChange).toHaveBeenCalledWith("duchy");
     fireEvent.click(screen.getByRole("switch", { name: "War planning" }));

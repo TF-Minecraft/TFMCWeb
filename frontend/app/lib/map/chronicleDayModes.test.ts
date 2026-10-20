@@ -26,6 +26,7 @@ const ALL_MODES: MapMode[] = [
   "trade",
   "prosperity",
   "infestation",
+  "coalition",
   "plain",
 ];
 
@@ -98,6 +99,11 @@ describe("chronicleProvincePaintSource", () => {
     });
     expect(showsLiveProvinceRaster("prosperity", DAY)).toBe(false);
     expect(showsLiveProvinceRaster("infestation", DAY)).toBe(false);
+  });
+
+  it("draws coalitions as regions, not a province raster", () => {
+    expect(chronicleProvincePaintSource("coalition", DAY)).toBeNull();
+    expect(chronicleProvincePaintSource("coalition", null)).toBeNull();
   });
 });
 

@@ -197,6 +197,12 @@ def build_color_mapping(map_name: str, mode: str):
             _load_province_data(map_name),
         )
 
+    elif mode == "coalition":
+        # Imported here: coalitiongen draws through mapgen, which imports this.
+        from ..mapgen.coalitiongen import color_mapping as coalition_color_mapping
+
+        province_to_color.update(coalition_color_mapping(map_name, provinces))
+
     elif mode == "trade":
         guilds = load_guilds(map_name)
         province_meta = load_province_metadata(map_name)

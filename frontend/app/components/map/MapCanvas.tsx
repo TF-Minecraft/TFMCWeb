@@ -364,6 +364,8 @@ type MapCanvasProps = {
    */
   selectedOverlay?: HoverOverlay | null;
   hoveredFortZoc?: HoverOverlay | null;
+  /** A selected coalition's target, hatched; drawn above the selection. */
+  targetOverlay?: HoverOverlay | null;
   cursorTooltip: CursorTooltip | null;
   labels?: NationLabelSpec[];
   markers?: MapMarker[];
@@ -429,6 +431,7 @@ export default function MapCanvas({
   hoveredOverlay,
   selectedOverlay = null,
   hoveredFortZoc = null,
+  targetOverlay = null,
   cursorTooltip,
   labels = [],
   markers = [],
@@ -904,6 +907,17 @@ export default function MapCanvas({
             ownShape
             imageClassName="map-selected-region"
             imageStyle={regionHighlightStyle(viewport.displayScale, 2.5, 0.95)}
+          />
+        )}
+        {regionOverlay === undefined && targetOverlay && (
+          <HoverOverlayImage
+            mapId={mapId}
+            sessionToken={sessionToken}
+            overlay={targetOverlay}
+            mapW={mapSize.w}
+            mapH={mapSize.h}
+            opacity={1}
+            alt="Coalition target"
           />
         )}
         {regionOverlay === undefined && hoveredOverlay && (
