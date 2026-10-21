@@ -113,6 +113,18 @@ export default function MagicPage() {
           <strong>Take the weapon.</strong> Right-click the station with an empty hand.
         </li>
         <li>
+          <strong>Charge it again later.</strong> Hold the weapon and right-click an empty{" "}
+          <StationLink name="Magic Station" /> to set it down, then attune it with another charge. A later charge can
+          only raise the weapon&apos;s attunement, never lower it.
+        </li>
+        <li>
+          <strong>Start over.</strong> To clear a weapon&apos;s attunement instead, sneak and right-click an empty{" "}
+          <StationLink name="Magic Station" /> while holding it. Chat shows the fee, half the materials of the
+          weapon&apos;s parts, rounded up. Sneak and right-click again to pay it. The next charge that stores anything
+          replaces the old attunement and its Rift. Until then, only you can charge the weapon or take it back. When no
+          charge is running, sneak and left-click the station to get the weapon and the fee.
+        </li>
+        <li>
           <strong>Add runes.</strong> Put spell runes into the weapon&apos;s sockets. Every spell comes from a rune, so
           a weapon with no runes casts nothing.
         </li>
