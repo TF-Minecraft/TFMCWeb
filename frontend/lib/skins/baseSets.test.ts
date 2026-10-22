@@ -38,8 +38,8 @@ describe("base sets from shared/skins/base_sets.json", () => {
     expect(kindsForBaseSet("battle standards")).toEqual(["item_3d"]);
   });
 
-  it("offers crutches as a 32×32 or 3D prop", () => {
-    expect(kindsForBaseSet("crutches")).toEqual(["large_handheld", "item_3d"]);
+  it("keeps crutches 3D only", () => {
+    expect(kindsForBaseSet("crutches")).toEqual(["item_3d"]);
     expect(baseSetLabel("crutches")).toBe("Crutches");
   });
 

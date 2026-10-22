@@ -35,7 +35,7 @@ function asVec3(value: unknown, fallback: [number, number, number]): [number, nu
   return [x, y, z];
 }
 
-function normalizeTab(raw: unknown): Required<DisplayTab> {
+export function normalizeTab(raw: unknown): Required<DisplayTab> {
   const src = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
   return {
     rotation: asVec3(src.rotation, IDENTITY_TAB.rotation),
@@ -46,7 +46,7 @@ function normalizeTab(raw: unknown): Required<DisplayTab> {
 
 /**
  * Preview display from the model JSON only.
- * Missing tab → identity (slot frame alone). No kind autofill / no packed defaults.
+ * Missing tab → identity (slot frame alone). Hand slots use resolveHandDisplayTab (handDisplay.ts).
  */
 export function resolveDisplayTab(
   json: JavaModelJson & { display?: Record<string, unknown> },
@@ -54,10 +54,21 @@ export function resolveDisplayTab(
   _kind?: DisplayKind,
 ): Required<DisplayTab> {
   const submitted = json.display?.[tabName];
-  if (submitted && typeof submitted === "object") {
+  if (isTabObject(submitted)) {
     return normalizeTab(submitted);
   }
   return { ...IDENTITY_TAB };
+}
+
+/** A display tab must be a JSON object; the pack ignores anything else. */
+export function isTabObject(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+export type HandTabName = Extract<DisplayTabName, "thirdperson_righthand" | "thirdperson_lefthand">;
+
+export function handTabName(leftHand: boolean): HandTabName {
+  return leftHand ? "thirdperson_lefthand" : "thirdperson_righthand";
 }
 
 /**
@@ -65,17 +76,15 @@ export function resolveDisplayTab(
  * Translation stays in model units (1 unit = 1/16 block), matching javaModel meshes.
  * Rotation order XYZ matches Minecraft ItemTransform euler.
  *
- * When `mirrorLeft` is true, matches ItemTransform.apply(leftHanded):
- * negate translation X, rotation Y/Z, and scale X.
- * Pass the *righthand* display tab with mirrorLeft on the left arm so the hold
- * mirrors the calibrated right pose (inward on both sides).
+ * When `leftHand` is true, matches ItemTransform.apply(leftHand):
+ * negate translation X and rotation Y/Z. Scale and geometry are not mirrored.
+ * Pass the *lefthand* display tab with leftHand on the left arm.
  */
-export function applyDisplayToObject(obj: THREE.Object3D, tab: DisplayTab, options?: { mirrorLeft?: boolean }): void {
+export function applyDisplayToObject(obj: THREE.Object3D, tab: DisplayTab, options?: { leftHand?: boolean }): void {
   const rotation = tab.rotation ?? [0, 0, 0];
   const translation = tab.translation ?? [0, 0, 0];
   const scale = tab.scale ?? [1, 1, 1];
-  const mirror = options?.mirrorLeft === true;
-  const mx = mirror ? -1 : 1;
+  const mx = options?.leftHand === true ? -1 : 1;
 
   obj.position.set(translation[0] * mx, translation[1], translation[2]);
   obj.rotation.order = "XYZ";
@@ -84,5 +93,5 @@ export function applyDisplayToObject(obj: THREE.Object3D, tab: DisplayTab, optio
     THREE.MathUtils.degToRad(rotation[1] * mx),
     THREE.MathUtils.degToRad(rotation[2] * mx),
   );
-  obj.scale.set(scale[0] * mx, scale[1], scale[2]);
+  obj.scale.set(scale[0], scale[1], scale[2]);
 }

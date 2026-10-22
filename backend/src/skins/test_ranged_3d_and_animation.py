@@ -63,9 +63,11 @@ def test_base_sets_come_from_shared_json():
     for wanted in ("wands", "mage blades", "pickaxes", "shovels", "fishing rods", "instruments"):
         assert wanted in sets["handheld"]
         assert wanted in sets["item_3d"]
-    for wanted in ("longswords", "greataxes", "crutches"):
+    for wanted in ("longswords", "greataxes"):
         assert wanted in sets["large_handheld"]
         assert wanted in sets["item_3d"]
+    assert "crutches" in sets["item_3d"]
+    assert "crutches" not in sets["large_handheld"]
     assert "battle standards" in sets["item_3d"]
     assert "battle standards" not in sets["handheld"]
     assert sets["bow_3d"] == {"shortbows", "longbows"}
