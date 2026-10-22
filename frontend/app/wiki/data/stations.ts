@@ -407,7 +407,7 @@ export const stations: StationInfo[] = [
   {
     slug: "ingredient-converter",
     name: "Ingredient Converter",
-    blurb: "Previews how a raw material contributes to an Advanced Crafting project.",
+    blurb: "Turns raw materials into Advanced Crafting ingredients and previews their stats.",
     icon: T("stations/ingredient-converter.png"),
     interaction: "Right click",
     guide: { href: "/wiki/advanced-crafting", label: "Advanced Crafting guide" },
@@ -427,10 +427,10 @@ export const stations: StationInfo[] = [
   {
     slug: "recycling-station",
     name: "Recycling Station",
-    blurb: "Returns materials from supported weapons, armour, guns, and dedicated recipes.",
+    blurb: "Breaks crafted gear, runes, artifacts and scrap back down into materials.",
     icon: T("stations/recycling-station.png"),
     interaction: "Right click",
-    guide: { href: "/wiki/recycler", label: "Recycler guide" },
+    guide: { href: "/wiki/recycler", label: "Recycling guide" },
     model: recyclingModel,
     craftRecipe: recyclingStationRecipe,
   },

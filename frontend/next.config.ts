@@ -31,6 +31,8 @@ const nextConfig: NextConfig = {
       // Staff tools that moved into the staff panel.
       { source: "/precedent", destination: "/admin/precedent", permanent: false },
       { source: "/inspect", destination: "/admin/codes", permanent: false },
+      // The Gathering plugin's spots never spawn on Main, so its wiki page was removed.
+      { source: "/wiki/gathering", destination: "/wiki", permanent: false },
     ];
   },
 };
