@@ -1,6 +1,6 @@
 import type { WikiCommandSet, WikiSection } from "./types";
 
-/** CustomCrops has no player commands; every command in commands.yml carries an admin node. */
+/** CustomCrops and Cooking farming have no player commands; every command carries an admin node. */
 export const farmingCommands: WikiCommandSet = {
   system: "Farming",
   href: "/wiki/farming",
@@ -12,7 +12,7 @@ export const farmingSection: WikiSection = {
     href: "/wiki/farming",
     label: "Farming",
     category: "gathering",
-    blurb: "Grow 30 custom crops in watered pots, and speed them up with fertiliser.",
+    blurb: "Field crops and hoes, 30 custom crops, open sky and province fertility.",
   },
   commands: farmingCommands,
 };

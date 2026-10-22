@@ -22,11 +22,9 @@ import { furnitureSection } from "./furniture";
 import { woodworkingSection } from "./woodworking";
 import { gamesSection } from "./games";
 import { dowsingSection } from "./dowsing";
-import { gatheringSection } from "./gathering";
 import { gemInfusionSection } from "./gem-infusion";
 import { gettingStartedSection } from "./getting-started";
 import { gunsSection } from "./guns";
-import { harvestingSection } from "./harvesting";
 import { infestationsSection } from "./infestations";
 import { instrumentsSection } from "./instruments";
 import { magicSection } from "./magic";
@@ -59,11 +57,9 @@ export const wikiSections: readonly WikiSection[] = [
   advancedCraftingSection,
   furnitureSection,
   woodworkingSection,
-  gatheringSection,
-  dowsingSection,
-  harvestingSection,
   farmingSection,
   fishingSection,
+  dowsingSection,
   cookingSection,
   animalHusbandrySection,
   brewingSection,
