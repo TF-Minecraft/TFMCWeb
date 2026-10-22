@@ -111,9 +111,9 @@ export default function FarmingPage() {
 
       <WikiSectionHeading id="field-crops">Field crops and hoes</WikiSectionHeading>
       <p className={body}>
-        Wheat, potatoes, carrots, beetroots and nether wart grow as in vanilla and need no perk. Harvest them by
-        breaking a ripe crop with one of the server&apos;s hoes. Every ripe crop in the hoe&apos;s area is cut at once,
-        the produce goes into your inventory, and each spot replants itself a moment later. Unripe crops are left alone.
+        Wheat, potatoes, carrots, beetroots and nether wart are vanilla crops and need no perk. Harvest them by breaking
+        a ripe crop with one of the server&apos;s hoes. Every ripe crop in the hoe&apos;s area is cut at once, the
+        produce goes into your inventory, and each spot replants itself a moment later. Unripe crops are left alone.
         Crops broken by hand drop as normal, but their produce is always 1 star. Bone meal does not work on field crops.
       </p>
       <DataTable
@@ -152,8 +152,9 @@ export default function FarmingPage() {
           area.
         </li>
         <li>
-          While the farmland is wet, the crop gains a growth step roughly every 10 minutes, so most crops ripen in 20 to
-          50 minutes. Crops only grow while their chunk is loaded. Bone meal sometimes adds a step or two.
+          While the farmland is wet, the crop gains a growth step roughly every 10 minutes, so in fertile land a crop
+          ripens in 20 to 50 minutes. Crops only grow while their chunk is loaded. Bone meal sometimes adds a step or
+          two.
         </li>
         <li>
           Right-click a ripe crop with an empty hand to harvest 2 to 4 produce. Crops that regrow drop back to an
