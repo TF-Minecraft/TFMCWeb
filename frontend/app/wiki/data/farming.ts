@@ -12,7 +12,7 @@ export const farmingSection: WikiSection = {
     href: "/wiki/farming",
     label: "Farming",
     category: "gathering",
-    blurb: "Field crops and hoes, 30 custom crops, open sky and province fertility.",
+    blurb: "Field crops and hoes, 27 custom crops, open sky and province fertility.",
   },
   commands: farmingCommands,
 };

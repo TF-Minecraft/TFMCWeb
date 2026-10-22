@@ -16,7 +16,6 @@ const SPICE = "Spice Lover";
 const crops = [
   ["Apple", FRUIT, 5, true],
   ["Banana", FRUIT, 4, true],
-  ["Cactus Fruit", FRUIT, 4, true],
   ["Cherry", FRUIT, 4, true],
   ["Grape", FRUIT, 5, true],
   ["Lemon", FRUIT, 4, true],
@@ -32,11 +31,9 @@ const crops = [
   ["Cucumber", VEGETABLE, 3, false],
   ["Garlic", VEGETABLE, 3, false],
   ["Lettuce", VEGETABLE, 2, false],
-  ["Mustard Seeds", VEGETABLE, 4, false],
   ["Olive", VEGETABLE, 4, true],
   ["Onion", VEGETABLE, 2, false],
   ["Rhubarb", VEGETABLE, 2, false],
-  ["Rice", VEGETABLE, 3, false],
   ["Yeast", VEGETABLE, 3, false],
   ["Basil", SPICE, 3, false],
   ["Black Pepper", SPICE, 3, false],
@@ -66,7 +63,7 @@ export default function FarmingPage() {
       width="lg"
       intro={
         <>
-          Farms grow two kinds of crops: the usual field crops, such as wheat and potatoes, and 30 custom fruits,
+          Farms grow two kinds of crops: the usual field crops, such as wheat and potatoes, and 27 custom fruits,
           vegetables and spices for{" "}
           <Link href="/wiki/cooking" className={link}>
             Cooking
@@ -102,7 +99,7 @@ export default function FarmingPage() {
           map
         </Link>{" "}
         to Fertility to see it. In poor land crops often skip a growth step, and at 0 they do not grow at all. Hardy
-        crops such as nether wart, cactus fruit and potatoes cope with poor soil far better than rice or corn.
+        crops such as nether wart, potatoes and olives cope with poor soil far better than corn or tomatoes.
       </p>
       <p className={`mt-3 ${body}`}>
         Harvested produce gets a quality of 1 to 5 stars. Fertile land makes good stars more likely, though any result
