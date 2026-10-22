@@ -42,7 +42,7 @@ const ammunitionName = (name: string) => {
 export default function VehiclesPage() {
   return (
     <WikiPage
-      lastModified="2026-09-27"
+      lastModified="2026-10-22"
       title="Vehicles & Construction"
       width="lg"
       intro="Build a cart, crew a ship or fly an airship. Choose a vehicle below for its materials, build time, fuel and 3D preview."

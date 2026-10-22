@@ -388,22 +388,6 @@ export const vehicles: VehicleInfo[] = [
         id: "monoplane_pirate",
         name: "Monoplane (Pirate)",
       },
-      {
-        id: "monoplane_prism",
-        name: "Monoplane (Prism)",
-      },
-      {
-        id: "monoplane_norain",
-        name: "Monoplane (Norain)",
-      },
-      {
-        id: "monoplane_zerratoris",
-        name: "Monoplane (Zerratoris)",
-      },
-      {
-        id: "monoplane_oseni",
-        name: "Monoplane (Oseni)",
-      },
     ],
   },
   {
@@ -466,22 +450,6 @@ export const vehicles: VehicleInfo[] = [
         id: "biplane_pirate",
         name: "Biplane (Pirate)",
       },
-      {
-        id: "biplane_prism",
-        name: "Biplane (Prism)",
-      },
-      {
-        id: "biplane_norain",
-        name: "Biplane (Norain)",
-      },
-      {
-        id: "biplane_zerratoris",
-        name: "Biplane (Zerratoris)",
-      },
-      {
-        id: "biplane_oseni",
-        name: "Biplane (Oseni)",
-      },
     ],
   },
   {
@@ -542,14 +510,6 @@ export const vehicles: VehicleInfo[] = [
         id: "cloudskimmer",
         name: "Cloudskimmer",
       },
-      {
-        id: "cloudskimmer_prism",
-        name: "Cloudskimmer (Prism)",
-      },
-      {
-        id: "cloudskimmer_norain",
-        name: "Cloudskimmer (Norain)",
-      },
     ],
   },
   {
@@ -579,10 +539,6 @@ export const vehicles: VehicleInfo[] = [
       {
         id: "gyrobomber",
         name: "Gyrobomber",
-      },
-      {
-        id: "gyrobomber_prism",
-        name: "Gyrobomber (Prism)",
       },
     ],
   },

@@ -16,12 +16,12 @@ import VehicleDetail, { generateStaticParams } from "./[slug]/page";
 import VehiclesPage from "./page";
 
 describe("vehicle catalogue and actual assets", () => {
-  it("covers every base blueprint and distinguishes missing skin models", () => {
+  it("covers every base blueprint and lists only skins with a model", () => {
     expect(vehicles).toHaveLength(21);
     expect(new Set(vehicles.map((v) => v.slug)).size).toBe(21);
     const skins = vehicles.flatMap((v) => v.skins);
     expect(skins.filter((s) => s.modelUrl)).toHaveLength(37);
-    expect(skins.filter((s) => !s.modelUrl)).toHaveLength(11);
+    expect(skins.filter((s) => !s.modelUrl)).toHaveLength(0);
     for (const vehicle of vehicles) {
       expect(getVehicleBySlug(vehicle.slug)).toBe(vehicle);
       expect(vehicle.skins[0].modelUrl).toBeTruthy();
