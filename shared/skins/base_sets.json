@@ -40,7 +40,7 @@
     { "id": "battle standards", "label": "Battle standards", "group": "other", "kinds": ["item_3d"] },
     { "id": "lutes", "label": "Lutes", "group": "other", "kinds": ["handheld", "item_3d"] },
     { "id": "instruments", "label": "Instruments", "group": "other", "kinds": ["handheld", "item_3d"] },
-    { "id": "crutches", "label": "Crutches", "group": "other", "kinds": ["large_handheld", "item_3d"] },
+    { "id": "crutches", "label": "Crutches", "group": "other", "kinds": ["item_3d"] },
     { "id": "books", "label": "Books", "group": "other", "kinds": ["book"] }
   ],
   "armor": {
