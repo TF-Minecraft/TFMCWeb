@@ -45,6 +45,16 @@ export const roleplayToolsCommands: WikiCommandSet = {
       command: "/tfmc statues",
       description: "Gives you the Armor Statues book.",
     },
+    {
+      command: "/tfmc masks",
+      description: "Gives you a random mask.",
+      notes: "Once every 10 seconds.",
+    },
+    {
+      command: "/tfmc patterns",
+      description: "Gives you all ten banner patterns.",
+      notes: "Once every 10 seconds.",
+    },
   ],
 };
 
@@ -53,7 +63,7 @@ export const roleplayToolsSection: WikiSection = {
     href: "/wiki/roleplay-tools",
     label: "Roleplay Tools",
     category: "character",
-    blurb: "Sit, lie down and crawl, pose armor stands, and write your own item names and lore.",
+    blurb: "Sit, lie down and crawl, pose armor stands, wear masks, and write your own item names and lore.",
   },
   commands: roleplayToolsCommands,
 };

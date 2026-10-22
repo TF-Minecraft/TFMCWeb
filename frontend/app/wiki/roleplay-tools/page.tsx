@@ -21,7 +21,7 @@ export default function RoleplayToolsPage() {
     <WikiPage
       lastModified="2026-10-22"
       title="Roleplay Tools"
-      intro="Small tools for setting a scene: sit down, lie down or crawl, pose armor stands, and give your items their own names and lore. Every player can use them."
+      intro="Small tools for setting a scene: sit down, lie down or crawl, pose armor stands, put on a mask, and give your items their own names and lore. Every player can use them."
     >
       <WikiSectionHeading id="sitting">Sitting</WikiSectionHeading>
       <p className={body}>
@@ -64,6 +64,15 @@ export default function RoleplayToolsPage() {
       <p className={`mt-3 ${body}`}>
         Locking a stand stops accidental edits and equipment clicks, but it does not protect the stand from other
         players.
+      </p>
+
+      <WikiSectionHeading id="masks">Masks and banner patterns</WikiSectionHeading>
+      <p className={body}>
+        <code className={code}>/tfmc masks</code> gives you a random mask. Most masks hide who you are while you wear
+        them on your head: in-character chat shows you as <strong>Masked</strong>, and nobody can read your character
+        card. <code className={code}>/tfmc patterns</code> gives you all ten banner patterns for the loom: Flower,
+        Guster, Field Masoned, Skull, Thing, Globe, Snout, Flow, Creeper and Bordure Indented. You can use each command
+        once every 10 seconds.
       </p>
 
       <WikiSectionHeading id="lorestones">

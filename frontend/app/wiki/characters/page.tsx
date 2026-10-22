@@ -150,7 +150,11 @@ export default function CharactersPage() {
         Sneak and right-click another player with an empty hand to see their character card: name, gender, age,
         birthday, race and description. <code className={code}>/rpcharacter profile &lt;player&gt;</code> shows the same
         card. A player wearing a mask hides their identity: in-character chat shows them as <strong>Masked</strong>, and
-        their card cannot be read.
+        their card cannot be read. <code className={code}>/tfmc masks</code> gives you one (see{" "}
+        <Link href="/wiki/roleplay-tools#masks" className={link}>
+          Roleplay Tools
+        </Link>
+        ).
       </p>
 
       <WikiSectionHeading id="chat">Chat channels</WikiSectionHeading>
