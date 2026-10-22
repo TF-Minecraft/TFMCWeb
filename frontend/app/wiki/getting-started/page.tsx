@@ -19,7 +19,7 @@ const nextGuides = [
 export default function GettingStartedPage() {
   return (
     <WikiPage
-      lastModified="2026-10-20"
+      lastModified="2026-10-22"
       title={gettingStartedSection.nav.label}
       intro="Do these steps in order when you first join. After that, pick the guide for whatever you want to do."
     >
@@ -38,9 +38,9 @@ export default function GettingStartedPage() {
           </Link>
         </li>
         <li>
-          <strong>Create a character.</strong> Type <code className={code}>/rpcharacter create</code>. You choose a
-          name, class, race, traits and attributes, and write a short description, so set aside some time. Until you
-          have a character, almost every command is blocked.{" "}
+          <strong>Create a character.</strong> On the character selection screen you see when you join, choose New
+          character, then Create character. You choose a name, class, race, traits and attributes, and write a short
+          description, so set aside some time. Until you are playing a character, almost every command is blocked.{" "}
           <Link href="/wiki/characters#creating" className={link}>
             Character guide
           </Link>
