@@ -1,45 +1,49 @@
-import {
-  Callout,
-  SeeAlso,
-  StationLink,
-  StatGrid,
-  WikiItemLink,
-  WikiPage,
-  WikiSectionHeading,
-} from "@/app/components/wiki";
+import Link from "next/link";
+import { SeeAlso, StationLink, StatGrid, WikiItemLink, WikiPage, WikiSectionHeading } from "@/app/components/wiki";
+import CraftingGrid from "@/app/components/wiki/CraftingGrid";
 import StationModelViewer from "@/app/components/wiki/StationModelViewer";
+import { letterRecipe } from "../data/bird-mail";
+
+const code = "text-[var(--tfmc-accent)]";
+const link = "text-[var(--tfmc-accent)] hover:underline";
+const body = "text-sm text-[var(--tfmc-mist)]";
 
 export default function BirdMailPage() {
   return (
-    <WikiPage lastModified="2026-09-19" title="Bird Mail">
-      <WikiSectionHeading id="how-it-works" intro="There is no /mail command.">
-        Sending a letter
-      </WikiSectionHeading>
+    <WikiPage
+      lastModified="2026-10-22"
+      title="Letters & Bird Mail"
+      intro="Write a letter, seal it, and hand it over yourself or send it by bird to any character on the server."
+    >
+      <WikiSectionHeading id="letters">Writing a letter</WikiSectionHeading>
+      <div className="mt-4">
+        <CraftingGrid recipe={letterRecipe} />
+      </div>
+      <p className={`mt-4 ${body}`}>
+        Craft a <WikiItemLink name="Letter" /> from four Paper in a square and write in it like a book. Signing it seals
+        it: the title becomes the letter&apos;s name, and the author is not shown. You need to be playing a character to
+        sign or edit a letter.
+      </p>
+      <p className={`mt-3 ${body}`}>
+        The seal breaks the first time someone opens the letter to read it, and it becomes an Opened Letter. Putting it
+        on a lectern or a chiselled bookshelf, or clicking a door or barrel while holding it, leaves the seal intact.
+      </p>
+
+      <WikiSectionHeading id="sending">Sending a letter by bird</WikiSectionHeading>
       <div className="mt-4 grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_22rem]">
-        <ol className="list-decimal space-y-2 pl-5 text-sm text-[var(--tfmc-mist)]">
+        <ol className={`list-decimal space-y-2 pl-5 ${body}`}>
           <li>
-            Get a <WikiItemLink name="Letter" /> item and write your message in it, same as writing a normal book.
+            Right-click a <StationLink name="Bird Mailbox">bird mailbox</StationLink> without sneaking.
           </li>
           <li>
-            Find a{" "}
-            <strong>
-              <StationLink name="Bird Mailbox">bird mailbox</StationLink>
-            </strong>{" "}
-            and right-click it while standing still. Sneak-right-clicking does nothing.
+            Put one <WikiItemLink name="Letter" /> in the slot. It can be blank, sealed or opened, but nothing else can
+            travel with it.
           </li>
           <li>
-            A small &quot;Bird Messenger&quot; window opens with one open slot. Place your letter into it, or
-            shift-click it in. Anything that isn&apos;t a <WikiItemLink name="Letter" /> is rejected.
+            Pick the recipient from the list of character heads. It shows every living character listed for mail, online
+            or offline, except your own.
           </li>
-          <li>
-            Closing that window with a valid letter in it opens a &quot;Send letter&quot; screen: a page of player-head
-            icons, one per character (your own characters are left out, so you can&apos;t mail yourself).
-          </li>
-          <li>Click the head of the character you want to send to, then hit Confirm.</li>
-          <li>
-            The letter leaves your inventory immediately and a bird flies off with it. If you close the picker without
-            confirming, you get your letter back.
-          </li>
+          <li>Click Confirm. The letter leaves your inventory and a bird flies off with it.</li>
         </ol>
         <aside className="min-w-0 rounded-md border border-[color-mix(in_srgb,var(--tfmc-cream)_12%,transparent)] bg-[color-mix(in_srgb,var(--tfmc-forest-deep)_55%,transparent)] p-4">
           <div
@@ -54,50 +58,43 @@ export default function BirdMailPage() {
           <h3 className="mt-3 font-[family-name:var(--font-fraunces)] text-lg text-[var(--tfmc-cream)]">
             <StationLink name="Bird Mailbox" />
           </h3>
-          <p className="text-sm text-[var(--tfmc-mist)]">
-            Right-click the mailbox to send a written <WikiItemLink name="Letter" />.
-          </p>
+          <p className={body}>Place it on the floor; it stands 2 blocks tall. Sneak to break it.</p>
         </aside>
       </div>
+      <p className={`mt-4 ${body}`}>
+        If you close the list without confirming, you get the letter back. The bird cannot fly between worlds, so a
+        character in another world is refused at Confirm and the letter stays with you. To keep the character you are
+        playing off the list, run <code className={code}>/rpcharacter mail off</code>.
+      </p>
 
-      <WikiSectionHeading
-        id="delivery"
-        intro="Delivery time depends on how far away the recipient's character last was."
-      >
-        How long delivery takes
-      </WikiSectionHeading>
-      <p className="text-sm text-[var(--tfmc-mist)]">
-        The bird&apos;s flight time is based on the distance from where you sent it to the recipient character&apos;s
-        last known location: roughly a quarter of a second per block.
+      <WikiSectionHeading id="delivery">Delivery</WikiSectionHeading>
+      <p className={body}>
+        The flight takes a quarter of a second per block between you and the recipient: where they are if they are
+        playing that character, otherwise where the character was last.
       </p>
       <StatGrid
         columns={3}
         stats={[
-          { label: "Minimum flight time", value: "30 seconds", note: "even at zero distance" },
-          { label: "Maximum flight time", value: "10 minutes", note: "any distance past ~2,400 blocks" },
+          { label: "Shortest flight", value: "30 seconds" },
+          { label: "Longest flight", value: "10 minutes", note: "for about 2,400 blocks or more" },
           { label: "Cost", value: "Free" },
         ]}
       />
-      <p className="mt-3 text-sm text-[var(--tfmc-mist)]">
-        If the recipient is online and actively playing that exact character when the bird arrives, they get the letter
-        immediately with a message that a bird has landed at their feet. Otherwise your letter waits until that
-        character is played again, however long that takes. You&apos;ll be told your letter is waiting rather than
-        delivered.
+      <p className={`mt-3 ${body}`}>
+        When the bird arrives, the recipient gets the letter at once if they are playing that character, alive, and have
+        a free inventory space. Otherwise it waits, for as long as it takes, until they next play that character, and
+        you are told it is waiting. If the recipient&apos;s character dies first, waiting letters go to its heir (see{" "}
+        <Link href="/wiki/characters#wills" className={link}>
+          wills
+        </Link>
+        ), or back to you if it has none.
+      </p>
+      <p className={`mt-3 ${body}`}>
+        A recipient with a linked Discord account also gets a Discord message when a bird arrives. It does not say who
+        sent the letter or what it says.
       </p>
 
-      <Callout variant="warning">
-        A letter can only be delivered within the same world the recipient character&apos;s last location was in. If
-        they&apos;re in a different world, the bird can&apos;t reach them and your letter bounces back as undeliverable.
-      </Callout>
-
-      <Callout variant="note">
-        This is a different system from sealed letters (the writable-book item you sign and hand to someone in person).
-        Bird Mail is specifically for sending a letter to a character who isn&apos;t there to hand it to directly, and
-        it can also forward a Discord DM notification (without revealing the sender or the letter&apos;s contents) if
-        the recipient has linked their account.
-      </Callout>
-
-      <SeeAlso hrefs={["/wiki/server-features", "/wiki/characters"]} />
+      <SeeAlso hrefs={["/wiki/characters", "/wiki/server-features"]} />
     </WikiPage>
   );
 }
