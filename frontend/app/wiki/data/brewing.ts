@@ -29,7 +29,7 @@ export const brewingSection: WikiSection = {
     href: "/wiki/brewing",
     label: "Brewing",
     category: "food",
-    blurb: "Ferment drinks in a cauldron, then distil them and age them in barrels.",
+    blurb: "Brew, distil and age drinks, or design your own on the website.",
   },
   commands: brewingCommands,
 };

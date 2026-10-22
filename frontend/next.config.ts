@@ -28,6 +28,8 @@ const nextConfig: NextConfig = {
       { source: "/character", destination: "/profile", permanent: false },
       // The in-game /token create drink message sends players to /drinks.
       { source: "/drinks", destination: "/profile?tab=drinks", permanent: false },
+      // The Drink Builder guide became a section of the Brewing guide.
+      { source: "/wiki/drink-builder", destination: "/wiki/brewing#custom-drinks", permanent: true },
       // Staff tools that moved into the staff panel.
       { source: "/precedent", destination: "/admin/precedent", permanent: false },
       { source: "/inspect", destination: "/admin/codes", permanent: false },

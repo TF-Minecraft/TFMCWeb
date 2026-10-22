@@ -49,7 +49,7 @@ const cropGalleryItems = crops.map(([name, profession, regrows]) => ({
 export default function FarmingPage() {
   return (
     <WikiPage
-      lastModified="2026-09-27"
+      lastModified="2026-10-22"
       title="Farming"
       width="lg"
       intro={
@@ -62,8 +62,8 @@ export default function FarmingPage() {
             Cooking
           </Link>{" "}
           and{" "}
-          <Link href="/wiki/drink-builder" className="underline decoration-dotted">
-            Drink Builder
+          <Link href="/wiki/brewing" className="underline decoration-dotted">
+            Brewing
           </Link>
           .
         </>

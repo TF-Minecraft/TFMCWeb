@@ -12,7 +12,6 @@ import { companionPetsSection } from "./companion-pets";
 import { cookingSection } from "./cooking";
 import { animalHusbandrySection } from "./animal-husbandry";
 import { detectorSection } from "./detector";
-import { drinkBuilderSection } from "./drink-builder";
 import { economySection } from "./economy";
 import { equipmentSlotsSection } from "./equipment-slots";
 import { factionsSection } from "./factions";
@@ -67,7 +66,6 @@ export const wikiSections: readonly WikiSection[] = [
   cookingSection,
   animalHusbandrySection,
   brewingSection,
-  drinkBuilderSection,
   magicSection,
   researchSection,
   codexSection,
