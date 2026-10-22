@@ -204,7 +204,8 @@ export default function CharactersPage() {
       <p className={body}>
         A healing injury goes away after 72 hours, counted in real time even while you are offline, and its attribute
         penalties ease as it heals. A physician can also treat it with surgery. If it turns permanent, it stays for
-        good. A prosthetic can replace a lost arm or leg, but nothing replaces lost sight.
+        good. With a broken or lost arm you drop whatever is in your off hand and any two-handed item you hold. A
+        prosthetic can replace a lost arm or leg, but nothing replaces lost sight.
       </p>
       <div className="mt-4">
         <DataTable
@@ -217,9 +218,9 @@ export default function CharactersPage() {
           rows={[
             [
               "Broken Arm",
-              "−4 Strength, −2 Constitution, Weakness, off hand unusable",
+              "−4 Strength, −2 Constitution, Weakness, no off hand or two-handed items",
               "One-Handed",
-              "−3 Strength, −1 Constitution, Weakness, off hand unusable",
+              "−3 Strength, −1 Constitution, Weakness, no off hand or two-handed items",
             ],
             ["Broken Leg", "−4 Dexterity, Slowness", "One-Legged", "−3 Dexterity, Slowness"],
             ["Half Blind", "−1 Dexterity", "Blind", "−4 Dexterity, −2 Wisdom, Blindness"],
@@ -295,11 +296,12 @@ export default function CharactersPage() {
       <WikiSectionHeading id="wills">Wills and inheritance</WikiSectionHeading>
       <p className={body}>
         <code className={code}>/will</code> names one living character as your character&apos;s heir. Your own
-        characters count, and nobody is told. The will is fixed when your character dies for good, and everything passes
-        to the heir 24 hours later. The heir collects stored items with <code className={code}>/estate collect</code>.
-        With no living heir, money goes to your guild and property to its leader; with no guild, the estate waits 7 days
-        and is then held by staff. Leading a guild or realm never passes by will. You can also change your will on your
-        website profile.
+        characters count, and nobody is told. The will is fixed when your character dies for good, and 24 hours later
+        the heir receives everything except your guild&apos;s locks, which go to the guild&apos;s leader, or to the
+        realm&apos;s leader if the guild has none. The heir collects stored items with{" "}
+        <code className={code}>/estate collect</code>. With no living heir, money goes to your guild and property to its
+        leader; with no guild, the estate waits 7 days and is then held by staff. Leading a guild or realm never passes
+        by will. You can also change your will on your website profile.
       </p>
 
       <WikiSectionHeading id="clues">Clues</WikiSectionHeading>
