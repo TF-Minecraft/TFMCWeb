@@ -40,7 +40,8 @@ export default function GettingStartedPage() {
         <li>
           <strong>Create a character.</strong> On the character selection screen you see when you join, choose New
           character, then Create character. You choose a name, class, race, traits and attributes, and write a short
-          description, so set aside some time. Until you pick a character, you cannot chat or use commands.{" "}
+          description, so set aside some time. Until you pick a character, you cannot chat or use any command except{" "}
+          <code className={code}>/linkdiscord</code> and <code className={code}>/rpcharacter menu</code>.{" "}
           <Link href="/wiki/characters#creating" className={link}>
             Character guide
           </Link>
