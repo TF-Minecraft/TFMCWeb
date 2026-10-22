@@ -120,7 +120,8 @@ export const skills: Record<string, Skill> = {
   CAMOUFLAGE: {
     name: "Camouflage",
     passive: true,
-    description: "Hold crouch to vanish, gear included, until you stand up, attack or are hit.",
+    description:
+      "Hold crouch to vanish for a while, gear included. Standing up, attacking, shooting or being hit reveals you.",
   },
   ICE_SHARD: { name: "Ice Shard", description: "Fire a shard that slows the target." },
   SILENCING_SHARD: { name: "Silencing Shard", description: "Fire a shard that stops the target casting spells." },

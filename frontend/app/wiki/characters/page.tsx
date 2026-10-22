@@ -28,9 +28,9 @@ export default function CharactersPage() {
       }
     >
       <Callout variant="warning">
-        Until you are playing a character, almost every command is blocked. You can still use{" "}
-        <code className={code}>/rpcharacter</code>, <code className={code}>/roll</code> and the out-of-character chats{" "}
-        <code className={code}>/ooc</code>, <code className={code}>/looc</code> and <code className={code}>/rooc</code>.
+        Until you pick a character on the selection screen, you cannot chat or use commands. The only ones that work
+        there are <code className={code}>/linkdiscord</code> and <code className={code}>/rpcharacter menu</code>, which
+        reopens the screen.
       </Callout>
 
       <WikiSectionHeading id="selection">Choosing a character</WikiSectionHeading>
@@ -89,7 +89,9 @@ export default function CharactersPage() {
         a free slot for a living character. The creator is a series of screens with Next and Back buttons:
       </p>
       <ol className={`mt-3 list-decimal space-y-1 pl-5 ${body}`}>
-        <li>Confirm that you are 18 or older in real life.</li>
+        <li>
+          Answer whether you are 18 or older in real life. This decides whether you can join age-restricted roleplay.
+        </li>
         <li>Name your character.</li>
         <li>
           Choose a{" "}
@@ -200,15 +202,15 @@ export default function CharactersPage() {
 
       <WikiSectionHeading id="injuries">Injuries</WikiSectionHeading>
       <p className={body}>
-        A healing injury goes away after 72 hours, counted in real time even while you are offline, and a physician can
-        treat it with surgery. If it turns permanent, it stays for good. A prosthetic can replace a lost arm or leg, but
-        nothing replaces lost sight.
+        A healing injury goes away after 72 hours, counted in real time even while you are offline, and its attribute
+        penalties ease as it heals. A physician can also treat it with surgery. If it turns permanent, it stays for
+        good. A prosthetic can replace a lost arm or leg, but nothing replaces lost sight.
       </p>
       <div className="mt-4">
         <DataTable
           columns={[
             { header: "Healing injury", nowrap: true },
-            { header: "Effects" },
+            { header: "Effects at first" },
             { header: "Permanent form", nowrap: true },
             { header: "Permanent effects" },
           ]}
@@ -243,7 +245,7 @@ export default function CharactersPage() {
       </p>
       <p className={`mt-3 ${body}`}>
         Fights between players start out nonlethal. <code className={code}>/pvp start</code> warns everyone within 80
-        blocks that a fight begins in 10 seconds, and the fight lasts 15 minutes or until someone in it runs{" "}
+        blocks that a fight begins in 10 seconds, and the fight lasts 15 minutes or until the player who started it runs{" "}
         <code className={code}>/pvp end</code>. In a started fight, losing can give your character a{" "}
         <strong>strike</strong>:
       </p>

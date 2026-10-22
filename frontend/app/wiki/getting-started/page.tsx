@@ -40,7 +40,7 @@ export default function GettingStartedPage() {
         <li>
           <strong>Create a character.</strong> On the character selection screen you see when you join, choose New
           character, then Create character. You choose a name, class, race, traits and attributes, and write a short
-          description, so set aside some time. Until you are playing a character, almost every command is blocked.{" "}
+          description, so set aside some time. Until you pick a character, you cannot chat or use commands.{" "}
           <Link href="/wiki/characters#creating" className={link}>
             Character guide
           </Link>

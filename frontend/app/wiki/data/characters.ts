@@ -115,7 +115,7 @@ export const charactersCommands: WikiCommandSet = {
     },
     {
       command: "/pvp end",
-      description: "Ends the fight you are in, or cancels it before it starts.",
+      description: "Ends a fight you started, or cancels it before it begins.",
     },
     {
       command: "/pvp lethal",
@@ -189,12 +189,11 @@ export const charactersCommands: WikiCommandSet = {
     {
       command: "/looc <message>",
       description: "Local out-of-character chat.",
-      notes: "20-block range. Works with no character.",
+      notes: "20-block range.",
     },
     {
       command: "/ooc <message>",
       description: "Global out-of-character chat.",
-      notes: "Works with no character.",
     },
     {
       command: "/gooc <message>",
@@ -209,7 +208,7 @@ export const charactersCommands: WikiCommandSet = {
     {
       command: "/rooc <message>",
       description: "Out-of-character chat with your whole realm, overlord and vassals included.",
-      notes: "One message every 3 seconds. Works with no character.",
+      notes: "One message every 3 seconds.",
     },
     {
       command: "/pooc <message>",

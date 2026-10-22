@@ -82,8 +82,9 @@ export default function BirdMailPage() {
       />
       <p className={`mt-3 ${body}`}>
         When the bird arrives, the recipient gets the letter at once if they are playing that character, alive, and have
-        a free inventory space. Otherwise it waits, for as long as it takes, until they next play that character, and
-        you are told it is waiting. If the recipient&apos;s character dies first, waiting letters go to its heir (see{" "}
+        a free inventory space. Otherwise it waits, for as long as it takes, and arrives as soon as all three are true.
+        If they are offline or playing another character, you are told it is waiting. If the recipient&apos;s character
+        dies first, waiting letters go to its heir (see{" "}
         <Link href="/wiki/characters#wills" className={link}>
           wills
         </Link>

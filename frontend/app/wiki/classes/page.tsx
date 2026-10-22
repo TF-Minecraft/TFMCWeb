@@ -150,8 +150,8 @@ export default function ClassesPage() {
 
       <WikiSectionHeading id="path-skills">Path skills</WikiSectionHeading>
       <p className={body}>
-        Every skill each path can learn. Skill strength, duration, mana cost and cooldown grow with skill level and are
-        shown in game.
+        Each path&apos;s skills are listed below. The in-game tooltips show each skill&apos;s effect, mana cost and
+        cooldown at every skill level.
       </p>
       {subclasses.map((path) => (
         <div key={path.id}>
