@@ -5,7 +5,6 @@ import {
   DataTable,
   RankName,
   SeeAlso,
-  StatGrid,
   WikiItemLink,
   WikiPage,
   WikiSectionHeading,
@@ -23,9 +22,8 @@ export default function CharactersPage() {
       title="Characters"
       intro={
         <>
-          Everything you do on the server, you do as a character. Each character has its own name, race, class,
-          inventory and place in the world. Your character is the one who speaks in chat, gets injured and can die for
-          good.
+          Everything you do on the server, you do as a character. Your character is the one who speaks in chat, gets
+          injured and can die for good.
         </>
       }
     >
@@ -35,9 +33,7 @@ export default function CharactersPage() {
         <code className={code}>/ooc</code>, <code className={code}>/looc</code> and <code className={code}>/rooc</code>.
       </Callout>
 
-      <WikiSectionHeading id="selection" intro="Every visit starts on the character selection screen.">
-        Choosing a character
-      </WikiSectionHeading>
+      <WikiSectionHeading id="selection">Choosing a character</WikiSectionHeading>
       <p className={body}>
         Each time you join, you arrive at the character selection screen. It shows your living characters one at a time:
         use the arrows to look through them, then click <strong>Play</strong> to enter the world where that character
@@ -63,39 +59,7 @@ export default function CharactersPage() {
         the character you were last playing. During an evil RP session you cannot switch at all.
       </p>
 
-      <StatGrid
-        columns={4}
-        stats={[
-          {
-            label: (
-              <>
-                <RankName rank="Commoner" /> living characters
-              </>
-            ),
-            value: "3",
-            note: (
-              <>
-                more from <RankName rank="Gilded" /> rank
-              </>
-            ),
-          },
-          {
-            label: "Switch cooldown",
-            value: "7 days",
-            note: (
-              <>
-                <RankName rank="Commoner" /> rank; shorter for higher ranks
-              </>
-            ),
-          },
-          { label: "Back to selection", value: "5 seconds", note: "standing still" },
-          { label: "Minimum age", value: "18 years", note: "in-fiction calendar" },
-        ]}
-      />
-
-      <WikiSectionHeading id="rank-benefits" intro="Higher ranks get more characters and more ways to customise them.">
-        Rank benefits
-      </WikiSectionHeading>
+      <WikiSectionHeading id="rank-benefits">Rank benefits</WikiSectionHeading>
       <DataTable
         columns={[
           { header: "Rank" },
@@ -179,9 +143,7 @@ export default function CharactersPage() {
         claims on different characters.
       </p>
 
-      <WikiSectionHeading id="looking-at-someone" intro="A quick way to check who you are talking to.">
-        Reading a character card
-      </WikiSectionHeading>
+      <WikiSectionHeading id="looking-at-someone">Reading a character card</WikiSectionHeading>
       <p className={body}>
         Sneak and right-click another player with an empty hand to see their character card: name, gender, age,
         birthday, race and description. <code className={code}>/rpcharacter profile &lt;player&gt;</code> shows the same
@@ -189,9 +151,7 @@ export default function CharactersPage() {
         their card cannot be read.
       </p>
 
-      <WikiSectionHeading id="chat" intro="Plain typing speaks in character. Other channels have their own commands.">
-        Chat channels
-      </WikiSectionHeading>
+      <WikiSectionHeading id="chat">Chat channels</WikiSectionHeading>
       <p className={body}>
         Anything you type without a command goes to your <strong>default channel</strong>, which starts as in-character
         speech (<code className={code}>rp</code>). Change it with <code className={code}>/channel &lt;id&gt;</code>, or
@@ -223,7 +183,6 @@ export default function CharactersPage() {
           ]}
         />
       </div>
-      <p className={`mt-3 ${body}`}>Guild, faction, realm and party chat allow one message every 3 seconds.</p>
       <Callout className="mt-4">
         Walls and distance affect in-character speech. A speaker who is partly blocked or near the edge of range comes
         through with cut-off words. If you can barely hear them, their name shows as <code className={code}>???</code>,
@@ -239,9 +198,7 @@ export default function CharactersPage() {
         at 0 or 1 points to +5 at 20 points (10 or 11 points give +0). You and everyone within 20 blocks see the result.
       </p>
 
-      <WikiSectionHeading id="injuries" intro="Injuries carry real penalties while they last.">
-        Injuries
-      </WikiSectionHeading>
+      <WikiSectionHeading id="injuries">Injuries</WikiSectionHeading>
       <p className={body}>
         A healing injury goes away after 72 hours, counted in real time even while you are offline, and a physician can
         treat it with surgery. If it turns permanent, it stays for good. A prosthetic can replace a lost arm or leg, but
@@ -273,9 +230,7 @@ export default function CharactersPage() {
         from a menu. They have 30 seconds to accept it.
       </p>
 
-      <WikiSectionHeading id="injuries-graves" intro="Most deaths only cost you a trip back to your grave.">
-        Death and permadeath
-      </WikiSectionHeading>
+      <WikiSectionHeading id="injuries-graves">Death and permadeath</WikiSectionHeading>
       <p className={body}>
         Some regions are <strong>permadeath zones</strong>, and a title tells you when you enter one. Dying there can
         kill your character for good: the chance is 10% for each injury your character already has. If your character
@@ -318,9 +273,7 @@ export default function CharactersPage() {
         minutes. Nobody dies or loses anything in a duel.
       </p>
 
-      <WikiSectionHeading id="graves" intro="Your belongings wait for you where you fell, but not forever.">
-        Graves
-      </WikiSectionHeading>
+      <WikiSectionHeading id="graves">Graves</WikiSectionHeading>
       <p className={body}>
         In most deaths, your belongings go into a grave chest at the spot where you died. A hologram above it shows who
         killed you and how long the grave has left. Right-click it to take your things back. Only you can open it,
@@ -337,9 +290,7 @@ export default function CharactersPage() {
         killer can open.
       </p>
 
-      <WikiSectionHeading id="wills" intro="Decide who inherits before your character dies for good.">
-        Wills and inheritance
-      </WikiSectionHeading>
+      <WikiSectionHeading id="wills">Wills and inheritance</WikiSectionHeading>
       <p className={body}>
         <code className={code}>/will</code> names one living character as your character&apos;s heir. Your own
         characters count, and nobody is told. The will is fixed when your character dies for good, and everything passes
@@ -349,9 +300,7 @@ export default function CharactersPage() {
         website profile.
       </p>
 
-      <WikiSectionHeading id="clues" intro="Clues are how others can work out who was somewhere.">
-        Clues
-      </WikiSectionHeading>
+      <WikiSectionHeading id="clues">Clues</WikiSectionHeading>
       <p className={body}>
         The clues you write during creation describe your character: visual features, smells, home, habits and so on.
         Every character also has an automatic clue that gives away their race. Low-effort or false clues can be
@@ -363,34 +312,12 @@ export default function CharactersPage() {
         within two days.
       </p>
 
-      <WikiSectionHeading id="persona" intro="Details you can change while playing your character.">
-        Customising your character
-      </WikiSectionHeading>
-      <ul className={`mt-3 list-disc space-y-1 pl-5 ${body}`}>
-        <li>
-          <code className={code}>/rpcharacter alias &lt;name&gt;</code> sets a name that others see in place of your
-          character&apos;s name.
-        </li>
-        <li>
-          <code className={code}>/rpcharacter gender &lt;Male/Female/Other&gt;</code> sets your character&apos;s gender.
-        </li>
-        <li>
-          <code className={code}>/rpcharacter description &lt;text&gt;</code> replaces your description (32 to 256
-          characters).
-        </li>
-        <li>
-          <code className={code}>/rpcharacter birthday &lt;DD.MM.YYYY&gt;</code> sets a birthday on the in-fiction
-          calendar.
-        </li>
-        <li>
-          <code className={code}>/rpcharacter namecolour &lt;#hex&gt; [#hex...]</code> colours your name, with as many
-          colours as your rank allows (see the table above).
-        </li>
-      </ul>
-      <p className={`mt-3 ${body}`}>
-        Alias, gender and description changes have a 10-second cooldown. Players with <RankName rank="Noble" />,{" "}
-        <RankName rank="Gilded" />, <RankName rank="Ascended" /> or <RankName rank="Legacy" /> rank can also use colour
-        codes in chat and in their description.
+      <WikiSectionHeading id="persona">Customising your character</WikiSectionHeading>
+      <p className={body}>
+        While playing, you can change your character&apos;s alias (a name others see in place of theirs), gender,
+        description, birthday and name colour with the <code className={code}>/rpcharacter</code> commands listed below.
+        Players with <RankName rank="Noble" />, <RankName rank="Gilded" />, <RankName rank="Ascended" /> or{" "}
+        <RankName rank="Legacy" /> rank can also use colour codes in chat and in their description.
       </p>
 
       <WikiSectionHeading id="commands">Commands</WikiSectionHeading>
