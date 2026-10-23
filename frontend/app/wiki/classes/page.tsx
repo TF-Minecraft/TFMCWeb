@@ -91,9 +91,9 @@ export default function ClassesPage() {
         <Link href="/wiki/magic" className={link}>
           Magic
         </Link>
-        ). Musketeers build firearms to order (see{" "}
+        ). Only Musketeers can fire guns (see{" "}
         <Link href="/wiki/guns" className={link}>
-          Guns and Gadgets
+          Guns &amp; Gunsmithing
         </Link>
         ).
       </p>

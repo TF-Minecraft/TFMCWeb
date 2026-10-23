@@ -5,7 +5,7 @@ export type GunPart = {
   kind: string;
   for: string;
   tier: string;
-  stats: string;
+  note: string;
   cost: string;
   rank: string;
 };
@@ -15,7 +15,7 @@ export const gunParts: GunPart[] = [
     kind: "Barrel",
     for: "Rifle",
     tier: "I",
-    stats: "Acc +5; speed 10; ironshot",
+    note: "Fires Iron Shot.",
     cost: "4 Iron Ingot",
     rank: "iron",
   },
@@ -24,7 +24,7 @@ export const gunParts: GunPart[] = [
     kind: "Barrel",
     for: "Rifle",
     tier: "II",
-    stats: "Acc +10; reload −4; speed 8; iron/steelshot",
+    note: "Fires Iron or Steel Shot, and aims better than smoothbore.",
     cost: "4 Steel Ingot",
     rank: "steel",
   },
@@ -33,7 +33,7 @@ export const gunParts: GunPart[] = [
     kind: "Barrel",
     for: "Pistol",
     tier: "I",
-    stats: "Acc +3; speed 8; ironshot",
+    note: "Fires Iron Shot.",
     cost: "4 Iron Ingot",
     rank: "iron",
   },
@@ -42,7 +42,7 @@ export const gunParts: GunPart[] = [
     kind: "Barrel",
     for: "Pistol",
     tier: "II",
-    stats: "Acc +7; reload −4; speed 7; iron/steelshot",
+    note: "Fires Iron or Steel Shot, and aims better than smoothbore.",
     cost: "4 Steel Ingot",
     rank: "steel",
   },
@@ -51,7 +51,7 @@ export const gunParts: GunPart[] = [
     kind: "Barrel",
     for: "Shotgun",
     tier: "II",
-    stats: "Acc −8; reload −10; spreadshot",
+    note: "Fires Spreadshot of any metal. Makes the gun a shotgun.",
     cost: "4 Steel Ingot",
     rank: "steel",
   },
@@ -60,7 +60,7 @@ export const gunParts: GunPart[] = [
     kind: "Barrel",
     for: "Launcher",
     tier: "III",
-    stats: "Acc −6; fire +16; reload −10; rocket",
+    note: "Fires Rockets of any metal. Makes the gun a launcher.",
     cost: "4 Abyssalite Ingot",
     rank: "abyssalite",
   },
@@ -69,7 +69,7 @@ export const gunParts: GunPart[] = [
     kind: "Loader",
     for: "All",
     tier: "I",
-    stats: "Acc +4; fire +2; reload +4; speed 4",
+    note: "The basic loader.",
     cost: "2 Iron Ingot",
     rank: "iron",
   },
@@ -78,7 +78,7 @@ export const gunParts: GunPart[] = [
     kind: "Loader",
     for: "Rifle/Shotgun/Launcher",
     tier: "IV",
-    stats: "Acc +2; fire +5; reload +12; speed 3",
+    note: "Reloads much faster.",
     cost: "2 Mythril Ingot",
     rank: "mythril",
   },
@@ -87,7 +87,7 @@ export const gunParts: GunPart[] = [
     kind: "Chamber",
     for: "Rifle/Pistol/Shotgun",
     tier: "I",
-    stats: "Capacity 1; acc +2; reload +2; speed 3",
+    note: "Holds 1 shot.",
     cost: "2 Iron Ingot",
     rank: "iron",
   },
@@ -96,7 +96,7 @@ export const gunParts: GunPart[] = [
     kind: "Chamber",
     for: "Launcher",
     tier: "III",
-    stats: "Capacity 1; acc +8; reload +4; speed 4",
+    note: "Holds 1 rocket. Shown in game as Single Shot.",
     cost: "2 Abyssalite Ingot",
     rank: "abyssalite",
   },
@@ -105,7 +105,7 @@ export const gunParts: GunPart[] = [
     kind: "Chamber",
     for: "Launcher",
     tier: "IV",
-    stats: "Capacity 4; acc +2; reload −10; speed 3",
+    note: "Holds 4 rockets.",
     cost: "2 Mythril Ingot",
     rank: "mythril",
   },
@@ -114,7 +114,7 @@ export const gunParts: GunPart[] = [
     kind: "Chamber",
     for: "Rifle/Pistol",
     tier: "III",
-    stats: "Capacity 6; acc −1; fire +4; reload −12; speed 1; dmg −3",
+    note: "Holds 6 shots, but reloads slowly and hits a little softer.",
     cost: "2 Abyssalite Ingot",
     rank: "abyssalite",
   },
@@ -123,7 +123,7 @@ export const gunParts: GunPart[] = [
     kind: "Action",
     for: "Rifle/Pistol",
     tier: "I",
-    stats: "Acc +1; fire +4; speed −3; forces ironshot; smokeless",
+    note: "Fires plain Iron Shot only, whatever the barrel. No smoke or muzzle flash, and a little less damage.",
     cost: "2 Iron Ingot",
     rank: "iron",
   },
@@ -132,7 +132,7 @@ export const gunParts: GunPart[] = [
     kind: "Action",
     for: "Rifle/Pistol/Shotgun",
     tier: "II",
-    stats: "Acc +1; fire +1",
+    note: "The basic firing action.",
     cost: "2 Steel Ingot",
     rank: "steel",
   },
@@ -141,7 +141,7 @@ export const gunParts: GunPart[] = [
     kind: "Action",
     for: "Rifle/Pistol/Shotgun",
     tier: "III",
-    stats: "Acc +2; fire +2",
+    note: "Aims and fires a little better than the Matchlock.",
     cost: "2 Abyssalite Ingot",
     rank: "abyssalite",
   },
@@ -150,7 +150,7 @@ export const gunParts: GunPart[] = [
     kind: "Action",
     for: "Launcher",
     tier: "III",
-    stats: "Acc +3; fire −10; reload −6",
+    note: "The launcher's action.",
     cost: "2 Abyssalite Ingot",
     rank: "abyssalite",
   },
@@ -159,7 +159,7 @@ export const gunParts: GunPart[] = [
     kind: "Action",
     for: "Rifle",
     tier: "IV",
-    stats: "Acc +8; fire −12; reload −10; speed 8; forces bronzeshot",
+    note: "Fires only Bronze or Mythril Shot, whatever the barrel. Very accurate, but slow to fire and reload.",
     cost: "2 Mythril Ingot",
     rank: "mythril",
   },
@@ -168,7 +168,7 @@ export const gunParts: GunPart[] = [
     kind: "Stock",
     for: "Rifle/Shotgun",
     tier: "I",
-    stats: "Acc +3",
+    note: "Steadies your aim.",
     cost: "2 Refined Barkwood",
     rank: "iron",
   },
@@ -177,7 +177,7 @@ export const gunParts: GunPart[] = [
     kind: "Stock",
     for: "Rifle/Shotgun",
     tier: "II",
-    stats: "Acc +4",
+    note: "Steadies your aim more.",
     cost: "2 Refined Maplewood",
     rank: "steel",
   },
@@ -186,7 +186,7 @@ export const gunParts: GunPart[] = [
     kind: "Stock",
     for: "Rifle/Shotgun",
     tier: "III",
-    stats: "Acc +5",
+    note: "Steadies your aim even more.",
     cost: "2 Refined Elderwood",
     rank: "abyssalite",
   },
@@ -195,75 +195,15 @@ export const gunParts: GunPart[] = [
     kind: "Stock",
     for: "Rifle/Shotgun",
     tier: "IV",
-    stats: "Acc +6",
+    note: "Steadies your aim the most.",
     cost: "2 Refined Demonwood",
     rank: "mythril",
   },
 ];
-// Mirrors GunsAndGadgets/ammunition.yml. Each id is also the Alchemy Station recipe that makes it.
-export const gunAmmo = [
-  { ammo: "Iron Shot", id: "ironshot", damage: 6, accuracy: -1, pierce: 4, projectiles: 1 },
-  { ammo: "Steel Shot", id: "steelshot", damage: 10, accuracy: 2, pierce: 6, projectiles: 1 },
-  { ammo: "Bronze Shot", id: "bronzeshot", damage: 14, accuracy: 4, pierce: 8, projectiles: 1 },
-  { ammo: "Mythril Shot", id: "mythrilshot", damage: 18, accuracy: 6, pierce: 10, projectiles: 1 },
-  { ammo: "Iron Spreadshot", id: "ironspreadshot", damage: 1, range: 20, projectiles: 16 },
-  { ammo: "Steel Spreadshot", id: "steelspreadshot", damage: 1, range: 22, projectiles: 18 },
-  { ammo: "Bronze Spreadshot", id: "bronzespreadshot", damage: 1, range: 24, projectiles: 20 },
-  { ammo: "Mythril Spreadshot", id: "mythrilspreadshot", damage: 1, range: 26, projectiles: 22 },
-  { ammo: "Iron Rocket", id: "ironrocket", damage: 14, accuracy: 1, pierce: 10, projectiles: 1, rocket: true },
-  { ammo: "Steel Rocket", id: "steelrocket", damage: 16, accuracy: 1, pierce: 12, projectiles: 1, rocket: true },
-  { ammo: "Bronze Rocket", id: "bronzerocket", damage: 18, accuracy: 2, pierce: 13, projectiles: 1, rocket: true },
-  { ammo: "Mythril Rocket", id: "mythrilrocket", damage: 20, accuracy: 2, pierce: 14, projectiles: 1, rocket: true },
-  { ammo: "Powered Iron Shot", id: "ironshot_powered", damage: 8, accuracy: 0, pierce: 5, projectiles: 1 },
-  { ammo: "Powered Steel Shot", id: "steelshot_powered", damage: 12, accuracy: 3, pierce: 7, projectiles: 1 },
-  { ammo: "Powered Bronze Shot", id: "bronzeshot_powered", damage: 16, accuracy: 5, pierce: 9, projectiles: 1 },
-  { ammo: "Powered Mythril Shot", id: "mythrilshot_powered", damage: 20, accuracy: 7, pierce: 11, projectiles: 1 },
-  { ammo: "Powered Iron Spreadshot", id: "ironspreadshot_powered", damage: 1, range: 21, projectiles: 17 },
-  { ammo: "Powered Steel Spreadshot", id: "steelspreadshot_powered", damage: 1, range: 23, projectiles: 19 },
-  { ammo: "Powered Bronze Spreadshot", id: "bronzespreadshot_powered", damage: 1, range: 25, projectiles: 21 },
-  { ammo: "Powered Mythril Spreadshot", id: "mythrilspreadshot_powered", damage: 1, range: 27, projectiles: 23 },
-  {
-    ammo: "Powered Iron Rocket",
-    id: "ironrocket_powered",
-    damage: 15,
-    accuracy: 1,
-    pierce: 11,
-    projectiles: 1,
-    rocket: true,
-  },
-  {
-    ammo: "Powered Steel Rocket",
-    id: "steelrocket_powered",
-    damage: 17,
-    accuracy: 1,
-    pierce: 13,
-    projectiles: 1,
-    rocket: true,
-  },
-  {
-    ammo: "Powered Bronze Rocket",
-    id: "bronzerocket_powered",
-    damage: 19,
-    accuracy: 2,
-    pierce: 14,
-    projectiles: 1,
-    rocket: true,
-  },
-  {
-    ammo: "Powered Mythril Rocket",
-    id: "mythrilrocket_powered",
-    damage: 21,
-    accuracy: 2,
-    pierce: 15,
-    projectiles: 1,
-    rocket: true,
-  },
-];
 // Keyed by part name, not by array index: an unmapped part renders its name in the
 // output slot instead of silently borrowing the neighbouring part's texture.
-// GunsAndGadgets/parts.yml configures demonwood_stock with the same GRAY_DYE
-// model 30 and display model as elderwood_stock, so both intentionally use the
-// server pack's elderwood stock sprite.
+// GunsAndGadgets/parts.yml gives demonwood_stock the same item model as
+// elderwood_stock, so both use the server pack's elderwood stock sprite.
 const partTextureIds: Record<string, string> = {
   "Smoothbore Barrel (Long)": "smoothbore_barrel_long",
   "Rifled Barrel (Long)": "rifled_barrel_long",
@@ -287,6 +227,10 @@ const partTextureIds: Record<string, string> = {
   "Elderwood Stock": "elderwood_stock",
   "Demonwood Stock": "elderwood_stock",
 };
+/** The sprite for a gun part, by its wiki name. */
+export function gunPartTexture(part: string): string {
+  return `/wiki/textures/gun-parts/${partTextureIds[part]}.png`;
+}
 const materialTextures: Record<string, string> = {
   "Iron Ingot": "/wiki/textures/vanilla/iron_ingot.png",
   "Steel Ingot": "/wiki/textures/materials/steel_ingot.png",
@@ -296,9 +240,6 @@ const materialTextures: Record<string, string> = {
   "Refined Maplewood": "/wiki/textures/materials/refined_maplewood.png",
   "Refined Elderwood": "/wiki/textures/materials/refined_elderwood.png",
   "Refined Demonwood": "/wiki/textures/materials/refined_demonwood.png",
-  Gravel: "/wiki/textures/vanilla/gravel.png",
-  Gunpowder: "/wiki/textures/vanilla/gunpowder.png",
-  "Bronze Ingot": "/wiki/textures/materials/bronze_ingot.png",
 };
 function ingredients(text: string) {
   return text.split(" + ").map((value) => {
@@ -310,25 +251,39 @@ export const gunPartRecipes: Recipe[] = gunParts.map((part) => ({
   key: `gun-part-${part.part}`,
   title: part.part,
   station: "Gunsmithing Station",
-  requirement: `Musketeer + ${part.rank[0].toUpperCase() + part.rank.slice(1)} Smith`,
+  requirement: `${part.rank[0].toUpperCase() + part.rank.slice(1)} Smith`,
   ingredients: ingredients(part.cost).map((item) => ({ ...item, texture: materialTextures[item.name] })),
   output: {
     name: part.part,
     qty: 1,
     sourceId: `gunsandgadgets:part:${part.part === "Demonwood Stock" ? "demonwood_stock" : part.part === "Single Shot (launcher)" ? "single_shot_launcher" : part.part === "Quad Shot" ? "quad_shot" : partTextureIds[part.part]}`,
-    texture: `/wiki/textures/gun-parts/${partTextureIds[part.part]}.png`,
+    texture: gunPartTexture(part.part),
   },
 }));
-export const gunAmmoRecipes: Recipe[] = gunAmmo.map((ammo) =>
-  stationRecipe(`gen-alchemy-station-${ammo.id.replace("_", "-")}`),
-);
+export const ammoMetals = ["Iron", "Steel", "Bronze", "Mythril"] as const;
+
+export type GunAmmoKind = { kind: string; idSuffix: string; firedBy: string };
+
+/** The three kinds of ammunition. Each is made at the Alchemy Station from one ingot. */
+export const gunAmmoKinds: GunAmmoKind[] = [
+  { kind: "Shot", idSuffix: "shot", firedBy: "Rifles and pistols" },
+  { kind: "Spreadshot", idSuffix: "spreadshot", firedBy: "Shotguns" },
+  { kind: "Rocket", idSuffix: "rocket", firedBy: "Launchers" },
+];
+
+/** The Alchemy Station recipe for one metal and kind, e.g. Steel Spreadshot. */
+export function gunAmmoRecipe(metal: (typeof ammoMetals)[number], kind: GunAmmoKind, powered = false): Recipe {
+  const id = `${metal.toLowerCase()}${kind.idSuffix}`;
+  return stationRecipe(`gen-alchemy-station-${id}${powered ? "-powered" : ""}`);
+}
+
 export const gunsCommands: WikiCommandSet = { system: "GunsAndGadgets", href: "/wiki/guns", commands: [] };
 export const gunsSection: WikiSection = {
   nav: {
     href: "/wiki/guns",
     label: "Guns & Gunsmithing",
     category: "combat",
-    blurb: "Build Musketeer firearms from parts, then compare ammunition, spread, reload and armour penetration.",
+    blurb: "Build a gun from parts at the Gunsmithing Station, make ammunition, and fire it as a Musketeer.",
   },
   recipes: gunPartRecipes,
   commands: gunsCommands,

@@ -46,7 +46,7 @@ const CATEGORY_DEFS: Record<WikiCategoryKey, Omit<WikiCategory, "key">> = {
   },
   combat: {
     label: "Combat & Danger",
-    blurb: "Guns, thievery, infestations and card games.",
+    blurb: "Guns, infestations, locks and thievery.",
     order: 7,
   },
   vehicles: {

@@ -4,7 +4,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
 import WikiItemLink, { WikiItemText } from "./WikiItemLink";
-import GamesPage from "@/app/wiki/games/page";
+import GamesPage from "@/app/wiki/card-games/page";
 import FishingPage from "@/app/wiki/fishing/page";
 import MaterialDetailPage from "@/app/wiki/materials/[slug]/page";
 

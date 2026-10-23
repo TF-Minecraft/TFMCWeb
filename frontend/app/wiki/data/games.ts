@@ -24,84 +24,71 @@ export const playingCards: PlayingCard[] = cardSuits.flatMap((suit) =>
 export const cardBackTexture = T("cards/card_back.png");
 
 /**
- * Three permissions cover every player-facing command, and all three are
- * default: true in the plugin's plugin.yml: granted to everyone. Everything
- * else at the table (placing, dealing, betting coins, drawing, discarding,
- * revealing, taking the free-play pot) is clicks and chat words, not commands.
+ * Games 0.7.1 on Main. games.help, games.bet and games.wager are default: true
+ * in plugin.yml, so every player has these. Staff commands (games.admin) are
+ * not listed.
  */
 export const gamesCommands: WikiCommandSet = {
-  system: "Games",
-  href: "/wiki/games",
+  system: "Card Games",
+  href: "/wiki/card-games",
   commands: [
     {
-      command: "/games",
-      description: "Prints the usage line appropriate to your permissions.",
-    },
-    {
       command: "/games help",
-      description: 'Opens the "Table games" index book.',
-      notes: "games.help, default true for everyone.",
+      description: "Opens the rule books: one for each game, plus an index.",
     },
     {
-      command: "/games help <blackjack|poker|draw|freeplay>",
-      description: "Opens that game's rule book.",
-      notes: "games.help, default true for everyone.",
+      command: "/games bet <hit|stand|double|split>",
+      description: "Your Blackjack move. Typing the word in chat on your turn does the same.",
     },
     {
-      command: "/games bet min <n>",
-      description: "Sets the table minimum, as the dealer standing at the shoe.",
-      notes: "games.bet, default true for everyone.",
+      command: "/games bet <check|call|raise|fold|allin>",
+      description: "Your poker move. Typing the word in chat on your turn does the same.",
     },
     {
-      command: "/games bet max <n>",
-      description: "Sets the table maximum.",
-      notes: "games.bet, default true for everyone.",
+      command: "/games bet <min|max> <amount>",
+      description: "Sets the Blackjack table's smallest or largest bet, as its dealer between rounds.",
     },
     {
-      command: "/games bet open",
-      description: "Opens betting for a round.",
-      notes: "games.bet, default true for everyone.",
+      command: "/games bet <open|close>",
+      description: "Opens or closes betting, as the Blackjack dealer.",
     },
     {
-      command: "/games bet close",
-      description: "Closes betting.",
-      notes: "games.bet, default true for everyone.",
+      command: "/games poker configure <buy-in> <chips> <rebuys> <ante> <minutes>",
+      description: "Turns your empty Hold'em table into a tournament. A buy-in of 0 makes it a cash table again.",
     },
     {
-      command: "/games bet hit | stand | double | split",
-      description: "Blackjack action on your turn.",
-      notes: "games.bet, default true. Identical to typing the word in chat on your turn.",
+      command: "/games poker <buyin|rebuy>",
+      description: "Buys into a tournament before it starts, or back in between hands when you are out of chips.",
     },
     {
-      command: "/games bet check | call | fold | raise",
-      description: "Tenceur Hold'em / Five-Draw action on your turn.",
-      notes:
-        "games.bet, default true. Put coins on the felt before using raise: the table only reads coins actually on the felt.",
+      command: "/games poker bet <chips>",
+      description: "Puts tournament chips out on your turn.",
     },
     {
-      command: "/wager <amount>",
-      description: "Proposes the item you are currently holding as a stake; the table votes on it.",
-      notes: "games.wager, default true.",
+      command: "/games poker <start|finish|status>",
+      description: "The host starts play or pays out the prize at the end. Anyone can check the status.",
     },
     {
-      command: "/wager accept",
-      description: "Votes yes on a proposed wager.",
-      notes: "games.wager, default true.",
+      command: "/games poker kick <player>",
+      description: "The host removes a player between hands. After play starts, they lose their buy-in.",
     },
     {
-      command: "/wager decline",
-      description: "Votes no on a proposed wager.",
-      notes: "games.wager, default true.",
+      command: "/wager <denars>",
+      description: "Offers the stack you are holding as a stake, valued at that many denars per item.",
+    },
+    {
+      command: "/wager <accept|decline>",
+      description: "Votes on another player's offered stake.",
     },
   ],
 };
 
 export const gamesSection: WikiSection = {
   nav: {
-    href: "/wiki/games",
-    label: "Games",
-    category: "combat",
-    blurb: "Place a table with a Deck of Cards and bet real denars at Blackjack, Hold'em, Five-Draw, or Free play.",
+    href: "/wiki/card-games",
+    label: "Card Games",
+    category: "social",
+    blurb: "Set up a card table and play Blackjack, Hold'em, Five-Draw or Free play for real denars.",
   },
   commands: gamesCommands,
 };

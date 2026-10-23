@@ -55,6 +55,8 @@ const nextConfig: NextConfig = {
       { source: "/wiki/market-blocks", destination: "/wiki/economy#market-blocks", permanent: false },
       // Crop Harvesting was merged into Farming.
       { source: "/wiki/harvesting", destination: "/wiki/farming#field-crops", permanent: true },
+      // Games was renamed Card Games and moved to Society & Economy.
+      { source: "/wiki/games", destination: "/wiki/card-games", permanent: true },
     ];
   },
 };

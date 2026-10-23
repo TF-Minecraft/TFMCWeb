@@ -34,6 +34,7 @@ import { serverFeaturesSection } from "./server-features";
 import { roleplayToolsSection } from "./roleplay-tools";
 import { stationsSection } from "./stations";
 import { thieverySection } from "./thievery";
+import { locksSection } from "./locks";
 import { vehiclesSection } from "./vehicles";
 import type { DuplicateCommand, Recipe, RegisteredCommand, WikiCommandSet, WikiSection } from "./types";
 
@@ -70,6 +71,7 @@ export const wikiSections: readonly WikiSection[] = [
   detectorSection,
   gunsSection,
   infestationsSection,
+  locksSection,
   thieverySection,
   vehiclesSection,
   economySection,
