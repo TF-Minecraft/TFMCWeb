@@ -40,16 +40,19 @@ export default function WoodworkingPage() {
           Right-click the station with materials to add them one at a time. The title shows how many of each material
           type the piece still needs, but not which ones.
         </li>
-        <li>Once all the materials are in, left-click the station with the tools until every count is full.</li>
+        <li>
+          Once all the materials are in, left-click the station with the tools. The title counts tools by group (see the
+          table below), so full counts don&apos;t mean you used the right tools.
+        </li>
         <li>
           Left-click with the <WikiItemLink name="Branding Tool" /> to finish. The piece appears on top of the station.
           Right-click with it to see your progress, or sneak and left-click to cancel and get your materials back.
         </li>
       </ol>
       <p className={`mt-3 ${body}`}>
-        Finishing shows your Recipe, Hits and Total percentages. Only exact work makes the piece. If the materials or
-        the tool work are off, it is ruined and the materials are lost. If someone breaks the station mid-project, the
-        materials go to whoever broke it.
+        Finishing shows your Recipe, Hits and Total percentages. Only exact work makes the piece: the right materials,
+        and the right number of hits with each tool. If either is off, it is ruined and the materials are lost. If
+        someone breaks the station mid-project, the materials go to whoever broke it.
       </p>
 
       <WikiSectionHeading id="materials">Materials</WikiSectionHeading>
