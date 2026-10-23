@@ -30,6 +30,7 @@ import { marketBlockSection } from "./market-blocks";
 import { materialsSection } from "./materials";
 import { recyclerSection } from "./recycler";
 import { researchSection } from "./research";
+import { mageWeaponsSection } from "./mage-weapons";
 import { serverFeaturesSection } from "./server-features";
 import { roleplayToolsSection } from "./roleplay-tools";
 import { stationsSection } from "./stations";
@@ -63,6 +64,7 @@ export const wikiSections: readonly WikiSection[] = [
   animalHusbandrySection,
   brewingSection,
   magicSection,
+  mageWeaponsSection,
   researchSection,
   codexSection,
   archaeologySection,

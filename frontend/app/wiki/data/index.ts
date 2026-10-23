@@ -43,6 +43,7 @@ export * from "./market-blocks";
 export * from "./materials";
 export * from "./recycler";
 export * from "./research";
+export * from "./mage-weapons";
 export * from "./server-features";
 export * from "./roleplay-tools";
 export * from "./station-recipes";

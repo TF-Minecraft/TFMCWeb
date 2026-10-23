@@ -1,12 +1,13 @@
 import { M, T, V, empty } from "./helpers";
-import { stationRecipe } from "./station-recipes";
+import { stationRecipe, stationRecipes } from "./station-recipes";
 import type { Recipe, WikiCommandSet, WikiSection } from "./types";
 
-// ---------- Magic (elements, shrines, spell runes, attunement) ----------
+// ---------- Magic and mage weapons ----------
 //
-// Sources: https://github.com/TF-Minecraft/TFMCWeb/blob/main/docs/docs/wiki-research/a-magic-knowledge.md section 1 (live Magic/*.yml,
-// MMOItems rune/charge definitions, the jar's plugin.yml). No source repository
-// exists for the Magic plugin, so everything here is config-derived.
+// Sources: the Magic plugin (TF-Minecraft/Magic, v0.12.2 on Main) and Main's live
+// `plugins/Magic` configs, MMOItems rune and mage gear items, and the ItemsAdder
+// station recipes. Hidden values (orb counts, Rift per orb, gains per hit, odds)
+// are deliberately left off the player pages.
 
 /** The Magic Station furniture is a plain vanilla 3x3 craft. */
 export const magicStationRecipe: Recipe = {
@@ -31,7 +32,7 @@ export const magicStationRecipe: Recipe = {
     sourceId: "itemsadder:magic_crafting_station",
     model: { url: M("magic-station.json"), texture: T("stations/magic-station.png") },
   },
-  note: "Place it, then interact to open the weapon assembly menu.",
+  note: "Place it, then right-click it to open the weapon assembly menu.",
 };
 
 /** ItemsAdder `tfmc:rune_crafting_station`: the Magic Station pattern without the Amethyst Shard. */
@@ -57,7 +58,7 @@ export const runeStationRecipe: Recipe = {
     sourceId: "itemsadder:rune_crafting_station",
     model: { url: M("stations/rune-station.json"), textures: { "1": T("stations/rune-station.png") } },
   },
-  note: "Place it, then interact to craft blank runestones and Enchanted Charges from Enchanted Dust.",
+  note: "Place it, then right-click it to make runestones and Enchanted Charges from Enchanted Dust.",
 };
 
 /** Everything the Rune Station crafts, from `MMOItems/crafting-stations/rune-station.yml`. Each takes 10 s. */
@@ -78,6 +79,10 @@ export const enchantedChargeRecipes: Recipe[] = ["minor", "lesser", "greater", "
   stationRecipe(`gen-rune-station-enchanted-charge-${key}`),
 );
 
+export const sealedArtifactRecipes: Recipe[] = ["", "-cerrith", "-oseni", "-seithr", "-mitlan"].flatMap((school) =>
+  stationRecipes.filter((recipe) => recipe.key === `gen-rune-station-sealed${school}-artifact`),
+);
+
 export const magicRecipes: Recipe[] = [magicStationRecipe, runeStationRecipe];
 
 // ---------- Commands ----------
@@ -87,15 +92,11 @@ export const magicCommands: WikiCommandSet = {
   href: "/wiki/magic",
   commands: [
     {
-      command: "/magic rune keybind",
-      description: "While holding a rune, use this command to change its casting key.",
-    },
-    {
       command: "/resonance",
       aliases: ["/res"],
       description:
-        "Opens your Resonance profile: a bar per element, your Equilibrium (Corruption vs Tranquility), your Mental Points, and the Surge / Flow cast-mode toggle.",
-      notes: "Requires an active character.",
+        "Opens your Resonance screen: your Resonance in each school, your Equilibrium, your Mental Points and the Surge or Flow choice.",
+      notes: "Needs an active character.",
     },
   ],
 };
@@ -105,8 +106,7 @@ export const magicSection: WikiSection = {
     href: "/wiki/magic",
     label: "Magic",
     category: "magic",
-    blurb: "Build a mage weapon, fill charges at a shrine and meditate to raise your Resonance.",
+    blurb: "The four schools, Resonance, shrines, artifacts and meditation.",
   },
-  recipes: magicRecipes,
   commands: magicCommands,
 };
