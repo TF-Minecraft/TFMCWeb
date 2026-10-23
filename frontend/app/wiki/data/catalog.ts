@@ -13,7 +13,8 @@ export function getRecipesForStation(name: string): Recipe[] {
 function buildMaterialCatalog(): Map<string, MaterialCatalogEntry> {
   const map = new Map<string, MaterialCatalogEntry>();
 
-  for (const m of [...serverCraftedMaterials, ...dropOnlyMaterials]) {
+  // Gathered materials first, so each group reads from raw material to what is made from it.
+  for (const m of [...dropOnlyMaterials, ...serverCraftedMaterials]) {
     if (!map.has(m.name)) {
       map.set(m.name, {
         slug: slugify(m.name),

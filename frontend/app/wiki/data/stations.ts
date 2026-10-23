@@ -550,7 +550,7 @@ export const stations: StationInfo[] = [
     slug: "block-station",
     name: "Block Station",
     group: "Wood, stone and building",
-    blurb: "Building blocks in bulk, such as stone, concrete, coral and ice, plus a few decorations.",
+    blurb: "Building blocks in bulk, such as stone, concrete, mud and ice, plus a few decorations.",
     icon: V("stone.png"),
     interaction: "Shift + Right click",
     fallbackTexture: V("stone.png"),

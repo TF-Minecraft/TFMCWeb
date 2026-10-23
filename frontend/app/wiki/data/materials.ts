@@ -31,7 +31,7 @@ const node = (focus: string, nodeName: string, extra = ""): MaterialAcquisition 
 });
 const detector: MaterialAcquisition = {
   method: "Arcane Trace Detector",
-  detail: "Follow a trace with the Arcane Trace Detector and dig up what it leads to.",
+  detail: "Follow a trace with the detector and dig up what it leads to.",
 };
 const fishing: MaterialAcquisition = {
   method: "Fishing",
