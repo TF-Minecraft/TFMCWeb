@@ -37,8 +37,8 @@ export default function ThieveryPage() {
         <Link href="/wiki/characters#creating" className={link}>
           create it
         </Link>
-        . A <strong>Thief</strong> can pick chests and display furniture and pick pockets. A <strong>Bandit</strong> can
-        rob players and loot graves.
+        . A <strong>Thief</strong> can pick chests and display furniture and pick pockets. Anyone with a lockpick can
+        pick a door. A <strong>Bandit</strong> can rob players and loot graves.
       </p>
       <Callout variant="warning" className="mt-4">
         Lockpicking, pickpocketing, robbing and grave looting each start a 30-minute evil RP session, and doing any of

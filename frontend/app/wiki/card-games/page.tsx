@@ -87,28 +87,16 @@ export default function CardGamesPage() {
         ). The house plays with the guild bank&apos;s money: if the bank can&apos;t cover the bets, the round is called
         off and everyone gets their bet back.
       </p>
-      <ol className={`mt-3 list-decimal space-y-2 pl-5 ${body}`}>
+      <ul className={`mt-3 list-disc space-y-2 pl-5 ${body}`}>
         <li>
-          Right-click your box on the felt with coins to bet, and again to add more. Usually up to 6 players can bet.
-          The first bet gives everyone else 10 seconds to join in. Bets below the table minimum are given back.
+          Right-click your box on the felt with coins to bet, and again to add more. The first bet gives everyone else
+          10 seconds to join in. Bets below the table minimum are given back.
         </li>
         <li>
           On your turn, right-click the shoe for a card, or say <Word>hit</Word>, <Word>stand</Word>,{" "}
-          <Word>double</Word> or <Word>split</Word>.
+          <Word>double</Word> or <Word>split</Word>. The usual blackjack rules apply, and <Word>/games help</Word> has
+          the details.
         </li>
-        <li>The dealer draws until reaching 17 or more, and stands on every 17.</li>
-        <li>
-          A win pays your bet again. Blackjack (an ace and a ten-value card as your first two) pays 3 to 2. A tie gives
-          your bet back.
-        </li>
-      </ol>
-      <ul className={`mt-3 list-disc space-y-2 pl-5 ${body}`}>
-        <li>
-          You can split any pair, including any two ten-value cards, into up to 4 hands. Split aces get one card each,
-          and an ace and a ten after a split count as 21, not blackjack.
-        </li>
-        <li>You can double on any first two cards, also after a split, except split aces.</li>
-        <li>There is no insurance and no surrender.</li>
         <li>Walk away once the round has started and you lose your bet.</li>
         <li>
           Between rounds, a guild member can stand at the dealer&apos;s spot and right-click the shoe to deal by hand.
@@ -129,13 +117,8 @@ export default function CardGamesPage() {
         <li>
           On your turn, put your coins on the felt first, then say <Word>check</Word>, <Word>call</Word>,{" "}
           <Word>raise</Word> or <Word>fold</Word>. The table only counts coins you actually put out. <Word>allin</Word>{" "}
-          puts in every coin you carry.
+          puts in every coin you carry, and you can only call for less than the bet once you have no coins left.
         </li>
-        <li>
-          You can only call for less than the bet when you have no coins left. Then you can only win what you matched,
-          and the rest goes to a side pot.
-        </li>
-        <li>The dealer button moves one seat after every hand and decides who acts first.</li>
         <li>
           Walk away mid-hand and you only get back what nobody has matched yet this round. After folding, you get
           nothing back.

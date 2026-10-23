@@ -40,9 +40,6 @@ export default function InfestationsPage() {
         56. You get ghouls, rats, slime cubes and skeletons, and bug-like creatures that burst into parasitic worms when
         they die. The worms bite through armour and poison you.
       </p>
-      <p className={`mt-3 ${body}`}>
-        Infestation monsters can drop crafting materials, some of them hard to find elsewhere.
-      </p>
 
       <WikiSectionHeading id="lure">Clearing a province with a Lure</WikiSectionHeading>
       <p className={body}>
