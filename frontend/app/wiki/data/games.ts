@@ -65,9 +65,12 @@ export const gamesCommands: WikiCommandSet = {
       description: "Puts tournament chips out on your turn.",
     },
     {
-      command: "/games poker <start|kick|finish|status>",
-      description:
-        "The host starts play, removes a player between hands, or pays out the prize. Anyone can check the status.",
+      command: "/games poker <start|finish|status>",
+      description: "The host starts play or pays out the prize at the end. Anyone can check the status.",
+    },
+    {
+      command: "/games poker kick <player>",
+      description: "The host removes a player between hands. After play starts, they lose their buy-in.",
     },
     {
       command: "/wager <denars>",

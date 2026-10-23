@@ -42,7 +42,7 @@ export default function LocksPage() {
         <li>Iron doors and iron trapdoors are the only ones that can&apos;t be locked.</li>
         <li>
           A locked door only opens for its key or a copy, though anyone can close a locked door or gate. Only someone
-          holding its key, a copy or a key chain with it can break it, or the block under it.
+          holding the original key, a Copper Key copy, or a key chain with either can break it, or the block under it.
         </li>
         <li>
           A <WikiItemLink name="Key Chain" /> (Tool Station, 2 Iron Ingots) holds up to 5 keys and opens their doors,
