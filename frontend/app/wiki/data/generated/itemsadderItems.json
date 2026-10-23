@@ -198,6 +198,10 @@
     "name": "Mixing Bowl",
     "material": "PAPER"
   },
+  "music_station": {
+    "name": "Music Station",
+    "material": "PAPER"
+  },
   "mythril_block1": {
     "name": "Block of Mythril",
     "material": "PAPER",

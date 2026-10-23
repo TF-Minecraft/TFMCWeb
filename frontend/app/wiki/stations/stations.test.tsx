@@ -9,6 +9,7 @@ import {
   getRecipesForStation,
   getStationAcquisitionVisual,
   navItems,
+  STATION_GROUPS,
   stationRecipes,
   stations,
   stationsSection,
@@ -16,13 +17,13 @@ import {
 import { getRecipeItemHref } from "../data/items";
 import StationsPage from "./page";
 import StationDetailPage, { generateStaticParams } from "./[slug]/page";
-import StationGallery from "./StationGallery";
 
 const publicPath = (url: string) => join(process.cwd(), "public", url);
 
 describe("station registry and source coverage", () => {
-  it("registers 24 unique station routes, including both engineering stations", () => {
-    expect(stations).toHaveLength(24);
+  it("registers 25 unique station routes, including both engineering stations", () => {
+    expect(stations).toHaveLength(25);
+    expect(stations.map((station) => station.slug)).toContain("woodworking-station");
     expect(new Set(stations.map((station) => station.slug)).size).toBe(stations.length);
     expect(stations.map((station) => station.slug)).toContain("engineer-station");
     expect(stations.map((station) => station.slug)).toContain("engineering-table");
@@ -48,23 +49,23 @@ describe("station registry and source coverage", () => {
   it("assigns each recipe source to its correct station detail page", () => {
     const expectedCounts: Record<string, number> = {
       "alchemy-station": 53,
-      "animal-station": 56,
+      "animal-station": 57,
       "archeology-station": 12,
       "block-station": 133,
       "copper-station": 119,
       "engineer-station": 17,
       "engineering-table": 16,
-      "fishing-station": 25,
+      "fishing-station": 27,
       "forester-station": 117,
       "gunsmithing-station": 21,
       "ingot-station": 71,
-      "instrument-station": 9,
-      "magic-station": 10,
+      "instrument-station": 10,
+      "magic-station": 13,
       "meal-prep-station": 22,
       "medicine-station": 42,
       dockyard: 5,
       "research-station": 36,
-      "tool-station": 57,
+      "tool-station": 59,
     };
     for (const [slug, count] of Object.entries(expectedCounts)) {
       const station = stations.find((candidate) => candidate.slug === slug)!;
@@ -266,21 +267,17 @@ describe("station registry and source coverage", () => {
 });
 
 describe("station routes", () => {
-  it("lists every station while mounting only the selected preview", () => {
+  it("lists every station once, under a topic heading, without loading any 3D preview", () => {
     const html = renderToStaticMarkup(<StationsPage />);
-    expect(html.match(/aria-pressed=/g) ?? []).toHaveLength(stations.length);
-    expect(html.match(/View station details/g) ?? []).toHaveLength(1);
-    for (const station of stations) expect(html).toContain(`>${station.name}</button>`);
+    for (const station of stations) {
+      expect(html.match(new RegExp(`href="/wiki/stations/${station.slug}"`, "g")), station.slug).toHaveLength(1);
+    }
+    for (const group of STATION_GROUPS) expect(html).toContain(`>${group}</h2>`);
+    expect(html).not.toContain("3D preview of");
   });
 
-  it("renders one real block preview in the gallery and detail hero for every vanilla station", async () => {
+  it("renders one real block preview in the detail hero for every vanilla station", async () => {
     for (const stationInfo of stations.filter((candidate) => candidate.vanillaBlock)) {
-      const ordered = [stationInfo, ...stations.filter((candidate) => candidate !== stationInfo)];
-      const galleryHtml = renderToStaticMarkup(<StationGallery stations={ordered} />);
-      expect(galleryHtml.match(/aria-label="3D preview of /g), stationInfo.slug).toHaveLength(1);
-      expect(galleryHtml, stationInfo.slug).toContain(`aria-label="3D preview of ${stationInfo.name}"`);
-      expect(galleryHtml, stationInfo.slug).not.toContain("standard block appearance");
-
       const detail = await StationDetailPage({ params: Promise.resolve({ slug: stationInfo.slug }) });
       const detailHtml = renderToStaticMarkup(detail);
       expect(detailHtml, stationInfo.slug).toContain(`aria-label="3D preview of ${stationInfo.name}"`);
@@ -290,9 +287,10 @@ describe("station routes", () => {
   it("renders obtaining instructions and the recipes assigned to a detail page", async () => {
     const station = await StationDetailPage({ params: Promise.resolve({ slug: "engineering-table" }) });
     const html = renderToStaticMarkup(station);
-    expect(html).toContain("How to obtain it");
-    expect(html).toContain("16 recipes use this station");
-    expect(html).toContain("Right click");
+    expect(html).toContain("Getting one");
+    expect(html).toContain("Recipes (16)");
+    expect(html).toContain("Right-click it without sneaking to open it.");
+    expect(html).toContain('href="/wiki/vehicles"');
   });
 
   it("uses the station's rendered thumbnail for model-backed acquisition outputs", async () => {
@@ -305,12 +303,12 @@ describe("station routes", () => {
 
   it("resolves every station acquisition output by source identity to a static 3D thumbnail", () => {
     const acquisitionStations = stations.filter((station) => station.craftRecipe || station.vanillaBlock?.recipe);
-    expect(acquisitionStations).toHaveLength(24);
+    expect(acquisitionStations).toHaveLength(25);
     const sourceIds = acquisitionStations.map(
       (station) => (station.craftRecipe ?? station.vanillaBlock!.recipe).output.sourceId,
     );
     expect(sourceIds.every(Boolean)).toBe(true);
-    expect(new Set(sourceIds).size).toBe(24);
+    expect(new Set(sourceIds).size).toBe(25);
 
     for (const station of acquisitionStations) {
       const recipe = station.craftRecipe ?? station.vanillaBlock!.recipe;
@@ -350,31 +348,34 @@ describe("station routes", () => {
   it("groups large catalogues and removes unavailable implementation placeholders", async () => {
     const station = await StationDetailPage({ params: Promise.resolve({ slug: "block-station" }) });
     const html = renderToStaticMarkup(station);
-    expect(html).toContain("133 recipes use this station");
+    expect(html).toContain("Recipes (133)");
     expect(html).toContain("<details");
     expect(html).toContain("Stonecutter");
     expect(html).not.toMatch(/Not documented|No 3D model|NPC or command|TEMPORARILY DISABLED/i);
   });
 
-  it("shows only the concise interaction in the use section", async () => {
-    for (const slug of ["block-station", "bird-mailbox"]) {
-      const station = await StationDetailPage({ params: Promise.resolve({ slug }) });
-      const html = renderToStaticMarkup(station);
-      expect(html).toMatch(/How to use it<\/h2><p[^>]*>(?:Right click|Shift \+ Right click)<\/p>/);
-      expect(html).not.toMatch(
-        /The action that opens|Stand still|without sneaking|holding a written Letter|normal right-click|placed station/i,
-      );
-    }
+  it("explains how to open a station in plain words", async () => {
+    const blockStation = renderToStaticMarkup(
+      await StationDetailPage({ params: Promise.resolve({ slug: "block-station" }) }),
+    );
+    expect(blockStation).toContain(
+      "Sneak and right-click it to open the station. A plain right-click still uses the Stonecutter as normal.",
+    );
+    const mailbox = renderToStaticMarkup(
+      await StationDetailPage({ params: Promise.resolve({ slug: "bird-mailbox" }) }),
+    );
+    expect(mailbox).toContain("Right-click it without sneaking to open it.");
+    expect(mailbox).not.toMatch(/Shift \+ Right click|>Right click</);
   });
 
   it("renders vanilla station acquisition as a recipe grid without explanatory copy", async () => {
     for (const stationInfo of stations.filter((candidate) => candidate.vanillaBlock)) {
       const station = await StationDetailPage({ params: Promise.resolve({ slug: stationInfo.slug }) });
       const html = renderToStaticMarkup(station);
-      expect(html, stationInfo.slug).toContain("How to obtain it");
+      expect(html, stationInfo.slug).toContain("Getting one");
+      expect(html, stationInfo.slug).toContain(`ordinary ${stationInfo.vanillaBlock!.name}`);
       expect(html, stationInfo.slug).toContain(`title="${stationInfo.vanillaBlock!.name}"`);
       expect(html, stationInfo.slug).not.toContain(`aria-label="View ${stationInfo.vanillaBlock!.name}"`);
-      expect(html, stationInfo.slug).not.toMatch(/The block or recipe you need|Craft and place a normal/i);
     }
   });
 

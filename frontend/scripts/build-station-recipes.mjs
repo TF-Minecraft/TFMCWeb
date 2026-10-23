@@ -98,6 +98,12 @@ export const HIDDEN_OUTPUTS = new Set([
   "itemsadder:red_chip",
   "itemsadder:blue_chip",
   "itemsadder:green_chip",
+  // Where artifacts come from stays off the wiki until staff decide otherwise.
+  "mmoitem:LOOT:SEALED_ARTIFACT",
+  "mmoitem:LOOT:SEALED_OSENI_ARTIFACT",
+  "mmoitem:LOOT:SEALED_SEITHR_ARTIFACT",
+  "mmoitem:LOOT:SEALED_CERRITH_ARTIFACT",
+  "mmoitem:LOOT:SEALED_MITLAN_ARTIFACT",
 ]);
 
 /** Resolve item references from the server configuration to available pack assets. */
@@ -668,6 +674,23 @@ export function build({
     parsed.push({ file, recipes: result.recipes });
   }
 
+  // A `display=` that is the configured name of a *different* MMOItems item is a
+  // config typo (Main's medicine-station.yml labels Refined Elderwood as "Refined
+  // Maplewood"). The wiki shows the item the recipe really takes.
+  const idsByItemName = new Map();
+  for (const [id, record] of items) {
+    if (!record?.name) continue;
+    if (!idsByItemName.has(record.name)) idsByItemName.set(record.name, new Set());
+    idsByItemName.get(record.name).add(id);
+  }
+  const mislabelled = (ref) => {
+    if (ref.kind !== "mmoitem" || !ref.attrs.display) return false;
+    const shown = stripColours(ref.attrs.display);
+    const configured = items.get(ref.attrs.id)?.name;
+    const owners = idsByItemName.get(shown);
+    return Boolean(configured && configured !== shown && owners && !owners.has(ref.attrs.id));
+  };
+
   // Pass 1: collect every `display=` seen on an ingredient, keyed by item
   // identity. Map-form outputs carry no display name; this recovers the real
   // name for the ones that also appear as an ingredient somewhere.
@@ -677,7 +700,7 @@ export function build({
       for (const raw of asList(r.fields.ingredients)) {
         const ref = parseRef(raw);
         // A Cooking `display` names the food ("Beef Steak"), not its vanilla origin.
-        if (!ref?.attrs.display || ref.kind === "cooking") continue;
+        if (!ref?.attrs.display || ref.kind === "cooking" || mislabelled(ref)) continue;
         const id = refIdentity(ref);
         if (!displayByIdentity.has(id)) displayByIdentity.set(id, stripColours(ref.attrs.display));
       }
@@ -688,7 +711,7 @@ export function build({
   // item config's own name, then a `display=` the same item carries somewhere
   // else, then a title-cased id as a last resort.
   const nameFor = (ref) => {
-    if (ref.attrs.display) return stripColours(ref.attrs.display);
+    if (ref.attrs.display && !mislabelled(ref)) return stripColours(ref.attrs.display);
     if (ref.kind === "mmoitem") {
       const configured = items.get(ref.attrs.id)?.name;
       if (configured) return configured;

@@ -1,15 +1,16 @@
 import type { WikiCommandSet, WikiSection } from "./types";
 
-/**
- * No player commands exist. infestations-0.1.0.jar declares exactly one
- * command, `/infestation` (alias `/infestations`), and it is
- * `infestations.admin`/op-only end to end: there is nothing here for a player
- * to type.
- */
+/** `/lure leave` is the only player command; `/infestation` is staff-only (Infestations 0.3.2). */
 export const infestationsCommands: WikiCommandSet = {
   system: "Infestations",
   href: "/wiki/infestations",
-  commands: [],
+  commands: [
+    {
+      command: "/lure leave",
+      description: "Leaves a lure you joined.",
+      notes: "You take damage outside the lure's province until you leave.",
+    },
+  ],
 };
 
 export const infestationsSection: WikiSection = {

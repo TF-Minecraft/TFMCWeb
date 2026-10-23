@@ -1,5 +1,5 @@
 import { generatedStationRecipes } from "./generated/stationRecipes";
-import { dropOnlyMaterials, materialRecipes, serverCraftedMaterials } from "./materials";
+import { dropOnlyMaterials, serverCraftedMaterials } from "./materials";
 import type { Slot } from "./types";
 
 const byName = new Map<string, Set<string>>();
@@ -14,15 +14,14 @@ for (const recipe of generatedStationRecipes) {
 
 /** Hand-authored material records are curated custom-item provenance. */
 const materialNames = new Set([
-  ...materialRecipes.map((recipe) => recipe.output.name),
   ...serverCraftedMaterials.map((item) => item.name),
   ...dropOnlyMaterials.map((item) => item.name),
 ]);
 
 // These objects are defined by the corresponding hand-authored station recipes.
 const recipeObjects: Record<string, string> = {
-  "Forging Station": "itemsadder:weapon_station",
-  "Weapon Station": "itemsadder:weapon_station",
+  "Forging Station": "itemsadder:forging_station",
+  "Weapon Station": "itemsadder:forging_station",
   "Ingredient Converter": "itemsadder:ingredient_converter",
   "Alloy Forge": "itemsadder:alloy_forge",
   "Magic Station": "itemsadder:magic_crafting_station",

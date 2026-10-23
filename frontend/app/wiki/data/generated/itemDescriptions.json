@@ -130,6 +130,8 @@
   "mmoitem:MUSIC:DISC11": ["Right Click to play without a Jukebox!"],
   "mmoitem:MUSIC:DISC12": ["Right Click to play without a Jukebox!", "The TFMC: Season 5 Combat Theme"],
   "mmoitem:MUSIC:DISC13": ["Right Click to play without a Jukebox!", "The TFMC: Season 5 Main Theme"],
+  "mmoitem:MUSIC:DISC14": ["Right Click to play without a Jukebox!"],
+  "mmoitem:MUSIC:DISC15": ["Right Click to play without a Jukebox!"],
   "mmoitem:PETS:TAMING_ITEM": ["Used to tame an animal.", "Right Click an animal to tame it."],
   "mmoitem:PETS:COOWNERSHIP_ITEM": [
     "Shares the ownership of an animal.",
@@ -186,6 +188,13 @@
   "mmoitem:PETS:PET_LAGOTTOROMAGNOLO_EGG": ["Right-click to hatch your companion.", "Choose its name in chat."],
   "mmoitem:PETS:PET_YORKSHIRE_EGG": ["Right-click to hatch your companion.", "Choose its name in chat."],
   "mmoitem:PETS:PET_BORDERCOLLIEGRAY_EGG": ["Right-click to hatch your companion.", "Choose its name in chat."],
+  "mmoitem:PETS:PET_CAVALIER_KING_CHARLES_SPANIEL_EGG": [
+    "Right-click to hatch your companion.",
+    "Choose its name in chat."
+  ],
+  "mmoitem:PETS:PET_SPHYNX_EGG": ["Right-click to hatch your companion.", "Choose its name in chat."],
+  "mmoitem:PROPS:FOREARM_CRUTCH": ["Made for wide arms"],
+  "mmoitem:PROPS:FOREARM_CRUTCH_SLIM": ["Made for slim arms"],
   "mmoitem:RESEARCH:SCRIBE_PAPER": [
     "Used to create various Research",
     "Papers in a Cartography Table.",

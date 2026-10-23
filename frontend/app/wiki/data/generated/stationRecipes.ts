@@ -2085,6 +2085,23 @@ export const generatedStationRecipes: Recipe[] = [
     },
   },
   {
+    key: "gen-animal-station-turtle-egg-block",
+    title: "Turtle Egg",
+    station: "Animal Station",
+    time: 5,
+    requirement: "Breeder I",
+    category: "Other",
+    ingredients: [
+      { name: "Seagrass", qty: 64, sourceId: "vanilla:seagrass", texture: "/wiki/textures/vanilla/seagrass.png" },
+    ],
+    output: {
+      name: "Turtle Egg",
+      qty: 1,
+      sourceId: "vanilla:turtle_egg",
+      texture: "/wiki/textures/vanilla/turtle_egg.png",
+    },
+  },
+  {
     key: "gen-animal-station-axolotl-egg",
     title: "Axolotl Spawn Egg",
     station: "Animal Station",
@@ -8385,6 +8402,50 @@ export const generatedStationRecipes: Recipe[] = [
     },
   },
   {
+    key: "gen-fishing-station-disc14",
+    title: "Music Disc",
+    station: "Fishing Station",
+    time: 5,
+    requirement: "Broken Disc Maker I",
+    category: "Other",
+    ingredients: [
+      {
+        name: "Broken Disc",
+        qty: 1,
+        sourceId: "mmoitem:MUSIC:BROKEN_DISC",
+        texture: "/wiki/textures/mmoitems/broken_disc.png",
+      },
+    ],
+    output: {
+      name: "Music Disc",
+      qty: 1,
+      sourceId: "mmoitem:MUSIC:DISC14",
+      texture: "/wiki/textures/mmoitems/disc14.png",
+    },
+  },
+  {
+    key: "gen-fishing-station-disc15",
+    title: "Music Disc",
+    station: "Fishing Station",
+    time: 5,
+    requirement: "Broken Disc Maker I",
+    category: "Other",
+    ingredients: [
+      {
+        name: "Broken Disc",
+        qty: 1,
+        sourceId: "mmoitem:MUSIC:BROKEN_DISC",
+        texture: "/wiki/textures/mmoitems/broken_disc.png",
+      },
+    ],
+    output: {
+      name: "Music Disc",
+      qty: 1,
+      sourceId: "mmoitem:MUSIC:DISC15",
+      texture: "/wiki/textures/mmoitems/disc15.png",
+    },
+  },
+  {
     key: "gen-forester-station-arrow",
     title: "Arrow",
     station: "Forester Station",
@@ -12528,6 +12589,30 @@ export const generatedStationRecipes: Recipe[] = [
     },
   },
   {
+    key: "gen-instrument-station-music-station",
+    title: "Music Station",
+    station: "Instrument Station",
+    time: 10,
+    category: "Other",
+    ingredients: [
+      {
+        name: "Spruce Planks",
+        qty: 6,
+        sourceId: "vanilla:spruce_planks",
+        texture: "/wiki/textures/vanilla/spruce_planks.png",
+      },
+      { name: "Glass Pane", qty: 4, sourceId: "vanilla:glass_pane", texture: "/wiki/textures/vanilla/glass_pane.png" },
+      { name: "Iron Ingot", qty: 1, sourceId: "vanilla:iron_ingot", texture: "/wiki/textures/vanilla/iron_ingot.png" },
+      { name: "Black Dye", qty: 1, sourceId: "vanilla:black_dye", texture: "/wiki/textures/vanilla/black_dye.png" },
+    ],
+    output: {
+      name: "Music Station",
+      qty: 1,
+      sourceId: "itemsadder:music_station",
+      texture: "/wiki/textures/vanilla/paper.png",
+    },
+  },
+  {
     key: "gen-meal-prep-station-cutting_knife",
     title: "Cutting Knife",
     station: "Meal Prep Station",
@@ -12894,7 +12979,7 @@ export const generatedStationRecipes: Recipe[] = [
         texture: "/wiki/textures/mmoitems/steel_ingot.png",
       },
       {
-        name: "Refined Maplewood",
+        name: "Refined Elderwood",
         qty: 4,
         sourceId: "mmoitem:MATERIALS:REFINED_ELDERWOOD",
         texture: "/wiki/textures/mmoitems/refined_elderwood.png",
@@ -12928,7 +13013,7 @@ export const generatedStationRecipes: Recipe[] = [
         texture: "/wiki/textures/mmoitems/mythril_ingot.png",
       },
       {
-        name: "Refined Maplewood",
+        name: "Refined Demonwood",
         qty: 4,
         sourceId: "mmoitem:MATERIALS:REFINED_DEMONWOOD",
         texture: "/wiki/textures/mmoitems/refined_demonwood.png",
@@ -12984,7 +13069,7 @@ export const generatedStationRecipes: Recipe[] = [
         texture: "/wiki/textures/mmoitems/steel_ingot.png",
       },
       {
-        name: "Refined Maplewood",
+        name: "Refined Elderwood",
         qty: 4,
         sourceId: "mmoitem:MATERIALS:REFINED_ELDERWOOD",
         texture: "/wiki/textures/mmoitems/refined_elderwood.png",
@@ -13018,7 +13103,7 @@ export const generatedStationRecipes: Recipe[] = [
         texture: "/wiki/textures/mmoitems/mythril_ingot.png",
       },
       {
-        name: "Refined Maplewood",
+        name: "Refined Demonwood",
         qty: 4,
         sourceId: "mmoitem:MATERIALS:REFINED_DEMONWOOD",
         texture: "/wiki/textures/mmoitems/refined_demonwood.png",
@@ -16139,6 +16224,40 @@ export const generatedStationRecipes: Recipe[] = [
       qty: 1,
       sourceId: "itemsadder:blindfold_helmet",
       texture: "/wiki/textures/itemsadder/blindfold_helmet.png",
+    },
+  },
+  {
+    key: "gen-tool-station-forearm-crutch",
+    title: "Forearm Crutch",
+    station: "Tool Station",
+    time: 5,
+    category: "Other",
+    ingredients: [
+      { name: "Stick", qty: 3, sourceId: "vanilla:stick", texture: "/wiki/textures/vanilla/stick.png" },
+      { name: "Leather", qty: 1, sourceId: "mmoitem:MATERIALS:LEATHER", texture: "/wiki/textures/vanilla/leather.png" },
+    ],
+    output: {
+      name: "Forearm Crutch",
+      qty: 1,
+      sourceId: "mmoitem:PROPS:FOREARM_CRUTCH",
+      texture: "/wiki/textures/mmoitems/forearm_crutch.png",
+    },
+  },
+  {
+    key: "gen-tool-station-forearm-crutch-slim",
+    title: "Slim Forearm Crutch",
+    station: "Tool Station",
+    time: 5,
+    category: "Other",
+    ingredients: [
+      { name: "Stick", qty: 3, sourceId: "vanilla:stick", texture: "/wiki/textures/vanilla/stick.png" },
+      { name: "Leather", qty: 1, sourceId: "mmoitem:MATERIALS:LEATHER", texture: "/wiki/textures/vanilla/leather.png" },
+    ],
+    output: {
+      name: "Slim Forearm Crutch",
+      qty: 1,
+      sourceId: "mmoitem:PROPS:FOREARM_CRUTCH_SLIM",
+      texture: "/wiki/textures/mmoitems/forearm_crutch_slim.png",
     },
   },
   {

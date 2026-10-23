@@ -38,7 +38,7 @@ export const weaponStationRecipe: Recipe = {
     { name: "Oak Planks", qty: 1, texture: V("oak_planks.png") },
     { name: "Oak Planks", qty: 1, texture: V("oak_planks.png") },
   ],
-  output: { name: "Forging Station", qty: 1, sourceId: "itemsadder:weapon_station", model: weaponStationModel },
+  output: { name: "Forging Station", qty: 1, sourceId: "itemsadder:forging_station", model: weaponStationModel },
 };
 
 export const ingredientConverterRecipe: Recipe = {

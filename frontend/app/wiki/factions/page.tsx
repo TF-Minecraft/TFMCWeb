@@ -69,7 +69,8 @@ export default function FactionsPage() {
         Money and banking
       </WikiSectionHeading>
       <p className="text-sm text-[var(--tfmc-mist)]">
-        The leader places a faction bank block, then anyone standing in that bank chunk can{" "}
+        The leader picks the bank chunk with <code className="text-[var(--tfmc-accent)]">/faction setbank</code>, then
+        anyone standing in that chunk can{" "}
         <code className="text-[var(--tfmc-accent)]">/faction deposit &lt;amount&gt;</code>; only the leader can{" "}
         <code className="text-[var(--tfmc-accent)]">/faction withdraw &lt;amount&gt;</code>. Guilds work the same way
         with their own bank chunk. Every deposit and withdrawal moves denars: see the Denar Economy page for how the

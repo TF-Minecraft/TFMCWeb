@@ -49,7 +49,6 @@ export const factionsCommands: WikiCommandSet = {
   system: "Simple Factions",
   href: "/wiki/factions",
   commands: [
-    { command: "/faction", description: "Opens the faction hub menu." },
     { command: "/faction menu", description: "Opens the faction view." },
     { command: "/faction list", description: "Lists every faction on the server." },
     {
@@ -58,7 +57,7 @@ export const factionsCommands: WikiCommandSet = {
       notes: "You must not already be in a faction.",
     },
     {
-      command: "/faction delete",
+      command: "/faction delete <faction id>",
       description: "Disbands your faction.",
       notes: "Faction leader only. Blocked if bankrupt, has active loans, or a positive balance.",
     },
@@ -83,6 +82,10 @@ export const factionsCommands: WikiCommandSet = {
       description: "Accepts a pending diplomacy or transfer request.",
       notes:
         "Requires a pending request. Diplomacy and war prompts go to the faction leader; guild elevate, movement join, wanted-leader, and vehicle consent go to whoever received the prompt.",
+    },
+    {
+      command: "/faction decline [faction]",
+      description: "Turns down a pending request, or an invite from that faction.",
     },
     {
       command: "/faction setleader <player>",
@@ -113,23 +116,42 @@ export const factionsCommands: WikiCommandSet = {
         "Faction leader only. Province must be owned and non-water; one build at a time. The build starts immediately. There is no confirmation screen.",
     },
     { command: "/faction deconstruct <id>", description: "Demolishes an installation.", notes: "Faction leader only." },
-    { command: "/faction installation", description: "Opens the installations view.", notes: "Any faction member." },
     {
-      command: "/faction vehicle transfer <installation id>",
+      command: "/faction upgrade <installation id>",
+      description: "Upgrades one of your installations.",
+      notes: "Faction leader only.",
+    },
+    {
+      command: "/faction vehicle transfer <installation id | pool>",
       aliases: ["/faction transfervehicle <id>"],
       description: "Berths one of your vehicles at that installation.",
       notes: "Faction leader only; the vehicle's owner must be online and consent.",
     },
     {
-      command: "/faction vehicle maintenance pay",
-      aliases: ["/faction maintenance"],
-      description: "Arms a right-click to pay one day of vehicle upkeep from your pouch.",
-      notes: "Faction leader only. An unpaid vehicle cannot be repaired.",
+      command: "/faction vehicle maintenance pay [bank]",
+      description: "Pay one day of a vehicle's upkeep: run it, then right-click the vehicle.",
+      notes:
+        "Paying from your pouch is for the faction leader. Add bank to pay from your own bank instead, which any character can do. An unpaid vehicle cannot be repaired.",
+    },
+    {
+      command: "/faction vehicle take",
+      description: "Take a faction vehicle as your own: run it, then right-click the vehicle.",
+      notes: "Faction leader only.",
+    },
+    {
+      command: "/faction vehicle give <player>",
+      description: "Give a faction vehicle to a player: run it, then right-click the vehicle.",
+      notes: "Faction leader only. They accept with /faction accept.",
+    },
+    {
+      command: "/faction vehicle handover <player>",
+      description: "Hand one of your own vehicles to another player: run it, then right-click the vehicle.",
+      notes: "They accept with /faction accept.",
     },
     {
       command: "/faction findvehicles <installation id>",
       description: "Lists berthed vehicles with coordinates.",
-      notes: "Any faction member.",
+      notes: "Faction leader only.",
     },
     {
       command: "/faction setbanner",
@@ -172,7 +194,7 @@ export const factionsCommands: WikiCommandSet = {
       description: "Withdraws denars from the faction bank into your pouch.",
       notes: "Faction leader only, while standing in the bank chunk.",
     },
-    { command: "/guild", aliases: ["/guild menu"], description: "Opens the guild hub menu." },
+    { command: "/guild menu", description: "Opens the guild hub menu.", notes: "You must be in a guild." },
     { command: "/guild list", description: "Lists guilds." },
     {
       command: "/guild create <name>",
@@ -180,7 +202,7 @@ export const factionsCommands: WikiCommandSet = {
       notes: "Must be in a faction, not already in a guild, and not the faction leader.",
     },
     {
-      command: "/guild delete",
+      command: "/guild delete <guild id>",
       description: "Disbands your guild.",
       notes: "Guild leader only; not the base guild. Blocked if bankrupt, has a positive balance, or active loans.",
     },
@@ -194,7 +216,18 @@ export const factionsCommands: WikiCommandSet = {
       description: "Joins a guild that invited you.",
       notes: "You cannot already be a guild leader.",
     },
+    {
+      command: "/guild decline <guild>",
+      description: "Turns down a guild invite or an offer to lead a guild.",
+    },
     { command: "/guild leave", description: "Leaves your guild.", notes: "The leader must /guild delete instead." },
+    { command: "/guild kick <player>", description: "Removes a member.", notes: "Guild leader only." },
+    {
+      command: "/guild appoint <guild> <character>",
+      description: "Offers a leaderless guild to one of its members.",
+      notes: "Faction leader only.",
+    },
+    { command: "/guild lead <guild>", description: "Accepts an offer to lead a guild." },
     {
       command: "/guild setleader <player>",
       description: "Hands the guild to another member.",
@@ -202,8 +235,14 @@ export const factionsCommands: WikiCommandSet = {
     },
     { command: "/guild rename <name>", description: "Renames the guild.", notes: "Guild leader only." },
     {
-      command: "/guild setcapital",
+      command: "/guild setcapital [name]",
       description: "Sets the guild's trade capital to your current province.",
+      notes:
+        "Guild leader only, not for the base guild. Your faction must own the province. Give a name to found a new settlement.",
+    },
+    {
+      command: "/guild setcolour <R,G,B>",
+      description: "Sets the guild's colour.",
       notes: "Guild leader only.",
     },
     {
@@ -228,11 +267,24 @@ export const factionsCommands: WikiCommandSet = {
     },
     { command: "/ledger", description: "Opens your personal daily cashflow: wages, dividends, and taxes." },
     { command: "/war list", description: "Lists active wars.", notes: "The only non-admin /war branch." },
-    { command: "/battle list", description: "Lists scheduled battles." },
-    { command: "/battle join <battleId>", description: "Joins a battle you're eligible for." },
-    { command: "/raid join", description: "Joins a campaign raid during its 60-second muster window." },
+    { command: "/battle list", description: "Opens the list of scheduled battles.", notes: "Warband leader only." },
+    {
+      command: "/battle join <battle id> <side>",
+      description: "Signs your warband up for a staff-run battle.",
+      notes: "Warband leader only. Battles in a war are joined with /warband join.",
+    },
+    {
+      command: "/raid join <raid>",
+      description: "Joins a campaign raid during its 60-second muster window.",
+      notes: "Attacking side only, and not while you are in a warband.",
+    },
     { command: "/warband create <name>", description: "Creates a warband (squad) for battles." },
-    { command: "/warband delete", description: "Disbands your warband.", notes: "Warband leader only." },
+    {
+      command: "/warband delete <warband id>",
+      description: "Disbands your warband.",
+      notes: "Warband leader only. Campaign warbands can't be deleted.",
+    },
+    { command: "/warband join <warband id>", description: "Joins a warband." },
     {
       command: "/warband invite <player>",
       description: "Invites a player to the warband.",
@@ -254,21 +306,27 @@ export const factionsCommands: WikiCommandSet = {
     {
       command: "/warband retreat",
       description: "Retreats the warband from a live battle.",
-      notes: "Warband leader only, and only after the first 1,200 seconds (20 minutes).",
+      notes:
+        "Warband leader only, in field or siege battles, after the first 20 minutes. Your side loses the battle, and a confirm screen comes first.",
     },
     {
       command: "/company found <name>",
       description: "Buys a mercenary company charter.",
-      notes: "You must be in a guild.",
+      notes:
+        "Guild leader only. You need the Mercenary trait, and the guild bank must hold the founding cost. A confirm screen comes first.",
     },
     { command: "/company invite <player>", description: "Offers a company slot.", notes: "Company leader only." },
     {
       command: "/company accept",
-      aliases: ["/company decline"],
-      description: "Signs on to, or turns down, a company offer.",
+      description: "Signs on to a company offer.",
       notes: "You must have a pending offer.",
     },
-    { command: "/company kick <player>", description: "Dismisses a mercenary.", notes: "Company leader only." },
+    { command: "/company decline", description: "Turns down a company offer." },
+    {
+      command: "/company kick <player>",
+      description: "Dismisses a mercenary.",
+      notes: "Company leader only, and only when every slot is filled.",
+    },
     {
       command: "/company expand",
       description: "Queues another company slot.",
@@ -284,13 +342,17 @@ export const factionsCommands: WikiCommandSet = {
       description: "Sends the reviewed contract to a faction.",
       notes: "Company leader only; you must be holding the reviewed book.",
     },
-    { command: "/company contracts", description: "Opens the contract ledger.", notes: "Any company member." },
+    {
+      command: "/company contracts",
+      description: "Opens the contract ledger.",
+      notes: "Any member of the company's guild.",
+    },
     { command: "/mercenaries", description: "Opens the mercenary market menu." },
     { command: "/mercenaries list", description: "Lists mercenary companies in chat, best reputation first." },
     {
       command: "/mercenaries hire <company>",
-      description: "Checks whether you may sign a company here.",
-      notes: "Faction leader in practice.",
+      description: "Hires a mercenary company.",
+      notes: "Any member of your faction's government, standing in the company's home settlement.",
     },
   ],
 };

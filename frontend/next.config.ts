@@ -33,6 +33,19 @@ const nextConfig: NextConfig = {
       { source: "/inspect", destination: "/admin/codes", permanent: false },
       // The Gathering plugin's spots never spawn on Main, so its wiki page was removed.
       { source: "/wiki/gathering", destination: "/wiki", permanent: false },
+      // Mage weapon parts are paid for at the Magic Station, not crafted as materials.
+      {
+        source:
+          "/wiki/materials/:part((?:basic|petty|heavy)-magical-(?:handle|tome)|(?:iron|steel|abyssalite|mythril)-magical-core)",
+        destination: "/wiki/stations/magic-station#recipes",
+        permanent: false,
+      },
+      // Materials that no player can obtain any more.
+      {
+        source: "/wiki/materials/:gone(bloodmagic-essence|necromancy-essence|smokeless-powder|fossil)",
+        destination: "/wiki/materials",
+        permanent: false,
+      },
     ];
   },
 };

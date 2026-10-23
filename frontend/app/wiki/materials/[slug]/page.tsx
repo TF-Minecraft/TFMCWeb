@@ -12,14 +12,15 @@ export default async function MaterialDetailPage({ params }: { params: Promise<{
   const { slug } = await params;
   const material = getMaterialBySlug(slug);
   if (!material) notFound();
+  const self = `/wiki/materials/${material.slug}`;
 
   return (
     <WikiPage
-      lastModified="2026-10-11"
+      lastModified="2026-10-23"
       title={material.name}
       beforeTitle={
         <Link href="/wiki/materials" className="text-xs text-[var(--tfmc-mist)] hover:text-[var(--tfmc-cream)]">
-          &larr; Back to Materials
+          &larr; Materials
         </Link>
       }
       titleVisual={
@@ -28,50 +29,42 @@ export default async function MaterialDetailPage({ params }: { params: Promise<{
           <img src={material.texture} alt={material.name} className="h-16 w-16 [image-rendering:pixelated]" />
         ) : undefined
       }
-      intro={
-        material.lore ? (
-          <em>
-            <WikiItemText text={material.lore} excludeHref={`/wiki/materials/${material.slug}`} />
-          </em>
-        ) : undefined
-      }
+      intro={material.lore ? <WikiItemText text={material.lore} excludeHref={self} /> : undefined}
     >
-      <WikiSectionHeading id="acquisition">How to acquire</WikiSectionHeading>
+      {material.acquisition?.length || material.recipes.length ? (
+        <WikiSectionHeading id="acquisition">Where to get it</WikiSectionHeading>
+      ) : null}
       {material.acquisition?.length ? (
-        <div className="mt-4 space-y-4">
+        <ul className="mt-4 space-y-3">
           {material.acquisition.map((source) => (
-            <section
+            <li
               key={source.method}
-              className="rounded-md border border-[color-mix(in_srgb,var(--tfmc-accent)_35%,transparent)] p-4"
+              className="rounded-md border border-[color-mix(in_srgb,var(--tfmc-cream)_12%,transparent)] p-4"
             >
               <h3 className="font-semibold text-[var(--tfmc-cream)]">
-                <WikiItemText text={source.method} excludeHref={`/wiki/materials/${material.slug}`} />
+                <WikiItemText text={source.method} excludeHref={self} />
               </h3>
               <p className="mt-1 text-sm text-[var(--tfmc-mist)]">
-                <WikiItemText text={source.detail} excludeHref={`/wiki/materials/${material.slug}`} />
+                <WikiItemText text={source.detail} excludeHref={self} />
               </p>
-            </section>
+            </li>
           ))}
-        </div>
+        </ul>
       ) : null}
       {material.recipes.length ? (
-        <div className="mt-4 space-y-4">
+        <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
           {material.recipes.map((recipe) => (
             <CraftingGrid key={recipe.key} recipe={recipe} />
           ))}
         </div>
-      ) : !material.acquisition?.length ? (
-        <p className="mt-1 text-sm text-[var(--tfmc-mist)]">
-          Acquisition details have not yet been verified for this material.
-        </p>
       ) : null}
 
       {material.unpackingRecipes.length ? (
         <section>
-          <WikiSectionHeading intro="Recover material from a storage block you already own.">
-            Block unpacking
+          <WikiSectionHeading id="unpacking" intro="Break a storage block you already own back into the material.">
+            Unpacking a block
           </WikiSectionHeading>
-          <div className="mt-4 space-y-4">
+          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
             {material.unpackingRecipes.map((recipe) => (
               <CraftingGrid key={recipe.key} recipe={recipe} />
             ))}
@@ -79,16 +72,21 @@ export default async function MaterialDetailPage({ params }: { params: Promise<{
         </section>
       ) : null}
 
-      <WikiSectionHeading id="used-in">What can be crafted from it</WikiSectionHeading>
+      <WikiSectionHeading id="used-in">Used to make</WikiSectionHeading>
+      {material.usedFor ? (
+        <p className="mt-2 text-sm text-[var(--tfmc-mist)]">
+          <WikiItemText text={material.usedFor} excludeHref={self} />
+        </p>
+      ) : null}
       {material.usedIn.length ? (
         <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
           {material.usedIn.map((r) => (
             <CraftingGrid key={r.key} recipe={r} />
           ))}
         </div>
-      ) : (
-        <p className="mt-1 text-sm text-[var(--tfmc-mist)]">Not used in any recipe here.</p>
-      )}
+      ) : !material.usedFor ? (
+        <p className="mt-2 text-sm text-[var(--tfmc-mist)]">No station recipe uses it.</p>
+      ) : null}
     </WikiPage>
   );
 }

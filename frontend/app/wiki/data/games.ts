@@ -35,63 +35,60 @@ export const gamesCommands: WikiCommandSet = {
   commands: [
     {
       command: "/games",
-      description: "Prints the usage line appropriate to your permissions.",
+      description: "Prints how to use /games bet.",
     },
     {
       command: "/games help",
       description: 'Opens the "Table games" index book.',
-      notes: "games.help, default true for everyone.",
     },
     {
       command: "/games help <blackjack|poker|draw|freeplay>",
       description: "Opens that game's rule book.",
-      notes: "games.help, default true for everyone.",
     },
     {
       command: "/games bet min <n>",
       description: "Sets the table minimum, as the dealer standing at the shoe.",
-      notes: "games.bet, default true for everyone.",
     },
     {
       command: "/games bet max <n>",
       description: "Sets the table maximum.",
-      notes: "games.bet, default true for everyone.",
     },
     {
       command: "/games bet open",
       description: "Opens betting for a round.",
-      notes: "games.bet, default true for everyone.",
     },
     {
       command: "/games bet close",
       description: "Closes betting.",
-      notes: "games.bet, default true for everyone.",
     },
     {
       command: "/games bet hit | stand | double | split",
       description: "Blackjack action on your turn.",
-      notes: "games.bet, default true. Identical to typing the word in chat on your turn.",
+      notes: "The same as typing the word in chat on your turn.",
     },
     {
-      command: "/games bet check | call | fold | raise",
+      command: "/games bet check | call | fold | raise | allin",
       description: "Tenceur Hold'em / Five-Draw action on your turn.",
-      notes:
-        "games.bet, default true. Put coins on the felt before using raise: the table only reads coins actually on the felt.",
+      notes: "Put coins on the felt before you raise: the table only counts coins that are on the felt.",
     },
     {
       command: "/wager <amount>",
-      description: "Proposes the item you are currently holding as a stake; the table votes on it.",
-      notes: "games.wager, default true.",
+      description:
+        "Proposes the item stack you are holding as a stake, valued at that many denars per item. The table votes on it.",
+      notes: "Blackjack tables only take coins.",
+    },
+    {
+      command: "/wager",
+      description: "Commits the coins you have put on the felt this round.",
+      notes: "If it is less than you need to stay in, your coins come back and you fold.",
     },
     {
       command: "/wager accept",
       description: "Votes yes on a proposed wager.",
-      notes: "games.wager, default true.",
     },
     {
       command: "/wager decline",
       description: "Votes no on a proposed wager.",
-      notes: "games.wager, default true.",
     },
   ],
 };
