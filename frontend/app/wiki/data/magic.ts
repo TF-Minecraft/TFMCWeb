@@ -31,7 +31,6 @@ export const magicStationRecipe: Recipe = {
     sourceId: "itemsadder:magic_crafting_station",
     model: { url: M("magic-station.json"), texture: T("stations/magic-station.png") },
   },
-  note: "Place it, then interact to open the weapon assembly menu.",
 };
 
 /** ItemsAdder `tfmc:rune_crafting_station`: the Magic Station pattern without the Amethyst Shard. */
@@ -57,7 +56,6 @@ export const runeStationRecipe: Recipe = {
     sourceId: "itemsadder:rune_crafting_station",
     model: { url: M("stations/rune-station.json"), textures: { "1": T("stations/rune-station.png") } },
   },
-  note: "Place it, then interact to craft blank runestones and Enchanted Charges from Enchanted Dust.",
 };
 
 /** Everything the Rune Station crafts, from `MMOItems/crafting-stations/rune-station.yml`. Each takes 10 s. */
@@ -83,7 +81,6 @@ export const enchantedChargeRecipes: Recipe[] = ["minor", "lesser", "greater", "
  * items: the Magic Station's assembly menu charges each chosen part's cost when it
  * builds the weapon, so these cards appear only on the Magic Station page.
  */
-const PART_NOTE = "Paid when you build a mage weapon with this part.";
 const stick = { name: "Stick", texture: T("vanilla/stick.png") };
 const book = { name: "Book", texture: T("vanilla/book.png") };
 const dust = { name: "Enchanted Dust", texture: T("magic_crafting/enchanted_dust.png") };
@@ -99,7 +96,6 @@ function part(
     title,
     station: "Magic Station",
     category: "Weapon parts",
-    note: PART_NOTE,
     ingredients,
     output: { name: title, qty: 1, texture },
   };

@@ -3,7 +3,14 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { build, cookingOrigin, isHiddenOutput, parseRef, parseStationRecipes } from "./build-station-recipes.mjs";
+import {
+  build,
+  cookingOrigin,
+  isHiddenOutput,
+  parseRef,
+  parseStationRecipes,
+  perkLabel,
+} from "./build-station-recipes.mjs";
 
 describe("station recipe parsing", () => {
   it("reads recipes indented 4/6/8 and 4/8/12 in the same file", () => {
@@ -100,5 +107,37 @@ recipes:
     const { recipes } = build({ sourceDir: dir, textureIndex: { byName: new Map() } });
     expect(recipes.map((recipe) => recipe.output.name)).toEqual(["Stick"]);
     expect(isHiddenOutput('itemsadder{id="tfmc_games:yellow_chip"}')).toBe(true);
+    expect(isHiddenOutput({ type: "LOOT", id: "SEALED_ARTIFACT", amount: 1 })).toBe(true);
+  });
+
+  it("names the item a recipe really takes when its label names a different item", () => {
+    dir = mkdtempSync(path.join(tmpdir(), "stations-"));
+    writeFileSync(
+      path.join(dir, "medicine-station.yml"),
+      `
+recipes:
+    claw:
+        output:
+            type: MATERIALS
+            id: CLAW
+            amount: 1
+        ingredients:
+        - mmoitem{type=MATERIALS,id=REFINED_ELDERWOOD,amount=4,display="Refined Maplewood"}
+        - mmoitem{type=MATERIALS,id=REFINED_MAPLEWOOD,amount=4,display="Refined Maplewood"}
+`,
+    );
+    const items = new Map([
+      ["REFINED_ELDERWOOD", { name: "Refined Elderwood" }],
+      ["REFINED_MAPLEWOOD", { name: "Refined Maplewood" }],
+    ]);
+    const { recipes } = build({ sourceDir: dir, textureIndex: { byName: new Map() }, items });
+    expect(recipes[0].ingredients.map((slot) => slot.name)).toEqual(["Refined Elderwood", "Refined Maplewood"]);
+  });
+
+  it("shows the perk tier a recipe really checks and fixes misspelt perk labels", () => {
+    expect(perkLabel("Requires §6Transmutation II", "professions.transmutation_1")).toBe("Transmutation I");
+    expect(perkLabel("Requires §6Transmutation II", "professions.transmutation_2")).toBe("Transmutation II");
+    expect(perkLabel("Requires §6Tree Crafer", "professions.tree_crafter")).toBe("Tree Crafter");
+    expect(perkLabel("Requires §6Gilded", "gilded")).toBe("Gilded");
   });
 });

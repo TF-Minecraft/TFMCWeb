@@ -614,6 +614,8 @@ export const stations: StationInfo[] = [
     name: "Magic Station",
     group: "Magic, alchemy and medicine",
     blurb: "Assembles mage staffs, wands and blades, and attunes them with Enchanted Charges.",
+    usage:
+      "Parts are not crafted on their own: building a weapon takes the cost of each part you pick from your inventory. The cards below show what each part costs.",
     icon: T("magic_crafting/heavy_magical_core.png"),
     interaction: "Right click",
     guide: { href: "/wiki/magic", label: "Magic guide" },

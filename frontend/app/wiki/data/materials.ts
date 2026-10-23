@@ -410,9 +410,9 @@ export const dropOnlyMaterials: CatalogMaterial[] = [
     name: `${grade} Quality ${kind}`,
     group: "Animal products",
     texture: T(`pets/${file}.png`),
-    lore: `${grade} grade ${kind.toLowerCase()} for smithing.`,
+    lore: `${grade} grade ${kind === "Feather" ? "feathers" : kind.toLowerCase()} for smithing.`,
     acquisition: gradedAnimalProduct(
-      kind.toLowerCase(),
+      kind === "Feather" ? "feathers" : kind.toLowerCase(),
       kind === "Leather" ? "cows, horses, donkeys, mules and camels" : kind === "Wool" ? "sheep and goats" : "chickens",
     ),
     usedFor: forgingUse(

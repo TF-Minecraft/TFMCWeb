@@ -641,13 +641,30 @@ function asList(value) {
  * `permission{...}` (label taken from `display`) and `class{list=...}` appear
  * in these files; nothing else in `conditions` is rendered.
  */
+/** Misspelt perk names in the server's `display=` labels. */
+const PERK_LABEL_TYPOS = { "Tree Crafer": "Tree Crafter" };
+const ROMAN = ["", "I", "II", "III", "IV", "V"];
+
+/**
+ * A perk label as the wiki shows it. Main's labels are hand-typed, and a few say
+ * "Transmutation II" over a `professions.transmutation_1` check, so the tier the
+ * permission really checks wins over the one the label claims.
+ */
+export function perkLabel(display, node = "") {
+  let label = stripColours(display).replace(/^Requires\s+/i, "");
+  label = PERK_LABEL_TYPOS[label] ?? label;
+  const tier = node.match(/^professions\.[a-z_]+_(\d)$/)?.[1];
+  if (tier && ROMAN[Number(tier)]) label = label.replace(/\s+(?:I|II|III|IV|V)$/, ` ${ROMAN[Number(tier)]}`);
+  return label;
+}
+
 function requirementFor(conditions) {
   const labels = [];
   for (const raw of conditions) {
     const ref = parseRef(raw);
     if (!ref) continue;
     if (ref.kind === "permission" && ref.attrs.display) {
-      labels.push(stripColours(ref.attrs.display).replace(/^Requires\s+/i, ""));
+      labels.push(perkLabel(ref.attrs.display, ref.attrs.list));
     } else if (ref.kind === "class" && ref.attrs.list) {
       labels.push(CLASS_REQUIREMENT_LABELS[ref.attrs.list] ?? `${ref.attrs.list} class`);
     }
