@@ -442,6 +442,8 @@ export const stations: StationInfo[] = [
     name: "Alloy Forge",
     group: "Smithing and tools",
     blurb: "Melts metals and catalysts together into named alloys.",
+    usage:
+      "Right-click it with a metal or wood, then with up to four crystals, then with a Lava Bucket to forge. The bucket is emptied.",
     icon: T("stations/alloy-forge.png"),
     interaction: "Right click",
     guide: { href: "/wiki/advanced-crafting", label: "Advanced Crafting guide" },
