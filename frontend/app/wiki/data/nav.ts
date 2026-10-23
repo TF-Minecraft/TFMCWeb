@@ -31,7 +31,7 @@ const CATEGORY_DEFS: Record<WikiCategoryKey, Omit<WikiCategory, "key">> = {
   },
   gathering: {
     label: "Gathering & Farming",
-    blurb: "Farming, fishing, harvesting and resource nodes.",
+    blurb: "Crops, fishing and guild resource nodes.",
     order: 4,
   },
   food: {

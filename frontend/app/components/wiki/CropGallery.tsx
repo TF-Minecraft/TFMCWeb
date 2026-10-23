@@ -5,7 +5,10 @@ import StationModelViewer from "./StationModelViewer";
 
 export interface CropGalleryItem {
   name: string;
-  profession: string;
+  /** The Forager perk that unlocks planting and harvesting it. */
+  perk: string;
+  /** Growth steps from seed to ripe. */
+  stages: number;
   regrows: boolean;
   image: string;
   plantModel?: { modelUrl: string; textureUrls: Record<string, string> };
@@ -57,8 +60,10 @@ export default function CropGallery({ crops }: { crops: CropGalleryItem[] }) {
           {selected.name}
         </h3>
         <dl className="mt-2 grid grid-cols-2 gap-x-4 text-sm">
-          <dt className="text-[var(--tfmc-stone)]">Profession</dt>
-          <dd className="text-[var(--tfmc-mist)]">{selected.profession}</dd>
+          <dt className="text-[var(--tfmc-stone)]">Perk</dt>
+          <dd className="text-[var(--tfmc-mist)]">{selected.perk}</dd>
+          <dt className="text-[var(--tfmc-stone)]">Growth steps</dt>
+          <dd className="text-[var(--tfmc-mist)]">{selected.stages}</dd>
           <dt className="text-[var(--tfmc-stone)]">Regrows</dt>
           <dd className="text-[var(--tfmc-mist)]">{selected.regrows ? "Yes" : "No"}</dd>
         </dl>

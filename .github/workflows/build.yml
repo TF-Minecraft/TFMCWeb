@@ -10,6 +10,28 @@ permissions:
   contents: read
 
 jobs:
+  renderer:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: backend/render/package-lock.json
+      - name: Install renderer dependencies
+        working-directory: backend/render
+        run: npm ci --no-audit --no-fund
+      - name: Install headless Chromium
+        working-directory: backend/render
+        run: npx playwright install --with-deps chromium
+      - name: Test review-sheet rendering
+        working-directory: backend/render
+        run: npm test
+
   discord:
     runs-on: ubuntu-24.04
     timeout-minutes: 5

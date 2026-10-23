@@ -5,96 +5,111 @@ import {
   DataTable,
   RankName,
   SeeAlso,
-  StatGrid,
   WikiPage,
   WikiSectionHeading,
+  wikiBodyText as body,
 } from "@/app/components/wiki";
 import { brewingCommands } from "../data/brewing";
 
+const code = "text-[var(--tfmc-accent)]";
+const link = "text-[var(--tfmc-accent)] hover:underline";
+
 export default function BrewingPage() {
   return (
-    <WikiPage lastModified="2026-09-11" title="Brewing" width="lg">
-      <WikiSectionHeading id="loop" intro="Ferment, then optionally distil, then optionally age.">
-        The brewing loop
-      </WikiSectionHeading>
-      <ol className="mt-4 flex flex-col gap-2 text-sm text-[var(--tfmc-mist)]">
+    <WikiPage
+      lastModified="2026-10-22"
+      title="Brewing"
+      width="lg"
+      intro="Brew drinks in a cauldron, then distil and age them when the recipe calls for it. Donators can also design their own drink on the website."
+    >
+      <WikiSectionHeading id="loop">Brewing a drink</WikiSectionHeading>
+      <ol className={`mt-4 list-decimal space-y-2 pl-5 ${body}`}>
         <li>
-          1. <strong>Ferment.</strong> Place a cauldron over a fire or campfire, fill it with water, then right-click it
-          in your main hand with ingredients to throw them in. Right-click with a clock/watch to read the current cook
-          time.
+          <strong>Ferment.</strong> Place a cauldron over fire, soul fire, lava, a magma block or a lit campfire and
+          fill it with water. Right-click it with each ingredient. Right-click with a clock to see how long it has been
+          boiling.
         </li>
         <li>
-          2. <strong>Bottle.</strong> Right-click the cauldron with a glass bottle to draw off one brew.
+          <strong>Bottle.</strong> Right-click the cauldron with a glass bottle to fill one bottle.
         </li>
         <li>
-          3. <strong>Distil (optional).</strong> Put the bottle in a Brewing Stand with glowstone dust; it distils for
-          as many runs as the recipe needs.
+          <strong>Distil, if the recipe needs it.</strong> Put the bottles in a brewing stand with glowstone dust. It
+          keeps distilling for as many runs as the recipe allows.
         </li>
         <li>
-          4. <strong>Age (optional).</strong> Build a barrel: vanilla barrels work too, up to 6 brews at once, and
-          right-click it to open. Signs on custom barrels must include the word &quot;barrel&quot;.
-        </li>
-        <li>
-          5. <strong>Seal (optional).</strong> A Sealing Table (a Smoker) strips a brew down for selling in shops.
-        </li>
-        <li>
-          6. <strong>Drink.</strong> The label always shows quality; the exact alcohol number is hidden but an indicator
-          is shown, and drinking prints a status message.
+          <strong>Age, if the recipe needs it.</strong> Leave the bottles in a barrel. One barrel year is 20 real
+          minutes.
         </li>
       </ol>
+      <p className={`mt-4 ${body}`}>
+        A normal Minecraft barrel holds up to 6 brews. You can also build a larger wooden barrel; its sign must include
+        the word &quot;barrel&quot;. Small built barrels hold 1 row of items and large ones 3 rows. The type of wood
+        matters for some recipes.
+      </p>
 
-      <WikiSectionHeading
-        id="drink-builder"
-        intro={
-          <>
-            Donator ranks can add a custom drink through the{" "}
-            <Link href="/wiki/drink-builder" className="underline decoration-dotted">
-              Drink Builder guide
-            </Link>
-            . Each submission uses one creation token, whose cooldown is shared with custom skin creation.
-          </>
-        }
-      >
-        Donator Drink Builder perks
+      <WikiSectionHeading id="drinking">Quality and drinking</WikiSectionHeading>
+      <p className={`mt-4 ${body}`}>
+        Every brew shows its quality as 1 to 5 stars. Alcoholic drinks are marked <em>Alcoholic</em>, but their exact
+        strength stays hidden. Each drink tells you how drunk you are, and <code className={code}>/brew info</code>{" "}
+        shows it again. Bread and milk sober you up a little. Log off very drunk and you may come back with a hangover.
+      </p>
+      <p className={`mt-3 ${body}`}>
+        A Brew Sealing Table is crafted from 2 glass bottles over 4 planks and looks like a smoker. Sealing a brew hides
+        how it was made, so it looks like a finished product when you sell it.
+      </p>
+
+      <WikiSectionHeading id="custom-drinks" intro="Noble rank and above can add their own drink recipe to the server.">
+        Designing your own drink
       </WikiSectionHeading>
+      <ol className={`mt-4 list-decimal space-y-2 pl-5 ${body}`}>
+        <li>
+          Link your Discord account and join the server once so your rank is known. Then open the Drinks tab on your{" "}
+          <Link href="/profile?tab=drinks" className={link}>
+            profile
+          </Link>{" "}
+          and choose New drink, or run <code className={code}>/token create drink</code> in game for a code.
+        </li>
+        <li>
+          Fill in the recipe: ingredients from a fixed list, cooking time, distilling, barrel wood and age, difficulty
+          and alcohol. Then the look: name, lore, potion effects, a shimmer, and either a colour or a bottle texture.
+          Higher ranks can also add a drink message, a line shown to whoever drinks it.
+        </li>
+        <li>Submit it. Staff review every drink, and you hear back on Discord.</li>
+        <li>
+          Once approved, the recipe is on the server within a few minutes. A custom bottle texture can take up to a day
+          and needs the updated resource pack.
+        </li>
+      </ol>
+      <p className={`mt-4 ${body}`}>
+        You don&apos;t get a bottle. Your drink becomes a normal recipe that anyone can brew if they know the
+        ingredients. Some potion effects are not allowed, such as speed, strength, regeneration and invisibility.
+      </p>
       <DataTable
         className="mt-4"
-        minWidth="38rem"
+        minWidth="40rem"
         columns={[
           { header: "Rank", width: "9rem" },
-          { header: "Creation interval" },
-          { header: "Drink customisation" },
+          { header: "New drink every" },
+          { header: "Name colours", align: "center" },
+          { header: "Bottle texture", align: "center" },
+          { header: "Drink message", align: "center" },
         ]}
         rows={[
-          [<RankName key="noble" rank="Noble" />, "Every 28 days", "1 name colour; standard bottle and message"],
-          [<RankName key="gilded" rank="Gilded" />, "Every 21 days", "2 name colours; custom bottle texture"],
-          [
-            <RankName key="ascended" rank="Ascended" />,
-            "Every 14 days",
-            "Up to 8 name colours; custom bottle texture and message",
-          ],
-          [
-            <RankName key="legacy" rank="Legacy" />,
-            "Every 7 days",
-            "Up to 8 name colours; custom bottle texture and message",
-          ],
+          [<RankName key="noble" rank="Noble" />, "28 days", "1", "No", "No"],
+          [<RankName key="gilded" rank="Gilded" />, "21 days", "2", "Yes", "No"],
+          [<RankName key="ascended" rank="Ascended" />, "14 days", "Up to 8", "Yes", "Yes"],
+          [<RankName key="legacy" rank="Legacy" />, "7 days", "Up to 8", "Yes", "Yes"],
         ]}
       />
-
-      <WikiSectionHeading id="numbers">Numbers that matter</WikiSectionHeading>
-      <StatGrid
-        stats={[
-          { label: "1 barrel year", value: "20 real minutes" },
-          { label: "Hangover length", value: "up to 7 days" },
-          { label: "Large barrel size", value: "3 inventory rows" },
-          { label: "Small barrel size", value: "1 inventory row" },
-        ]}
-      />
+      <p className={`mt-3 ${body}`}>
+        The wait is shared with custom skins and starts when you take the code. A code you never use, or a drink staff
+        deny, does not count once the code expires.
+      </p>
 
       <WikiSectionHeading id="commands">Commands</WikiSectionHeading>
       <CommandTable commands={brewingCommands.commands} />
 
-      <SeeAlso hrefs={["/wiki/drink-builder", "/wiki/materials", "/wiki/commands"]} />
+      <SeeAlso hrefs={["/wiki/cooking", "/wiki/farming", "/wiki/armour-shop", "/wiki/commands"]} />
     </WikiPage>
   );
 }

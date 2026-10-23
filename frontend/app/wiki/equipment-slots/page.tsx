@@ -1,27 +1,48 @@
-import { Callout, SeeAlso, StatGrid, WikiPage, WikiSectionHeading } from "@/app/components/wiki";
+import Link from "next/link";
+import { Callout, DataTable, SeeAlso, WikiPage, WikiSectionHeading } from "@/app/components/wiki";
+
+const body = "text-sm text-[var(--tfmc-mist)]";
+const link = "text-[var(--tfmc-accent)] hover:underline";
 
 export default function EquipmentSlotsPage() {
   return (
     <WikiPage
-      lastModified="2026-09-11"
+      lastModified="2026-10-22"
       title="Equipment Slots"
-      intro="Equip one Ring, one Amulet and two Artifacts in the extra slots inside your normal inventory."
+      intro="Your inventory has four extra slots for jewellery: one ring, one amulet and two artifacts."
     >
-      <WikiSectionHeading id="equip">Equip an accessory</WikiSectionHeading>
-      <ol className="mt-4 list-decimal space-y-2 pl-5 text-sm text-[var(--tfmc-mist)]">
-        <li>Press E to open your normal inventory.</li>
-        <li>Drag and click a matching accessory into the matching accessory slot.</li>
-        <li>Keep accessories unstacked; stacked items cannot be equipped.</li>
-      </ol>
-      <StatGrid
-        className="mt-4"
-        columns={2}
-        stats={[{ label: "Accessories", value: "10 rings · 9 amulets · 11 artifacts" }]}
-      />
-      <Callout variant="warning" className="mt-4">
-        These slots replace four ordinary storage spaces.
+      <WikiSectionHeading id="slots">The four slots</WikiSectionHeading>
+      <p className={body}>
+        Press E to open your inventory. The first four spaces of the top storage row are accessory slots, so you have
+        four fewer spaces for ordinary items. Drag an accessory onto its slot, or click it in.
+      </p>
+      <div className="mt-4">
+        <DataTable
+          columns={[{ header: "Slot" }, { header: "Takes" }]}
+          rows={[
+            ["Ring", "One ring"],
+            ["Amulet", "One necklace or pendant"],
+            ["Artifact (two slots)", "Medals, mirrors, chalices, bracelets and other jewellery artifacts"],
+          ]}
+        />
+      </div>
+      <p className={`mt-3 ${body}`}>
+        Each slot only takes its own kind of accessory, and a stacked item cannot be equipped.
+      </p>
+      <Callout className="mt-4">
+        Magic artifacts are a different kind of item and do not fit the Artifact slots.
       </Callout>
-      <SeeAlso hrefs={["/wiki/classes", "/wiki/advanced-crafting"]} />
+
+      <WikiSectionHeading id="getting-accessories">Getting accessories</WikiSectionHeading>
+      <p className={body}>
+        Goldsmiths make rings, necklaces and jewellery artifacts around an infused gemstone, and the quality of the work
+        sets the accessory&apos;s stats. See{" "}
+        <Link href="/wiki/gem-infusion#goldsmithing" className={link}>
+          Gem Infusion
+        </Link>{" "}
+        for every piece and how to make it.
+      </p>
+      <SeeAlso hrefs={["/wiki/gem-infusion", "/wiki/classes"]} />
     </WikiPage>
   );
 }
