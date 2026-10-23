@@ -521,7 +521,7 @@ export const stations: StationInfo[] = [
   {
     slug: "instrument-station",
     name: "Instrument Station",
-    blurb: "Crafts the nine musical instruments and the Music Station.",
+    blurb: "Crafts musical instruments for players with the Bard class.",
     icon: V("jukebox_top.png"),
     interaction: "Shift + Right click",
     fallbackTexture: V("jukebox_top.png"),
