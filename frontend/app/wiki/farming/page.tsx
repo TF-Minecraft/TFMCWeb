@@ -157,8 +157,8 @@ export default function FarmingPage() {
       </ol>
       <p className={`mt-3 ${body}`}>
         Breaking a ripe crop always gives its produce and a seed, but removes the plant, even one that would regrow.
-        Breaking an unripe crop loses the seed. Each growth step also carries a small chance, from 2.5% to 14% depending
-        on the crop, that an unripe crop withers away.
+        Breaking an unripe crop loses the seed. About every 10 minutes, an unripe crop also has a 2.5% to 14% chance,
+        depending on the crop, of withering away, even if dry farmland has stopped it growing.
       </p>
 
       <CropGallery crops={cropGalleryItems} />
