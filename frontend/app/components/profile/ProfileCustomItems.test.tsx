@@ -1,5 +1,5 @@
 /** @vitest-environment jsdom */
-import { act, cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { listCharacterKits } from "../../../lib/characters/api";
 import { customItemId } from "../../../lib/profile/paths";
@@ -60,6 +60,9 @@ async function renderShowcase() {
     />,
   );
   await screen.findByRole("heading", { name: item.display_name });
+  // The heading can render before the picture's effect starts its request.
+  // Wait for the consumer before settling the deferred promise below.
+  await waitFor(() => expect(fetchTexture).toHaveBeenCalledTimes(1));
   return view;
 }
 
