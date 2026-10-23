@@ -156,8 +156,9 @@ export default function FactionsPage() {
           is depends on both factions&apos; Spymasters. Overlords find it easier to spy on their subjects.
         </li>
         <li>
-          The Spymaster can share reports with your overlord, your subjects or your allies, using{" "}
-          <code className={code}>/faction spymaster share</code> or the Spymaster&apos;s office in{" "}
+          The Spymaster can open up your own military to your overlord, your subjects or your allies, so they see it
+          exactly up to the report quality you choose. Set it with{" "}
+          <code className={code}>/faction spymaster share</code> or in the Spymaster&apos;s office in{" "}
           <code className={code}>/faction espionage</code>.
         </li>
       </ul>

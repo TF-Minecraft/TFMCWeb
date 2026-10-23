@@ -119,7 +119,8 @@ export const factionsCommands: WikiCommandSet = {
     },
     {
       command: "/faction spymaster share <overlord|vassals|allies> <tier>",
-      description: "Shares your reports, up to the tier you choose (none, rumours, broad, reliable or detailed).",
+      description:
+        "Lets that partner see your own military exactly, up to the quality you choose (rumours, broad, reliable or detailed). none stops sharing.",
       notes: "Spymaster.",
     },
     { command: "/ledger", description: "Shows your own money in and out each day: earnings, taxes and upkeep." },
