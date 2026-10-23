@@ -37,8 +37,12 @@ export default function CharactersPage() {
       <p className={body}>
         Each time you join, you arrive at the character selection screen. It shows your living characters one at a time:
         use the arrows to look through them, then click <strong>Play</strong> to enter the world where that character
-        left off. Each character keeps its own inventory, ender chest, position, health and experience, so nothing
-        carries over when you switch. You must link your Discord account before you can play (see{" "}
+        left off. Each character keeps its own inventory, ender chest, position, health and experience. Profession
+        levels are shared between them (see{" "}
+        <Link href="/wiki/classes#professions" className={link}>
+          Professions
+        </Link>
+        ). You must link your Discord account before you can play (see{" "}
         <Link href="/wiki/getting-started" className={link}>
           Getting Started
         </Link>
@@ -262,8 +266,8 @@ export default function CharactersPage() {
         </li>
         <li>
           A <strong>lethal</strong> winner (<code className={code}>/pvp lethal</code>, then confirm) gives you a strike
-          as soon as they kill you. You keep your items and wake at your spawn point, unless they are able to loot
-          graves.
+          as soon as they kill you. You wake at your spawn point with your items, though not the money in your pouch. If
+          they are able to loot graves, your items go into a grave instead.
         </li>
         <li>
           Your first strike is a healing injury and the second a permanent one. The third kills your character, and only
@@ -289,7 +293,12 @@ export default function CharactersPage() {
         <Link href="/wiki/thievery" className={link}>
           Thievery
         </Link>
-        ). After 40 minutes the grave disappears and drops whatever is left on the ground.
+        ). After 40 minutes the grave disappears and drops whatever is left on the ground. When another player kills
+        you, the money in your pouch also drops as coins where you died (see{" "}
+        <Link href="/wiki/economy" className={link}>
+          Denar Economy
+        </Link>
+        ).
       </p>
       <p className={`mt-3 ${body}`}>
         Carry a <WikiItemLink name="Grave Insurance" /> ticket when you die and it binds to your grave. Right-click the
