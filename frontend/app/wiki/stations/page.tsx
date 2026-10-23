@@ -20,8 +20,9 @@ export default function StationsPage() {
         instead.
       </p>
       <p className={body}>
-        A recipe can need a profession perk or a class, and each one takes a few seconds to craft. The recipe card on
-        the station&apos;s page shows both.
+        A recipe can need a profession perk or a class, and most take a few seconds to craft. The recipe card on the
+        station&apos;s page shows both. Vehicles from the Engineering Table and Dockyard are the exception: they take
+        hours or days to build.
       </p>
 
       {STATION_GROUPS.map((group) => {

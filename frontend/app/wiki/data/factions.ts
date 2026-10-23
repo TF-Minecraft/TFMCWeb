@@ -351,7 +351,7 @@ export const factionsCommands: WikiCommandSet = {
     { command: "/mercenaries list", description: "Lists mercenary companies in chat, best reputation first." },
     {
       command: "/mercenaries hire <company>",
-      description: "Hires a mercenary company.",
+      description: "Checks whether you can sign a contract with that company here.",
       notes: "Any member of your faction's government, standing in the company's home settlement.",
     },
   ],

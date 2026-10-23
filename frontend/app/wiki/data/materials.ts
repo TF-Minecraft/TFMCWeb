@@ -343,9 +343,9 @@ export const dropOnlyMaterials: CatalogMaterial[] = [
     acquisition: [
       {
         method: "Mining stone",
-        detail:
-          "Mine stone, andesite, diorite, granite, deepslate or tuff. No perk is needed. The Crafter perk Lucky Miner I gives more.",
+        detail: "Mine stone, andesite, diorite, granite, deepslate or tuff. No perk is needed.",
       },
+      luckyMiner,
       node("Stone Quarry", "Quarry"),
     ],
   },
