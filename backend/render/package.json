@@ -6,6 +6,8 @@
   "scripts": {
     "prebuild": "node scripts/sync-skins.mjs",
     "build": "esbuild src/browser.ts --bundle --outfile=dist/browser.js --format=iife --global-name=SheetRender --platform=browser",
+    "pretest": "npm run build",
+    "test": "node --test test/*.test.mjs",
     "postinstall": "npm run build"
   },
   "dependencies": {

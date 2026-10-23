@@ -63,6 +63,11 @@ The Discord cog suite uses Python 3.11 and `discord/requirements-test.txt`:
 `python -m pytest -q discord/test_identity_commands.py`. It exercises Red command
 definitions, Discord modals and local HTTP lookups without signing into Discord.
 
+The bot's review-sheet renderer has pixel tests using headless Chromium. From
+`backend/render/`, run `npm ci`, `npx playwright install --with-deps chromium`,
+then `npm test`. These render sparse texture atlases to check Java model faces
+and flat item sprites; CI runs them in the `renderer` job.
+
 ## License
 
 Copyright (c) 2026 TF-Minecraft contributors.
