@@ -23,39 +23,34 @@ export const thieveryKeyCopies: ThieveryKeyCopy[] = [
 export const thieveryCommands: CommandRow[] = [
   {
     command: "/thievery",
-    description: "Lists the thievery commands.",
+    description: "Lists the player subcommands (loadout, clearclues).",
+    notes: "Use the subcommands below to manage your loadout and activities.",
   },
   {
     command: "/thievery loadout",
-    description: "Chooses what you can steal.",
-    notes: 'Needs the "thief" character trait.',
+    description: "Choose what you can steal.",
+    notes: 'Requires the "thief" character trait, else you are told you lack the needed trait(s).',
   },
   {
     command: "/thievery clearclues",
-    description: "Wipes the clues from a door or container: run it, then right-click the block.",
-    notes: "Only on doors and containers you can open through their lock. Unlocked ones are open to anyone.",
+    description: "Then right-click to wipe clues from one door or container.",
   },
   { command: "/pickpocket", description: "Shows pickpocket usage." },
   {
     command: "/pickpocket start",
-    description: "Starts a pickpocket: run it, then right-click a player within 4 blocks.",
+    description: "Then right-click to pickpocket a player within 4 blocks.",
     notes: 'Requires the "thief" trait.',
   },
   { command: "/robbery", description: "Shows robbery usage." },
   {
     command: "/robbery start",
-    description: "Starts a robbery: run it, then right-click a player within 4 blocks.",
+    description: "Then right-click to demand a robbery from a player within 4 blocks.",
     notes: 'Requires the "bandit" trait.',
   },
   {
     command: "/robbery accept",
     description: "Accepts a robbery demand aimed at you.",
-    notes: "Anyone can accept.",
-  },
-  {
-    command: "/handsup",
-    description: "Raises your hands so other players can right-click you to look through your inventory.",
-    notes: "They can look but not take anything. Sneak or use /handsup again to stop.",
+    notes: "No trait or permission needed: any player can accept.",
   },
 ];
 

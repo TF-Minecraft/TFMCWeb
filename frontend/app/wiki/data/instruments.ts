@@ -108,51 +108,14 @@ export const instrumentCommands: WikiCommandSet = {
     {
       command: "/instruments keybinds",
       description: "Prints the full note and chord layout for the instrument currently in your off-hand.",
-      notes: "Hold an instrument in your off-hand first.",
-    },
-    {
-      command: "/instruments play",
-      description: "Opens the on-screen keyboard for the instrument you are holding.",
+      notes:
+        "You must be holding an instrument in your off-hand, or it just tells you so. " +
+        "Permission instruments.use, default true - no normal player is ever blocked.",
     },
     {
       command: "/instruments list",
       description: "Prints the name of every instrument that exists on the server.",
-    },
-    {
-      command: "/music",
-      aliases: ["/recording"],
-      description: "Lists the recording commands. Open the studio by right-clicking a Music Station.",
-    },
-    { command: "/music new <title>", description: "Starts a new recording project." },
-    { command: "/music projects", description: "Lists your recording projects." },
-    { command: "/music open <project-id>", description: "Opens one of your projects." },
-    { command: "/music status", description: "Shows the open project and its tracks." },
-    { command: "/music title <title>", description: "Renames the open project." },
-    { command: "/music record <track>", description: "Records a take on that track. Hold an instrument and play." },
-    { command: "/music stop", description: "Stops recording." },
-    { command: "/music preview [take]", description: "Plays back the project or a take." },
-    {
-      command: "/music keep | discard",
-      description: "Keeps the take you just recorded, replacing the old one, or throws it away.",
-    },
-    { command: "/music volume <track> <0-2>", description: "Sets a track's volume." },
-    { command: "/music mute <track>", description: "Mutes or unmutes a track." },
-    { command: "/music remove <track>", description: "Deletes a track." },
-    { command: "/music bpm <40-240>", description: "Sets the tempo." },
-    { command: "/music metronome <on|off>", description: "Turns the metronome on or off." },
-    {
-      command: "/music blank",
-      description: "Turns the ordinary music disc in your main hand into a blank recording disc.",
-    },
-    { command: "/music publish", description: "Records the open project onto the blank disc in your main hand." },
-    {
-      command: "/music copy",
-      description: "Copies a recorded disc onto a blank one.",
-      notes: "Blank disc in your main hand, recorded disc in your off-hand.",
-    },
-    {
-      command: "/music reset confirm",
-      description: "Clears your project. Discs you already published keep their song.",
+      notes: "Needs nothing in hand. Permission instruments.use, default true - no normal player " + "is ever blocked.",
     },
   ],
 };

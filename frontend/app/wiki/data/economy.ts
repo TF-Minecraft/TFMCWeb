@@ -48,31 +48,21 @@ export const denarCommands: WikiCommandSet = {
       command: "/deco toitem <amount>",
       description:
         "Converts part of your pouch balance into physical coin items in your inventory, largest denomination first.",
-      notes:
-        "Add a coin name, as in /deco toitem <count> <coin>, to take that many of one coin. Gold Ingots can never be withdrawn this way.",
-    },
-    {
-      command: "/deco topouch",
-      description: "Puts the coins in your main hand back into your pouch.",
-      notes: "Coins dropped in the world or on death can't go back into a pouch.",
+      notes: "Gold Ingots can never be withdrawn this way: only the dedicated coin items.",
     },
     {
       command: "/deco deposit <amount>",
-      description: "Moves denars from your pouch into your bank.",
-      notes: "You must be in a faction or guild and standing in its bank chunk.",
+      description: "Moves denars from your pouch into your faction's bank.",
+      notes: "You must be in a faction and standing inside its claimed bank chunk.",
     },
     {
       command: "/deco withdraw <amount>",
-      description: "Moves denars from your bank into your pouch.",
-      notes: "You must be in a faction or guild and standing in its bank chunk.",
+      description: "Moves denars from your faction's bank into your pouch.",
+      notes: "Faction leader only, and only while standing in the bank chunk.",
     },
     {
       command: "/deco baltop",
-      description: "Prints a leaderboard of the richest characters, pouch and bank together.",
-    },
-    {
-      command: "/deco history",
-      description: "Lists the recent changes to your current character's pouch and bank.",
+      description: "Prints a leaderboard of the richest pouches on the server.",
     },
   ],
 };
