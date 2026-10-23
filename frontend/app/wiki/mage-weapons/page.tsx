@@ -67,11 +67,7 @@ export default function MageWeaponsPage() {
         Weapon types
       </WikiSectionHeading>
       <DataTable
-        columns={[
-          { header: "Weapon", nowrap: true },
-          { header: "How it fights" },
-          { header: "Rune slots by core" },
-        ]}
+        columns={[{ header: "Weapon", nowrap: true }, { header: "How it fights" }, { header: "Rune slots by core" }]}
         rows={[
           ["Mage Staff", "Two-handed. No melee attack.", "Iron 1, Steel 2, Abyssalite 3, Mythril 4"],
           [

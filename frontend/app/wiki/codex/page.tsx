@@ -17,8 +17,8 @@ export default function CodexPage() {
       <ul className={`mt-3 list-disc space-y-2 pl-5 ${body}`}>
         <li>The first page shows each category and how much of it you have unlocked.</li>
         <li>
-          Inside a category, locked entries are hidden. An unlocked entry shows its name and description, the date you
-          found it and how many players have found it.
+          Inside a category, locked entries are hidden. An unlocked entry shows its name and description, and some also
+          show the date you found it and the percentage of players who have unlocked it.
         </li>
         <li>Some entries, such as research and important figures, can be clicked to read more.</li>
         <li>Every new entry gives you experience, and chat tells you how much.</li>

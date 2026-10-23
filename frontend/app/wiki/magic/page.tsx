@@ -178,8 +178,8 @@ export default function MagicPage() {
         ]}
       />
       <p className={`mt-4 ${body}`}>
-        A ring can only raise you as high as your share of its aura. Everyone who meditated with an artifact in the past
-        week shares it, so a ring used by several mages gives each of them less.
+        A ring can only raise you as high as your share of its aura. Everyone who has recently meditated with an
+        artifact shares it, so a ring used by several mages gives each of them less.
       </p>
 
       <WikiSectionHeading id="mental-points" intro="Your focus, shown in /resonance. A new character starts full.">

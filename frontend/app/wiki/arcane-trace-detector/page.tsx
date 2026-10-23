@@ -49,8 +49,10 @@ export default function ArcaneTraceDetectorPage() {
           purple to bright purple and then white, the faster the clicks and the fuller the bar.
         </li>
         <li>
-          When the bar reads <em>dig close by</em>, the cache is just underground. The rings and colour only measure
-          distance across the ground, while the clicks and the bar also count how deep it is.
+          When you are nearly there, the bar is renamed <em>Arcane Signal - dig close by</em> and starts again from
+          empty, and the clicks drop back to slow. From there both build up again as you close in, until the clicks
+          become a steady stream right on top of the cache. The rings and colour only measure distance across the
+          ground, while the clicks and the bar also count how deep the cache is.
         </li>
         <li>Dig down. Once you are close, a chest only you can see appears. Click it to open the Arcane Cache.</li>
       </ol>
