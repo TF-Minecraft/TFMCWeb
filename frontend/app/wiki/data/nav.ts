@@ -26,7 +26,7 @@ const CATEGORY_DEFS: Record<WikiCategoryKey, Omit<WikiCategory, "key">> = {
   },
   professions: {
     label: "Professions & Crafting",
-    blurb: "Smithing, woodworking, furniture and other crafting.",
+    blurb: "Smithing, goldsmithing, woodworking, furniture and recycling.",
     order: 3,
   },
   gathering: {
@@ -41,7 +41,7 @@ const CATEGORY_DEFS: Record<WikiCategoryKey, Omit<WikiCategory, "key">> = {
   },
   magic: {
     label: "Magic & Knowledge",
-    blurb: "Magic, research, gems, archaeology and the Codex.",
+    blurb: "Magic, research, archaeology and the Codex.",
     order: 6,
   },
   combat: {

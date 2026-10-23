@@ -21,6 +21,7 @@ from src.skins.display import (  # noqa: E402
     parse_and_merge_model,
     validate_java_block_model,
 )
+from src.skins.pack_models.constants import load_constants  # noqa: E402
 
 
 def _cube(
@@ -173,6 +174,21 @@ class ParseAndMergeModelTests(unittest.TestCase):
         with self.assertRaises(DisplayError) as ctx:
             parse_and_merge_model(_dumps(model), "item_3d")
         self.assertEqual(ROTATION_ERROR, str(ctx.exception))
+
+    def test_hand_autofill_matches_web_preview(self) -> None:
+        """The skin preview shows these shared constants when a model has no hand tab."""
+        consts = load_constants()
+        expected = {
+            "item_3d": consts["preview"]["generated_tp"],
+            "shield": consts["shield"]["round_idle"],
+            "bow_3d": consts["preview"]["bow_tp"],
+            "crossbow_3d": consts["preview"]["crossbow_tp"],
+        }
+        for kind, tabs in expected.items():
+            out = parse_and_merge_model(_dumps(_valid_classic()), kind)
+            for tab in ("thirdperson_righthand", "thirdperson_lefthand"):
+                with self.subTest(kind=kind, tab=tab):
+                    self.assertEqual(tabs[tab], out["display"][tab])
 
 
 if __name__ == "__main__":

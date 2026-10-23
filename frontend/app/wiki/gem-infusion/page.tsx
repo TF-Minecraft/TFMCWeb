@@ -1,142 +1,110 @@
-import {
-  Callout,
-  ItemGallery,
-  SeeAlso,
-  StatGrid,
-  WikiItemLink,
-  WikiPage,
-  WikiSectionHeading,
-} from "@/app/components/wiki";
-import { gemInfusionTables, goldMaterials, goldTools, jewelleryProjects } from "../data/gem-infusion";
+import Link from "next/link";
+import { Callout, ItemGallery, SeeAlso, WikiItemLink, WikiPage, WikiSectionHeading } from "@/app/components/wiki";
+import { gemSocketTypes, goldMaterials, goldTools, jewelleryProjects } from "../data/gem-infusion";
 
-const gemTables = gemInfusionTables.slice(1, 5);
-const jewelleryTextures: Record<string, string> = {
-  gold_ring: "gold_ring",
-  jeweled_gold_ring: "jeweled_gold_ring",
-  purple_ring: "purple_ring",
-  red_ring: "red_ring",
-  green_ring: "green_ring",
-  red_necklace: "red_necklace",
-  purple_necklace: "purple_necklace",
-  dark_necklace: "dark_necklace",
-  pendant: "pendant",
-  green_medal: "green_medal",
-  blue_medal: "blue_medal",
-  mirror: "mirror",
-  chalice: "chalice",
-  bracelet: "bracelet",
-};
-function gemTexture(name: string) {
-  const filename =
-    name === "Direstone (key firestone)" ? "firestone" : name.toLowerCase().replaceAll("'", "").replaceAll(" ", "_");
-  return `/wiki/textures/gems/${filename}.png`;
-}
-const goldsmithToolTextures: Record<string, string> = {
-  "Goldsmith Branding Tool": "branding_tool",
-  "Goldsmith Hammer": "smith_hammer",
-  "Small Goldsmith Hammer": "small_smith_hammer",
-  "Goldsmith Tinker Tool": "smith_tinker_tool",
-};
+const link = "text-[var(--tfmc-accent)] hover:underline";
+const body = "text-sm text-[var(--tfmc-mist)]";
+const subheading = "mt-6 text-sm font-semibold uppercase tracking-wide text-[var(--tfmc-mist)]";
+
 export default function GemInfusionPage() {
   return (
     <WikiPage
-      lastModified="2026-09-12"
-      title="Gem Infusion"
+      lastModified="2026-10-22"
+      title="Gems & Goldsmithing"
       width="lg"
-      intro="Turn blank gemstones into stat-bearing Infused Gemstones at an Enchanting Table. Goldsmiths can then build jewellery around one infused gem at a Smithing Table."
+      intro="Blank gemstones are infused with a stat at an Enchanting Table. Infused gems go into the sockets of forged gear, or a goldsmith can set one in a piece of gold jewellery."
     >
-      <WikiSectionHeading id="infusion">Infuse a batch</WikiSectionHeading>
-      <ol className="mt-4 list-decimal space-y-3 pl-6 text-sm text-[var(--tfmc-mist)]">
-        <li>
-          Bring a Blank Gemstone from the 40-entry catalogue and an <WikiItemLink name="Infusion Ticket" /> to any
-          Enchanting Table. An ordinary vanilla jewel will not work.
-        </li>
-        <li>
-          Hold a blank gem and right-click the table to deposit one. Repeat up to 10 gems. Deposited gems leave your
-          hand.
-        </li>
-        <li>
-          Hold the <WikiItemLink name="Infusion Ticket" /> and left-click the table five times. After the first hit, the
-          batch is locked and cannot accept more gems.
-        </li>
-        <li>
-          The fifth hit consumes one Infusion Ticket for the entire batch. Collect every infused gem that drops above
-          the table. A Legendary result is announced server-wide.
-        </li>
-      </ol>
-      <StatGrid
-        stats={[
-          { label: "Batch size", value: "1-10 gems" },
-          { label: "Finish", value: "5 left-clicks" },
-          { label: "Infusion Tickets", value: "1 per completed batch" },
-        ]}
-      />
-      <WikiSectionHeading id="stats">Read the gemstone correctly</WikiSectionHeading>
-      <p className="mt-4 text-sm text-[var(--tfmc-mist)]">
-        Basic, Polished, Radiant and Mythical are socket types, with ten gems in each. Common, Rare, Epic and Legendary
-        are independently rolled rarities. The resulting name is, for example, Legendary Infused Ruby. Match the
-        Gemstone Type to the receiving socket. Names, lore and rarity are restored when the gem is unsocketed.
+      <WikiSectionHeading id="infusion">Infusing gems</WikiSectionHeading>
+      <p className={body}>
+        Anyone can infuse. You need blank gemstones and an <WikiItemLink name="Infusion Ticket" />, and any Enchanting
+        Table will do. Ordinary vanilla gems don&apos;t work.
       </p>
-      {gemTables.map((table, index) => (
-        <section key={table.title}>
-          <WikiSectionHeading id={`gems-${index}`}>{table.title}</WikiSectionHeading>
-          <ItemGallery items={table.rows.map((row) => ({ name: row[0], image: gemTexture(row[0]) }))} />
+      <ol className={`mt-3 list-decimal space-y-2 pl-5 ${body}`}>
+        <li>Right-click the table with a blank gem to put it in. A batch holds up to 10.</li>
+        <li>
+          Hold the ticket and left-click the table five times. The batch locks after the first hit, and the fifth uses
+          up one ticket.
+        </li>
+        <li>The infused gems pop out above the table. A Legendary gem is announced to the whole server.</li>
+      </ol>
+      <p className={`mt-3 ${body}`}>
+        Each infused gem rolls a stat and gets a rarity name from how good the roll is, such as Legendary Infused Ruby.
+        It also gets a Success Rate for socketing. Bigger batches lower the best rate a gem can get.
+      </p>
+      <p className={`mt-3 ${body}`}>
+        A gem only fits its own socket type: Basic, Polished, Radiant or Mythical. Forged gear gets its socket from its{" "}
+        <Link href="/wiki/advanced-crafting#quality" className={link}>
+          quality
+        </Link>
+        . Taking a gem out of a socket gives it back with its name and rarity. If you get a gem that was reset to blank,
+        right-clicking a table with it restores it rather than infusing it again.
+      </p>
+      {gemSocketTypes.map(({ type, gems }) => (
+        <section key={type}>
+          <h3 className={subheading}>{type} gemstones</h3>
+          <ItemGallery items={gems.map(({ name, texture }) => ({ name, image: texture }))} />
         </section>
       ))}
-      <WikiSectionHeading id="goldsmithing">Make jewellery</WikiSectionHeading>
-      <Callout title="Goldsmith profession required">
-        Any player can infuse gems. Crafting jewellery requires the Goldsmith profession.
+      <p className={`mt-3 ${body}`}>A blank Firestone becomes an infused Direstone.</p>
+
+      <WikiSectionHeading id="goldsmithing">Goldsmithing</WikiSectionHeading>
+      <Callout title="Goldsmith perk">
+        Jewellery needs the <strong>Goldsmith</strong> perk (2 Crafter points). It also unlocks the goldsmith tools at
+        the Tool Station.
       </Callout>
-      <ol className="mt-4 list-decimal space-y-3 pl-6 text-sm text-[var(--tfmc-mist)]">
-        <li>Right-click an empty Smithing Table and choose one of the 14 projects.</li>
-        <li>Right-click with each required gold material to deposit one item per click. Follow the exact recipe.</li>
+      <p className={`mt-3 ${body}`}>
+        Gold ore can drop Rough, Moldable and Shiny Gold when mined. The <strong>Gold Digger</strong> perk, which needs
+        Goldsmith, makes those drops more likely.
+      </p>
+      <ol className={`mt-3 list-decimal space-y-2 pl-5 ${body}`}>
         <li>
-          Right-click with one Infused Gemstone. Gem jewellery requires exactly one. Any of the 40 infused gems is
-          accepted.
+          Right-click an empty Smithing Table and pick a project. The menu shows how many gold materials it takes and
+          its tier.
         </li>
         <li>
-          Left-click with the <WikiItemLink name="Goldsmith Hammer" />, <WikiItemLink name="Small Goldsmith Hammer" />{" "}
-          and <WikiItemLink name="Goldsmith Tinker Tool">Tinker Tool</WikiItemLink> to fill their respective counters.
+          Right-click with gold to add it one piece at a time, then with one infused gem. Which golds you use is up to
+          you, but the right mix scores better.
         </li>
         <li>
-          Right-click with the <WikiItemLink name="Branding Tool" /> to see the project, the gold still to add and the
-          gem. Left-click with it to finish and collect the jewellery dropped on the bench.
+          Once all the gold and the gem are in, left-click with the hammers and the tinker hammer. Not every piece needs
+          all three.
         </li>
         <li>
-          To cancel, shift-left-click with the <WikiItemLink name="Branding Tool" />. Materials and the gem return to
-          inventory; overflow drops at your feet.
+          Left-click with the <WikiItemLink name="Goldsmith Branding Tool" /> to finish. The piece drops on the bench.
+          Right-click with it to see your progress, or sneak and left-click to cancel and get your gold and gem back.
         </li>
       </ol>
-      <Callout variant="warning">
-        For gem jewellery, recipe accuracy and tool work affect quality. Gem-free pieces need the exact recipe and hits
-        or are ruined. Breaking a bench refunds deposits to the person who breaks it.
+      <p className={`mt-3 ${body}`}>
+        When you finish, you see your Recipe, Hits and Total percentages and the quality, from Rusted up to Masterwork.
+        Better work and a higher tier keep more of the gem&apos;s stat. Benches in progress survive restarts. If someone
+        breaks a bench, the gold and gem go to whoever broke it.
+      </p>
+      <Callout variant="warning" title="Golden Key">
+        The Golden Key needs no gem, but it has to be made exactly: the right gold mix and the right hits. Anything else
+        ruins it and the gold is lost.
       </Callout>
-      <section>
-        <WikiSectionHeading id="gold-0">Gold materials</WikiSectionHeading>
-        <ItemGallery
-          items={goldMaterials.rows.map((row) => ({ name: row[1], image: `/wiki/textures/materials/${row[0]}.png` }))}
-        />
-      </section>
-      <section>
-        <WikiSectionHeading id="gold-1">Goldsmithing tools</WikiSectionHeading>
-        <ItemGallery
-          items={goldTools.rows.map((row) => ({
-            name: row[0],
-            image: `/wiki/textures/goldsmith-tools/${goldsmithToolTextures[row[0]]}.png`,
-            detail: `Produces: ${row[2]}`,
-          }))}
-        />
-      </section>
-      <section>
-        <WikiSectionHeading id="gold-2">Jewellery</WikiSectionHeading>
-        <ItemGallery
-          items={jewelleryProjects.rows.map((row) => ({
-            name: row[1],
-            image: `/wiki/textures/jewellery/${jewelleryTextures[row[0]]}.png`,
-          }))}
-        />
-      </section>
-      <SeeAlso hrefs={["/wiki/research", "/wiki/magic", "/wiki/materials", "/wiki/stations"]} />
+
+      <h3 className={subheading}>Gold</h3>
+      <ItemGallery
+        items={goldMaterials.map(({ id, name }) => ({ name, image: `/wiki/textures/materials/${id}.png` }))}
+      />
+      <h3 className={subheading}>Tools</h3>
+      <ItemGallery
+        items={goldTools.map(({ name, texture, use }) => ({
+          name,
+          image: `/wiki/textures/goldsmith-tools/${texture}.png`,
+          detail: use,
+        }))}
+      />
+      <h3 className={subheading}>Jewellery</h3>
+      <ItemGallery
+        items={jewelleryProjects.map(({ id, name, tier }) => ({
+          name,
+          image: `/wiki/textures/jewellery/${id}.png`,
+          detail: `${tier} tier`,
+        }))}
+      />
+      <SeeAlso hrefs={["/wiki/advanced-crafting", "/wiki/research", "/wiki/materials", "/wiki/stations"]} />
     </WikiPage>
   );
 }

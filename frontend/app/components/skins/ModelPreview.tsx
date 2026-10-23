@@ -8,11 +8,12 @@ import { composeTintedPotionCanvas, loadDrinkAssetImages } from "../../../lib/dr
 import {
   applyDisplayToObject,
   resolveDisplayTab,
+  handTabName,
   type DisplayKind,
-  type DisplayTabName,
 } from "../../../lib/skins/displayTransform";
 import { buildExtrudedItemGroup, loadImageDataFromFile } from "../../../lib/skins/extrudeItem";
 import { resolveFlatDisplayTab, type FlatDisplayKind } from "../../../lib/skins/flatItemDisplay";
+import { resolveHandDisplayTab } from "../../../lib/skins/handDisplay";
 import { resolveShieldBlockingTab } from "../../../lib/skins/shieldBlockingDisplay";
 import { loadAnimatedFrames } from "../../../lib/skins/animatedTexture";
 import { frameIndexAt, prefersReducedMotion, type ScheduledFrame } from "../../../lib/textureAnimation";
@@ -427,7 +428,7 @@ export default function ModelPreview({
   const runtimeRef = useRef<ViewerRuntime | null>(null);
   const contentRef = useRef<ContentRefs>(EMPTY_CONTENT());
   const heldItemRef = useRef<THREE.Group | null>(null);
-  const heldMirrorLeftRef = useRef(false);
+  const heldLeftHandRef = useRef(false);
   const steveLiveRef = useRef<SteveMannequin | null>(null);
   const orbitInitializedRef = useRef(false);
   const orbitStateRef = useRef<OrbitState | null>(null);
@@ -717,22 +718,23 @@ export default function ModelPreview({
         steveLiveRef.current = steveRoot;
         content.steveRoot = steveRoot;
 
-        const displayTabName: DisplayTabName = slot === "head" ? "head" : "thirdperson_righthand";
+        const javaJson = content.javaJson ?? { elements: [] };
 
         const held = new THREE.Group();
         held.name = "heldItem";
 
         if (flat) {
-          const tab = resolveFlatDisplayTab(displayKind, "thirdperson_righthand", gripYRef.current);
-          applyDisplayToObject(held, tab, { mirrorLeft: leftHand });
+          const tab = resolveFlatDisplayTab(displayKind, handTabName(leftHand), gripYRef.current);
+          applyDisplayToObject(held, tab, { leftHand });
           heldItemRef.current = held;
-          heldMirrorLeftRef.current = leftHand;
+          heldLeftHandRef.current = leftHand;
         } else if (kind === "shield" && shieldMode === "blocking" && slot !== "head") {
-          const tab = resolveShieldBlockingTab(content.javaJson ?? { elements: [] }, "thirdperson_righthand");
-          applyDisplayToObject(held, tab, { mirrorLeft: leftHand });
+          const tab = resolveShieldBlockingTab(javaJson, handTabName(leftHand));
+          applyDisplayToObject(held, tab, { leftHand });
+        } else if (slot === "head") {
+          applyDisplayToObject(held, resolveDisplayTab(javaJson, "head", kind));
         } else {
-          const tab = resolveDisplayTab(content.javaJson ?? { elements: [] }, displayTabName, kind);
-          applyDisplayToObject(held, tab, { mirrorLeft: leftHand });
+          applyDisplayToObject(held, resolveHandDisplayTab(javaJson, leftHand, kind), { leftHand });
         }
 
         held.add(content.itemRoot);
@@ -978,9 +980,9 @@ export default function ModelPreview({
   useEffect(() => {
     const held = heldItemRef.current;
     if (!held || !flat || kind !== "large_handheld") return;
-    const leftHand = heldMirrorLeftRef.current;
-    const tab = resolveFlatDisplayTab(displayKind, "thirdperson_righthand", gripY);
-    applyDisplayToObject(held, tab, { mirrorLeft: leftHand });
+    const leftHand = heldLeftHandRef.current;
+    const tab = resolveFlatDisplayTab(displayKind, handTabName(leftHand), gripY);
+    applyDisplayToObject(held, tab, { leftHand });
   }, [gripY, flat, kind, displayKind, slot]);
 
   if (!hasPreview) {
