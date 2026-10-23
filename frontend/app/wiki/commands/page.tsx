@@ -26,7 +26,7 @@ export default function CommandIndexPage() {
           <code key="command" className="font-mono text-[var(--tfmc-accent)]">
             {entry.row.command}
           </code>,
-          entry.row.aliases?.length ? entry.row.aliases.join(", ") : "—",
+          entry.row.aliases?.length ? entry.row.aliases.join(", ") : "None",
           entry.row.description,
           <Link key="guide" href={entry.href} className="underline decoration-dotted hover:text-[var(--tfmc-accent)]">
             {getNavItemByHref(entry.href)?.label ?? entry.system}

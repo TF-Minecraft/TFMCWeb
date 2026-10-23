@@ -1,11 +1,20 @@
-import { Callout, CommandTable, DataTable, SeeAlso, WikiPage, WikiSectionHeading } from "@/app/components/wiki";
+import {
+  Callout,
+  CommandTable,
+  DataTable,
+  SeeAlso,
+  StationLink,
+  WikiItemLink,
+  WikiPage,
+  WikiSectionHeading,
+} from "@/app/components/wiki";
 import { animalHusbandryCommands } from "../data/animal-husbandry";
 
 export default function AnimalHusbandryPage() {
   return (
     <WikiPage
       title="Animal Husbandry"
-      lastModified="2026-09-24"
+      lastModified="2026-10-22"
       intro="Raise livestock for milk, eggs, meat and materials. Claim your animals, keep them fed and clean, then breed successive generations for better genetics. You can own or co-own up to 15 animals."
     >
       <WikiSectionHeading id="getting-started">Claim your first animal</WikiSectionHeading>
@@ -150,6 +159,12 @@ export default function AnimalHusbandryPage() {
         animal is marked Co-owner. Visit an animal once if its place has not been recorded yet.
       </p>
       <CommandTable className="mt-4" commands={animalHusbandryCommands.commands} />
+      <p className="mt-4 text-sm text-[var(--tfmc-mist)]">
+        Right-click an <StationLink name="Animal Station" /> to craft a <WikiItemLink name="Mount Whistle" />. Blow it
+        with a right-click and every horse, donkey, mule, llama and trader llama within 64 blocks glows for 5 seconds,
+        so you can spot it through walls. It finds every such animal, not only yours, and chat tells you how many
+        answered. Camels do not answer. Other players can hear the whistle, and it has a 3-second cooldown.
+      </p>
 
       <WikiSectionHeading id="mounts">Caring for mounts</WikiSectionHeading>
       <p className="mt-4 text-sm text-[var(--tfmc-mist)]">
