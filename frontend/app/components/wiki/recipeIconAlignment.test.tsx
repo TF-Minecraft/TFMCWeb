@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { iconTranslation, recipeIconTransform } from "./recipeIconAlignment";
 import RecipeItemIcon from "./RecipeItemIcon";
 import CraftingGrid from "./CraftingGrid";
-import { magicPartRecipes } from "../../wiki/data/magic";
+import { magicPartRecipes } from "../../wiki/data/magic-parts";
 
 describe("visible recipe sprite alignment", () => {
   it("corrects the measured Steel Magical Core padding without changing its size", () => {

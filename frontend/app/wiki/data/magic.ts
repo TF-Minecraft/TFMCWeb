@@ -31,6 +31,7 @@ export const magicStationRecipe: Recipe = {
     sourceId: "itemsadder:magic_crafting_station",
     model: { url: M("magic-station.json"), texture: T("stations/magic-station.png") },
   },
+  note: "Place it, then interact to open the weapon assembly menu.",
 };
 
 /** ItemsAdder `tfmc:rune_crafting_station`: the Magic Station pattern without the Amethyst Shard. */
@@ -56,6 +57,7 @@ export const runeStationRecipe: Recipe = {
     sourceId: "itemsadder:rune_crafting_station",
     model: { url: M("stations/rune-station.json"), textures: { "1": T("stations/rune-station.png") } },
   },
+  note: "Place it, then interact to craft blank runestones and Enchanted Charges from Enchanted Dust.",
 };
 
 /** Everything the Rune Station crafts, from `MMOItems/crafting-stations/rune-station.yml`. Each takes 10 s. */
@@ -76,84 +78,7 @@ export const enchantedChargeRecipes: Recipe[] = ["minor", "lesser", "greater", "
   stationRecipe(`gen-rune-station-enchanted-charge-${key}`),
 );
 
-/**
- * Mage weapon part costs, from the server's Magic `gear/parts.yml`. Parts are not
- * items: the Magic Station's assembly menu charges each chosen part's cost when it
- * builds the weapon, so these cards appear only on the Magic Station page.
- */
-const stick = { name: "Stick", texture: T("vanilla/stick.png") };
-const book = { name: "Book", texture: T("vanilla/book.png") };
-const dust = { name: "Enchanted Dust", texture: T("magic_crafting/enchanted_dust.png") };
-
-function part(
-  key: string,
-  title: string,
-  texture: string,
-  ingredients: Array<{ name: string; texture: string; qty: number }>,
-): Recipe {
-  return {
-    key: `magic-part-${key}`,
-    title,
-    station: "Magic Station",
-    category: "Weapon parts",
-    ingredients,
-    output: { name: title, qty: 1, texture },
-  };
-}
-
-export const magicPartRecipes: Recipe[] = [
-  part("oak-handle", "Oak Magical Handle", T("vanilla/stick.png"), [
-    { ...stick, qty: 2 },
-    { ...dust, qty: 2 },
-  ]),
-  part("basic-handle", "Basic Magical Handle", T("magic_crafting/basic_magical_handle.png"), [
-    { ...stick, qty: 2 },
-    { ...dust, qty: 4 },
-  ]),
-  part("petty-handle", "Petty Magical Handle", T("magic_crafting/petty_magical_handle.png"), [
-    { ...stick, qty: 2 },
-    { ...dust, qty: 6 },
-  ]),
-  part("heavy-handle", "Heavy Magical Handle", T("magic_crafting/heavy_magical_handle.png"), [
-    { ...stick, qty: 2 },
-    { ...dust, qty: 8 },
-  ]),
-  part("simple-tome", "Simple Tome", T("vanilla/book.png"), [{ ...book, qty: 2 }]),
-  part("simple-magical-tome", "Simple Magical Tome", T("vanilla/book.png"), [
-    { ...book, qty: 2 },
-    { ...dust, qty: 2 },
-  ]),
-  part("basic-tome", "Basic Magical Tome", T("magic_crafting/binding_tome.png"), [
-    { ...book, qty: 2 },
-    { ...dust, qty: 4 },
-  ]),
-  part("petty-tome", "Petty Magical Tome", T("magic_crafting/binding_tome.png"), [
-    { ...book, qty: 2 },
-    { ...dust, qty: 6 },
-  ]),
-  part("heavy-tome", "Heavy Magical Tome", T("magic_crafting/strong_binding_tome.png"), [
-    { ...book, qty: 2 },
-    { ...dust, qty: 8 },
-  ]),
-  part("iron-core", "Iron Magical Core", T("magic_crafting/makeshift_magical_core.png"), [
-    { name: "Iron Ingot", qty: 4, texture: T("vanilla/iron_ingot.png") },
-    { ...dust, qty: 4 },
-  ]),
-  part("steel-core", "Steel Magical Core", T("magic_crafting/basic_magical_core.png"), [
-    { name: "Steel Ingot", qty: 4, texture: T("materials/steel_ingot.png") },
-    { ...dust, qty: 4 },
-  ]),
-  part("abyssalite-core", "Abyssalite Magical Core", T("magic_crafting/petty_magical_core.png"), [
-    { name: "Abyssalite Ingot", qty: 4, texture: T("materials/abyssalite_ingot.png") },
-    { ...dust, qty: 4 },
-  ]),
-  part("mythril-core", "Mythril Magical Core", T("magic_crafting/heavy_magical_core.png"), [
-    { name: "Mythril Ingot", qty: 4, texture: T("materials/mythril_ingot.png") },
-    { ...dust, qty: 4 },
-  ]),
-];
-
-export const magicRecipes: Recipe[] = [magicStationRecipe, runeStationRecipe, ...magicPartRecipes];
+export const magicRecipes: Recipe[] = [magicStationRecipe, runeStationRecipe];
 
 // ---------- Commands ----------
 
@@ -162,8 +87,8 @@ export const magicCommands: WikiCommandSet = {
   href: "/wiki/magic",
   commands: [
     {
-      command: "/magic rune keybind <right_click|left_click|shift_right_click|shift_left_click>",
-      description: "Changes which click casts the spells of the rune in your main hand.",
+      command: "/magic rune keybind",
+      description: "While holding a rune, use this command to change its casting key.",
     },
     {
       command: "/resonance",

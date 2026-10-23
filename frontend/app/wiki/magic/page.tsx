@@ -342,8 +342,7 @@ export default function MagicPage() {
       </WikiSectionHeading>
       <p className="mt-3 text-sm text-[var(--tfmc-mist)]">
         To change a rune&apos;s casting key, hold the rune and use{" "}
-        <code className="text-[var(--tfmc-accent)]">/magic rune keybind &lt;key&gt;</code> with right_click, left_click,
-        shift_right_click or shift_left_click.
+        <code className="text-[var(--tfmc-accent)]">/magic rune keybind</code>.
       </p>
       <DataTable
         columns={[{ header: "What you see", nowrap: true }, { header: "Why" }, { header: "What it costs you" }]}

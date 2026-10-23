@@ -98,12 +98,6 @@ export const HIDDEN_OUTPUTS = new Set([
   "itemsadder:red_chip",
   "itemsadder:blue_chip",
   "itemsadder:green_chip",
-  // Where artifacts come from stays off the wiki until staff decide otherwise.
-  "mmoitem:LOOT:SEALED_ARTIFACT",
-  "mmoitem:LOOT:SEALED_OSENI_ARTIFACT",
-  "mmoitem:LOOT:SEALED_SEITHR_ARTIFACT",
-  "mmoitem:LOOT:SEALED_CERRITH_ARTIFACT",
-  "mmoitem:LOOT:SEALED_MITLAN_ARTIFACT",
 ]);
 
 /** Resolve item references from the server configuration to available pack assets. */
@@ -781,6 +775,9 @@ export function build({
     if (ref.kind === "mmoitem") {
       const exact = mmoItemsTextures.get(ref.attrs.id)?.texture;
       if (exact && existsSync(path.join(TEXTURE_ROOT, exact))) return `/wiki/textures/${exact}`;
+      // A sprite saved by hand under the item's id, for models the pack extractor can't resolve.
+      const saved = `mmoitems/${(ref.attrs.id ?? "").toLowerCase()}.png`;
+      if (ref.attrs.id && existsSync(path.join(TEXTURE_ROOT, saved))) return `/wiki/textures/${saved}`;
     }
     if (ref.kind === "itemsadder") {
       const item = itemsAdder.get(bareItemsAdderId(ref));

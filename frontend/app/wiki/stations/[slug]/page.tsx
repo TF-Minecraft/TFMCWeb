@@ -59,7 +59,9 @@ export default async function StationDetailPage({ params }: { params: Promise<{ 
 
   const self = `/wiki/stations/${station.slug}`;
   const recipes = getRecipesForStation(station.name);
-  const acquisitionRecipe = station.craftRecipe ?? station.vanillaBlock?.recipe;
+  // The station's own craft note only repeats "Using it" below, so this page leaves it off.
+  const craft = station.craftRecipe ?? station.vanillaBlock?.recipe;
+  const acquisitionRecipe = craft ? { ...craft, note: undefined } : undefined;
 
   return (
     <WikiPage

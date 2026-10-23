@@ -107,7 +107,6 @@ recipes:
     const { recipes } = build({ sourceDir: dir, textureIndex: { byName: new Map() } });
     expect(recipes.map((recipe) => recipe.output.name)).toEqual(["Stick"]);
     expect(isHiddenOutput('itemsadder{id="tfmc_games:yellow_chip"}')).toBe(true);
-    expect(isHiddenOutput({ type: "LOOT", id: "SEALED_ARTIFACT", amount: 1 })).toBe(true);
   });
 
   it("names the item a recipe really takes when its label names a different item", () => {

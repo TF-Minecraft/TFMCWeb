@@ -15202,6 +15202,111 @@ export const generatedStationRecipes: Recipe[] = [
     },
   },
   {
+    key: "gen-rune-station-sealed-artifact",
+    title: "Sealed Artifact",
+    station: "Rune Station",
+    time: 10,
+    category: "Loot",
+    ingredients: [
+      {
+        name: "Enchanted Dust",
+        qty: 18,
+        sourceId: "mmoitem:CURRENCY:ENCHANTED_DUST",
+        texture: "/wiki/textures/mmoitems/enchanted_dust.png",
+      },
+    ],
+    output: {
+      name: "Sealed Artifact",
+      qty: 1,
+      sourceId: "mmoitem:LOOT:SEALED_ARTIFACT",
+      texture: "/wiki/textures/mmoitems/sealed_artifact.png",
+    },
+  },
+  {
+    key: "gen-rune-station-sealed-oseni-artifact",
+    title: "Sealed Oseni Artifact",
+    station: "Rune Station",
+    time: 10,
+    category: "Loot",
+    ingredients: [
+      {
+        name: "Enchanted Dust",
+        qty: 28,
+        sourceId: "mmoitem:CURRENCY:ENCHANTED_DUST",
+        texture: "/wiki/textures/mmoitems/enchanted_dust.png",
+      },
+    ],
+    output: {
+      name: "Sealed Oseni Artifact",
+      qty: 1,
+      sourceId: "mmoitem:LOOT:SEALED_OSENI_ARTIFACT",
+      texture: "/wiki/textures/mmoitems/sealed_oseni_artifact.png",
+    },
+  },
+  {
+    key: "gen-rune-station-sealed-seithr-artifact",
+    title: "Sealed Seithr Artifact",
+    station: "Rune Station",
+    time: 10,
+    category: "Loot",
+    ingredients: [
+      {
+        name: "Enchanted Dust",
+        qty: 28,
+        sourceId: "mmoitem:CURRENCY:ENCHANTED_DUST",
+        texture: "/wiki/textures/mmoitems/enchanted_dust.png",
+      },
+    ],
+    output: {
+      name: "Sealed Seithr Artifact",
+      qty: 1,
+      sourceId: "mmoitem:LOOT:SEALED_SEITHR_ARTIFACT",
+      texture: "/wiki/textures/mmoitems/sealed_seithr_artifact.png",
+    },
+  },
+  {
+    key: "gen-rune-station-sealed-cerrith-artifact",
+    title: "Sealed Cerrith Artifact",
+    station: "Rune Station",
+    time: 10,
+    category: "Loot",
+    ingredients: [
+      {
+        name: "Enchanted Dust",
+        qty: 28,
+        sourceId: "mmoitem:CURRENCY:ENCHANTED_DUST",
+        texture: "/wiki/textures/mmoitems/enchanted_dust.png",
+      },
+    ],
+    output: {
+      name: "Sealed Cerrith Artifact",
+      qty: 1,
+      sourceId: "mmoitem:LOOT:SEALED_CERRITH_ARTIFACT",
+      texture: "/wiki/textures/mmoitems/sealed_cerrith_artifact.png",
+    },
+  },
+  {
+    key: "gen-rune-station-sealed-mitlan-artifact",
+    title: "Sealed Mitlan Artifact",
+    station: "Rune Station",
+    time: 10,
+    category: "Loot",
+    ingredients: [
+      {
+        name: "Enchanted Dust",
+        qty: 28,
+        sourceId: "mmoitem:CURRENCY:ENCHANTED_DUST",
+        texture: "/wiki/textures/mmoitems/enchanted_dust.png",
+      },
+    ],
+    output: {
+      name: "Sealed Mitlan Artifact",
+      qty: 1,
+      sourceId: "mmoitem:LOOT:SEALED_MITLAN_ARTIFACT",
+      texture: "/wiki/textures/mmoitems/sealed_mitlan_artifact.png",
+    },
+  },
+  {
     key: "gen-tool-station-iron-hunting-knife",
     title: "Iron Hunting Knife",
     station: "Tool Station",

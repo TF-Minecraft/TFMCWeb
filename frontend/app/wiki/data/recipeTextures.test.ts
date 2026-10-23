@@ -62,9 +62,9 @@ describe("recipe textures", () => {
 
   it("keeps generated station coverage complete", () => {
     const slots = stationRecipes.flatMap((recipe) => [...recipe.ingredients, recipe.output]);
-    expect(stationRecipes).toHaveLength(787);
-    expect(slots).toHaveLength(1835);
-    expect(slots.filter((slot) => slot.name && (slot.texture || slot.model))).toHaveLength(1835);
+    expect(stationRecipes).toHaveLength(792);
+    expect(slots).toHaveLength(1845);
+    expect(slots.filter((slot) => slot.name && (slot.texture || slot.model))).toHaveLength(1845);
   });
 
   it("uses the exact TFMC sprites for lockpicks, collectors, and no-CMD tool families", () => {

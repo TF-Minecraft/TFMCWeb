@@ -2,6 +2,7 @@ import { M, T, V, empty } from "./helpers";
 import { alloyForgeRecipe, ingredientConverterRecipe, weaponStationRecipe } from "./advanced-crafting";
 import { archeologyTableRecipe } from "./archaeology";
 import { magicStationRecipe, runeStationRecipe } from "./magic";
+import { magicPartRecipes } from "./magic-parts";
 import { recyclingStationRecipe } from "./recycler";
 import { stationRecipes } from "./station-recipes";
 import { constructionStations } from "./vehicle-construction";
@@ -626,7 +627,7 @@ export const stations: StationInfo[] = [
     slug: "rune-station",
     name: "Rune Station",
     group: "Magic, alchemy and medicine",
-    blurb: "Turns Enchanted Dust into runestones and Enchanted Charges.",
+    blurb: "Turns Enchanted Dust into runestones, Enchanted Charges and Sealed Artifacts.",
     icon: T("mmoitems/minor_runestone.png"),
     interaction: "Right click",
     guide: { href: "/wiki/magic", label: "Magic guide" },
@@ -809,5 +810,5 @@ export const stationsSection: WikiSection = {
     category: "reference",
     blurb: "Every crafting station: how to get it, how to open it, and what it makes.",
   },
-  recipes: [...stationRecipes, ...stationOwnedCraftRecipes],
+  recipes: [...stationRecipes, ...stationOwnedCraftRecipes, ...magicPartRecipes],
 };

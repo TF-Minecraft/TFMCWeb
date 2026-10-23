@@ -1945,6 +1945,31 @@
     "sourceModel": "tfmc_pack/resourcepack/assets/minecraft/models/item/miscellaneous/parchment_paper.json",
     "sourceTexture": "tfmc_pack/resourcepack/assets/minecraft/textures/item/miscellaneous/parchment_paper.png"
   },
+  "SEALED_ARTIFACT": {
+    "name": "Sealed Artifact",
+    "material": "PAPER",
+    "customModelData": 10859
+  },
+  "SEALED_CERRITH_ARTIFACT": {
+    "name": "Sealed Cerrith Artifact",
+    "material": "PAPER",
+    "customModelData": 10790
+  },
+  "SEALED_MITLAN_ARTIFACT": {
+    "name": "Sealed Mitlan Artifact",
+    "material": "PAPER",
+    "customModelData": 10810
+  },
+  "SEALED_OSENI_ARTIFACT": {
+    "name": "Sealed Oseni Artifact",
+    "material": "PAPER",
+    "customModelData": 10817
+  },
+  "SEALED_SEITHR_ARTIFACT": {
+    "name": "Sealed Seithr Artifact",
+    "material": "PAPER",
+    "customModelData": 10838
+  },
   "SEWING_NEEDLE": {
     "name": "Sewing Needle",
     "material": "BREEZE_ROD",
