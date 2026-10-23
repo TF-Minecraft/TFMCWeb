@@ -42,7 +42,6 @@ export * from "./harvesting";
 export * from "./infestations";
 export * from "./instruments";
 export * from "./magic";
-export * from "./market-blocks";
 export * from "./materials";
 export * from "./recycler";
 export * from "./research";

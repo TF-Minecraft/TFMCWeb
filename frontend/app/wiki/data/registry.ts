@@ -15,7 +15,7 @@ import { detectorSection } from "./detector";
 import { drinkBuilderSection } from "./drink-builder";
 import { economySection } from "./economy";
 import { equipmentSlotsSection } from "./equipment-slots";
-import { factionsSection } from "./factions";
+import { factionsSection, guildsSection, warSection } from "./factions";
 import { farmingSection } from "./farming";
 import { fishingSection } from "./fishing";
 import { furnitureSection } from "./furniture";
@@ -29,7 +29,6 @@ import { harvestingSection } from "./harvesting";
 import { infestationsSection } from "./infestations";
 import { instrumentsSection } from "./instruments";
 import { magicSection } from "./magic";
-import { marketBlockSection } from "./market-blocks";
 import { materialsSection } from "./materials";
 import { recyclerSection } from "./recycler";
 import { researchSection } from "./research";
@@ -73,13 +72,14 @@ export const wikiSections: readonly WikiSection[] = [
   archaeologySection,
   detectorSection,
   gunsSection,
-  armourShopSection,
   infestationsSection,
   thieverySection,
   vehiclesSection,
-  factionsSection,
   economySection,
-  marketBlockSection,
+  factionsSection,
+  guildsSection,
+  warSection,
+  armourShopSection,
   birdMailSection,
   companionPetsSection,
   gamesSection,

@@ -1,228 +1,141 @@
-import {
-  Callout,
-  CommandTable,
-  DataTable,
-  SeeAlso,
-  StatGrid,
-  WikiItemLink,
-  WikiPage,
-  WikiSectionHeading,
-} from "@/app/components/wiki";
 import Link from "next/link";
-import { factionRanks, factionTiers, factionsCommands, installations } from "../data/factions";
+import { CommandTable, DataTable, SeeAlso, WikiItemLink, WikiPage, WikiSectionHeading } from "@/app/components/wiki";
+import { factionRanks, factionTitles, factionsCommands } from "../data/factions";
+
+const link = "text-[var(--tfmc-accent)] hover:underline";
+const body = "text-sm text-[var(--tfmc-mist)]";
+const code = "text-[var(--tfmc-accent)]";
 
 export default function FactionsPage() {
   return (
-    <WikiPage lastModified="2026-10-03" title="Factions" width="lg">
-      <WikiSectionHeading id="getting-started">Founding a faction</WikiSectionHeading>
-      <ol className="list-decimal space-y-2 pl-5 text-sm text-[var(--tfmc-mist)]">
+    <WikiPage
+      lastModified="2026-10-23"
+      title="Factions"
+      intro={
+        <>
+          A faction is a realm on the map: its members, the provinces it claims, its money and its government. Most of
+          what you do here is done by the leader, from <code className={code}>/faction menu</code>. Everything belongs
+          to your current character.
+        </>
+      }
+    >
+      <WikiSectionHeading id="joining" intro="The easiest start is to join a faction that already exists.">
+        Joining a faction
+      </WikiSectionHeading>
+      <p className={body}>
+        Ask a faction&apos;s leader to invite you. Click Accept on the invite, or type{" "}
+        <code className={code}>/faction join</code>. <code className={code}>/faction list</code> shows every faction.
+        Each faction is split into{" "}
+        <Link href="/wiki/guilds" className={link}>
+          guilds
+        </Link>
+        : you start in the main guild, which the faction leader runs.
+      </p>
+
+      <WikiSectionHeading id="founding" intro="You become the leader of a faction of one.">
+        Founding a faction
+      </WikiSectionHeading>
+      <ol className={`mt-3 list-decimal space-y-2 pl-5 ${body}`}>
         <li>
-          <code className="text-[var(--tfmc-accent)]">/faction create &lt;name&gt;</code> founds your faction and makes
-          you its leader.
+          <code className={code}>/faction create &lt;name&gt;</code> founds the faction.
         </li>
         <li>
-          Stand in a province and run{" "}
-          <code className="text-[var(--tfmc-accent)]">/faction setcapital &lt;name&gt;</code>. This is required before
-          you can claim anything else.
+          Stand in an unclaimed province and run <code className={code}>/faction setcapital &lt;name&gt;</code> to claim
+          it as your capital.
         </li>
         <li>
-          Stand in a province adjacent to land you already own and run{" "}
-          <code className="text-[var(--tfmc-accent)]">/faction claim</code> (leader only).
+          Stand in a chunk of your capital province and run <code className={code}>/faction setbank</code>. This is
+          where members pay in and where everyone banks their own{" "}
+          <Link href="/wiki/economy" className={link}>
+            money
+          </Link>
+          .
         </li>
         <li>
-          Invite others with <code className="text-[var(--tfmc-accent)]">/faction invite &lt;player&gt;</code>; they
-          accept with <code className="text-[var(--tfmc-accent)]">/faction join &lt;name&gt;</code>.
+          Invite players with <code className={code}>/faction invite &lt;player&gt;</code>.
         </li>
       </ol>
-      <Callout variant="note">
-        Untitled land is capped at 5 provinces. Claim a 6th and you&apos;re told to form a County first: see the tier
-        table below.
-      </Callout>
 
       <WikiSectionHeading
-        id="tiers"
-        intro="Prestige unlocks the next title tier, each with its own province-forming cost."
+        id="land"
+        intro="Land is claimed one province at a time, and prestige decides how much you can hold."
       >
-        Titles and tiers
+        Land and prestige
       </WikiSectionHeading>
+      <p className={body}>
+        Stand in a province and run <code className={code}>/faction claim</code>. It must border your land, or lie
+        across a single stretch of water from it. Sea provinces can&apos;t be claimed.
+      </p>
+      <ul className={`mt-3 list-disc space-y-2 pl-5 ${body}`}>
+        <li>
+          Each claim needs prestige: 50 for your second province, 100 for your third, and so on. Prestige isn&apos;t
+          spent.
+        </li>
+        <li>
+          Prestige comes mostly from members and the time they play, plus your wealth, trade, land, titles and subjects.
+          Low stability and long inactivity lower it.
+        </li>
+        <li>If your prestige drops too low for the land you hold, other factions can claim your provinces from you.</li>
+        <li>You can hold at most 5 provinces outside a title. Form a County to grow further.</li>
+      </ul>
+
+      <WikiSectionHeading id="titles" intro="The leader forms titles from the Tier menu.">
+        Titles and ranks
+      </WikiSectionHeading>
+      <DataTable
+        columns={[{ header: "Title" }, { header: "Formed from" }, { header: "Prestige", align: "right" }]}
+        rows={factionTitles.map((t) => [t.title, t.formedFrom, t.prestige])}
+      />
+      <p className={`mt-3 ${body}`}>
+        Only your highest title adds prestige, on top of 10 for each province. You can&apos;t hold more Counties than
+        you have members. Titles that already exist on the map can be claimed from the Titles menu once you hold enough
+        of their provinces. How much depends on your faction&apos;s rank:
+      </p>
       <DataTable
         columns={[
-          { header: "Tier" },
-          { header: "Prestige needed", align: "right" },
-          { header: "Form cost", align: "right" },
+          { header: "Rank" },
+          { header: "Prestige", align: "right" },
+          { header: "Provinces needed to claim a title", align: "right" },
         ]}
-        rows={factionTiers.map((t) => [t.tier, t.prestige, t.formCost])}
+        rows={factionRanks.map((r) => [r.rank, r.prestige, r.share])}
       />
-
-      <WikiSectionHeading
-        id="ranks"
-        intro="Prestige rank is separate from title tier. It lowers the de-jure requirement for annexing land as you climb."
-      >
-        Prestige ranks
-      </WikiSectionHeading>
-      <DataTable
-        columns={[{ header: "Rank" }, { header: "Prestige", align: "right" }]}
-        rows={factionRanks.map((r) => [r.rank, r.prestige])}
-      />
-
-      <WikiSectionHeading id="banking" intro="Banking needs a claimed bank chunk.">
-        Money and banking
-      </WikiSectionHeading>
-      <p className="text-sm text-[var(--tfmc-mist)]">
-        The leader places a faction bank block, then anyone standing in that bank chunk can{" "}
-        <code className="text-[var(--tfmc-accent)]">/faction deposit &lt;amount&gt;</code>; only the leader can{" "}
-        <code className="text-[var(--tfmc-accent)]">/faction withdraw &lt;amount&gt;</code>. Guilds work the same way
-        with their own bank chunk. Every deposit and withdrawal moves denars: see the Denar Economy page for how the
-        currency itself works.
+      <p className={`mt-3 ${body}`}>
+        The higher ranks also need a share of the strongest faction&apos;s prestige, so they get harder as the top
+        factions grow.
       </p>
-      <StatGrid
-        stats={[
-          { label: "Province cost", value: "50 prestige" },
-          { label: "Max members", value: "64 per faction" },
-          { label: "Untitled province cap", value: "5" },
-        ]}
-      />
 
-      <WikiSectionHeading
-        id="guilds"
-        intro="A guild is a sub-organisation inside your faction, useful for trade income."
-      >
-        Guilds and government
+      <WikiSectionHeading id="government" intro="Government, laws, council and elections are all in /faction menu.">
+        Government and taxes
       </WikiSectionHeading>
-      <p className="text-sm text-[var(--tfmc-mist)]">
-        Any non-leader member can <code className="text-[var(--tfmc-accent)]">/guild create &lt;name&gt;</code> to start
-        a sub-guild with its own bank, leadership, and trade branches (Bureaucracy, Guild Halls, Workshops,
-        Storehouses). The faction leader runs the &quot;base guild&quot; automatically. From{" "}
-        <code className="text-[var(--tfmc-accent)]">/faction menu</code> you can also open government, laws, taxes,
-        council and elections: under a democracy the leader can&apos;t be set directly; players vote at{" "}
-        <WikiItemLink name="Voting Booth">voting booths</WikiItemLink> instead.
-      </p>
-      <h3 className="mt-6 text-sm font-semibold uppercase tracking-wide text-[var(--tfmc-mist)]">Resource nodes</h3>
-      <p className="mt-2 text-sm text-[var(--tfmc-mist)]">
-        Guilds also own{" "}
-        <Link href="/wiki/dowsing" className="text-[var(--tfmc-accent)] underline underline-offset-2">
-          resource nodes
-        </Link>
-        : production sites that turn out ores, crops, wood or stone on a repeating cycle. You must be in a guild to
-        place one, and a one-person guild is enough.
-      </p>
-      <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-[var(--tfmc-mist)]">
+      <ul className={`mt-3 list-disc space-y-2 pl-5 ${body}`}>
         <li>
-          Craft a <WikiItemLink name="General Node">General Node</WikiItemLink> and place it. A guild can own only one
-          node, and each chunk holds only one.
+          Laws set the government type, how the leader is chosen, the council, taxes, the military, vassals, the economy
+          and the borders. Changing a law costs administrative power and locks that law for a few days.
         </li>
         <li>
-          Run it as an Ore Mine, Magical Mine, Farm, Plantation, Forestry or Quarry, then pick what it focuses on.
+          When the leader is elected, members vote at a <WikiItemLink name="Voting Booth" /> during an election. Only
+          the faction leader can set up a booth.
         </li>
-        <li>Upgrades from level 1 to 10 are paid from the guild bank, so the guild needs a bank with funds in it.</li>
         <li>
-          Only members of the owning guild can change a node. A guild leader can claim a node that another guild has
-          marked for transfer.
+          Taxes take a share of what members and guilds earn. Money is settled once a day, and{" "}
+          <code className={code}>/ledger</code> shows your own daily earnings, taxes and upkeep.
         </li>
       </ul>
 
-      <WikiSectionHeading id="war" intro="Battles are scheduled events, not spontaneous fights.">
-        War and battles
+      <WikiSectionHeading id="diplomacy" intro="The leader sets relations with other factions from the Diplomacy menu.">
+        Diplomacy
       </WikiSectionHeading>
-      <p className="text-sm text-[var(--tfmc-mist)]">
-        When a war has been declared, check <code className="text-[var(--tfmc-accent)]">/war list</code>. Form a squad
-        with <code className="text-[var(--tfmc-accent)]">/warband create &lt;name&gt;</code>, then join a scheduled
-        fight with <code className="text-[var(--tfmc-accent)]">/battle join &lt;battleId&gt;</code> when its window
-        opens, or a campaign raid with <code className="text-[var(--tfmc-accent)]">/raid join</code> during its
-        60-second muster. Retreating a warband mid-battle is locked for the first 20 minutes.
-      </p>
-
-      <WikiSectionHeading
-        id="installations"
-        intro="Built by a faction leader with /faction construct, in an owned, non-water province."
-      >
-        Installations
-      </WikiSectionHeading>
-      <DataTable
-        columns={[
-          { header: "Type" },
-          { header: "Radius", align: "right" },
-          { header: "Upkeep / day", align: "right" },
-          { header: "Build time", align: "right" },
-          { header: "Vehicle slots" },
-        ]}
-        rows={installations.map((i) => [i.type, `${i.radius} blocks`, `${i.upkeepPerDay} d`, i.buildTime, i.slots])}
-      />
-      <Callout variant="note">
-        Trains are not stored at train stations. Berthing a vehicle requires the vehicle&apos;s owner to be online and
-        consent. An unpaid vehicle (see{" "}
-        <code className="text-[var(--tfmc-accent)]">/faction vehicle maintenance pay</code>) cannot be repaired. The
-        upkeep column is for a newly built installation. A train station at level 2 costs 35 denars a day (3-day build,
-        3 static emplacements). Level 3 costs 100 denars a day (5-day build, 4 static emplacements).
-      </Callout>
-
-      <WikiSectionHeading
-        id="trade-reach"
-        intro="Ports, airports, stations, and the lanes between them carry a guild's trade."
-      >
-        Trade, lanes, and foreign installations
-      </WikiSectionHeading>
-      <p className="text-sm text-[var(--tfmc-mist)]">
-        Ports, airports and train stations carry a guild&apos;s trade and production further, and so do the sea lanes
-        and railways between them. Trade can join a sea lane or railway at any province along it, and is strongest
-        getting on and off at the installations.
-      </p>
-      <p className="text-sm text-[var(--tfmc-mist)]">
-        Guilds can use every installation in their realm. A foreign installation depends on a trade agreement and on
-        both realms&apos; economy laws. An equal trade agreement gives full use both ways. An unequal treaty gives the
-        leader full use and the subject half.
-      </p>
-      <p className="text-sm text-[var(--tfmc-mist)]">
-        The host&apos;s law sets how open its installations are to foreign guilds. The guest&apos;s law adds or removes
-        reach abroad. Access is capped at 100%. An isolationist host stays closed whatever the guest&apos;s law. Embargo
-        or war means no access. Tariffs apply as usual.
-      </p>
-      <DataTable
-        columns={[
-          { header: "Economy law" },
-          { header: "Open to foreigners", align: "right" },
-          { header: "Own guilds abroad", align: "right" },
-        ]}
-        rows={[
-          ["Free trade", "50%", "+10%"],
-          ["Decentralized", "35%", "—"],
-          ["Mercantilism", "15%", "+20%"],
-          ["Protectionism", "10%", "—"],
-          ["Isolationism", "Closed", "−25%"],
-        ]}
-      />
-      <p className="text-sm text-[var(--tfmc-mist)]">
-        <code className="text-[var(--tfmc-accent)]">/faction construct</code> builds a fort, port, airport, or train
-        station in the current province at once. There is no confirmation screen. The province must be owned and not
-        water, and only one build can be underway.
-      </p>
-      <Callout variant="note">
-        Isolationism closes the realm to foreigners and also takes 25% off that realm&apos;s own guilds when they use
-        installations abroad. A guest law cannot open an isolationist host.
-      </Callout>
-      <WikiSectionHeading
-        id="mercenaries"
-        intro="A guild can found a mercenary company and hire it out to other factions."
-      >
-        Mercenaries
-      </WikiSectionHeading>
-      <p className="text-sm text-[var(--tfmc-mist)]">
-        Inside a guild, <code className="text-[var(--tfmc-accent)]">/company found &lt;name&gt;</code> buys a charter;
-        the company leader invites recruits and drafts a contract with{" "}
-        <code className="text-[var(--tfmc-accent)]">/company draft</code>, then sends it to a buyer faction with{" "}
-        <code className="text-[var(--tfmc-accent)]">/company offer &lt;faction&gt;</code>. Buyers browse the market with{" "}
-        <code className="text-[var(--tfmc-accent)]">/mercenaries</code> and hire with{" "}
-        <code className="text-[var(--tfmc-accent)]">/mercenaries hire &lt;company&gt;</code>.
+      <p className={body}>
+        Each faction has an opinion of every other, which slowly moves toward what your relations call for. An alliance
+        needs both sides at 40 or more, a rivalry -10 or less, and a war -50 or less. You can also sign trade agreements
+        and non-aggression pacts, place embargoes, and take smaller factions as subjects. Agreements that need both
+        sides are answered by the other leader with <code className={code}>/faction accept</code> while online.
       </p>
 
       <WikiSectionHeading id="commands">Commands</WikiSectionHeading>
-      <Callout variant="note">
-        Some actions require a leadership role within your faction, guild, or warband. Check the Notes column before
-        planning a group action.
-      </Callout>
       <CommandTable commands={factionsCommands.commands} />
 
-      <SeeAlso hrefs={["/wiki/economy", "/wiki/commands"]} />
+      <SeeAlso hrefs={["/wiki/guilds", "/wiki/war", "/wiki/economy", "/wiki/commands"]} />
     </WikiPage>
   );
 }

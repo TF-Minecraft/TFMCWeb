@@ -56,7 +56,7 @@ const CATEGORY_DEFS: Record<WikiCategoryKey, Omit<WikiCategory, "key">> = {
   },
   social: {
     label: "Society & Economy",
-    blurb: "Money, factions, trade, cosmetics and music.",
+    blurb: "Money, factions, guilds, war, skins and music.",
     order: 9,
   },
   reference: {

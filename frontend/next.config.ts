@@ -33,6 +33,8 @@ const nextConfig: NextConfig = {
       { source: "/inspect", destination: "/admin/codes", permanent: false },
       // The Gathering plugin's spots never spawn on Main, so its wiki page was removed.
       { source: "/wiki/gathering", destination: "/wiki", permanent: false },
+      // Market Blocks became a section of the money page.
+      { source: "/wiki/market-blocks", destination: "/wiki/economy#market-blocks", permanent: false },
     ];
   },
 };

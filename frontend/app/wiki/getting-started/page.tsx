@@ -12,7 +12,7 @@ const nextGuides = [
   ["Farm crops, fish or collect materials", "/wiki/farming", "Farming"],
   ["Cook food or brew drinks", "/wiki/cooking", "Cooking"],
   ["Learn magic", "/wiki/magic", "Magic"],
-  ["Trade with other players", "/wiki/economy", "Denar Economy"],
+  ["Earn and spend money", "/wiki/economy", "Money & Market Blocks"],
   ["Look up a command", "/wiki/commands", "Command Index"],
 ] as const;
 
