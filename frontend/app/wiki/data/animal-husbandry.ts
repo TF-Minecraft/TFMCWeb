@@ -7,9 +7,9 @@ export const animalHusbandryCommands: WikiCommandSet = {
     {
       command: "/animals",
       aliases: ["/livestock"],
-      description: "Lists every animal you own or share, with the last place each one was seen.",
+      description: "Lists the animals your current character owns or shares, and where each was last seen.",
       notes:
-        "Each line shows the name, the kind of animal, whether it is growing, and whether it is happy, hungry, or dirty. Click the coordinates in chat to copy them. If a place is missing, visit that animal once so it can be recorded.",
+        "Shows each animal's name and kind, whether it is still growing, and whether it is happy, hungry or dirty, plus how many of your account's 15 places are used. Click the coordinates to copy them. If a place is missing, visit that animal once.",
     },
   ],
 };
@@ -19,7 +19,7 @@ export const animalHusbandrySection: WikiSection = {
     href: "/wiki/animal-husbandry",
     label: "Animal Husbandry",
     category: "food",
-    blurb: "Claim animals, keep them fed and clean, and breed for better food and materials.",
+    blurb: "Claim farm animals, care for them and breed them for better meat, milk and materials.",
   },
   commands: animalHusbandryCommands,
 };

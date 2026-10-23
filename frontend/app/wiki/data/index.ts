@@ -26,7 +26,6 @@ export * from "./companion-pets";
 export * from "./cooking";
 export * from "./animal-husbandry";
 export * from "./detector";
-export * from "./drink-builder";
 export * from "./economy";
 export * from "./equipment-slots";
 export * from "./factions";

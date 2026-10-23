@@ -10,7 +10,7 @@ const body = "text-sm text-[var(--tfmc-mist)]";
 export default function ServerFeaturesPage() {
   return (
     <WikiPage
-      lastModified="2026-10-22"
+      lastModified="2026-10-23"
       title="Account & Website"
       intro="Your Minecraft account, your Discord account and the TFMC website work together once they are linked."
     >
@@ -44,7 +44,7 @@ export default function ServerFeaturesPage() {
           skin
         </Link>{" "}
         or{" "}
-        <Link href="/wiki/drink-builder" className={link}>
+        <Link href="/wiki/brewing#custom-drinks" className={link}>
           drink
         </Link>{" "}
         on the website. They are a supporter perk, and both share one cooldown that depends on your rank.
