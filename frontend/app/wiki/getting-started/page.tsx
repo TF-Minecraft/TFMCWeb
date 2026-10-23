@@ -56,12 +56,11 @@ export default function GettingStartedPage() {
 
       <WikiSectionHeading id="discord">Linking Discord</WikiSectionHeading>
       <p className={body}>
-        Type <code className={code}>/linkdiscord</code> in game and click the code to copy it. Then run{" "}
-        <code className={code}>/linkdiscord &lt;code&gt;</code> in any channel of the TFMC Discord. You can already do
-        this in the Lobby, and the character screen on the main server has a <strong>Link Discord to play</strong>{" "}
-        button too. You can create a character before you link, but you cannot play one until you have.{" "}
+        You need to link your Discord account before you can play. You can already do it in the Lobby, and the character
+        screen on the main server has a <strong>Link Discord to play</strong> button. You can create a character before
+        you link, but you cannot play one until you have.{" "}
         <Link href="/wiki/server-features#website-link" className={link}>
-          More on linking
+          How to link
         </Link>
       </p>
 
@@ -83,14 +82,13 @@ export default function GettingStartedPage() {
       <WikiSectionHeading id="first-steps">Your first steps</WikiSectionHeading>
       <ul className={`list-disc space-y-2 pl-5 ${body}`}>
         <li>
-          <code className={code}>/rpcharacter kit starter</code> gives each new character a knife, some coins, food and
-          a few other basics.{" "}
+          <code className={code}>/rpcharacter kit starter</code> gives each new character a starter kit.{" "}
           <Link href="/wiki/characters#creating" className={link}>
-            What the kit holds
+            What it holds
           </Link>
         </li>
         <li>
-          Anything you type is spoken by your character, and only people nearby hear it. Use{" "}
+          By default, what you type is spoken by your character, and only people nearby hear it. Use{" "}
           <code className={code}>/ooc &lt;message&gt;</code> to talk out of character to everyone online.{" "}
           <Link href="/wiki/characters#chat" className={link}>
             Chat channels
