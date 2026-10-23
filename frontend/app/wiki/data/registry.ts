@@ -25,7 +25,6 @@ import { gettingStartedSection } from "./getting-started";
 import { gunsSection } from "./guns";
 import { infestationsSection } from "./infestations";
 import { instrumentsSection } from "./instruments";
-import { locksSection } from "./locks";
 import { magicSection } from "./magic";
 import { marketBlockSection } from "./market-blocks";
 import { materialsSection } from "./materials";
@@ -35,6 +34,7 @@ import { serverFeaturesSection } from "./server-features";
 import { roleplayToolsSection } from "./roleplay-tools";
 import { stationsSection } from "./stations";
 import { thieverySection } from "./thievery";
+import { locksSection } from "./locks";
 import { vehiclesSection } from "./vehicles";
 import type { DuplicateCommand, Recipe, RegisteredCommand, WikiCommandSet, WikiSection } from "./types";
 
