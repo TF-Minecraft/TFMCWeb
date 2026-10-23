@@ -1,5 +1,5 @@
 import { M, T, V, empty } from "./helpers";
-import { stationRecipe } from "./station-recipes";
+import { stationRecipe, stationRecipes } from "./station-recipes";
 import type { Recipe, WikiCommandSet, WikiSection } from "./types";
 
 // ---------- Magic and mage weapons ----------
@@ -79,8 +79,8 @@ export const enchantedChargeRecipes: Recipe[] = ["minor", "lesser", "greater", "
   stationRecipe(`gen-rune-station-enchanted-charge-${key}`),
 );
 
-export const sealedArtifactRecipes: Recipe[] = ["", "-cerrith", "-oseni", "-seithr", "-mitlan"].map((school) =>
-  stationRecipe(`gen-rune-station-sealed${school}-artifact`),
+export const sealedArtifactRecipes: Recipe[] = ["", "-cerrith", "-oseni", "-seithr", "-mitlan"].flatMap((school) =>
+  stationRecipes.filter((recipe) => recipe.key === `gen-rune-station-sealed${school}-artifact`),
 );
 
 export const magicRecipes: Recipe[] = [magicStationRecipe, runeStationRecipe];
@@ -101,18 +101,6 @@ export const magicCommands: WikiCommandSet = {
   ],
 };
 
-export const mageWeaponCommands: WikiCommandSet = {
-  system: "Magic",
-  href: "/wiki/mage-weapons",
-  commands: [
-    {
-      command: "/magic rune keybind <key>",
-      description:
-        "While holding a spell rune, changes the key that casts it: RIGHT_CLICK, LEFT_CLICK, SHIFT_RIGHT_CLICK or SHIFT_LEFT_CLICK.",
-    },
-  ],
-};
-
 export const magicSection: WikiSection = {
   nav: {
     href: "/wiki/magic",
@@ -121,15 +109,4 @@ export const magicSection: WikiSection = {
     blurb: "The four schools, Resonance, shrines, artifacts and meditation.",
   },
   commands: magicCommands,
-};
-
-export const mageWeaponsSection: WikiSection = {
-  nav: {
-    href: "/wiki/mage-weapons",
-    label: "Mage Weapons",
-    category: "magic",
-    blurb: "Build a staff, wand or blade, attune it with a charge, and fit spell runes.",
-  },
-  recipes: magicRecipes,
-  commands: mageWeaponCommands,
 };

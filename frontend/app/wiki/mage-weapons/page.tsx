@@ -13,12 +13,12 @@ import CraftingGrid from "@/app/components/wiki/CraftingGrid";
 import {
   armorRunestoneRecipes,
   enchantedChargeRecipes,
-  mageWeaponCommands,
   magicStationRecipe,
   runeStationRecipe,
   runestoneRecipes,
   sealedArtifactRecipes,
 } from "../data/magic";
+import { mageWeaponCommands } from "../data/mage-weapons";
 
 const link = "text-[var(--tfmc-accent)] hover:underline";
 const body = "text-sm text-[var(--tfmc-mist)]";
