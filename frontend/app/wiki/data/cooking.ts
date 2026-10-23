@@ -1,9 +1,10 @@
 import type { WikiCommandSet, WikiSection } from "./types";
 
 /**
- * Cooking (drefvelin/cooking) has no in-game player commands at all: every
- * interaction is right-clicking furniture. Recorded as an empty array per the
- * README rule: "no commands" is a fact, not an omission.
+ * Cooking (drefvelin/cooking) has no cooking commands: every interaction is
+ * done on furniture. Its one player command, /animals, is listed under Animal
+ * Husbandry. Recorded as an empty array per the README rule: "no commands" is
+ * a fact, not an omission.
  */
 export const cookingCommands: WikiCommandSet = {
   system: "Cooking",
@@ -16,7 +17,7 @@ export const cookingSection: WikiSection = {
     href: "/wiki/cooking",
     label: "Cooking",
     category: "food",
-    blurb: "Cook on placed furniture: pans, pots, ovens, cutting boards and more.",
+    blurb: "Cook on furniture you place: pans, pots, ovens, cutting boards and more.",
   },
   commands: cookingCommands,
 };

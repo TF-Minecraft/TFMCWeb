@@ -28,11 +28,18 @@ const nextConfig: NextConfig = {
       { source: "/character", destination: "/profile", permanent: false },
       // The in-game /token create drink message sends players to /drinks.
       { source: "/drinks", destination: "/profile?tab=drinks", permanent: false },
+      // The Drink Builder guide became a section of the Brewing guide.
+      { source: "/wiki/drink-builder", destination: "/wiki/brewing#custom-drinks", permanent: true },
       // Staff tools that moved into the staff panel.
       { source: "/precedent", destination: "/admin/precedent", permanent: false },
       { source: "/inspect", destination: "/admin/codes", permanent: false },
+      // Sitting and Armor Statues were merged into Roleplay Tools.
+      { source: "/wiki/sitting", destination: "/wiki/roleplay-tools", permanent: true },
+      { source: "/wiki/armor-statues", destination: "/wiki/roleplay-tools#armor-statues", permanent: true },
       // The Gathering plugin's spots never spawn on Main, so its wiki page was removed.
       { source: "/wiki/gathering", destination: "/wiki", permanent: false },
+      // Crop Harvesting was merged into Farming.
+      { source: "/wiki/harvesting", destination: "/wiki/farming#field-crops", permanent: true },
       // Mage weapon parts are paid for at the Magic Station, not crafted as materials.
       {
         source:

@@ -1,53 +1,67 @@
-import { V, empty } from "./helpers";
-import type { Recipe, WikiCommandSet, WikiSection } from "./types";
+import type { WikiCommandSet, WikiSection } from "./types";
 
-// ---------- TFMCCore + TFMCWeb ----------
-
-export const letterRecipe: Recipe = {
-  key: "craft-letter",
-  title: "Letter",
-  station: "Crafting Table",
-  requirement: "None",
-  ingredients: [
-    { name: "Paper", qty: 1, texture: V("paper.png") },
-    { name: "Paper", qty: 1, texture: V("paper.png") },
-    empty,
-    { name: "Paper", qty: 1, texture: V("paper.png") },
-    { name: "Paper", qty: 1, texture: V("paper.png") },
-    empty,
-    empty,
-    empty,
-    empty,
-  ],
-  output: { name: "Letter", qty: 1, texture: "/wiki/textures/items/letters/letter.png" },
-  note: "Write in the Letter and sign it to seal it.",
-};
+// ---------- TFMCWeb account links and TFMCCore player commands ----------
 
 export const serverFeaturesCommands: WikiCommandSet = {
-  system: "TFMCCore + TFMCWeb",
+  system: "Account & Website",
   href: "/wiki/server-features",
   commands: [
     {
       command: "/linkdiscord",
-      description: "Requests a one-time Discord link code and prints it click-to-copy in chat.",
-      notes: "Run /linkdiscord <code> in the Discord server to finish linking, usually within about a second.",
+      description: "Gives you a code to link your Discord account. Run /linkdiscord <code> in the Discord server.",
+      notes: "You cannot play in Survival until you are linked.",
     },
     {
       command: "/unlinkdiscord",
       description: "Removes your Discord link.",
-      notes: "You'll need to link again to play Survival.",
+      notes: "You will need to link again to play in Survival.",
     },
     {
-      command: "/token",
-      description: "Shows the token actions available to you.",
+      command: "/token create profile",
+      description: "Gives you a one-time code to sign in to your profile on the website.",
     },
     {
-      command: "/token create <skin|drink|profile>",
-      description: "Creates a one-time website code to redeem for a skin upload, a drink upload, or your profile page.",
-      access: "permission",
-      permission: "tfmcweb.token.create",
-      notes:
-        "Skin and drink codes share one cooldown, gated by rank (28 days down to 7 days). This is a rank perk, not something every player has.",
+      command: "/token create <skin|drink>",
+      description: "Gives you a one-time code to upload a custom skin or drink on the website.",
+      notes: "Noble rank and above. Skin and drink codes share one cooldown.",
+    },
+    {
+      command: "/patreon [unlink]",
+      description: "Links your Patreon account, shows your supporter status, or removes the link.",
+    },
+    {
+      command: "/tfmc patreon",
+      description: "Shows the link to the server's Patreon page.",
+    },
+    {
+      command: "/tfmc tips <enable|disable>",
+      description: "Turns the tips shown in chat on or off.",
+    },
+    {
+      command: "/tfmc pack [auto|manual]",
+      description: "Loads the server resource pack now, or sets whether it loads automatically when you join.",
+    },
+    {
+      command: "/tfmc map",
+      description: "Gives you the link to the nations map on the website.",
+    },
+    {
+      command: "/tfmc date",
+      description: "Shows today's weekday and month in the world's own calendar.",
+    },
+    {
+      command: "/tcore stats <advancedcrafting|factions|rpcharacters|skills|vehicles>",
+      description: "Shows your own statistics for that part of the game.",
+    },
+    {
+      command: "/tfmc drinks",
+      description: "Opens the drink builder.",
+      notes: "Noble rank and above.",
+    },
+    {
+      command: "/tfmc booster",
+      description: "Starts a one-hour profession EXP booster for everyone on the server.",
+      notes: "Ascended and Legacy only, once every 3 days.",
     },
   ],
 };
@@ -55,10 +69,9 @@ export const serverFeaturesCommands: WikiCommandSet = {
 export const serverFeaturesSection: WikiSection = {
   nav: {
     href: "/wiki/server-features",
-    label: "Server Features & Website Link",
+    label: "Account & Website",
     category: "character",
-    blurb: "Letters, lorestones, the animal whistle, and linking your account to the website.",
+    blurb: "Link Discord, sign in to the website, support the server, and handy account commands.",
   },
-  recipes: [letterRecipe],
   commands: serverFeaturesCommands,
 };

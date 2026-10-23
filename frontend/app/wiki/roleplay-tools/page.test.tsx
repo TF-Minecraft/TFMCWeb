@@ -6,7 +6,7 @@ import { describe, expect, it } from "vitest";
 import { allRecipes } from "../data";
 import { stationRecipe } from "../data/station-recipes";
 import ItemDetailPage from "../items/[slug]/page";
-import ServerFeaturesPage from "./page";
+import RoleplayToolsPage from "./page";
 
 const recipes = [stationRecipe("gen-tool-station-lorestone"), stationRecipe("gen-tool-station-namestone")];
 
@@ -47,8 +47,8 @@ describe("Lorestone and Namestone guide", () => {
     }
   });
 
-  it("shows both recipes and canonical links in the Server Features guide", () => {
-    const html = renderToStaticMarkup(<ServerFeaturesPage />);
+  it("shows both recipes and canonical links in the Roleplay Tools guide", () => {
+    const html = renderToStaticMarkup(<RoleplayToolsPage />);
     expect(html).toContain('href="/wiki/stations/tool-station"');
     expect(html).toContain('href="/wiki/items/lorestone"');
     expect(html).toContain('href="/wiki/items/namestone"');

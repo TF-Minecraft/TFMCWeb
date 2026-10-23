@@ -48,7 +48,7 @@ const gradedAnimalProduct = (kind: string, animals: string): MaterialAcquisition
   },
   {
     method: "Animal Husbandry",
-    detail: `Owned ${animals} with good genetics give graded ${kind}. The higher the animal's star rating, the better the grade.`,
+    detail: `Owned ${animals} with good genetics give graded ${kind}. The higher their star tier, the better the grade.`,
   },
 ];
 const forgingUse = (kind: string) => `Used in Forging Station recipes for ${kind}.`;
@@ -413,7 +413,11 @@ export const dropOnlyMaterials: CatalogMaterial[] = [
     lore: `${grade} grade ${kind === "Feather" ? "feathers" : kind.toLowerCase()} for smithing.`,
     acquisition: gradedAnimalProduct(
       kind === "Feather" ? "feathers" : kind.toLowerCase(),
-      kind === "Leather" ? "cows, horses, donkeys, mules and camels" : kind === "Wool" ? "sheep and goats" : "chickens",
+      kind === "Leather"
+        ? "cows, horses, donkeys, mules and camels"
+        : kind === "Wool"
+          ? "sheep and goats"
+          : "chickens and llamas",
     ),
     usedFor: forgingUse(
       kind === "Feather"

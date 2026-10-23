@@ -47,7 +47,9 @@ function imageToTexture(image: HTMLImageElement): {
   texture.wrapS = THREE.ClampToEdgeWrapping;
   texture.wrapT = THREE.ClampToEdgeWrapping;
   texture.colorSpace = THREE.SRGBColorSpace;
-  texture.flipY = false;
+  // Java-model UVs invert V, matching Three's default image upload. Extruded
+  // sprites set flipY=false themselves because their UVs follow image rows.
+  texture.flipY = true;
   texture.needsUpdate = true;
   return {
     texture,

@@ -1,143 +1,154 @@
-import { DataTable, SeeAlso, WikiPage, WikiSectionHeading } from "@/app/components/wiki";
-import { WikiItemLink, WikiItemText } from "@/app/components/wiki";
+import Link from "next/link";
 
-const furnitureLink = (name: string, piece: string) => (
-  <WikiItemLink name={name} key={piece}>
+import {
+  DataTable,
+  SeeAlso,
+  WikiItemLink,
+  WikiItemText,
+  WikiPage,
+  WikiSectionHeading,
+  wikiBodyText as body,
+} from "@/app/components/wiki";
+
+const link = "text-[var(--tfmc-accent)] hover:underline";
+
+const piece = (name: string) => (
+  <WikiItemLink name={name} key={name}>
     {name}
   </WikiItemLink>
 );
 
-const itemLink = (name: string) => <WikiItemLink name={name}>{name}</WikiItemLink>;
-
 export default function CookingPage() {
   return (
     <WikiPage
-      lastModified="2026-09-20"
+      lastModified="2026-10-23"
       title="Cooking"
       width="lg"
-      intro={
-        <>
-          <WikiItemText text="Cooking has no menu and no crafting table. It is a set of real furniture props you place in the world: a pan, a pot, a cutting board, an oven, a milling stone, a fire pit with a spit, a butter churn, a sausage maker. Put ingredients on them, work the station, and the food item you get back tracks its own freshness, cooked state, seasoning and a 1–5 star quality rating: all shown in the item's name and lore. There is nothing to type; everything is a right-click." />
-        </>
-      }
+      intro="You cook on furniture placed in the world, not in a menu. Food keeps track of how fresh it is, how it was cooked and how it was seasoned, and has a quality from 1 to 5 stars."
     >
-      <WikiSectionHeading id="loop">The basic loop</WikiSectionHeading>
-      <ol className="mt-4 flex flex-col gap-2 text-sm text-[var(--tfmc-mist)]">
+      <WikiSectionHeading id="basics">The basics</WikiSectionHeading>
+      <p className={`mt-4 ${body}`}>
+        All cooking furniture and tools are made at the{" "}
+        <Link href="/wiki/stations/meal-prep-station" className={link}>
+          Meal Prep Station
+        </Link>{" "}
+        from iron, stone or oak planks (see{" "}
+        <Link href="/wiki/furniture#crafting" className={link}>
+          Furniture
+        </Link>
+        ).
+      </p>
+      <ul className={`mt-3 list-disc space-y-2 pl-5 ${body}`}>
+        <li>Right-click a piece with an ingredient to put it in.</li>
+        <li>Right-click with an empty hand to take it back out, or to work the station: churn, stir, turn the spit.</li>
         <li>
-          1.{" "}
-          <WikiItemText text="Place the furniture you need: Frying Pan, Pot, Cutting Board, Fire Pit, Milling Stone, Mixing Bowl, Oven Bottom + Oven Top with a Bread Tray, Butter Churn, Sausage Maker, Meat Hook, or a plain vanilla Cauldron." />
+          To cut or carve, hit the <WikiItemLink name="Cutting Board" /> or <WikiItemLink name="Meat Hook" /> while
+          holding a <WikiItemLink name="Cutting Knife" />.
         </li>
         <li>
-          2. <strong>Right-click the furniture while holding an ingredient</strong> to place it into one of the
-          furniture&apos;s slots.
+          <WikiItemText text="The Frying Pan, Saucepan, Pot and Oven Top only cook when they sit directly on a lit Oven Bottom. Right-click the Oven Bottom with logs (up to 6), then with Flint and Steel to light it. The Fire Pit goes on a lit campfire instead." />
         </li>
-        <li>
-          3. <strong>Right-click with an empty hand</strong> to take the item back out, or to operate the station
-          (churn, turn the spit, stir).
-        </li>
-        <li>
-          4. Stations that need heat must sit above a heat source. For soup, place a <WikiItemLink name="Pot" />{" "}
-          directly on an <WikiItemLink name="Oven Bottom" />, add logs and light them.
-        </li>
-      </ol>
+      </ul>
 
-      <WikiSectionHeading id="simple-soup" intro="A simple carrot and potato soup to get you started.">
+      <WikiSectionHeading id="first-soup" intro="A carrot and potato soup to learn the basics.">
         Your first soup
       </WikiSectionHeading>
-      <p className="mt-4 text-sm text-[var(--tfmc-mist)]">
-        <WikiItemText text="Ingredients: 2 Carrots, 2 Potatoes, a Water Bucket and wood logs for fuel. Equipment: Cutting Board, Cutting Knife, Oven Bottom, Pot, Flint and Steel, Masher, Ladle and a Bowl." />
+      <p className={`mt-4 ${body}`}>
+        <WikiItemText text="You need 2 carrots, 2 potatoes, a Water Bucket, a few logs, Flint and Steel, a Cutting Board, Cutting Knife, Oven Bottom, Pot, Masher, Ladle and Bowl." />
       </p>
-      <ol className="mt-4 list-decimal space-y-2 pl-5 text-sm text-[var(--tfmc-mist)]">
+      <ol className={`mt-3 list-decimal space-y-2 pl-5 ${body}`}>
         <li>
-          Put 2 carrots on the <WikiItemLink name="Cutting Board" /> and cut them once with a{" "}
-          <WikiItemLink name="Cutting Knife" />. Take the cut carrots off the board.
+          Put the 2 carrots on the Cutting Board and hit it with the Cutting Knife. You get 1 cut carrot. Do the same
+          with the potatoes.
         </li>
+        <li>Place the Oven Bottom and put the Pot on top. Fill the pot with the Water Bucket.</li>
+        <li>Add logs to the Oven Bottom and light them with Flint and Steel.</li>
         <li>
-          Put 2 potatoes on the cutting board and cut them once with the Cutting Knife. Take the cut potatoes off the
-          board.
+          When the water boils, add the cut carrot and mash it with the Masher. The pot won&apos;t take anything else
+          until you do. Then add the cut potato and mash that too.
         </li>
+        <li>Right-click the pot with the Ladle to take a serving. One pot gives 3.</li>
         <li>
-          Craft an <WikiItemLink name="Oven Bottom" /> and place it, then put a <WikiItemLink name="Pot" /> on top.
+          Place the Bowl, right-click it with the full ladle, then right-click the bowl with an empty hand to eat.
         </li>
-        <li>Right-click the pot with a Water Bucket to fill it.</li>
-        <li>Right-click the Oven Bottom while holding wood logs to add fuel.</li>
-        <li>Right-click the logs inside the oven with Flint and Steel to light them.</li>
-        <li>Wait for the water to boil, then add either the cut carrots or the cut potatoes.</li>
-        <li>
-          Right-click the vegetables in the pot with a <WikiItemLink name="Masher" /> to mash them into soup.
-        </li>
-        <li>Add the other cut vegetables and mash them in the same way.</li>
-        <li>
-          Once the soup has finished cooking, right-click it with a <WikiItemLink name="Ladle" /> to take a serving.
-        </li>
-        <li>Pour the soup into a Bowl, then right-click to eat it.</li>
       </ol>
+      <p className={`mt-3 ${body}`}>
+        Once mashed, a soup takes one salt, one pepper, one garnish and one spice to season it.
+      </p>
 
       <WikiSectionHeading id="stations">Station by station</WikiSectionHeading>
       <DataTable
         className="mt-4"
         minWidth="46rem"
-        columns={[{ header: "Station", width: "10rem" }, { header: "Held item / action" }, { header: "Result" }]}
+        columns={[{ header: "Station", width: "10rem" }, { header: "How to use it" }]}
         rows={[
           [
-            furnitureLink("Cutting Board", "cutting_board"),
-            <WikiItemText key="cutting-knife" text="Hold the Cutting Knife and interact" />,
-            "Runs a cutting/chopping recipe on up to 4 slots at once: all 4 must be the same ingredient.",
+            piece("Cutting Board"),
+            "Put up to 2 of the same ingredient on it and hit it with the Cutting Knife. See the recipes below.",
           ],
           [
-            furnitureLink("Frying Pan", "frying_pan"),
-            "Place food, needs heat below; take out by hand",
-            "Cooks over time; burns if left on too long.",
-          ],
-          [
-            furnitureLink("Pot", "pot"),
-            <WikiItemText key="water-bucket" text="Add a Water Bucket, then cut vegetables" />,
-            "Makes boiled foods and soups.",
-          ],
-          [
-            furnitureLink("Fire Pit", "fire_pit"),
+            piece("Frying Pan"),
             <WikiItemText
-              key="fire-pit-turner"
-              text="Put a roast on the spit, then right-click with the Fire Pit Turner"
+              key="pan"
+              text="Add Butter first: without it, everything in a hot pan burns within 10 seconds. One Butter lasts 30 seconds. Fries raw meat, sausages, eggs, seafood and cut vegetables."
             />,
-            "Rotates and roasts a whole joint (chicken, beef, venison).",
           ],
           [
-            <>
-              {furnitureLink("Meat Hook", "meat_hook")} + {itemLink("Cutting Knife")}
-            </>,
-            "Carve a cooked roast",
-            "Yields cuts one at a time, in a fixed order.",
+            piece("Pot"),
+            "Fill with a Water Bucket. Boils cut vegetables, chicken, red meat, fish fillets, jellyfish and octopus, which you mash into soup.",
           ],
           [
-            furnitureLink("Milling Stone", "milling_stone"),
-            "Insert 8 Wheat, then perform 4 revolutions",
-            <WikiItemText key="flour-output" text="1 batch of Flour in 3 seconds." />,
-          ],
-          [
-            furnitureLink("Mixing Bowl", "mixing_bowl"),
-            <WikiItemText key="mixing-inputs" text="Add Flour + Cup of Water + Yeast, then stir 3 times" />,
-            <WikiItemText key="dough-output" text="Dough (½ second per stir)." />,
-          ],
-          [
-            <>{furnitureLink("Bread Tray", "bread_tray")} (in an Oven)</>,
-            <WikiItemText key="bread-input" text="Fill both moulds with Dough, light the oven with logs" />,
-            "2 Bread per mould.",
-          ],
-          [
-            furnitureLink("Butter Churn", "butter_churn"),
+            piece("Saucepan"),
             <WikiItemText
-              key="milk-input"
-              text="Right-click with a Milk Bucket to load it, then repeatedly right-click the stick"
+              key="saucepan"
+              text="Fill with a cup of water or milk, add ingredients, then ladle the sauce onto food on a Plate."
             />,
-            <WikiItemText key="butter-output" text="3 churns deliver Butter onto a carried Butter Plate." />,
           ],
           [
-            furnitureLink("Sausage Maker", "sausage_maker"),
-            "Feed 3 meats, then crank",
-            <WikiItemText key="sausage-output" text="A Sausage Chain you carve for 5 sausages." />,
+            piece("Liquid Container"),
+            <WikiItemText
+              key="liquid"
+              text="Fill with a water or milk bucket, then right-click with an Empty Cup to fill a cup."
+            />,
           ],
-          ["Cauldron (vanilla block)", "Right-click while holding a sauce or soup item", "Empties/serves the liquid."],
+          [
+            piece("Fire Pit"),
+            "Place it on a lit campfire and put any roast on the spit. Right-click the handle with an empty hand to turn it. Each turn cooks it a little more, so stop before it burns.",
+          ],
+          [
+            piece("Meat Hook"),
+            "Hangs from a ceiling. Hang a roast or sausage chain on it and hit it with the Cutting Knife to carve one piece at a time.",
+          ],
+          [
+            piece("Milling Stone"),
+            "Right-click it with 8 or more wheat in hand (it uses 8), then right-click with an empty hand to grind 1 flour.",
+          ],
+          [
+            piece("Mixing Bowl"),
+            <WikiItemText
+              key="mixing"
+              text="Add flour, a cup of water and yeast, in that order. You can also add 1 sugar and up to 2 different fruits. Stir 3 times to make dough."
+            />,
+          ],
+          [
+            piece("Bread Tray"),
+            <WikiItemText
+              key="bread"
+              text="Fill the moulds with dough before putting the tray in the Oven Top over a lit Oven Bottom. Each mould bakes 2 bread. Take it out before it burns. Let the dough rise first: its description shows Unrisen, Rising or Risen."
+            />,
+          ],
+          [
+            piece("Butter Churn"),
+            <WikiItemText
+              key="churn"
+              text="Right-click with a Milk Bucket, then churn 3 times. Add salt or a spice before collecting for salted or spiced butter. Collect the butter while carrying a Butter Plate."
+            />,
+          ],
+          [
+            piece("Sausage Maker"),
+            "Add 3 pieces of meat, then crank it with paper in your hand (uses 1 sheet). Carve the sausage chain into 5 sausages at a Meat Hook.",
+          ],
+          ["Empty cauldron", "Right-click with a soup or sauce to pour it away. You get the empty ladle back."],
         ]}
       />
 
@@ -147,71 +158,53 @@ export default function CookingPage() {
       <DataTable
         className="mt-4"
         minWidth="40rem"
-        columns={[{ header: "Recipe", width: "12rem" }, { header: "Input" }]}
+        columns={[{ header: "Recipe", width: "12rem" }, { header: "Input" }, { header: "Output" }]}
         rows={[
           [
             "Cut vegetables",
-            <WikiItemText
-              key="raw-vegetables"
-              text="Any raw vegetable (Carrot, Potato, Tomato, Onion, Lettuce, Cucumber, Corn, Beetroot, Pumpkin)"
-            />,
+            "2 raw carrots, potatoes, beetroots, pumpkins, tomatoes, onions, lettuce, cucumbers or corn",
+            "1 cut vegetable",
           ],
-          ["Chop vegetables", "Any cut vegetable"],
-          ["Chop olive", <WikiItemText key="olive" text="Olive" />],
-          ["Chop pistachio", <WikiItemText key="pistachio" text="Pistachio" />],
-          ["Chop rhubarb", <WikiItemText key="rhubarb" text="Rhubarb" />],
-          ["Chop garlic", <WikiItemText key="garlic" text="Garlic" />],
+          ["Chop vegetables", "1 cut vegetable", "1 chopped vegetable"],
+          ["Chop", "1 olive, pistachio, rhubarb or garlic", "1 chopped garnish"],
+          ["Cut seafood", "1 whole fish, jellyfish or octopus", "1 fish fillet, jellyfish cubes or octopus pieces"],
         ]}
       />
-      <p className="mt-2 text-sm text-[var(--tfmc-mist)]">
-        <WikiItemText text="Olive, Pistachio, Rhubarb and Garlic skip the cutting step and go straight to chopped; every other vegetable above is cut first, then optionally chopped again." />
-      </p>
 
-      <WikiSectionHeading id="cook-times">Cooking stations</WikiSectionHeading>
-      <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        <article className="rounded border border-[color-mix(in_srgb,var(--tfmc-cream)_14%,transparent)] p-4">
-          <h3 className="font-semibold">{furnitureLink("Fire Pit", "fire_pit")}</h3>
-          <p className="mt-2 text-sm text-[var(--tfmc-mist)]">
-            <WikiItemText text="Whole Chicken, Beef Roast, Venison Roast" />
-          </p>
-        </article>
-        <article className="rounded border border-[color-mix(in_srgb,var(--tfmc-cream)_14%,transparent)] p-4">
-          <h3 className="font-semibold">{furnitureLink("Frying Pan", "frying_pan")}</h3>
-          <p className="mt-2 text-sm text-[var(--tfmc-mist)]">
-            <WikiItemText text="Chicken, Chicken Leg, Steak, Beef, Venison, Pork, Sausage, Cut vegetables" />
-          </p>
-        </article>
-        <article className="rounded border border-[color-mix(in_srgb,var(--tfmc-cream)_14%,transparent)] p-4">
-          <h3 className="font-semibold">{furnitureLink("Pot", "pot")}</h3>
-          <p className="mt-2 text-sm text-[var(--tfmc-mist)]">Cut vegetables</p>
-        </article>
-      </div>
       <WikiSectionHeading
         id="carving"
-        intro="Each right-click with the Cutting Knife on a roast or sausage chain takes one cut off, in this order."
+        intro="Each hit with the Cutting Knife on the Meat Hook takes off one piece, in this order."
       >
-        Carving sequences
+        Carving
       </WikiSectionHeading>
       <DataTable
         className="mt-4"
         minWidth="34rem"
-        columns={[{ header: "Sequence", width: "14rem" }, { header: "Cuts" }, { header: "Yields in order" }]}
+        columns={[{ header: "Hanging on the hook", width: "14rem" }, { header: "Yields in order" }]}
         rows={[
-          ["Whole Chicken", "6", "Chicken Leg ×2, Chicken ×3, then 2 Bone"],
-          ["Beef / Venison Roast", "8", "Beef ×7, then 4 Bone"],
-          ["Sausage Chain", "5", "Sausage ×5"],
+          ["Whole chicken", "2 chicken legs, 3 chicken, then 2 bones"],
+          ["Other roasts", "7 pieces of that meat, then 4 bones"],
+          ["Sausage chain", "5 sausages"],
         ]}
       />
+      <p className={`mt-3 ${body}`}>
+        How many pieces a roast actually holds depends on how well the animal was bred and cared for (see{" "}
+        <Link href="/wiki/animal-husbandry#quality" className={link}>
+          Animal Husbandry
+        </Link>
+        ).
+      </p>
+
+      <WikiSectionHeading id="eating">Eating</WikiSectionHeading>
+      <p className={`mt-4 ${body}`}>
+        Each character has its own hunger, and a full stomach does not heal you the way it does in normal Minecraft. As
+        you eat, your diet is rated from Terrible to Fantastic. A better diet gives you more damage, health, mana and
+        critical chance, and shorter cooldowns. Eating the same few ingredients over and over lowers your rating, so
+        vary your meals.
+      </p>
 
       <SeeAlso
-        hrefs={[
-          "/wiki/animal-husbandry",
-          "/wiki/farming",
-          "/wiki/drink-builder",
-          "/wiki/materials",
-          "/wiki/stations",
-          "/wiki/commands",
-        ]}
+        hrefs={["/wiki/animal-husbandry", "/wiki/farming", "/wiki/fishing", "/wiki/brewing", "/wiki/furniture"]}
       />
     </WikiPage>
   );

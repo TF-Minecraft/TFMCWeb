@@ -38,23 +38,23 @@ export const generalNodeRecipe: Recipe = {
 
 export type NodeType = { name: string; cycle: string; focuses: string[]; fittings: string[] };
 
-/** Base cycle length is the type's timer; node level and fittings shorten it. */
+/** Base cycle length before level, fittings and efficiency (types.yml `timer`, in minutes). */
 export const nodeTypes: NodeType[] = [
   {
     name: "Ore Mine",
-    cycle: "240",
+    cycle: "4 hours",
     focuses: ["Iron Ore Mine", "Copper Ore Mine", "Rare Ore Mine", "Gemstone Mine"],
     fittings: ["Tools", "Refinery", "Light", "Explosives"],
   },
   {
     name: "Magical Mine",
-    cycle: "240",
+    cycle: "4 hours",
     focuses: ["Dust Mine", "Artifact Mine"],
     fittings: ["Tools", "Refinery", "Light", "Explosives"],
   },
   {
     name: "Farm",
-    cycle: "120",
+    cycle: "2 hours",
     focuses: [
       "Vegetable Farm",
       "Onion Farm",
@@ -67,19 +67,19 @@ export const nodeTypes: NodeType[] = [
   },
   {
     name: "Plantation",
-    cycle: "120",
+    cycle: "2 hours",
     focuses: ["Material Plantation", "Spice Plantation", "Sweet Spice Plantation"],
     fittings: ["Hoes", "Fertilizer", "Irrigation"],
   },
   {
     name: "Forestry",
-    cycle: "60",
+    cycle: "1 hour",
     focuses: ["Log Forestry", "Bark Forestry", "Rare Wood Forestry"],
     fittings: ["Axes", "Refinery", "Irrigation"],
   },
   {
     name: "Quarry",
-    cycle: "60",
+    cycle: "1 hour",
     focuses: ["Stone Quarry", "Salt Quarry", "Gold Quarry"],
     fittings: ["Shovels", "Refinery", "Light", "Explosives"],
   },
@@ -104,7 +104,7 @@ export const dowsingSection: WikiSection = {
     href: "/wiki/dowsing",
     label: "Resource Nodes",
     category: "gathering",
-    blurb: "Place a guild-owned node, pick what it produces, and collect its output every cycle.",
+    blurb: "A guild-run mine, farm, forestry or quarry that keeps producing while it is active.",
   },
   recipes: [generalNodeRecipe],
 };
