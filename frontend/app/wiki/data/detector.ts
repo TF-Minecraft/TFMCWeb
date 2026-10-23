@@ -1,7 +1,11 @@
 import { stationRecipe } from "./station-recipes";
 import type { Recipe, WikiCommandSet, WikiSection } from "./types";
 
-// ---------- Arcane Trace Detector ("Geiger Counter") ----------
+// ---------- Arcane Trace Detector (GeigerCounters v2.4.0 on Main) ----------
+//
+// Main runs one buried cache per character (`mode: player`). Distance thresholds,
+// click rates and reward lists stay off the page: the hunt is read by feel, and the
+// rewards belong to the Act System.
 
 /**
  * Recipes from the authoritative server `engineer-station.yml`, via
@@ -14,18 +18,7 @@ export const detectorRecipes: Recipe[] = [
   stationRecipe("gen-engineer-station-geiger_counter"),
 ];
 
-export const signalTable = [
-  { signal: "1 ring", meaning: "Over 1000 blocks away." },
-  { signal: "2 rings", meaning: "Within 1000 blocks." },
-  { signal: "3 rings", meaning: "Within 300 blocks." },
-  { signal: "Very dark purple, almost black", meaning: "Near the far edge of range (~2500 blocks)." },
-  { signal: "Bright purple", meaning: "~200 blocks out." },
-  { signal: "Turning white", meaning: "Under 200 blocks: the whiter, the closer." },
-  { signal: "Slow clicking (~1 every 2s)", meaning: "Outer limit of the signal." },
-  { signal: "Rapid clicking (a stream)", meaning: "Almost at the source." },
-];
-
-/** geiger_counter 1.1.2 exposes only an op-default admin command. */
+/** The plugin's only command is staff-only. */
 export const detectorCommands: WikiCommandSet = {
   system: "Arcane Trace Detector",
   href: "/wiki/arcane-trace-detector",
@@ -37,8 +30,7 @@ export const detectorSection: WikiSection = {
     href: "/wiki/arcane-trace-detector",
     label: "Arcane Trace Detector",
     category: "magic",
-    blurb:
-      "Hunt the server's single hidden source of Arcane Radiation with a clicking, glowing detector. A serverwide loot race.",
+    blurb: "Follow a clicking, glowing detector to your own buried Arcane Cache.",
   },
   // `detectorRecipes` are server recipes registered by `stationsSection`; listing
   // them again here would put them in the recipe index twice.

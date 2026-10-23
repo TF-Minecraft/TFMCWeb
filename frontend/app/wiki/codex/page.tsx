@@ -1,41 +1,66 @@
+import Link from "next/link";
 import { CommandTable, DataTable, SeeAlso, WikiPage, WikiSectionHeading } from "@/app/components/wiki";
 import { codexCommands } from "../data/codex";
+
+const link = "text-[var(--tfmc-accent)] hover:underline";
+const body = "text-sm text-[var(--tfmc-mist)]";
 
 export default function CodexPage() {
   return (
     <WikiPage
-      lastModified="2026-09-11"
+      lastModified="2026-10-23"
       title="Codex"
       width="lg"
-      intro="The Codex is your in-game discovery journal. Open it to browse lore, character entries, special discoveries, and achievements you have unlocked."
+      intro="The Codex is your character's journal of discoveries. Type /codex while playing a character to open it."
     >
-      <WikiSectionHeading id="browse">Open and read your journal</WikiSectionHeading>
-      <ol className="mt-4 list-decimal space-y-3 pl-6 text-sm text-[var(--tfmc-mist)]">
+      <WikiSectionHeading id="journal">Reading the journal</WikiSectionHeading>
+      <ul className={`mt-3 list-disc space-y-2 pl-5 ${body}`}>
+        <li>The first page shows each category and how much of it you have unlocked.</li>
         <li>
-          Type <code>/codex</code>. The main menu shows the journal categories and your discovery progress.
+          Inside a category, locked entries are hidden. An unlocked entry shows its name and description, the date you
+          found it and how many players have found it.
         </li>
-        <li>Choose a category. Unlocked entries have a colored icon, name, description and discovery date.</li>
-        <li>Click an unlocked Research, Character or Special entry to open its lore book.</li>
-        <li>Close the journal with the barrier.</li>
-      </ol>
+        <li>Some entries, such as research and important figures, can be clicked to read more.</li>
+        <li>Every new entry gives you experience, and chat tells you how much.</li>
+      </ul>
+
+      <WikiSectionHeading id="categories">Categories</WikiSectionHeading>
       <DataTable
-        columns={[{ header: "Category" }, { header: "What to expect" }]}
+        columns={[{ header: "Category", nowrap: true }, { header: "How entries unlock" }]}
         rows={[
-          ["Points of Interest", "Discoveries tied to places in the world."],
-          ["Research", "Material, technique and lore entries."],
-          ["Characters", "Named character entries."],
-          ["Special", "Special books and other secrets."],
-          ["Achievements", "Progress milestones and other achievement entries."],
+          ["Points of Interest", "Travel to notable places around the world."],
+          [
+            "Research",
+            <>
+              Right-click a Completed Thesis from{" "}
+              <Link href="/wiki/research" className={link}>
+                Research
+              </Link>
+              .
+            </>,
+          ],
+          ["Important Figures", "Right-click a Completed Thesis about a historical figure."],
+          ["Special Discoveries", "The world's deepest secrets."],
+          [
+            "Achievements",
+            "Milestones, such as your first death or how much of the Codex you have found, plus a few surprises.",
+          ],
         ]}
       />
-      <WikiSectionHeading id="theses">Research theses and claiming</WikiSectionHeading>
-      <p className="mt-4 text-sm text-[var(--tfmc-mist)]">
-        Right-click a Completed Thesis to claim its matching Research entry. Claiming consumes the thesis. If you
-        already know that entry, keep or trade the duplicate instead.
+
+      <WikiSectionHeading id="characters" intro="Most discoveries belong to your whole account.">
+        Your other characters
+      </WikiSectionHeading>
+      <p className={body}>
+        When another of your characters starts playing, it receives your discoveries and their experience. Research
+        entries and a few achievements are the exception: they stay with the character who earned them. Your other
+        characters can still read an entry they did not find themselves, and the entry shows which of your characters
+        knows it in character. Play the others as if they don&apos;t.
       </p>
+
       <WikiSectionHeading id="commands">Commands</WikiSectionHeading>
-      <CommandTable commands={codexCommands.commands} />
-      <SeeAlso hrefs={["/wiki/research", "/wiki/magic", "/wiki/commands"]} />
+      <CommandTable commands={codexCommands.commands} showNotes={false} />
+      <SeeAlso hrefs={["/wiki/research", "/wiki/commands"]} />
     </WikiPage>
   );
 }

@@ -15,7 +15,7 @@ const returns = [
   ],
   ["Guns", "Up to half the materials the gun was made from. Broken guns and guns made before tracking began can't."],
   [
-    <Link key="magic" href="/wiki/magic" className={link}>
+    <Link key="magic" href="/wiki/mage-weapons" className={link}>
       Mage weapons
     </Link>,
     "Up to half the materials paid to craft it. Take any runes out first. Broken ones can't.",
@@ -78,7 +78,7 @@ export default function RecyclerPage() {
         <CraftingGrid recipe={recyclingStationRecipe} />
       </div>
 
-      <SeeAlso hrefs={["/wiki/advanced-crafting", "/wiki/magic", "/wiki/materials", "/wiki/stations"]} />
+      <SeeAlso hrefs={["/wiki/advanced-crafting", "/wiki/mage-weapons", "/wiki/materials", "/wiki/stations"]} />
     </WikiPage>
   );
 }

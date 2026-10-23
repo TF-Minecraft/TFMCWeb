@@ -25,7 +25,7 @@ import { gettingStartedSection } from "./getting-started";
 import { gunsSection } from "./guns";
 import { infestationsSection } from "./infestations";
 import { instrumentsSection } from "./instruments";
-import { magicSection } from "./magic";
+import { mageWeaponsSection, magicSection } from "./magic";
 import { marketBlockSection } from "./market-blocks";
 import { materialsSection } from "./materials";
 import { recyclerSection } from "./recycler";
@@ -63,6 +63,7 @@ export const wikiSections: readonly WikiSection[] = [
   animalHusbandrySection,
   brewingSection,
   magicSection,
+  mageWeaponsSection,
   researchSection,
   codexSection,
   archaeologySection,

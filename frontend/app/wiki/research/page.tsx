@@ -1,102 +1,106 @@
-import {
-  Callout,
-  DataTable,
-  SeeAlso,
-  StationLink,
-  StatGrid,
-  WikiItemLink,
-  WikiPage,
-  WikiSectionHeading,
-} from "@/app/components/wiki";
+import Link from "next/link";
+import { Callout, SeeAlso, StationLink, WikiItemLink, WikiPage, WikiSectionHeading } from "@/app/components/wiki";
+
+const link = "text-[var(--tfmc-accent)] hover:underline";
+const body = "text-sm text-[var(--tfmc-mist)]";
 
 export default function ResearchPage() {
   return (
     <WikiPage
-      lastModified="2026-09-27"
+      lastModified="2026-10-23"
       title="Research"
       width="lg"
-      intro="Research is an item-based deduction puzzle. Make a research paper at a Cartography Table, study it at a Lectern, and test materials to uncover and fill its hidden aspects."
+      intro="Research is a guessing game played at a Lectern. Every project hides a few aspects, such as Metal or Magic. You test items to find out which aspects they are and fill each one up, and a finished project gives you its result."
     >
-      <WikiSectionHeading id="start">Make a paper and start a project</WikiSectionHeading>
-      <ol className="mt-4 list-decimal space-y-3 pl-6 text-sm text-[var(--tfmc-mist)]">
+      <WikiSectionHeading id="start" intro="A project starts from a research paper or a blank runestone.">
+        Starting a project
+      </WikiSectionHeading>
+      <ol className={`mt-3 list-decimal space-y-2 pl-5 ${body}`}>
         <li>
-          Sneak-right-click a Cartography Table to open the <StationLink name="Research Station" />. Combine one vanilla
-          Paper and one <WikiItemLink name="Alchemy Powder" /> for one <WikiItemLink name="Parchment Paper" />. It takes
-          2 seconds.
+          Sneak and right-click a Cartography Table to open the <StationLink name="Research Station" />. Make a{" "}
+          <WikiItemLink name="Parchment Paper" /> from a Paper and an <WikiItemLink name="Alchemy Powder" />.
         </li>
         <li>
-          Combine one <WikiItemLink name="Parchment Paper" /> with the subject ingredient. Every paper, including an{" "}
-          <WikiItemLink name="Unknown Research Paper" />, takes 5 seconds. Every station recipe grants 10 Herborist EXP.
-          Recipes hide when you lack their ingredients.
+          Combine the Parchment Paper with a subject, such as an ingot, to get a Research Paper about it. You get the
+          subject item back. Papers you have no ingredients for stay hidden. A{" "}
+          <WikiItemLink name="Lost Knowledge Fragment" /> instead makes an{" "}
+          <WikiItemLink name="Unknown Research Paper" />, which studies a random topic. Every craft here also gives a
+          little Herborist experience.
         </li>
         <li>
-          Hold the resulting paper and right-click a Lectern. Each lectern has one owner, so find another lectern if one
-          is occupied. A Minor, Lesser, Greater or Ascendant Runestone (weapon or armour) can start its own project
-          without first becoming a paper.
-        </li>
-        <li>
-          Choose an experiment item, inspect its point preview, then confirm. Each different item may be tested once per
-          project. Items with no aspect tags cannot be used.
-        </li>
-        <li>
-          Use the Testing, Confirmed and Rejected labels to guide your next experiment. Fill every required aspect
-          completely, then collect the result that drops above the lectern. It is not placed directly in your inventory.
+          Hold the paper and right-click a Lectern. The paper is used up and the project starts. A blank runestone from
+          the{" "}
+          <Link href="/wiki/mage-weapons#rune-station" className={link}>
+            Rune Station
+          </Link>{" "}
+          starts a project the same way, without a paper.
         </li>
       </ol>
-      <Callout variant="warning">
-        Breaking the lectern destroys the project. The Scrap button also destroys it after a confirmation and does not
-        refund the project.
-      </Callout>
-      <WikiSectionHeading id="experiments">How experiments reveal the answer</WikiSectionHeading>
-      <DataTable
-        columns={[{ header: "Rule" }, { header: "Meaning" }]}
-        rows={[
-          [
-            "Primary / secondary aspect",
-            "An item contributes more strongly to each primary aspect than to each secondary aspect. One item can contribute to several aspects.",
-          ],
-          [
-            "Rejected",
-            "An aspect outside the hidden recipe is rejected after enough testing. An experiment containing only rejected aspects is blocked.",
-          ],
-          [
-            "Undiscovered Aspect",
-            "Its row appears after you make some progress toward the required points. Intelligence makes it appear sooner.",
-          ],
-          [
-            "Confirmed",
-            "Its identity appears after further progress. Intelligence makes it appear sooner. Confirmation is not completion: keep filling it.",
-          ],
-          [
-            "Product reveal",
-            "The product appears after enough aspects are confirmed. Intelligence can make it appear sooner, but early reveal is not assured.",
-          ],
-          [
-            "Completion",
-            "Every hidden aspect must reach its full required points. Total points are not an experiment count, because tests may contribute to multiple aspects.",
-          ],
-        ]}
-      />
-      <Callout title="A concrete experiment example">
-        <WikiItemLink name="Arcane Crystal" /> is a primary Arcane item, so it supplies 2 Arcane points when tested.
-        Crying Obsidian is secondary Arcane and supplies 1. These are distinct items, so each can be tested once. The{" "}
-        <WikiItemLink name="Arcane Crystal" /> project requires 3 Arcane points, plus its Earth, Energy and Machine
-        requirements.
-      </Callout>
-      <WikiSectionHeading id="focus">Budget your Mental Points</WikiSectionHeading>
-      <StatGrid
-        stats={[
-          { label: "Maximum Focus", value: "150", note: "Stored per RP character; shared with Magic meditation" },
-          { label: "Each experiment", value: "1 point" },
-          { label: "Base refill", value: "10 per real hour", note: "Regenerates offline; 15 hours from empty to full" },
-        ]}
-      />
-      <p className="mt-4 text-sm text-[var(--tfmc-mist)]">
-        Wisdom adds 0.5 points per hour per attribute point; Intelligence adds 0.25. The regeneration interval is one
-        hour. When exhausted, the lectern tells you that you are too tired to research. The aspect table counts distinct
-        primary and secondary items; it is not a recipe or a list of required quantities.
+      <p className={`mt-3 ${body}`}>
+        Only the character who started a project can work on it. You can run projects on several lecterns at once, and
+        they survive restarts.
       </p>
-      <SeeAlso hrefs={["/wiki/magic", "/wiki/codex", "/wiki/gem-infusion", "/wiki/materials", "/wiki/stations"]} />
+
+      <WikiSectionHeading id="experiments" intro="Right-click your lectern to open the project.">
+        Running experiments
+      </WikiSectionHeading>
+      <ol className={`mt-3 list-decimal space-y-2 pl-5 ${body}`}>
+        <li>
+          Click an item in your inventory to put it in the test slot. Its preview shows the aspects it carries, how many
+          points it would add to each, and whether each aspect is still Testing, already Confirmed or Rejected.
+        </li>
+        <li>
+          Press <strong>Confirm Experiment</strong>. The test uses one{" "}
+          <Link href="/wiki/magic#mental-points" className={link}>
+            Mental Point
+          </Link>
+          , and you get the item back.
+        </li>
+        <li>Pick the next item from what you learned, and keep going until every aspect is full.</li>
+      </ol>
+      <ul className={`mt-4 list-disc space-y-2 pl-5 ${body}`}>
+        <li>An item has a main aspect and sometimes a weaker second one. It adds more points to its main aspect.</li>
+        <li>Each item can be tested only once per project. Items with no aspects can&apos;t be tested at all.</li>
+        <li>
+          A hidden aspect first shows as an <strong>Undiscovered</strong> row. Keep adding points to it until chat says
+          &quot;Aspect confirmed&quot; and the row shows its name. Confirmed is not the same as done, so keep filling
+          it.
+        </li>
+        <li>
+          An aspect the project doesn&apos;t use is <strong>Rejected</strong> after a few tests. An experiment that only
+          adds rejected aspects is refused.
+        </li>
+        <li>
+          Points beyond what an aspect needs are wasted, and a test still costs a Mental Point when it adds nothing.
+        </li>
+        <li>
+          Intelligence makes aspects show up and confirm sooner. On an Unknown Research Paper the result itself stays
+          hidden until you have confirmed enough aspects.
+        </li>
+      </ul>
+
+      <WikiSectionHeading id="results" intro="Fill every aspect to finish.">
+        Results and theses
+      </WikiSectionHeading>
+      <p className={body}>
+        When every aspect is confirmed and full, the result drops on top of the lectern. Pick it up quickly, because
+        anyone nearby can. A runestone gives a random rune of its size, and a paper gives a{" "}
+        <strong>Completed Thesis</strong>.
+      </p>
+      <p className={`mt-3 ${body}`}>
+        Right-click a Completed Thesis to add its entry to your{" "}
+        <Link href="/wiki/codex" className={link}>
+          Codex
+        </Link>{" "}
+        and earn experience. This uses up the thesis. If you already know that entry, you keep the thesis, so you can
+        sell or trade it.
+      </p>
+      <Callout variant="warning" title="Ways to lose a project">
+        Breaking the lectern destroys the project. The <strong>Scrap</strong> button does too, after you confirm it, and
+        nothing is refunded.
+      </Callout>
+
+      <SeeAlso hrefs={["/wiki/codex", "/wiki/magic", "/wiki/mage-weapons", "/wiki/stations"]} />
     </WikiPage>
   );
 }

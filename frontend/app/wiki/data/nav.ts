@@ -41,7 +41,7 @@ const CATEGORY_DEFS: Record<WikiCategoryKey, Omit<WikiCategory, "key">> = {
   },
   magic: {
     label: "Magic & Knowledge",
-    blurb: "Magic, research, archaeology and the Codex.",
+    blurb: "Magic and mage weapons, research, the Codex, archaeology and arcane caches.",
     order: 6,
   },
   combat: {
