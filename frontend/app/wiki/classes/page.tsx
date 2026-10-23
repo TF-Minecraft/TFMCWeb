@@ -142,15 +142,7 @@ export default function ClassesPage() {
 
       <WikiSectionHeading id="commands">Commands</WikiSectionHeading>
       <CommandTable commands={classesCommands.commands} />
-      <SeeAlso
-        hrefs={[
-          "/wiki/characters",
-          "/wiki/advanced-crafting",
-          "/wiki/equipment-slots",
-          "/wiki/gathering",
-          "/wiki/commands",
-        ]}
-      />
+      <SeeAlso hrefs={["/wiki/characters", "/wiki/advanced-crafting", "/wiki/equipment-slots", "/wiki/commands"]} />
     </WikiPage>
   );
 }

@@ -1,7 +1,7 @@
 import generated from "./generated/woodworkingFurniture.json";
 import type { WikiSection } from "./types";
 
-// Source: plugins/Woodworking (categories, projects, hits, materials, qualities) and the
+// Source: plugins/Woodworking (categories, projects, hits, materials) and the
 // ItemsAdder furniture packs. Regenerate with `python scripts/build-woodworking-furniture.py`.
 
 export type WoodworkingProject = {
@@ -19,7 +19,7 @@ export type WoodworkingProject = {
 export const woodworkingCategories: { id: string; name: string }[] = generated.categories;
 export const woodworkingProjects = generated.projects as unknown as WoodworkingProject[];
 
-/** Each action is performed with its matching artisan tool in the main hand. */
+/** Each action uses its own artisan tool in the main hand. `group` is the hit category (`hit-types.yml`). */
 export const woodworkingActions = [
   { action: "Whittle", tool: "Whittling Tool", group: "Woodworking" },
   { action: "Engrave", tool: "Engraving Tool", group: "Woodworking" },
@@ -31,20 +31,11 @@ export const woodworkingActions = [
 
 export const woodworkingMaterials = ["Valewood", "Runebark", "Amberpine", "Goldmaple", "Silk"];
 
-/** Quality is picked by hit accuracy; the highest threshold met wins. */
-export const woodworkingQualities = [
-  { name: "Crude", accuracy: "Below 50%" },
-  { name: "Sturdy", accuracy: "50%" },
-  { name: "Fine", accuracy: "75%" },
-  { name: "Ornate", accuracy: "90%" },
-  { name: "Masterwork", accuracy: "100%" },
-];
-
 export const woodworkingSection: WikiSection = {
   nav: {
     href: "/wiki/woodworking",
-    label: "Woodworking Furniture",
+    label: "Woodworking",
     category: "professions",
-    blurb: `Every one of the ${generated.projects.length} decorative furniture pieces you can craft, with a 3D preview of each.`,
+    blurb: `Carve ${generated.projects.length} decorative furniture pieces, each with a 3D preview.`,
   },
 };

@@ -102,7 +102,7 @@ export default function DowsingPage() {
         <li>Only members of the owning guild can change a node.</li>
       </ul>
 
-      <SeeAlso hrefs={["/wiki/factions", "/wiki/gathering", "/wiki/woodworking"]} />
+      <SeeAlso hrefs={["/wiki/factions", "/wiki/woodworking"]} />
     </WikiPage>
   );
 }

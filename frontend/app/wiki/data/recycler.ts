@@ -41,9 +41,9 @@ export const recyclerCommands: WikiCommandSet = {
 export const recyclerSection: WikiSection = {
   nav: {
     href: "/wiki/recycler",
-    label: "Recycler",
+    label: "Recycling",
     category: "professions",
-    blurb: "Break a crafted item back down into a share of the materials that made it.",
+    blurb: "Break crafted gear, runes, artifacts and scrap back down into materials.",
   },
   recipes: recyclerRecipes,
   commands: recyclerCommands,

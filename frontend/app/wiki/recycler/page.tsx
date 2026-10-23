@@ -1,56 +1,84 @@
+import Link from "next/link";
 import { DataTable, SeeAlso, StationLink, WikiPage, WikiSectionHeading } from "@/app/components/wiki";
 import CraftingGrid from "@/app/components/wiki/CraftingGrid";
 import { recyclingStationRecipe } from "../data/recycler";
 
-const providers = [
-  ["Weapons and armour", "Returns some of the original ingredients or alloy components, depending on condition."],
-  ["Guns", "Refunds materials according to the weapon recipe and its remaining durability."],
-  ["Items with a dedicated recycling recipe", "Returns materials from its recycling recipe."],
+const link = "text-[var(--tfmc-accent)] hover:underline";
+const body = "text-sm text-[var(--tfmc-mist)]";
+
+const returns = [
+  [
+    <Link key="ac" href="/wiki/advanced-crafting" className={link}>
+      Forged weapons and armour
+    </Link>,
+    "Up to half the materials. An alloy comes back as its base metal or wood and its crystals.",
+  ],
+  ["Guns", "Up to half the materials the gun was made from. Broken guns and guns made before tracking began can't."],
+  [
+    <Link key="magic" href="/wiki/magic" className={link}>
+      Mage weapons
+    </Link>,
+    "Up to half the materials paid to craft it. Take any runes out first. Broken ones can't.",
+  ],
+  [
+    <Link key="gold" href="/wiki/gem-infusion" className={link}>
+      Gold jewellery
+    </Link>,
+    "Up to half the gold. The gem is not returned.",
+  ],
+  ["Spell runes", "2, 4, 6 or 8 Enchanted Dust (Minor to Ascendant)."],
+  ["Armour runes", "4, 8, 12 or 16 Enchanted Dust (Minor to Ascendant)."],
+  ["Artifacts", "Enchanted Dust by rarity: 4, 8, 12, 16 or 28 (Common to Legendary). Any stored aura is lost."],
+  ["Spent husks", "Half an artifact's dust: 2, 4, 6, 8 or 14."],
+  [
+    "Unusable Scrap",
+    "Each material in it has a chance to come back; its tooltip shows the odds. The scrap is used up either way.",
+  ],
 ];
 
 export default function RecyclerPage() {
   return (
     <WikiPage
-      lastModified="2026-09-12"
-      title="Recycler"
+      lastModified="2026-10-22"
+      title="Recycling"
       intro={
         <>
-          The <StationLink name="Recycling Station" /> breaks a crafted item back down into a share of the materials it
-          took to make it. A pristine item gives back the most; a worn-down one gives back less, and a fully broken item
-          gives back nothing at all.
+          The <StationLink name="Recycling Station" /> breaks crafted gear back down into some of the materials that
+          made it.
         </>
       }
     >
-      <WikiSectionHeading id="building" intro="Built on a vanilla crafting table.">
-        Building the station
-      </WikiSectionHeading>
+      <WikiSectionHeading id="loop">Recycling an item</WikiSectionHeading>
+      <ol className={`mt-3 list-decimal space-y-2 pl-5 ${body}`}>
+        <li>Right-click the station to open it.</li>
+        <li>
+          Click the item in your inventory to move it in. Click it again in the station to take it back. Items that
+          can&apos;t be recycled, or that are unbreakable, are refused.
+        </li>
+        <li>The right side of the menu shows what you would get back.</li>
+        <li>
+          Click the confirm button in the top-left corner. The materials pop out of the station, and anyone nearby can
+          grab them.
+        </li>
+      </ol>
+      <p className={`mt-3 ${body}`}>
+        Gear returns at most half of what went into it, less the more worn it is. Each material is rounded down, so a
+        material that went in only once won&apos;t come back, and fully broken gear gives nothing. If nothing would come
+        back, confirming tells you so and you keep the item. If you close the menu with an item still in it, you get the
+        item back. With a full inventory, it waits for your character until you have room.
+      </p>
+
+      <WikiSectionHeading id="what-recycles">What you get back</WikiSectionHeading>
+      <DataTable columns={[{ header: "Item" }, { header: "Returns" }]} rows={returns} />
+      <p className={`mt-3 ${body}`}>Vanilla items can&apos;t be recycled.</p>
+
+      <WikiSectionHeading id="building">Building the station</WikiSectionHeading>
+      <p className={body}>Made on a crafting table and placed on the floor.</p>
       <div className="mt-4">
         <CraftingGrid recipe={recyclingStationRecipe} />
       </div>
 
-      <WikiSectionHeading id="loop" intro="Right-click the placed station to open it.">
-        The loop
-      </WikiSectionHeading>
-      <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm text-[var(--tfmc-mist)]">
-        <li>
-          Right-click the <StationLink name="Recycling Station" />.
-        </li>
-        <li>
-          Drop the item you want to break down into the input slot. An item that cannot be recycled at all is rejected
-          with &quot;That item cannot be recycled here.&quot;
-        </li>
-        <li>
-          The middle columns of the menu preview exactly what you would get back. If recycling it would return nothing,
-          the preview says so and the confirm button is blocked.
-        </li>
-        <li>Click confirm. The materials pop out of the station, and you get &quot;Recycling complete.&quot;</li>
-        <li>If you close the menu with an item still sitting in the input slot, it is returned to you.</li>
-      </ol>
-
-      <WikiSectionHeading id="what-recycles">What can be recycled</WikiSectionHeading>
-      <DataTable columns={[{ header: "Item" }, { header: "What you get back" }]} rows={providers} />
-
-      <SeeAlso hrefs={["/wiki/materials", "/wiki/stations", "/wiki/commands", "/wiki/advanced-crafting"]} />
+      <SeeAlso hrefs={["/wiki/advanced-crafting", "/wiki/magic", "/wiki/materials", "/wiki/stations"]} />
     </WikiPage>
   );
 }

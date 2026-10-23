@@ -35,7 +35,6 @@ export * from "./farming";
 export * from "./fishing";
 export * from "./furniture";
 export * from "./games";
-export * from "./gathering";
 export * from "./gem-infusion";
 export * from "./getting-started";
 export * from "./guns";
