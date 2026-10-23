@@ -1,7 +1,6 @@
 import Link from "next/link";
 
 import { CropGallery, DataTable, SeeAlso, WikiItemLink, WikiPage, WikiSectionHeading } from "@/app/components/wiki";
-import StationModelViewer from "@/app/components/wiki/StationModelViewer";
 import { cropPlantModels } from "../data/crop-plant-models";
 
 const body = "text-sm text-[var(--tfmc-mist)]";
@@ -144,14 +143,12 @@ export default function FarmingPage() {
       <ol className={`mt-3 list-decimal space-y-2 pl-5 ${body}`}>
         <li>Plant the seed on farmland.</li>
         <li>
-          Keep the farmland wet. It holds up to 7 water and loses 1 roughly every 10 minutes, unless rain or water
-          within about 4 blocks tops it up. A water bottle adds 1, and a watering can adds 5 to every block in a 3×3
-          area.
+          Keep the farmland fully wet (dark). Farmland within 4 blocks of water stays wet, and rain wets the rest for a
+          while. Custom crops stop growing as soon as their farmland starts to dry out.
         </li>
         <li>
-          While the farmland is wet, the crop gains a growth step roughly every 10 minutes, so in fertile land a crop
-          ripens in 20 to 50 minutes. Crops only grow while their chunk is loaded. Bone meal sometimes adds a step or
-          two.
+          On wet farmland the crop gains a growth step roughly every 10 minutes, so in fertile land a crop ripens in 20
+          to 50 minutes. Crops only grow while their chunk is loaded. Bone meal sometimes adds a step or two.
         </li>
         <li>
           Right-click a ripe crop with an empty hand to harvest 2 to 4 produce. Crops that regrow drop back to an
@@ -189,18 +186,6 @@ export default function FarmingPage() {
           ["Sweet Spice Plantation", "Cinnamon, Nutmeg, Vanilla"],
         ]}
       />
-
-      <WikiSectionHeading id="watering">Watering can</WikiSectionHeading>
-      <div className="mt-4 grid items-start gap-4 md:grid-cols-[minmax(0,1fr)_18rem]">
-        <p className={body}>
-          Made at the Tool Station from one iron ingot. It holds 20 water, and each right-click on farmland waters a 3×3
-          area and uses 1. Right-click a water source to refill it by 5. The can&apos;s lore shows how full it is.
-        </p>
-        <StationModelViewer
-          modelUrl="/wiki/models/farming/watering_can.json"
-          textureUrl="/wiki/textures/farming/watering_can.png"
-        />
-      </div>
 
       <SeeAlso hrefs={["/wiki/cooking", "/wiki/dowsing", "/wiki/animal-husbandry", "/wiki/classes"]} />
     </WikiPage>
