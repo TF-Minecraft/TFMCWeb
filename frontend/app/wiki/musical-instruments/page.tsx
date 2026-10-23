@@ -105,9 +105,10 @@ export default function MusicalInstrumentsPage() {
       </ol>
       <p className={`mt-3 ${body}`}>
         Publishing over a disc that already has a song needs a second click to confirm. Copies made before keep the old
-        version. You can publish once every 30 seconds, and make up to 20 new songs in a day. Publishing an unchanged
-        song again doesn&apos;t count. Every studio button also has a <code className={code}>/music</code> command, and{" "}
-        <code className={code}>/music copy</code> copies a recorded disc onto a blank one.
+        version. You can publish once every 30 seconds, and up to 20 new or changed versions across your account in any
+        24 hours. Publishing an unchanged version again doesn&apos;t count. Every studio button also has a{" "}
+        <code className={code}>/music</code> command, and <code className={code}>/music copy</code> copies a recorded
+        disc onto a blank one.
       </p>
 
       <WikiSectionHeading id="faq">If no sound plays</WikiSectionHeading>

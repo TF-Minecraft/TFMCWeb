@@ -98,15 +98,16 @@ export default function WarPage() {
         <li>
           A guild leader whose character has the Mercenary trait founds a company with{" "}
           <code className={code}>/company found &lt;name&gt;</code>. It costs 100 d from the guild bank and is ready a
-          day later. Every mercenary needs the Mercenary trait.
+          day later. Every mercenary needs the Mercenary trait. Each place in the company costs the guild 8 d a day,
+          filled or not.
         </li>
         <li>
           The company leader writes a contract with <code className={code}>/company draft</code>, signs it, and sends it
           to a faction with <code className={code}>/company offer &lt;faction&gt;</code>.
         </li>
         <li>
-          Factions browse companies with <code className={code}>/mercenaries</code>. Their leader or a council member
-          signs the contract to hire.
+          Factions browse companies with <code className={code}>/mercenaries</code>. To hire, their leader or a council
+          member goes to the province of the company&apos;s guild capital and signs the contract there.
         </li>
       </ol>
 
