@@ -24,7 +24,6 @@ import { dowsingSection } from "./dowsing";
 import { gemInfusionSection } from "./gem-infusion";
 import { gettingStartedSection } from "./getting-started";
 import { gunsSection } from "./guns";
-import { harvestingSection } from "./harvesting";
 import { infestationsSection } from "./infestations";
 import { instrumentsSection } from "./instruments";
 import { magicSection } from "./magic";
@@ -58,10 +57,9 @@ export const wikiSections: readonly WikiSection[] = [
   gemInfusionSection,
   woodworkingSection,
   furnitureSection,
-  dowsingSection,
-  harvestingSection,
   farmingSection,
   fishingSection,
+  dowsingSection,
   cookingSection,
   animalHusbandrySection,
   brewingSection,

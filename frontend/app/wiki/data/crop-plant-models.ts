@@ -29,16 +29,6 @@ export const cropPlantModels: Record<string, CropPlantModelAsset> = {
     maturePoint: 4,
     matureModelId: "banana_stage_5",
   },
-  "cactus-fruit": {
-    modelUrl: "/wiki/models/crops/cactus-fruit.json",
-    textureUrls: {
-      "0": "/wiki/textures/crop-plants/cactusfruit/cactusfruit_block.png",
-      particle: "/wiki/textures/crop-plants/cactusfruit/cactusfruit_block.png",
-    },
-    sourceCropId: "cactusfruit",
-    maturePoint: 4,
-    matureModelId: "cactusfruit_stage_5",
-  },
   cherry: {
     modelUrl: "/wiki/models/crops/cherry.json",
     textureUrls: {
@@ -194,16 +184,6 @@ export const cropPlantModels: Record<string, CropPlantModelAsset> = {
     maturePoint: 2,
     matureModelId: "lettuce_stage_3",
   },
-  "mustard-seeds": {
-    modelUrl: "/wiki/models/crops/mustard-seeds.json",
-    textureUrls: {
-      "0": "/wiki/textures/crop-plants/mustard/mustard_block.png",
-      particle: "/wiki/textures/crop-plants/mustard/mustard_block.png",
-    },
-    sourceCropId: "mustard",
-    maturePoint: 4,
-    matureModelId: "mustard_stage_5",
-  },
   olive: {
     modelUrl: "/wiki/models/crops/olive.json",
     textureUrls: {
@@ -234,16 +214,6 @@ export const cropPlantModels: Record<string, CropPlantModelAsset> = {
     sourceCropId: "rhubarb",
     maturePoint: 2,
     matureModelId: "rhubarb_stage_3",
-  },
-  rice: {
-    modelUrl: "/wiki/models/crops/rice.json",
-    textureUrls: {
-      "0": "/wiki/textures/crop-plants/rice/rice_block.png",
-      particle: "/wiki/textures/crop-plants/rice/rice_block.png",
-    },
-    sourceCropId: "rice",
-    maturePoint: 3,
-    matureModelId: "rice_stage_4",
   },
   yeast: {
     modelUrl: "/wiki/models/crops/yeast.json",

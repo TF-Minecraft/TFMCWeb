@@ -37,7 +37,6 @@ export * from "./games";
 export * from "./gem-infusion";
 export * from "./getting-started";
 export * from "./guns";
-export * from "./harvesting";
 export * from "./infestations";
 export * from "./instruments";
 export * from "./magic";
