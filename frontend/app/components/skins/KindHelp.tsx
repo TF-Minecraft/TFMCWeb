@@ -21,7 +21,7 @@ const GUIDES: Record<SkinKind, KindGuide> = {
       "Set name is optional if you want a custom name instead of the default label (e.g. Light Iron).",
       "Per set, upload helmet, chestplate, leggings, and boots icons (16×16 PNG).",
       "Upload Layer 1 and Layer 2 body textures (64×32 PNG) for that set.",
-      "Optional: tick 3D Helmet and upload a Java Block/Item JSON + PNG instead of the flat helmet icon (File → Export → Export Block/Item Model; one-axis 22.5°/45° rotations only).",
+      "Optional: tick 3D Helmet and upload a Java Block/Item JSON + PNG instead of the flat helmet icon (File → Export → Export Block/Item Model; one-axis rotations in 22.5° steps only).",
       "Set the item name and colours/styles if you want, then submit.",
     ],
     notes: [
@@ -81,7 +81,7 @@ const GUIDES: Record<SkinKind, KindGuide> = {
     steps: [
       "Choose Shortbows or Longbows.",
       "Upload one texture PNG used by every model.",
-      "Export Standby, Pull 0, Pull 1 and Pull 2 as Java Block/Item JSON (File → Export → Export Block/Item Model; one-axis 22.5°/45° rotations only).",
+      "Export Standby, Pull 0, Pull 1 and Pull 2 as Java Block/Item JSON (File → Export → Export Block/Item Model; one-axis rotations in 22.5° steps only).",
       "All five files together must be 60 KB or less.",
       "Set the item name / colours, then submit.",
     ],
@@ -93,7 +93,7 @@ const GUIDES: Record<SkinKind, KindGuide> = {
     steps: [
       "Choose Crossbows.",
       "Upload one texture PNG used by every model.",
-      "Export Standby, Pull 0, Pull 1, Pull 2 and Charged as Java Block/Item JSON (one-axis 22.5°/45° rotations only).",
+      "Export Standby, Pull 0, Pull 1, Pull 2 and Charged as Java Block/Item JSON (one-axis rotations in 22.5° steps only).",
       "All six files together must be 60 KB or less.",
       "Set the item name / colours, then submit.",
     ],
@@ -105,7 +105,7 @@ const GUIDES: Record<SkinKind, KindGuide> = {
     steps: [
       "Choose the item type.",
       "In Blockbench: File → Export → Export Block/Item Model as Java Block/Item (not Java Item, not a project file).",
-      "Cubes may only rotate on one axis by 22.5° or 45°.",
+      "Cubes may only rotate on one axis, in steps of 22.5° (67.5°, 90° and so on work too).",
       "Upload that model JSON and its texture PNG.",
       "Set the item name / colours, then submit.",
     ],
@@ -115,7 +115,7 @@ const GUIDES: Record<SkinKind, KindGuide> = {
     summary: "3D shield model plus texture.",
     steps: [
       "Choose the item type.",
-      "Export as Java Block/Item JSON (File → Export → Export Block/Item Model; one-axis 22.5°/45° only).",
+      "Export as Java Block/Item JSON (File → Export → Export Block/Item Model; one-axis rotations in 22.5° steps only).",
       "Upload that JSON + texture PNG.",
       "Preview Idle / Blocking on Right and Left hands.",
       "Set the item name / colours, then submit.",
@@ -127,7 +127,7 @@ const GUIDES: Record<SkinKind, KindGuide> = {
       "3D helmet model worn as an RP mask. Skin it onto a mask in the armour shop; wearing it hides your character name.",
     steps: [
       "Choose Masks as the item type.",
-      "Export as Java Block/Item JSON (File → Export → Export Block/Item Model; one-axis 22.5°/45° only).",
+      "Export as Java Block/Item JSON (File → Export → Export Block/Item Model; one-axis rotations in 22.5° steps only).",
       "Upload that JSON + texture PNG.",
       "Set the item name / colours, then submit.",
     ],
@@ -140,7 +140,7 @@ const GUIDES: Record<SkinKind, KindGuide> = {
     summary: "Standalone 3D helmet (model + texture), not a full armour set.",
     steps: [
       "Choose the item type.",
-      "Export as Java Block/Item JSON (File → Export → Export Block/Item Model; one-axis 22.5°/45° only).",
+      "Export as Java Block/Item JSON (File → Export → Export Block/Item Model; one-axis rotations in 22.5° steps only).",
       "Upload that JSON + texture PNG.",
       "Set the item name / colours, then submit.",
     ],
@@ -151,7 +151,7 @@ const GUIDES: Record<SkinKind, KindGuide> = {
     steps: [
       "Choose the item type.",
       "Upload one texture PNG used by all poses.",
-      "Export carry, reload, and aim as Java Block/Item JSON (not Java Item; one-axis 22.5°/45° only).",
+      "Export carry, reload, and aim as Java Block/Item JSON (not Java Item; one-axis rotations in 22.5° steps only).",
       "Upload them as Carry model, Reload model and Aim model.",
       "Set the item name / colours, then submit.",
     ],

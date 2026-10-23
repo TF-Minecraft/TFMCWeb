@@ -135,7 +135,7 @@ backend/src/data/skins/{submission_id}/
 - Id from IGN + item name per [naming.md](naming.md)
 - PNG magic bytes; max bytes; **exact** pixel sizes
 - `base_set` required for non-armor kinds; `tiers` for armor
-- 3D kinds: vanilla Java Block/Item JSON (`elements` + single-axis 22.5°/45° rotation); display autofill; pair byte caps
+- 3D kinds: vanilla Java Block/Item JSON (`elements` + single-axis rotation in 22.5° steps; past ±45° is baked into the cube as quarter turns for 1.21.10 clients); display autofill; pair byte caps
 - Requires Discord link stamp at submit
 
 ## Review preview

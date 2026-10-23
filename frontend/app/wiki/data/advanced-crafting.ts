@@ -95,9 +95,8 @@ export const advancedCraftingCommands: WikiCommandSet = {
   commands: [
     {
       command: "/alloy name <NewName>",
-      description: "Names the alloy you just invented at the Alloy Forge, inside a 60-second naming prompt.",
-      notes:
-        "Names may only contain letters and underscores. Underscores appear as spaces, and the naming prompt is available to every player who reaches it.",
+      description: "Names a new alloy you just forged. You have 60 seconds after forging it.",
+      notes: "Letters and underscores only; underscores show as spaces. The name must not already be taken.",
     },
   ],
 };
@@ -109,7 +108,7 @@ export const advancedCraftingSection: WikiSection = {
     href: "/wiki/advanced-crafting",
     label: "Advanced Crafting",
     category: "professions",
-    blurb: "Hammer your own weapons and armour, then invent and name your own metal alloys.",
+    blurb: "Forge weapons, armour and bows, and invent your own alloys.",
   },
   recipes: advancedCraftingRecipes,
   commands: advancedCraftingCommands,
@@ -117,7 +116,7 @@ export const advancedCraftingSection: WikiSection = {
 
 // ---------- Forging Station recipe templates ----------
 //
-// Source: plugins/AdvancedCrafting/recipes/{weapons,armor,bows}.yml (35 entries).
+// Source: plugins/AdvancedCrafting/recipes/{weapons,armor,bows}.yml on Main (36 entries).
 //
 // These are NOT 3x3 crafting-table recipes and deliberately do not use the
 // `Recipe`/`Slot` shape. A station recipe asks for ingredient *types* with a
@@ -129,16 +128,8 @@ export const advancedCraftingSection: WikiSection = {
 // No entry in any of the three files declares a time, a cost, a level or a
 // permission, so none of those fields exist here.
 
-/** The eight ingredient types, from `ingredient-types.yml`. */
-export type IngredientTypeId =
-  | "metal"
-  | "wood"
-  | "crystal"
-  | "leather"
-  | "feather"
-  | "wool"
-  | "paper"
-  | "enchanted_dust";
+/** The seven ingredient types, from `ingredient-types.yml` on Main. */
+export type IngredientTypeId = "metal" | "wood" | "crystal" | "leather" | "feather" | "wool" | "enchanted_dust";
 
 /** Display label and in-game colour for each type (`ingredient-types.yml`). */
 export const ingredientTypes: Record<IngredientTypeId, { label: string; color: string }> = {
@@ -148,7 +139,6 @@ export const ingredientTypes: Record<IngredientTypeId, { label: string; color: s
   leather: { label: "Leather", color: "#f29857" },
   feather: { label: "Feather", color: "#faf9f7" },
   wool: { label: "Wool", color: "#ede2af" },
-  paper: { label: "Paper", color: "#faf9f7" },
   enchanted_dust: { label: "Enchanted Dust", color: "#FF55FF" },
 };
 
@@ -178,7 +168,7 @@ export type StationRecipeTemplate = {
 
 const gem = "gemstones" as const;
 
-/** recipes/weapons.yml: 12 entries, in file order. */
+/** recipes/weapons.yml: 13 entries, in file order. */
 export const weaponRecipeTemplates: StationRecipeTemplate[] = [
   {
     id: "sword",
@@ -275,6 +265,17 @@ export const weaponRecipeTemplates: StationRecipeTemplate[] = [
     socketGroup: gem,
     ingredients: [
       { type: "metal", qty: 8 },
+      { type: "leather", qty: 2 },
+      { type: "wool", qty: 2 },
+    ],
+  },
+  {
+    id: "lute",
+    name: "%material% Lute",
+    category: "weapons",
+    socketGroup: gem,
+    ingredients: [
+      { type: "metal", qty: 4 },
       { type: "leather", qty: 2 },
       { type: "wool", qty: 2 },
     ],
@@ -489,7 +490,6 @@ export const armorRecipeTemplates: StationRecipeTemplate[] = [
     group: "Infantry",
     socketGroup: gem,
     ingredients: [
-      { type: "paper", qty: 4 },
       { type: "metal", qty: 4 },
       { type: "feather", qty: 4 },
     ],
@@ -501,7 +501,6 @@ export const armorRecipeTemplates: StationRecipeTemplate[] = [
     group: "Infantry",
     socketGroup: gem,
     ingredients: [
-      { type: "paper", qty: 4 },
       { type: "metal", qty: 4 },
       { type: "feather", qty: 4 },
     ],
@@ -513,7 +512,6 @@ export const armorRecipeTemplates: StationRecipeTemplate[] = [
     group: "Infantry",
     socketGroup: gem,
     ingredients: [
-      { type: "paper", qty: 4 },
       { type: "metal", qty: 4 },
       { type: "feather", qty: 4 },
     ],
@@ -525,7 +523,6 @@ export const armorRecipeTemplates: StationRecipeTemplate[] = [
     group: "Infantry",
     socketGroup: gem,
     ingredients: [
-      { type: "paper", qty: 4 },
       { type: "metal", qty: 4 },
       { type: "feather", qty: 4 },
     ],

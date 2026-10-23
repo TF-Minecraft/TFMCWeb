@@ -21,7 +21,7 @@ const piece = (name: string) => (
 export default function CookingPage() {
   return (
     <WikiPage
-      lastModified="2026-10-22"
+      lastModified="2026-10-23"
       title="Cooking"
       width="lg"
       intro="You cook on furniture placed in the world, not in a menu. Food keeps track of how fresh it is, how it was cooked and how it was seasoned, and has a quality from 1 to 5 stars."
@@ -162,7 +162,7 @@ export default function CookingPage() {
         rows={[
           [
             "Cut vegetables",
-            "2 raw carrots, potatoes, beetroots, pumpkins, tomatoes, onions, lettuce, cucumbers, corn or rice",
+            "2 raw carrots, potatoes, beetroots, pumpkins, tomatoes, onions, lettuce, cucumbers or corn",
             "1 cut vegetable",
           ],
           ["Chop vegetables", "1 cut vegetable", "1 chopped vegetable"],
@@ -180,11 +180,11 @@ export default function CookingPage() {
       <DataTable
         className="mt-4"
         minWidth="34rem"
-        columns={[{ header: "Hanging on the hook", width: "14rem" }, { header: "Cuts" }, { header: "Yields in order" }]}
+        columns={[{ header: "Hanging on the hook", width: "14rem" }, { header: "Yields in order" }]}
         rows={[
-          ["Whole chicken", "6", "2 chicken legs, 3 chicken, then 2 bones"],
-          ["Other roasts", "8", "7 pieces of that meat, then 4 bones"],
-          ["Sausage chain", "5", "5 sausages"],
+          ["Whole chicken", "2 chicken legs, 3 chicken, then 2 bones"],
+          ["Other roasts", "7 pieces of that meat, then 4 bones"],
+          ["Sausage chain", "5 sausages"],
         ]}
       />
       <p className={`mt-3 ${body}`}>

@@ -5,6 +5,7 @@ import {
   CommandTable,
   DataTable,
   SeeAlso,
+  StationLink,
   WikiItemLink,
   WikiItemText,
   WikiPage,
@@ -19,7 +20,7 @@ export default function AnimalHusbandryPage() {
   return (
     <WikiPage
       title="Animal Husbandry"
-      lastModified="2026-10-22"
+      lastModified="2026-10-23"
       intro="Claim farm animals, keep them fed and clean, and breed them for better meat, milk, eggs and materials."
     >
       <WikiSectionHeading id="tools">What you need</WikiSectionHeading>
@@ -120,10 +121,9 @@ export default function AnimalHusbandryPage() {
         neutered. If either parent is owned, you must own both. Wild animals start with 0 to 20 genetics and 0 care.
       </p>
       <p className={`mt-3 ${body}`}>
-        A baby gets about the average of its parents&apos; genetics plus a random boost, up to a maximum of 1,000. The
-        boost grows with the parents&apos; care and shrinks as genetics get high. Parents with no care pass on only
-        their average, so raise their care before breeding. Breeding food with a star rating matters too: 1-star food
-        gives a fifth of the boost, while 5-star food or food with no stars gives all of it.
+        Babies inherit genetics from their parents, with a boost that improves when the parents are well cared for.
+        Raise both parents' care before breeding. Higher-star breeding food also helps; food with no stars gives the
+        same benefit as 5-star food. Genetics can reach 1,000 through breeding.
       </p>
       <p className={`mt-3 ${body}`}>
         Babies take 1 hour to grow up (chickens 45 minutes) and look like babies until then. They have to be grown
@@ -152,8 +152,8 @@ export default function AnimalHusbandryPage() {
         ]}
       />
       <p className={`mt-4 ${body}`}>
-        Only grown, happy animals lay eggs or shed, and shedding has a 15% chance every 4 hours. Wild cows and goats
-        cannot be milked. A recently sheared sheep or goat drops no wool when killed. Carve roasts at a Meat Hook (see{" "}
+        Only grown, happy animals lay eggs or shed. Wild cows and goats cannot be milked. A recently sheared sheep or
+        goat drops no wool when killed. Carve roasts at a Meat Hook (see{" "}
         <Link href="/wiki/cooking#carving" className={link}>
           Cooking
         </Link>
@@ -167,10 +167,8 @@ export default function AnimalHusbandryPage() {
         Genetics, care and quality
       </WikiSectionHeading>
       <p className={`mt-4 ${body}`}>
-        An animal&apos;s <strong>effective genetics</strong> is its genetics multiplied by its care out of 200. At 200
-        care it uses all its genetics, at 100 care only half. Effective genetics sets how much meat a roast holds: one
-        more cut for every 125, up to the size of the roast. Chicken roasts always have at least two legs and one piece
-        of chicken.
+        Genetics sets an animal's potential, and care affects how much of it you get. Well-bred animals kept fed and
+        clean give more meat and better food.
       </p>
       <DataTable
         className="mt-4"
@@ -184,9 +182,8 @@ export default function AnimalHusbandryPage() {
         ]}
       />
       <p className={`mt-4 ${body}`}>
-        Food quality rolls between the star tier of its effective genetics and the star tier of its raw genetics. For
-        example, an animal with 800 genetics and 100 care has 400 effective genetics, so its food rolls 3 to 5 stars. At
-        200 care, it always gives 5 stars. Raw genetics also unlocks rarer material drops at 3, 4 and 5 stars.
+        Better genetics raise food quality, and high care makes that quality more consistent. Keep animals fed and clean
+        to get the best food from them. Raw genetics also unlocks rarer material drops at 3, 4 and 5 stars.
       </p>
 
       <WikiSectionHeading id="mounts">Mounts</WikiSectionHeading>
@@ -198,6 +195,12 @@ export default function AnimalHusbandryPage() {
 
       <WikiSectionHeading id="finding">Finding your animals</WikiSectionHeading>
       <CommandTable className="mt-4" commands={animalHusbandryCommands.commands} />
+      <p className="mt-4 text-sm text-[var(--tfmc-mist)]">
+        Right-click an <StationLink name="Animal Station" /> to craft a <WikiItemLink name="Mount Whistle" />. Blow it
+        with a right-click and every horse, donkey, mule, llama and trader llama within 64 blocks glows for 5 seconds,
+        so you can spot it through walls. It finds every such animal, not only yours, and chat tells you how many
+        answered. Camels do not answer. Other players can hear the whistle, and it has a 3-second cooldown.
+      </p>
 
       <SeeAlso hrefs={["/wiki/cooking", "/wiki/farming", "/wiki/companion-pets", "/wiki/materials"]} />
     </WikiPage>

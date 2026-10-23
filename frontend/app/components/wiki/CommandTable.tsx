@@ -34,7 +34,7 @@ export default function CommandTable({
             {command.aliases.join(", ")}
           </span>
         ) : (
-          "—"
+          "None"
         ),
       );
     }
@@ -46,7 +46,7 @@ export default function CommandTable({
     if (showNotes) {
       cells.push(
         <span key="notes" className="break-words [overflow-wrap:anywhere]">
-          {typeof command.notes === "string" ? <WikiItemText text={command.notes} /> : (command.notes ?? "—")}
+          {typeof command.notes === "string" ? <WikiItemText text={command.notes} /> : (command.notes ?? "None")}
         </span>,
       );
     }

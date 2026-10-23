@@ -1,6 +1,5 @@
 import { advancedCraftingSection } from "./advanced-crafting";
 import { archaeologySection } from "./archaeology";
-import { armorStatuesSection } from "./armor-statues";
 import { armourShopSection } from "./armour-shop";
 import { birdMailSection } from "./bird-mail";
 import { brewingSection } from "./brewing";
@@ -21,11 +20,9 @@ import { furnitureSection } from "./furniture";
 import { woodworkingSection } from "./woodworking";
 import { gamesSection } from "./games";
 import { dowsingSection } from "./dowsing";
-import { gatheringSection } from "./gathering";
 import { gemInfusionSection } from "./gem-infusion";
 import { gettingStartedSection } from "./getting-started";
 import { gunsSection } from "./guns";
-import { harvestingSection } from "./harvesting";
 import { infestationsSection } from "./infestations";
 import { instrumentsSection } from "./instruments";
 import { magicSection } from "./magic";
@@ -34,7 +31,7 @@ import { materialsSection } from "./materials";
 import { recyclerSection } from "./recycler";
 import { researchSection } from "./research";
 import { serverFeaturesSection } from "./server-features";
-import { sittingSection } from "./sitting";
+import { roleplayToolsSection } from "./roleplay-tools";
 import { stationsSection } from "./stations";
 import { thieverySection } from "./thievery";
 import { vehiclesSection } from "./vehicles";
@@ -53,23 +50,21 @@ export const wikiSections: readonly WikiSection[] = [
   classesSection,
   equipmentSlotsSection,
   serverFeaturesSection,
-  sittingSection,
-  armorStatuesSection,
+  birdMailSection,
+  roleplayToolsSection,
   advancedCraftingSection,
-  furnitureSection,
+  gemInfusionSection,
   woodworkingSection,
-  gatheringSection,
-  dowsingSection,
-  harvestingSection,
+  furnitureSection,
   farmingSection,
   fishingSection,
+  dowsingSection,
   cookingSection,
   animalHusbandrySection,
   brewingSection,
   magicSection,
   researchSection,
   codexSection,
-  gemInfusionSection,
   archaeologySection,
   detectorSection,
   gunsSection,
@@ -80,7 +75,6 @@ export const wikiSections: readonly WikiSection[] = [
   factionsSection,
   economySection,
   marketBlockSection,
-  birdMailSection,
   companionPetsSection,
   gamesSection,
   instrumentsSection,
