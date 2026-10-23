@@ -4,7 +4,7 @@ import type { WikiCommandSet, WikiSection } from "./types";
 
 /** No player command exists for the live inventory. It is `type: vanilla`, so slots sit in your normal inventory. */
 export const equipmentSlotsCommands: WikiCommandSet = {
-  system: "MMOInventory",
+  system: "Equipment Slots",
   href: "/wiki/equipment-slots",
   commands: [],
 };
@@ -14,7 +14,7 @@ export const equipmentSlotsSection: WikiSection = {
     href: "/wiki/equipment-slots",
     label: "Equipment Slots",
     category: "character",
-    blurb: "Four extra slots in your normal inventory for a Ring, an Amulet and two Artifacts.",
+    blurb: "Four inventory slots for a ring, an amulet and two jewellery artifacts.",
   },
   commands: equipmentSlotsCommands,
 };

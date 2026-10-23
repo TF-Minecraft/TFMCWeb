@@ -31,6 +31,9 @@ const nextConfig: NextConfig = {
       // Staff tools that moved into the staff panel.
       { source: "/precedent", destination: "/admin/precedent", permanent: false },
       { source: "/inspect", destination: "/admin/codes", permanent: false },
+      // Sitting and Armor Statues were merged into Roleplay Tools.
+      { source: "/wiki/sitting", destination: "/wiki/roleplay-tools", permanent: true },
+      { source: "/wiki/armor-statues", destination: "/wiki/roleplay-tools#armor-statues", permanent: true },
       // The Gathering plugin's spots never spawn on Main, so its wiki page was removed.
       { source: "/wiki/gathering", destination: "/wiki", permanent: false },
       // Crop Harvesting was merged into Farming.
