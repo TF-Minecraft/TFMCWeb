@@ -469,9 +469,7 @@ export const dropOnlyMaterials: CatalogMaterial[] = [
     acquisition: gradedAnimalProduct(
       kind === "Feather" ? "feathers" : kind.toLowerCase(),
       kind === "Leather"
-        ? grade === "Perfect"
-          ? "cows, horses, donkeys, mules, camels and 5-star goats"
-          : "cows, horses, donkeys, mules and camels"
+        ? "cows, horses, donkeys, mules and camels"
         : kind === "Wool"
           ? "sheep and goats"
           : "chickens and llamas",
