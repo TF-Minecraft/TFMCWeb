@@ -164,7 +164,7 @@ export const guildsCommands: WikiCommandSet = {
     {
       command: "/guild setcapital [name]",
       description: "Makes the province you stand in the guild's capital, where its trade starts.",
-      notes: "Guild leader, in your faction's land.",
+      notes: "Guild leader, in your faction's land. Give a name if the province has no settlement yet.",
     },
     {
       command: "/guild setbank",

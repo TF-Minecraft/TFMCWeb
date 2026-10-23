@@ -110,20 +110,22 @@ export const instrumentCommands: WikiCommandSet = {
     },
     {
       command: "/music new <title>",
-      description: "Starts a new song.",
+      aliases: ["/music title <title>"],
+      description: "Starts a new song, or renames the one you have open.",
     },
     {
       command: "/music projects",
-      aliases: ["/music open <id>"],
-      description: "Lists your songs, or opens one of them.",
+      aliases: ["/music open <id>", "/music status"],
+      description: "Lists your songs, opens one, or shows the tracks of the open song.",
     },
     {
       command: "/music record <track>",
-      description: "Records a take on track 1 to 4. Stop with /music stop.",
+      aliases: ["/music stop"],
+      description: "Records a take on track 1 to 4, or stops recording or playback.",
     },
     {
-      command: "/music preview take",
-      description: "Plays back your last take with the other tracks.",
+      command: "/music preview [take]",
+      description: "Plays the whole song. With take, plays your last take with the other tracks.",
     },
     {
       command: "/music keep",
@@ -131,8 +133,19 @@ export const instrumentCommands: WikiCommandSet = {
       description: "Keeps or throws away your last take.",
     },
     {
+      command: "/music volume <track> <0-2>",
+      aliases: ["/music mute <track>", "/music remove <track>"],
+      description: "Sets a track's volume, mutes or unmutes it, or deletes it.",
+    },
+    {
+      command: "/music bpm <40-240>",
+      aliases: ["/music metronome <on|off>"],
+      description: "Sets the metronome's tempo, or turns the metronome on or off.",
+      notes: "Recorded notes keep their timing.",
+    },
+    {
       command: "/music blank",
-      description: "Turns a music disc from your inventory into a blank recording disc.",
+      description: "Turns the ordinary music disc in your main hand into a blank recording disc.",
     },
     {
       command: "/music publish",
@@ -140,7 +153,11 @@ export const instrumentCommands: WikiCommandSet = {
     },
     {
       command: "/music copy",
-      description: "Copies the recorded disc in your off-hand onto a blank disc.",
+      description: "Copies the recorded disc in your off-hand onto the blank disc in your main hand.",
+    },
+    {
+      command: "/music reset confirm",
+      description: "Clears the song you have open. Discs you already published keep it.",
     },
   ],
 };

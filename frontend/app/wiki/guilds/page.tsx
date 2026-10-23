@@ -34,7 +34,7 @@ export default function GuildsPage() {
         </li>
         <li>
           A guild has its own leader, banner, capital and bank. Set the capital with{" "}
-          <code className={code}>/guild setcapital</code>, then the bank inside it with{" "}
+          <code className={code}>/guild setcapital &lt;name&gt;</code>, then the bank inside it with{" "}
           <code className={code}>/guild setbank</code>. Any member can pay in; only the guild leader can take money out.
         </li>
         <li>

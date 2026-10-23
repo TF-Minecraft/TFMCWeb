@@ -59,8 +59,12 @@ export default function WarPage() {
           After 20 minutes, a warband leader can <code className={code}>/warband retreat</code>, which ends the battle
           as a loss for that side.
         </li>
-        <li>The losing faction pays the winner a quarter of its income for 10 days.</li>
       </ul>
+
+      <p className={`mt-3 ${body}`}>
+        The faction that loses the war, and its subjects, pay the winner a quarter of their guilds&apos; trade income
+        for 10 days.
+      </p>
 
       <WikiSectionHeading id="raids" intro="A short attack launched from a port or airport.">
         Raids

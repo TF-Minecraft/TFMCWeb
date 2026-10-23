@@ -96,7 +96,7 @@ export default function MusicalInstrumentsPage() {
         </li>
         <li>
           Listen to the take with the other tracks, then keep or discard it. Each track has its own volume and mute.
-          Song settings change the title, the tempo and a metronome that only you hear.
+          Song settings change the title and the metronome, which only you hear and is never recorded.
         </li>
         <li>
           Pick up one music disc and place it on <strong>Publish full song</strong>. The disc now plays your song in any
@@ -105,9 +105,9 @@ export default function MusicalInstrumentsPage() {
       </ol>
       <p className={`mt-3 ${body}`}>
         Publishing over a disc that already has a song needs a second click to confirm. Copies made before keep the old
-        version. You can publish once every 30 seconds, up to 20 times a day. Every studio button also has a{" "}
-        <code className={code}>/music</code> command, and <code className={code}>/music copy</code> copies a recorded
-        disc onto a blank one.
+        version. You can publish once every 30 seconds, and make up to 20 new songs in a day. Publishing an unchanged
+        song again doesn&apos;t count. Every studio button also has a <code className={code}>/music</code> command, and{" "}
+        <code className={code}>/music copy</code> copies a recorded disc onto a blank one.
       </p>
 
       <WikiSectionHeading id="faq">If no sound plays</WikiSectionHeading>
