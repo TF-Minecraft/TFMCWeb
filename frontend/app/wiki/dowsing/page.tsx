@@ -111,7 +111,7 @@ export default function DowsingPage() {
         undone. You get the node block back and any output it was holding, but its level and fittings are lost.
       </p>
 
-      <SeeAlso hrefs={["/wiki/factions", "/wiki/economy", "/wiki/farming"]} />
+      <SeeAlso hrefs={["/wiki/factions", "/wiki/economy", "/wiki/farming", "/wiki/woodworking"]} />
     </WikiPage>
   );
 }

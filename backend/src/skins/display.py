@@ -8,7 +8,10 @@ from __future__ import annotations
 
 import copy
 import json
+import math
 from typing import Any
+
+from .element_rotation import bake_quarter_turns, is_step_angle
 
 HAND_TABS = (
     "thirdperson_righthand",
@@ -148,8 +151,10 @@ class DisplayError(ValueError):
 
 EXPORT_HINT = "Export in Blockbench as Java Block/Item (not Java Item)."
 ROTATION_ERROR = (
-    "Cubes may only rotate on one axis by 22.5° or 45°. " + EXPORT_HINT
+    "Cubes may only rotate on one axis, in steps of 22.5°. " + EXPORT_HINT
 )
+FACE_ROTATION_ERROR = "Face texture rotation must be 0, 90, 180 or 270."
+FACE_UV_ERROR = "Face uv must be four numbers."
 NO_ELEMENTS_ERROR = "Model has no elements. " + EXPORT_HINT
 ITEM_WRAPPER_ERROR = (
     "This looks like a Minecraft item definition, not a Java Block/Item model. "
@@ -157,11 +162,15 @@ ITEM_WRAPPER_ERROR = (
 )
 PROJECT_FILE_ERROR = "This looks like a Blockbench project file. " + EXPORT_HINT
 BOUNDS_ERROR = "Cube coordinates must be between -16 and 32."
+TURNED_BOUNDS_ERROR = (
+    "A cube rotated past 45° ends up outside -16 to 32 once turned. "
+    "Move it or its pivot closer to the model centre."
+)
 TEXTURES_ERROR = "Model textures must be a map of texture ids to paths."
 CUBE_ERROR = "Each cube needs from and to as three numbers."
 
 _ALLOWED_AXES = frozenset({"x", "y", "z"})
-_ALLOWED_ANGLES = (-45.0, -22.5, 0.0, 22.5, 45.0)
+_FACE_ROTATIONS = frozenset({0, 90, 180, 270})
 _COORD_MIN = -16.0
 _COORD_MAX = 32.0
 
@@ -171,9 +180,24 @@ def _is_number(value: Any) -> bool:
 
 
 def _angle_allowed(value: Any) -> bool:
-    if not _is_number(value):
+    """Any multiple of 22.5°; past ±45° is baked into the cube on upload."""
+    if not _is_number(value) or not math.isfinite(value):
         return False
-    return any(abs(float(value) - allowed) < 1e-6 for allowed in _ALLOWED_ANGLES)
+    return is_step_angle(float(value))
+
+
+def _single_axis_euler(rot: dict[str, Any]) -> tuple[str, float] | None:
+    """1.21.11 x/y/z rotation turning on at most one axis, as (axis, angle)."""
+    turned = []
+    for axis in ("x", "y", "z"):
+        value = rot.get(axis, 0)
+        if not _is_number(value) or not math.isfinite(value):
+            return None
+        if value != 0:
+            turned.append((axis, float(value)))
+    if len(turned) > 1:
+        return None
+    return turned[0] if turned else ("y", 0.0)
 
 
 def _vec3(value: Any) -> bool:
@@ -216,18 +240,63 @@ def validate_java_block_model(model: dict[str, Any]) -> None:
             raise DisplayError(CUBE_ERROR)
         if not _coords_in_bounds(from_v) or not _coords_in_bounds(to_v):
             raise DisplayError(BOUNDS_ERROR)
+        faces = el.get("faces")
+        if isinstance(faces, dict):
+            for face in faces.values():
+                if not isinstance(face, dict):
+                    continue
+                if not _face_rotation_ok(face.get("rotation", 0)):
+                    raise DisplayError(FACE_ROTATION_ERROR)
+                uv = face.get("uv")
+                if uv is not None and not _uv4(uv):
+                    raise DisplayError(FACE_UV_ERROR)
         rot = el.get("rotation")
         if rot is None:
             continue
         if isinstance(rot, list) or not isinstance(rot, dict):
             raise DisplayError(ROTATION_ERROR)
-        if any(k in rot for k in ("x", "y", "z")) and "axis" not in rot:
-            raise DisplayError(ROTATION_ERROR)
-        axis = rot.get("axis")
-        if axis not in _ALLOWED_AXES or not _angle_allowed(rot.get("angle")):
+        if "axis" in rot:
+            axis, angle = rot.get("axis"), rot.get("angle")
+        elif any(k in rot for k in ("x", "y", "z")):
+            axis, angle = _single_axis_euler(rot) or (None, None)
+        else:
+            axis, angle = None, None
+        if axis not in _ALLOWED_AXES or not _angle_allowed(angle):
             raise DisplayError(ROTATION_ERROR)
         if not _vec3(rot.get("origin")):
             raise DisplayError(ROTATION_ERROR)
+
+
+def _uv4(value: Any) -> bool:
+    return (
+        isinstance(value, list)
+        and len(value) == 4
+        and all(_is_number(n) and math.isfinite(n) for n in value)
+    )
+
+
+def _face_rotation_ok(value: Any) -> bool:
+    return _is_number(value) and value in _FACE_ROTATIONS
+
+
+def to_vanilla_rotations(model: dict[str, Any]) -> None:
+    """Rewrite validated cube rotations into what Minecraft 1.21.10 loads.
+
+    x/y/z rotations become axis/angle, and angles past ±45° are baked into
+    the cube as quarter turns.
+    """
+    for el in model["elements"]:
+        rot = el.get("rotation")
+        if rot is None:
+            continue
+        if "axis" not in rot:
+            axis, angle = _single_axis_euler(rot)  # type: ignore[misc]
+            for k in ("x", "y", "z"):
+                rot.pop(k, None)
+            rot["axis"], rot["angle"] = axis, angle
+        bake_quarter_turns(el)
+        if not _coords_in_bounds(el["from"]) or not _coords_in_bounds(el["to"]):
+            raise DisplayError(TURNED_BOUNDS_ERROR)
 
 
 def required_tabs(kind: str) -> tuple[str, ...]:
@@ -289,6 +358,7 @@ def parse_and_merge_model(raw: bytes, kind: str) -> dict[str, Any]:
     if not isinstance(model, dict):
         raise DisplayError("Model JSON must be an object")
     validate_java_block_model(model)
+    to_vanilla_rotations(model)
     submitted = model.get("display")
     if submitted is not None and not isinstance(submitted, dict):
         raise DisplayError("Model display must be an object")

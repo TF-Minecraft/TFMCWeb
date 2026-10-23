@@ -31,9 +31,10 @@ const nextConfig: NextConfig = {
       // Staff tools that moved into the staff panel.
       { source: "/precedent", destination: "/admin/precedent", permanent: false },
       { source: "/inspect", destination: "/admin/codes", permanent: false },
-      // Crop Harvesting was merged into Farming. Gathering spots do not spawn on Main, so that page was removed.
-      { source: "/wiki/harvesting", destination: "/wiki/farming#field-crops", permanent: true },
+      // The Gathering plugin's spots never spawn on Main, so its wiki page was removed.
       { source: "/wiki/gathering", destination: "/wiki", permanent: false },
+      // Crop Harvesting was merged into Farming.
+      { source: "/wiki/harvesting", destination: "/wiki/farming#field-crops", permanent: true },
     ];
   },
 };

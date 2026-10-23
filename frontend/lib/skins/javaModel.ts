@@ -100,11 +100,15 @@ const FACE_DIRS: Record<FaceName, { normal: [number, number, number]; corners: n
   },
 };
 
+/**
+ * Vanilla face `rotation` turns the texture clockwise: corner i samples the UV
+ * of corner i + 1 for each 90° (Minecraft Quadrant.rotateVertexIndex).
+ */
 function rotateUv(uvs: [number, number][], rotation: number): [number, number][] {
   const turns = (((rotation % 360) + 360) % 360) / 90;
   const out = uvs.slice() as [number, number][];
   for (let i = 0; i < turns; i++) {
-    out.unshift(out.pop()!);
+    out.push(out.shift()!);
   }
   return out;
 }
@@ -272,7 +276,10 @@ export function buildJavaModelGroup(
 }
 
 export const JAVA_MODEL_EXPORT_HINT = "Export in Blockbench as Java Block/Item (not Java Item).";
-export const JAVA_MODEL_ROTATION_ERROR = "Cubes may only rotate on one axis by 22.5° or 45°. " + JAVA_MODEL_EXPORT_HINT;
+export const JAVA_MODEL_ROTATION_ERROR =
+  "Cubes may only rotate on one axis, in steps of 22.5°. " + JAVA_MODEL_EXPORT_HINT;
+export const JAVA_MODEL_FACE_ROTATION_ERROR = "Face texture rotation must be 0, 90, 180 or 270.";
+export const JAVA_MODEL_FACE_UV_ERROR = "Face uv must be four numbers.";
 export const JAVA_MODEL_NO_ELEMENTS_ERROR = "Model has no elements. " + JAVA_MODEL_EXPORT_HINT;
 export const JAVA_MODEL_ITEM_WRAPPER_ERROR =
   "This looks like a Minecraft item definition, not a Java Block/Item model. " + JAVA_MODEL_EXPORT_HINT;
@@ -282,7 +289,9 @@ export const JAVA_MODEL_TEXTURES_ERROR = "Model textures must be a map of textur
 export const JAVA_MODEL_CUBE_ERROR = "Each cube needs from and to as three numbers.";
 
 const ALLOWED_AXES = new Set(["x", "y", "z"]);
-const ALLOWED_ANGLES = [-45, -22.5, 0, 22.5, 45];
+const ANGLE_STEP = 22.5;
+const MAX_ANGLE = 360;
+const FACE_ROTATIONS = new Set([0, 90, 180, 270]);
 const COORD_MIN = -16;
 const COORD_MAX = 32;
 
@@ -290,9 +299,24 @@ function isFiniteNumber(value: unknown): value is number {
   return typeof value === "number" && Number.isFinite(value);
 }
 
+/** Any multiple of 22.5°; the server bakes turns past ±45° into the cube. */
 function angleAllowed(value: unknown): boolean {
-  if (!isFiniteNumber(value)) return false;
-  return ALLOWED_ANGLES.some((allowed) => Math.abs(value - allowed) < 1e-6);
+  if (!isFiniteNumber(value) || Math.abs(value) > MAX_ANGLE) return false;
+  const steps = value / ANGLE_STEP;
+  return Math.abs(steps - Math.round(steps)) < 1e-6;
+}
+
+/** 1.21.11 x/y/z rotation turning on at most one axis, as [axis, angle]. */
+function singleAxisEuler(rotation: Record<string, unknown>): [string, number] | null {
+  const turned: [string, number][] = [];
+  for (const axis of ["x", "y", "z"]) {
+    if (!(axis in rotation)) continue;
+    const value = rotation[axis];
+    if (!isFiniteNumber(value)) return null;
+    if (value !== 0) turned.push([axis, value]);
+  }
+  if (turned.length > 1) return null;
+  return turned[0] ?? ["y", 0];
 }
 
 function isVec3(value: unknown): value is [number, number, number] {
@@ -351,16 +375,34 @@ export function assertVanillaJavaBlockModel(data: unknown): void {
     if (!coordsInBounds(cube.from) || !coordsInBounds(cube.to)) {
       throw new Error(JAVA_MODEL_BOUNDS_ERROR);
     }
+    const faces = cube.faces;
+    if (faces && typeof faces === "object" && !Array.isArray(faces)) {
+      for (const face of Object.values(faces as Record<string, unknown>)) {
+        if (!face || typeof face !== "object") continue;
+        const faceRotation = (face as Record<string, unknown>).rotation ?? 0;
+        if (typeof faceRotation !== "number" || !FACE_ROTATIONS.has(faceRotation)) {
+          throw new Error(JAVA_MODEL_FACE_ROTATION_ERROR);
+        }
+        const uv = (face as Record<string, unknown>).uv;
+        if (uv !== undefined && !(Array.isArray(uv) && uv.length === 4 && uv.every((n) => isFiniteNumber(n)))) {
+          throw new Error(JAVA_MODEL_FACE_UV_ERROR);
+        }
+      }
+    }
     const rot = cube.rotation;
     if (rot === undefined || rot === null) continue;
     if (Array.isArray(rot) || typeof rot !== "object") {
       throw new Error(JAVA_MODEL_ROTATION_ERROR);
     }
     const rotation = rot as Record<string, unknown>;
-    if (("x" in rotation || "y" in rotation || "z" in rotation) && !("axis" in rotation)) {
-      throw new Error(JAVA_MODEL_ROTATION_ERROR);
+    let axisAngle: [unknown, unknown] = [undefined, undefined];
+    if ("axis" in rotation) {
+      axisAngle = [rotation.axis, rotation.angle];
+    } else if ("x" in rotation || "y" in rotation || "z" in rotation) {
+      axisAngle = singleAxisEuler(rotation) ?? axisAngle;
     }
-    if (!ALLOWED_AXES.has(String(rotation.axis)) || !angleAllowed(rotation.angle) || !isVec3(rotation.origin)) {
+    const [axis, angle] = axisAngle;
+    if (!ALLOWED_AXES.has(String(axis)) || !angleAllowed(angle) || !isVec3(rotation.origin)) {
       throw new Error(JAVA_MODEL_ROTATION_ERROR);
     }
   }
@@ -374,7 +416,16 @@ export function parseJavaModelJson(text: string): JavaModelJson {
     throw new Error("Invalid model JSON");
   }
   assertVanillaJavaBlockModel(data);
-  return data as JavaModelJson;
+  const model = data as JavaModelJson;
+  // Preview draws axis/angle only; x/y/z here turns on one axis at most.
+  for (const el of model.elements ?? []) {
+    const rotation = el.rotation as Record<string, unknown> | undefined;
+    if (rotation && !("axis" in rotation)) {
+      const [axis, angle] = singleAxisEuler(rotation)!;
+      el.rotation = { ...el.rotation!, axis: axis as "x" | "y" | "z", angle };
+    }
+  }
+  return model;
 }
 
 export async function assertVanillaJavaBlockModelFile(file: File): Promise<void> {

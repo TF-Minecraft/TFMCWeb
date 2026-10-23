@@ -68,8 +68,8 @@ export default function FarmingPage() {
             Cooking
           </Link>{" "}
           and{" "}
-          <Link href="/wiki/drink-builder" className={link}>
-            Drink Builder
+          <Link href="/wiki/brewing" className={link}>
+            Brewing
           </Link>
           . Both need open sky, and both grow better in fertile land.
         </>
@@ -157,8 +157,9 @@ export default function FarmingPage() {
       </ol>
       <p className={`mt-3 ${body}`}>
         Breaking a ripe crop always gives its produce and a seed, but removes the plant, even one that would regrow.
-        Breaking an unripe crop loses the seed. About every 10 minutes, an unripe crop also has a 2.5% to 14% chance,
-        depending on the crop, of withering away, even if dry farmland has stopped it growing.
+        Breaking an unripe crop loses the seed. Unripe crops can also wither: at a fertility of around 80, about one
+        crop in eight withers before it ripens. Poorer land means slower growth and more losses, and a crop on dry
+        farmland can still wither while it waits. Crops that regrow take the same risk each time they regrow.
       </p>
 
       <CropGallery crops={cropGalleryItems} />

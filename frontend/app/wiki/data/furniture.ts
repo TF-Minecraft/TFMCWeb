@@ -1,97 +1,47 @@
 import type { WikiCommandSet, WikiSection } from "./types";
 
-export type FurnitureRow = {
-  name: string;
-  id: string;
-  surface: string;
-  rotate: boolean;
-  pickup: boolean;
-  carry: boolean;
-  solid: boolean;
-  slots: string;
-};
-const cooking = (
-  name: string,
-  id: string,
-  carry = false,
-  solid = false,
-  slots = "Cooking-controlled or configured slots",
-): FurnitureRow => ({
-  name,
-  id: `tfmc_cooking:${id}`,
-  surface: "Floor",
-  rotate: true,
-  pickup: true,
-  carry,
-  solid,
-  slots,
-});
+// Source: plugins/InteractibleFurniture/furniture/*.yml on Main. The Bucket entry there
+// points at an ItemsAdder item that doesn't exist, so it is left out.
+
+export type FurnitureRow = { name: string; id: string };
+
+const cooking = (name: string, id: string): FurnitureRow => ({ name, id: `tfmc_cooking:${id}` });
+
 export const furniture: FurnitureRow[] = [
-  cooking("Frying Pan", "frying_pan", true, false, "2 clickable (cut vegetables / meats); butter display-only"),
-  cooking("Saucepan", "saucepan", true, false, "No clickable slots; Cooking controls 2 inputs + liquid"),
-  cooking("Pot", "pot", true, false, "Ladle slot only; 5 inputs + liquid are hidden"),
-  cooking("Bowl", "bowl", true, false, "No clickable slots; Cooking controls all inputs"),
+  cooking("Frying Pan", "frying_pan"),
+  cooking("Saucepan", "saucepan"),
+  cooking("Pot", "pot"),
+  cooking("Bowl", "bowl"),
   cooking("Cutting Board", "cutting_board"),
   cooking("Butter Churn", "butter_churn"),
-  cooking("Butter Plate", "butter_plate", true),
-  cooking("Plate", "plate", true),
-  cooking("Bucket", "bucket"),
-  cooking("Fire Pit", "fire_pit", false, false, "Configured to place items inside"),
-  { ...cooking("Meat Hook", "meat_hook"), surface: "None configured" },
+  cooking("Butter Plate", "butter_plate"),
+  cooking("Plate", "plate"),
+  cooking("Fire Pit", "fire_pit"),
+  cooking("Meat Hook", "meat_hook"),
   cooking("Mixing Bowl", "mixing_bowl"),
   cooking("Milling Stone", "milling_stone"),
-  cooking("Oven Bottom", "oven_bottom", false, true),
-  cooking("Bread Tray", "bread_tray", true),
+  cooking("Oven Bottom", "oven_bottom"),
+  cooking("Bread Tray", "bread_tray"),
   cooking("Oven Top", "oven_top"),
-  cooking("Liquid Container", "liquid_container", false, true),
+  cooking("Liquid Container", "liquid_container"),
   cooking("Sausage Maker", "sausage_maker"),
-  cooking(
-    "Trough",
-    "trough",
-    true,
-    true,
-    "4 display-only feed slots; fill it with any vegetable mix to make Universal Feed",
-  ),
-  {
-    name: "Tool Shelf",
-    id: "tfmc_cooking:tool_shelf",
-    surface: "Wall",
-    rotate: false,
-    pickup: true,
-    carry: false,
-    solid: false,
-    slots: "3: cutting knife, ladle or masher only",
-  },
-  {
-    name: "Pedestal",
-    id: "tfmc:pedestal",
-    surface: "Floor",
-    rotate: true,
-    pickup: true,
-    carry: false,
-    solid: true,
-    slots: "1; any item",
-  },
-  {
-    name: "Artifact Display",
-    id: "tfmc:artifact_display",
-    surface: "Floor",
-    rotate: true,
-    pickup: true,
-    carry: false,
-    solid: true,
-    slots: "1; any item",
-  },
-  {
-    name: "Lure",
-    id: "tfmc:lure",
-    surface: "Floor",
-    rotate: true,
-    pickup: true,
-    carry: false,
-    solid: false,
-    slots: "None",
-  },
+  cooking("Trough", "trough"),
+  cooking("Tool Shelf", "tool_shelf"),
+  { name: "Pedestal", id: "tfmc:pedestal" },
+  { name: "Artifact Display", id: "tfmc:artifact_display" },
+  { name: "Lure", id: "tfmc:lure" },
+];
+
+/** Pieces with `carry: true`. */
+export const carriableFurniture = [
+  "Frying Pan",
+  "Saucepan",
+  "Pot",
+  "Bowl",
+  "Butter Plate",
+  "Plate",
+  "Bread Tray",
+  "Trough",
 ];
 
 export const furnitureRecipes = [
@@ -123,7 +73,7 @@ export const furnitureSection: WikiSection = {
     href: "/wiki/furniture",
     label: "Interactive Furniture",
     category: "professions",
-    blurb: "Place, carry and fill cooking and display furniture.",
+    blurb: "Place, fill, carry and pick up cookware, troughs and display stands.",
   },
   commands: furnitureCommands,
 };
