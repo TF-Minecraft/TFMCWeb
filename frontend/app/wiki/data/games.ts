@@ -72,6 +72,29 @@ export const gamesCommands: WikiCommandSet = {
       notes: "Put coins on the felt before you raise: the table only counts coins that are on the felt.",
     },
     {
+      command: "/games poker status",
+      description:
+        "Shows the tournament settings at the poker table next to you: buy-in, starting chips, rebuys, ante and blind timer.",
+    },
+    {
+      command: "/games poker buyin | rebuy",
+      description: "Pays the table's buy-in to join its poker tournament, or to buy back in.",
+    },
+    {
+      command: "/games poker bet <chips>",
+      description: "Bets tournament chips on your turn.",
+    },
+    {
+      command: "/games poker configure <buy-in> <chips> <rebuys> <ante> <blind minutes>",
+      description: "Sets up the tournament. A buy-in of 0 makes it a cash game.",
+      notes: "The table's owner only, between hands.",
+    },
+    {
+      command: "/games poker start | kick <player> | finish",
+      description: "Deals the next hand, removes a registered player, or pays the last player standing.",
+      notes: "The table's owner only.",
+    },
+    {
       command: "/wager <amount>",
       description:
         "Proposes the item stack you are holding as a stake, valued at that many denars per item. The table votes on it.",

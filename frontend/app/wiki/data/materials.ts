@@ -53,6 +53,28 @@ const gradedAnimalProduct = (kind: string, animals: string): MaterialAcquisition
 ];
 const forgingUse = (kind: string) => `Used in Forging Station recipes for ${kind}.`;
 
+/** Sources of the current act's materials. Which materials they give changes from act to act. */
+const activity: MaterialAcquisition = {
+  method: "Weekly activity rewards",
+  detail: "Part of the rewards for reaching your weekly activity goals.",
+};
+const infestationMonsters: MaterialAcquisition = {
+  method: "Infestations",
+  detail: "Monsters from an infestation can drop it.",
+};
+const worldBosses: MaterialAcquisition = {
+  method: "World bosses",
+  detail: "Some world bosses drop it when defeated.",
+};
+const actFishing = (rod: string): MaterialAcquisition => ({
+  method: "Fishing",
+  detail: `Fishing in water with ${rod} can bring it up as treasure.`,
+});
+const laterAct: MaterialAcquisition = {
+  method: "A later act",
+  detail: "Nobody can find this yet. It becomes available in a later act of the season.",
+};
+
 /** Materials made at a station. Their recipes come from the server's station configs. */
 export const serverCraftedMaterials: CatalogMaterial[] = [
   {
@@ -214,7 +236,20 @@ export const dropOnlyMaterials: CatalogMaterial[] = [
     texture: T("materials/ignitium.png"),
     lore: "A fiery crystal, the key to making Coke and Steel.",
     unpackingRecipeKeys: ["gen-ingot-station-ignitium-block2"],
-    acquisition: [luckyMiner, treeGatherer("IV"), detector, fishing, trialRooms],
+    acquisition: [
+      luckyMiner,
+      treeGatherer("IV"),
+      detector,
+      fishing,
+      trialRooms,
+      activity,
+      infestationMonsters,
+      worldBosses,
+      {
+        method: "Faction battles",
+        detail: "Some faction battles reward their fighters with it.",
+      },
+    ],
     usedFor: "A crystal catalyst at the Forging Station.",
   },
   {
@@ -223,6 +258,15 @@ export const dropOnlyMaterials: CatalogMaterial[] = [
     texture: T("materials/raw_tin.png"),
     lore: "A soft metal, the key to making Bronze.",
     unpackingRecipeKeys: ["gen-ingot-station-tin-block2"],
+    acquisition: [
+      luckyMiner,
+      treeGatherer("IV"),
+      detector,
+      actFishing("an Abyssalite Rod"),
+      activity,
+      infestationMonsters,
+      worldBosses,
+    ],
     usedFor: "A crystal catalyst at the Forging Station.",
   },
   {
@@ -230,6 +274,15 @@ export const dropOnlyMaterials: CatalogMaterial[] = [
     group: "Metals and gold",
     texture: T("materials/abyssalite.png"),
     lore: "A tough shard of metal, the raw material of Abyssalite.",
+    acquisition: [
+      luckyMiner,
+      treeGatherer("IV"),
+      detector,
+      actFishing("an Abyssalite Rod"),
+      activity,
+      infestationMonsters,
+      worldBosses,
+    ],
     usedFor: "A catalyst at the Forging Station.",
   },
   {
@@ -237,6 +290,7 @@ export const dropOnlyMaterials: CatalogMaterial[] = [
     group: "Metals and gold",
     texture: T("materials/mythril_fragment.png"),
     lore: "A metal of legend, the raw material of Mythril.",
+    acquisition: [laterAct],
     usedFor: "A catalyst at the Forging Station.",
   },
   {
@@ -244,6 +298,7 @@ export const dropOnlyMaterials: CatalogMaterial[] = [
     group: "Metals and gold",
     texture: T("materials/mythrilite.png"),
     lore: "One of the rarest materials in Cerrith. Mythril can't be made without it.",
+    acquisition: [laterAct],
   },
   {
     name: "Rough Gold",
@@ -414,7 +469,9 @@ export const dropOnlyMaterials: CatalogMaterial[] = [
     acquisition: gradedAnimalProduct(
       kind === "Feather" ? "feathers" : kind.toLowerCase(),
       kind === "Leather"
-        ? "cows, horses, donkeys, mules and camels"
+        ? grade === "Perfect"
+          ? "cows, horses, donkeys, mules, camels and 5-star goats"
+          : "cows, horses, donkeys, mules and camels"
         : kind === "Wool"
           ? "sheep and goats"
           : "chickens and llamas",

@@ -154,6 +154,30 @@ export const factionsCommands: WikiCommandSet = {
       notes: "Faction leader only.",
     },
     {
+      command: "/faction positions",
+      description: "Shows your faction's special positions, such as the Spymaster, and who holds them.",
+    },
+    {
+      command: "/faction espionage",
+      description: "Opens the Spymaster's Office, or the Spymaster's own settings if that is you.",
+    },
+    {
+      command: "/faction spymaster <player | remove>",
+      description: "Appoints an online member as Spymaster, or removes the current one.",
+      notes: "Faction leader only. The member needs an active character.",
+    },
+    {
+      command: "/faction spymaster sabotage <offense | defense> <0 | 25 | 50 | 75 | 100>",
+      description:
+        "Secretly betrays your own faction: offense weakens its spying on others, defense lets rival spies learn more. 0 turns it off.",
+      notes: "Spymaster only. Only the Spymaster sees this choice.",
+    },
+    {
+      command: "/faction spymaster share <overlord | vassals | allies> <none | rumours | broad | reliable | detailed>",
+      description: "Chooses how much of your intelligence your overlord, vassals or allies get to see.",
+      notes: "Spymaster only.",
+    },
+    {
       command: "/faction setbanner",
       description: "Sets the faction banner from the banner you're holding.",
       notes: "Faction leader only.",

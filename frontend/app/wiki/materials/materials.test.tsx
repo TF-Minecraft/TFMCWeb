@@ -38,8 +38,12 @@ describe("material acquisition", () => {
     expect(html).not.toContain("No crafting recipe. This material comes from loot");
   });
 
-  it("lists no acquisition sources for Tin", () => {
-    expect(getMaterialBySlug("tin")!.acquisition).toBeUndefined();
+  it("lists the current act's sources for Tin, and a later act for Mythril materials", () => {
+    const tin = getMaterialBySlug("tin")!.acquisition!.map((source) => source.method);
+    expect(tin).toEqual(expect.arrayContaining(["Mining with Lucky Miner I", "Fishing", "World bosses"]));
+    for (const slug of ["mythril-fragment", "mythrilite"]) {
+      expect(getMaterialBySlug(slug)!.acquisition!.map((source) => source.method)).toEqual(["A later act"]);
+    }
   });
 
   it.each([
@@ -54,10 +58,7 @@ describe("material acquisition", () => {
   });
 
   it("gives every material something to say about where it comes from", () => {
-    // Act materials whose sources change from act to act carry no source list for now.
-    const noSourceYet = new Set(["Tin", "Abyssalite Fragment", "Mythril Fragment", "Mythrilite"]);
     for (const material of materialCatalog.values()) {
-      if (noSourceYet.has(material.name)) continue;
       expect((material.acquisition?.length ?? 0) + material.recipes.length, material.name).toBeGreaterThan(0);
     }
   });
