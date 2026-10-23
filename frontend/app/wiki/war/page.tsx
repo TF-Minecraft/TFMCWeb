@@ -56,13 +56,6 @@ export default function WarPage() {
       <ul className={`mt-3 list-disc space-y-2 pl-5 ${body}`}>
         <li>Each side&apos;s lives in a battle come from its regiments.</li>
         <li>
-          Dying in a battle never costs you your{" "}
-          <Link href="/wiki/economy" className={link}>
-            pouch
-          </Link>
-          .
-        </li>
-        <li>
           After 20 minutes, a warband leader can <code className={code}>/warband retreat</code>, which ends the battle
           as a loss for that side.
         </li>

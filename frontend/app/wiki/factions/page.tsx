@@ -13,9 +13,9 @@ export default function FactionsPage() {
       title="Factions"
       intro={
         <>
-          A faction is a realm on the map: its members, the provinces it claims, its money and its government. Most of
-          what you do here is done by the leader, from <code className={code}>/faction menu</code>. Everything belongs
-          to your current character.
+          A faction is a realm on the map: its members, the provinces it claims, its money and its government. The
+          leader runs most of it from <code className={code}>/faction menu</code>. Everything belongs to your current
+          character.
         </>
       }
     >
