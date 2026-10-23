@@ -51,6 +51,8 @@ const nextConfig: NextConfig = {
       { source: "/wiki/armor-statues", destination: "/wiki/roleplay-tools#armor-statues", permanent: true },
       // The Gathering plugin's spots never spawn on Main, so its wiki page was removed.
       { source: "/wiki/gathering", destination: "/wiki", permanent: false },
+      // Market Blocks became a section of the money page.
+      { source: "/wiki/market-blocks", destination: "/wiki/economy#market-blocks", permanent: false },
       // Crop Harvesting was merged into Farming.
       { source: "/wiki/harvesting", destination: "/wiki/farming#field-crops", permanent: true },
     ];

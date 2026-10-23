@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import * as THREE from "three";
-import { marketBlockRecipe } from "../../wiki/data/market-blocks";
+import { marketBlockRecipe } from "../../wiki/data/economy";
 import {
   faceUvCoordinates,
   buildGeometryForElement,

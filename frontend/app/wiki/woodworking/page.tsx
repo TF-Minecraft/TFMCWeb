@@ -71,7 +71,7 @@ export default function WoodworkingPage() {
           Forestry node
         </Link>{" "}
         set to Rare Wood produces them too, once it has Diamond Axes or better. Spare wood sells at a{" "}
-        <Link href="/wiki/market-blocks" className={link}>
+        <Link href="/wiki/economy#market-blocks" className={link}>
           Market Block
         </Link>
         .

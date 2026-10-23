@@ -82,40 +82,82 @@ export function getInstrumentBySlug(slug: string): InstrumentInfo | undefined {
 }
 
 /**
- * The Instrument Station is shared with four MMOItems `LUTES`: Bard *weapons*, not
- * MusicalInstruments content. They cannot be played as instruments. Source:
- * `plugins\MMOItems\crafting-stations\instrument-station.yml:12-108`.
- *
- * Their exact ingredient lists were not captured in the research, so they are deliberately
- * not modelled as `Recipe`s here: only named, so the page can disambiguate them.
- */
-export const bardWeaponLutes = [
-  { name: "Iron Lute", id: "IRON_LUTE", altRecipe: false },
-  { name: "Steel Lute", id: "STEEL_LUTE", altRecipe: true },
-  { name: "Abyssalite Lute", id: "ABYSSALITE_LUTE", altRecipe: true },
-  { name: "Mythril Lute", id: "MYTHRIL_LUTE", altRecipe: true },
-] as const;
-
-/**
- * Source: `musicalinstruments-2.3.jar` `plugin.yml`: `/instruments` has no
- * aliases, and both player subcommands sit behind `instruments.use`
- * (`default: true`), so no normal player is ever blocked.
+ * MusicalInstruments 3.4.1 on Main. Every player command below defaults to true
+ * (`instruments.use`, `instruments.record`, `instruments.copy`). `/music studio`,
+ * `/instruments give` and `/instruments reload` are staff only.
  */
 export const instrumentCommands: WikiCommandSet = {
   system: "Musical Instruments",
   href: "/wiki/musical-instruments",
   commands: [
     {
+      command: "/instruments play",
+      description: "Opens the on-screen keyboard for the instrument you are holding.",
+      notes: "Right-clicking with the instrument does the same.",
+    },
+    {
       command: "/instruments keybinds",
-      description: "Prints the full note and chord layout for the instrument currently in your off-hand.",
-      notes:
-        "You must be holding an instrument in your off-hand, or it just tells you so. " +
-        "Permission instruments.use, default true - no normal player is ever blocked.",
+      description: "Lists the notes and chords on each hotbar key for the instrument in your off-hand.",
     },
     {
       command: "/instruments list",
-      description: "Prints the name of every instrument that exists on the server.",
-      notes: "Needs nothing in hand. Permission instruments.use, default true - no normal player " + "is ever blocked.",
+      description: "Lists every instrument.",
+    },
+    {
+      command: "/music help",
+      aliases: ["/recording help"],
+      description: "Lists the recording commands. They do the same as the buttons in the studio.",
+    },
+    {
+      command: "/music new <title>",
+      aliases: ["/music title <title>"],
+      description: "Starts a new song, or renames the one you have open.",
+    },
+    {
+      command: "/music projects",
+      aliases: ["/music open <id>", "/music status"],
+      description: "Lists your songs, opens one, or shows the tracks of the open song.",
+    },
+    {
+      command: "/music record <track>",
+      aliases: ["/music stop"],
+      description: "Records a take on track 1 to 4, or stops recording or playback.",
+    },
+    {
+      command: "/music preview [take]",
+      description: "Plays the whole song. With take, plays your last take with the other tracks.",
+    },
+    {
+      command: "/music keep",
+      aliases: ["/music discard"],
+      description: "Keeps or throws away your last take.",
+    },
+    {
+      command: "/music volume <track> <0-2>",
+      aliases: ["/music mute <track>", "/music remove <track>"],
+      description: "Sets a track's volume, mutes or unmutes it, or deletes it.",
+    },
+    {
+      command: "/music bpm <40-240>",
+      aliases: ["/music metronome <on|off>"],
+      description: "Sets the metronome's tempo, or turns the metronome on or off.",
+      notes: "Recorded notes keep their timing.",
+    },
+    {
+      command: "/music blank",
+      description: "Turns the ordinary music disc in your main hand into a blank recording disc.",
+    },
+    {
+      command: "/music publish",
+      description: "Records the whole song onto the blank disc in your main hand.",
+    },
+    {
+      command: "/music copy",
+      description: "Copies the recorded disc in your off-hand onto the blank disc in your main hand.",
+    },
+    {
+      command: "/music reset confirm",
+      description: "Clears the song you have open. Discs you already published keep it.",
     },
   ],
 };
@@ -125,7 +167,7 @@ export const instrumentsSection: WikiSection = {
     href: "/wiki/musical-instruments",
     label: "Musical Instruments",
     category: "social",
-    blurb: "Nine instruments turn your hotbar into a keyboard. Only Bards can craft them, but anyone can play one.",
+    blurb: "Play nine instruments from your hotbar or an on-screen keyboard, and record songs onto music discs.",
   },
   // `instrumentRecipes` are server recipes registered by `stationsSection`;
   // listing them again here would put them in the recipe index twice.
