@@ -1,7 +1,7 @@
 import type { WikiCommandSet, WikiSection } from "./types";
 
 // SimpleFactions 4.14.2 with Main's configs. Staff commands (force*, admin, reload and so on),
-// coalitions (off on Main) and Spymaster commands are left out.
+// coalitions (off on Main) and the Spymaster's private sabotage are left out.
 
 // ---------- Factions ----------
 
@@ -105,6 +105,22 @@ export const factionsCommands: WikiCommandSet = {
       aliases: ["/faction setrulingsystem", "/faction setculture", "/faction setreligion"],
       description: "Sets the ruler title, ruling system, culture or religion shown for your faction.",
       notes: "Leader. These are names only and change nothing else.",
+    },
+    { command: "/faction positions", description: "Shows your faction's offices and who holds them." },
+    {
+      command: "/faction espionage",
+      description: "Opens the Spymaster's office.",
+    },
+    {
+      command: "/faction spymaster <player>",
+      aliases: ["/faction spymaster remove"],
+      description: "Appoints or removes the Spymaster.",
+      notes: "Leader.",
+    },
+    {
+      command: "/faction spymaster share <overlord|vassals|allies> <tier>",
+      description: "Shares your reports, up to the tier you choose (none, rumours, broad, reliable or detailed).",
+      notes: "Spymaster.",
     },
     { command: "/ledger", description: "Shows your own money in and out each day: earnings, taxes and upkeep." },
   ],

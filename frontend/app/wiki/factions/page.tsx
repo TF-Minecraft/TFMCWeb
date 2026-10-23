@@ -132,6 +132,36 @@ export default function FactionsPage() {
         sides are answered by the other leader with <code className={code}>/faction accept</code> while online.
       </p>
 
+      <WikiSectionHeading
+        id="spymaster"
+        intro="Each faction has a Spymaster, who hides its army and spies on everyone else's."
+      >
+        Spymaster
+      </WikiSectionHeading>
+      <ul className={`mt-3 list-disc space-y-2 pl-5 ${body}`}>
+        <li>
+          The leader appoints one with <code className={code}>/faction spymaster &lt;player&gt;</code>. While nobody is
+          appointed, the leader holds the office. A new Spymaster starts out weak and reaches full strength after a
+          week, and the leader must wait 2 days before appointing someone else, unless the Spymaster&apos;s character
+          dies.
+        </li>
+        <li>
+          Your Spymaster hides your military from other factions: your regiments, your faction&apos;s vehicles and the
+          military lines of your accounts. Everything else, such as members, money, laws, government, installations and
+          offices, is open to everyone.
+        </li>
+        <li>
+          Each day your Spymaster gathers a report on every other faction&apos;s military. It can be a botched report,
+          rumours, or broad, reliable or detailed estimates, and the better it is, the closer its numbers. How good it
+          is depends on both factions&apos; Spymasters. Overlords find it easier to spy on their subjects.
+        </li>
+        <li>
+          The Spymaster can share reports with your overlord, your subjects or your allies, using{" "}
+          <code className={code}>/faction spymaster share</code> or the Spymaster&apos;s office in{" "}
+          <code className={code}>/faction espionage</code>.
+        </li>
+      </ul>
+
       <WikiSectionHeading id="commands">Commands</WikiSectionHeading>
       <CommandTable commands={factionsCommands.commands} />
 

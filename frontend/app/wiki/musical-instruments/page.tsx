@@ -23,7 +23,7 @@ export default function MusicalInstrumentsPage() {
       intro={
         <>
           Nine instruments, each with its own sound, crafted at the <StationLink name="Instrument Station" />. Anyone
-          can play one, and everyone within 64 blocks hears you. Pick one below to hear it and see its recipe.
+          can craft and play one, and everyone within 64 blocks hears you. Pick one below to hear it and see its recipe.
         </>
       }
     >
