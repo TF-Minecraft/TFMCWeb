@@ -61,7 +61,8 @@ export const factionsCommands: WikiCommandSet = {
     {
       command: "/faction leave",
       description: "Leaves your faction.",
-      notes: "If you are in a guild, use /guild leave instead. A leader must hand over or delete the faction first.",
+      notes:
+        "Leave any guild other than the main one first with /guild leave. A leader must hand over or delete the faction first.",
     },
     { command: "/faction kick <player>", description: "Removes a member.", notes: "Leader." },
     {
@@ -168,10 +169,24 @@ export const guildsCommands: WikiCommandSet = {
     { command: "/guild join <name>", description: "Accepts a guild invite." },
     {
       command: "/guild leave",
-      description: "Leaves your guild.",
-      notes: "A guild leader must delete the guild first.",
+      description: "Leaves your guild and puts you back in your faction's main guild.",
+      notes: "A guild leader must delete the guild first. To leave the faction, use /faction leave.",
     },
-    { command: "/guild kick <player>", description: "Removes a member.", notes: "Guild leader." },
+    {
+      command: "/guild decline <guild>",
+      description: "Turns down a guild invite, or an offer to lead a guild.",
+    },
+    {
+      command: "/guild kick <player>",
+      description: "Removes a member, who goes back to your faction's main guild.",
+      notes: "Guild leader.",
+    },
+    {
+      command: "/guild appoint <guild> <character>",
+      description: "Offers a guild whose leader has died to a living member of your faction.",
+      notes: "Faction leader.",
+    },
+    { command: "/guild lead <guild>", description: "Accepts an offer to lead a guild." },
     { command: "/guild setleader <player>", description: "Hands the guild to another member.", notes: "Guild leader." },
     {
       command: "/guild delete <guild>",
@@ -287,7 +302,7 @@ export const warCommands: WikiCommandSet = {
     {
       command: "/raid join <raid>",
       description: "Joins a raid while it musters.",
-      notes: "Attackers only, within 60 seconds.",
+      notes: "Attackers only, within 60 seconds, and not while you are in a warband.",
     },
     {
       command: "/warband retreat",
