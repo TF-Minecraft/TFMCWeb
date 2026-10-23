@@ -78,17 +78,14 @@ export default function MagicPage() {
         spell, a Lesser rune tier II, a Greater rune tier III and an Ascendant rune tier IV. To cast a spell, your
         Resonance in its school must reach that tier, and so must your weapon&apos;s attunement in that school.
       </p>
-      <DataTable
-        columns={[{ header: "Tier" }, { header: "Resonance needed", align: "right" }, { header: "Rune size" }]}
-        rows={[
-          ["I", "10", "Minor"],
-          ["II", "35", "Lesser"],
-          ["III", "65", "Greater"],
-          ["IV", "95", "Ascendant"],
-        ]}
-      />
       <ul className={`mt-4 list-disc space-y-2 pl-5 ${body}`}>
-        <li>A new character has no Resonance, so even tier I spells need some meditation first.</li>
+        <li>
+          Higher tiers need more Resonance. A new character has none, so even tier I spells need some meditation first.
+        </li>
+        <li>
+          If a spell is beyond you, chat tells you the tier it needs and the tier you have, for example &quot;This spell
+          needs Cerrith II. You carry I.&quot;
+        </li>
         <li>
           Low Resonance makes a school&apos;s spells cost more mana, deal less damage and take longer to recharge. High
           Resonance does the opposite. Hover a school in /resonance to see how it affects you right now.

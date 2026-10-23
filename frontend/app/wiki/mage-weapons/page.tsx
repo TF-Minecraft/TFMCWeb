@@ -17,6 +17,7 @@ import {
   magicStationRecipe,
   runeStationRecipe,
   runestoneRecipes,
+  sealedArtifactRecipes,
 } from "../data/magic";
 
 const link = "text-[var(--tfmc-accent)] hover:underline";
@@ -124,7 +125,7 @@ export default function MageWeaponsPage() {
 
       <WikiSectionHeading
         id="rune-station"
-        intro="Turns Enchanted Dust into runestones and Enchanted Charges. Each craft takes 10 seconds."
+        intro="Turns Enchanted Dust into runestones, Enchanted Charges and sealed artifacts. Each craft takes 10 seconds."
       >
         The <StationLink name="Rune Station" />
       </WikiSectionHeading>
@@ -152,6 +153,17 @@ export default function MageWeaponsPage() {
         </Link>{" "}
         project. Finishing it gives a random spell rune of the same size from any of the four schools. An armor
         runestone gives a random armour rune instead.
+      </p>
+      <DataTable
+        columns={[{ header: "Sealed artifact" }, { header: "Cost", align: "right" }]}
+        rows={sealedArtifactRecipes.map((recipe) => [recipe.output.name, `${recipe.ingredients[0].qty} dust`])}
+      />
+      <p className={`mt-4 ${body}`}>
+        Right-click a sealed artifact to break the seal. The plain one holds a random{" "}
+        <Link href="/wiki/magic#artifacts" className={link}>
+          artifact
+        </Link>
+        , and the others a random artifact of their school.
       </p>
 
       <WikiSectionHeading id="attuning" intro="A weapon with no school in it cannot cast anything.">

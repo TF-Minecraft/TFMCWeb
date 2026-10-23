@@ -79,6 +79,10 @@ export const enchantedChargeRecipes: Recipe[] = ["minor", "lesser", "greater", "
   stationRecipe(`gen-rune-station-enchanted-charge-${key}`),
 );
 
+export const sealedArtifactRecipes: Recipe[] = ["", "-cerrith", "-oseni", "-seithr", "-mitlan"].map((school) =>
+  stationRecipe(`gen-rune-station-sealed${school}-artifact`),
+);
+
 export const magicRecipes: Recipe[] = [magicStationRecipe, runeStationRecipe];
 
 // ---------- Commands ----------

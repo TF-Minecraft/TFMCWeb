@@ -583,7 +583,7 @@ export const stations: StationInfo[] = [
   {
     slug: "rune-station",
     name: "Rune Station",
-    blurb: "Turns Enchanted Dust into blank runestones, armor runestones, and Enchanted Charges.",
+    blurb: "Turns Enchanted Dust into blank runestones, armor runestones, Enchanted Charges and sealed artifacts.",
     icon: T("mmoitems/minor_runestone.png"),
     interaction: "Right click",
     model: runeStationRecipe.output.model,
