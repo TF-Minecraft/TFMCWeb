@@ -1,5 +1,5 @@
 {
-  "copied": 0,
+  "copied": 3,
   "existing": 466,
   "unresolved": [],
   "items": {
@@ -872,6 +872,12 @@
       "sourceJar": "minecraft-client.jar",
       "sourceModel": "assets/minecraft/models/item/glass_bottle.json",
       "sourceTexture": "assets/minecraft/textures/item/glass_bottle.png"
+    },
+    "glass_pane": {
+      "texture": "vanilla/glass_pane.png",
+      "sourceJar": "minecraft-client.jar",
+      "sourceModel": "assets/minecraft/models/item/glass_pane.json",
+      "sourceTexture": "assets/minecraft/textures/block/glass.png"
     },
     "glow_ink_sac": {
       "texture": "vanilla/glow_ink_sac.png",
@@ -2003,6 +2009,12 @@
       "sourceModel": "assets/minecraft/models/block/spruce_log.json",
       "sourceTexture": "assets/minecraft/textures/block/spruce_log.png"
     },
+    "spruce_planks": {
+      "texture": "vanilla/spruce_planks.png",
+      "sourceJar": "minecraft-client.jar",
+      "sourceModel": "assets/minecraft/models/block/spruce_planks.json",
+      "sourceTexture": "assets/minecraft/textures/block/spruce_planks.png"
+    },
     "stick": {
       "texture": "vanilla/stick.png",
       "source": "existing checked-in asset"
@@ -2158,6 +2170,12 @@
       "sourceJar": "minecraft-client.jar",
       "sourceModel": "assets/minecraft/models/block/tuff.json",
       "sourceTexture": "assets/minecraft/textures/block/tuff.png"
+    },
+    "turtle_egg": {
+      "texture": "vanilla/turtle_egg.png",
+      "sourceJar": "minecraft-client.jar",
+      "sourceModel": "assets/minecraft/models/item/turtle_egg.json",
+      "sourceTexture": "assets/minecraft/textures/item/turtle_egg.png"
     },
     "turtle_spawn_egg": {
       "texture": "vanilla/turtle_spawn_egg.png",

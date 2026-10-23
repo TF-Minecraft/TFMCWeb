@@ -1,5 +1,5 @@
 import { slugify } from "./helpers";
-import { dropOnlyMaterials, materialRecipes, serverCraftedMaterials } from "./materials";
+import { dropOnlyMaterials, serverCraftedMaterials } from "./materials";
 import { allRecipes } from "./registry";
 import { customItemIdentity } from "./item-identity";
 import type { MaterialCatalogEntry, Recipe } from "./types";
@@ -13,24 +13,16 @@ export function getRecipesForStation(name: string): Recipe[] {
 function buildMaterialCatalog(): Map<string, MaterialCatalogEntry> {
   const map = new Map<string, MaterialCatalogEntry>();
 
-  for (const r of materialRecipes) {
-    map.set(r.output.name, {
-      slug: slugify(r.output.name),
-      name: r.output.name,
-      texture: r.output.texture,
-      recipe: r,
-      recipes: [],
-      unpackingRecipes: [],
-      usedIn: [],
-    });
-  }
-  for (const m of [...serverCraftedMaterials, ...dropOnlyMaterials]) {
+  // Gathered materials first, so each group reads from raw material to what is made from it.
+  for (const m of [...dropOnlyMaterials, ...serverCraftedMaterials]) {
     if (!map.has(m.name)) {
       map.set(m.name, {
         slug: slugify(m.name),
         name: m.name,
+        group: m.group,
         texture: m.texture,
         lore: m.lore,
+        usedFor: m.usedFor,
         recipes: [],
         acquisition: m.acquisition,
         unpackingRecipes: allRecipes.filter((r) => m.unpackingRecipeKeys?.includes(r.key)),

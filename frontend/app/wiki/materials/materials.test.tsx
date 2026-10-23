@@ -1,6 +1,6 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { getMaterialBySlug, serverCraftedMaterials } from "../data";
+import { getMaterialBySlug, materialCatalog, serverCraftedMaterials } from "../data";
 import MaterialsPage from "./page";
 import MaterialDetailPage from "./[slug]/page";
 
@@ -17,7 +17,7 @@ describe("material acquisition", () => {
 
   it.each(["tin", "ignitium"])("separates %s gathering from unpacking", async (slug) => {
     const html = renderToStaticMarkup(await MaterialDetailPage({ params: Promise.resolve({ slug }) }));
-    expect(html).toContain("Block unpacking");
+    expect(html).toContain("Unpacking a block");
     expect(html).toContain("already own");
     expect(html).not.toContain("Chance");
     expect(getMaterialBySlug(slug)?.recipe).toBeUndefined();
@@ -38,8 +38,42 @@ describe("material acquisition", () => {
     expect(html).not.toContain("No crafting recipe. This material comes from loot");
   });
 
-  it("lists no acquisition sources for Tin", () => {
-    expect(getMaterialBySlug("tin")!.acquisition).toBeUndefined();
+  it("lists the current act's sources for Tin, and a later act for Mythril materials", () => {
+    const tin = getMaterialBySlug("tin")!.acquisition!.map((source) => source.method);
+    expect(tin).toEqual(expect.arrayContaining(["Mining with Lucky Miner I", "Fishing", "World bosses"]));
+    for (const slug of ["mythril-fragment", "mythrilite"]) {
+      expect(getMaterialBySlug(slug)!.acquisition!.map((source) => source.method)).toEqual(["A later act"]);
+    }
+  });
+
+  it.each([
+    "bloodmagic-essence",
+    "necromancy-essence",
+    "smokeless-powder",
+    "fossil",
+    "basic-magical-handle",
+    "iron-magical-core",
+  ])("has no page for %s, which players can't get as a material", (slug) => {
+    expect(getMaterialBySlug(slug)).toBeUndefined();
+  });
+
+  it("gives every material something to say about where it comes from", () => {
+    for (const material of materialCatalog.values()) {
+      expect((material.acquisition?.length ?? 0) + material.recipes.length, material.name).toBeGreaterThan(0);
+    }
+  });
+
+  it("no longer offers the Pouch of Rare Materials as a source", async () => {
+    const html = renderToStaticMarkup(await MaterialDetailPage({ params: Promise.resolve({ slug: "ignitium" }) }));
+    expect(html).not.toContain("Pouch of Rare Materials");
+    expect(html).not.toContain("not yet been verified");
+  });
+
+  it("groups every material on the index page", () => {
+    const html = renderToStaticMarkup(MaterialsPage());
+    for (const material of materialCatalog.values()) {
+      expect(html, material.name).toContain(`href="/wiki/materials/${material.slug}"`);
+    }
   });
 
   it("lists Ignitium sources without any drop chances", () => {

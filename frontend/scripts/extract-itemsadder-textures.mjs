@@ -24,7 +24,13 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { buildItemIndex, HIDDEN_OUTPUTS, parseRef, parseStationRecipes } from "./build-station-recipes.mjs";
+import {
+  buildItemIndex,
+  HIDDEN_OUTPUTS,
+  isHiddenOutput,
+  parseRef,
+  parseStationRecipes,
+} from "./build-station-recipes.mjs";
 
 const FRONTEND_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const DEFAULT_CONTENTS_DIR = "C:/Users/MSI/Desktop/plugins/ItemsAdder/contents";
@@ -371,6 +377,7 @@ export function collectReferencedMmoItems(stationsDir) {
     .sort()) {
     const { recipes } = parseStationRecipes(readFileSync(path.join(stationsDir, file), "utf8"));
     for (const recipe of recipes) {
+      if (isHiddenOutput(recipe.fields.output)) continue;
       const ingredients = Array.isArray(recipe.fields.ingredients)
         ? recipe.fields.ingredients
         : typeof recipe.fields.ingredients === "string"

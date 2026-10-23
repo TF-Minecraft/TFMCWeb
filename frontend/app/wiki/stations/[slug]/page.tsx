@@ -4,7 +4,10 @@ import { WikiItemText, WikiPage, WikiSectionHeading } from "@/app/components/wik
 import CraftingGrid from "@/app/components/wiki/CraftingGrid";
 import StationModelViewer from "@/app/components/wiki/StationModelViewer";
 import SimpleCubeViewer from "@/app/components/wiki/SimpleCubeViewer";
-import { getRecipesForStation, getStationBySlug, stations, type Recipe } from "@/app/wiki/data";
+import { getRecipesForStation, getStationBySlug, stationOpening, stations, type Recipe } from "@/app/wiki/data";
+
+const body = "mt-3 text-sm text-[var(--tfmc-mist)]";
+const link = "text-[var(--tfmc-accent)] underline underline-offset-2";
 
 export function generateStaticParams() {
   return stations.map((station) => ({ slug: station.slug }));
@@ -54,25 +57,30 @@ export default async function StationDetailPage({ params }: { params: Promise<{ 
   const station = getStationBySlug(slug);
   if (!station) notFound();
 
+  const self = `/wiki/stations/${station.slug}`;
   const recipes = getRecipesForStation(station.name);
-  const acquisitionRecipe = station.craftRecipe ?? station.vanillaBlock?.recipe;
+  // The station's own craft note only repeats "Using it" below, so this page leaves it off.
+  const craft = station.craftRecipe ?? station.vanillaBlock?.recipe;
+  const acquisitionRecipe = craft ? { ...craft, note: undefined } : undefined;
 
   return (
     <WikiPage
-      lastModified="2026-10-11"
+      lastModified="2026-10-23"
       title={station.name}
-      intro={<WikiItemText text={station.blurb} excludeHref={`/wiki/stations/${station.slug}`} />}
+      beforeTitle={
+        <Link href="/wiki/stations" className="text-xs text-[var(--tfmc-mist)] hover:text-[var(--tfmc-cream)]">
+          &larr; Crafting Stations
+        </Link>
+      }
+      intro={<WikiItemText text={station.blurb} excludeHref={self} />}
       width="lg"
     >
-      <Link
-        href="/wiki/stations"
-        className="mt-3 inline-block text-xs text-[var(--tfmc-mist)] hover:text-[var(--tfmc-cream)]"
-      >
-        &larr; Back to Stations
-      </Link>
-
-      {/* Recipe and rotating model side by side, as on the Resource Nodes page. */}
-      <WikiSectionHeading id="obtaining">{acquisitionRecipe ? "How to obtain it" : "Preview"}</WikiSectionHeading>
+      <WikiSectionHeading id="obtaining">Getting one</WikiSectionHeading>
+      <p className={body}>
+        {station.vanillaBlock
+          ? `This station is an ordinary ${station.vanillaBlock.name}. Craft one the usual way and place it.`
+          : "Craft it at a crafting table, then place it on the ground."}
+      </p>
       <div className={`mt-4 grid gap-4 ${acquisitionRecipe ? "lg:grid-cols-[minmax(0,1fr)_22rem]" : "max-w-sm"}`}>
         {acquisitionRecipe ? <CraftingGrid recipe={acquisitionRecipe} /> : null}
         <div aria-label={`3D preview of ${station.name}`}>
@@ -98,31 +106,36 @@ export default async function StationDetailPage({ params }: { params: Promise<{ 
         </div>
       </div>
 
-      <WikiSectionHeading id="using">How to use it</WikiSectionHeading>
-      <p className="mt-3 text-sm text-[var(--tfmc-mist)]">{station.interaction}</p>
-
-      <WikiSectionHeading
-        id="recipes"
-        intro={
-          recipes.length
-            ? `${recipes.length} recipes use this station.`
-            : station.guide
-              ? "See its guide below."
-              : undefined
-        }
-      >
-        Recipes crafted here
-      </WikiSectionHeading>
-      {recipes.length ? (
-        <RecipeCards recipes={recipes} />
-      ) : station.guide ? (
-        <p className="mt-3 text-sm text-[var(--tfmc-mist)]">
-          See the{" "}
-          <Link href={station.guide.href} className="text-[var(--tfmc-accent)] underline underline-offset-2">
+      <WikiSectionHeading id="using">Using it</WikiSectionHeading>
+      <p className={body}>
+        <WikiItemText text={stationOpening(station)} excludeHref={self} />
+        {station.usage ? (
+          <>
+            {" "}
+            <WikiItemText text={station.usage} excludeHref={self} />
+          </>
+        ) : null}
+      </p>
+      {station.guide ? (
+        <p className={body}>
+          The{" "}
+          <Link href={station.guide.href} className={link}>
             {station.guide.label}
           </Link>{" "}
-          for its recipes and full workflow.
+          explains the whole process.
         </p>
+      ) : null}
+
+      {recipes.length ? (
+        <>
+          <WikiSectionHeading
+            id="recipes"
+            intro="A recipe card shows the ingredients, how long the craft takes, and any profession perk or class it needs."
+          >
+            Recipes ({recipes.length})
+          </WikiSectionHeading>
+          <RecipeCards recipes={recipes} />
+        </>
       ) : null}
     </WikiPage>
   );

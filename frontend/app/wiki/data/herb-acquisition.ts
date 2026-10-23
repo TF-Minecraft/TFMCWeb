@@ -11,8 +11,9 @@ export function collectorSource(): MaterialAcquisition {
 function collectorHerb(name: string, texture: string): DropOnlyMaterial {
   return {
     name,
+    group: "Herbs",
     texture: T(texture),
-    lore: "Herbal reagent gathered from the world.",
+    lore: "A wild herb for alchemy, medicine and drinks.",
     acquisition: [collectorSource()],
   };
 }

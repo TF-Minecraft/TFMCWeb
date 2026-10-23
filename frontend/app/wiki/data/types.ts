@@ -175,11 +175,27 @@ export type InstrumentInfo = {
  * if it has one, is resolved from the global recipe index rather than being
  * attached here.
  */
+/** Headings on the Materials page, in display order. */
+export const MATERIAL_GROUPS = [
+  "Metals and gold",
+  "Wood",
+  "Block cores",
+  "Alchemy and explosives",
+  "Magic",
+  "Herbs",
+  "Animal products",
+] as const;
+export type MaterialGroup = (typeof MATERIAL_GROUPS)[number];
+
 export type CatalogMaterial = {
   name: string;
+  group: MaterialGroup;
   texture?: string;
+  /** A short line on what the material is, shown under its name. */
   lore?: string;
   acquisition?: MaterialAcquisition[];
+  /** Uses that no station recipe on the wiki shows, such as smithing or node upgrades. */
+  usedFor?: string;
   /** Existing-stock conversions, not a source of new material. */
   unpackingRecipeKeys?: string[];
 };
@@ -195,6 +211,8 @@ export type DropOnlyMaterial = CatalogMaterial;
 export type MaterialCatalogEntry = {
   slug: string;
   name: string;
+  group: MaterialGroup;
+  usedFor?: string;
   texture?: string;
   lore?: string;
   recipe?: Recipe;
@@ -206,10 +224,26 @@ export type MaterialCatalogEntry = {
 
 // ---------- Stations ----------
 
+/** Topic headings on the Crafting Stations page, in display order. */
+export const STATION_GROUPS = [
+  "Smithing and tools",
+  "Wood, stone and building",
+  "Food, animals and fishing",
+  "Magic, alchemy and medicine",
+  "Research, archaeology and music",
+  "Engineering and vehicles",
+  "Letters",
+] as const;
+export type StationGroup = (typeof STATION_GROUPS)[number];
+
 export type StationInfo = {
   slug: string;
   name: string;
+  /** One line on what the station is for, shown on the index and as the page intro. */
   blurb: string;
+  group: StationGroup;
+  /** Extra sentences for "Using it" beyond how to open it. */
+  usage?: string;
   icon: string;
   /** The verified input that opens or operates this station. */
   interaction: "Right click" | "Shift + Right click";

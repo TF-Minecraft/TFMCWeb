@@ -731,7 +731,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Fertilizer",
     station: "Alchemy Station",
     time: 2,
-    requirement: "Transmutation II",
+    requirement: "Transmutation I",
     category: "Materials",
     ingredients: [
       {
@@ -760,7 +760,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Raw Gold",
     station: "Alchemy Station",
     time: 2,
-    requirement: "Transmutation II",
+    requirement: "Transmutation I",
     category: "Materials",
     ingredients: [
       {
@@ -2082,6 +2082,23 @@ export const generatedStationRecipes: Recipe[] = [
       qty: 1,
       sourceId: "vanilla:turtle_spawn_egg",
       texture: "/wiki/textures/vanilla/turtle_spawn_egg.png",
+    },
+  },
+  {
+    key: "gen-animal-station-turtle-egg-block",
+    title: "Turtle Egg",
+    station: "Animal Station",
+    time: 5,
+    requirement: "Breeder I",
+    category: "Other",
+    ingredients: [
+      { name: "Seagrass", qty: 64, sourceId: "vanilla:seagrass", texture: "/wiki/textures/vanilla/seagrass.png" },
+    ],
+    output: {
+      name: "Turtle Egg",
+      qty: 1,
+      sourceId: "vanilla:turtle_egg",
+      texture: "/wiki/textures/vanilla/turtle_egg.png",
     },
   },
   {
@@ -8385,6 +8402,50 @@ export const generatedStationRecipes: Recipe[] = [
     },
   },
   {
+    key: "gen-fishing-station-disc14",
+    title: "Music Disc",
+    station: "Fishing Station",
+    time: 5,
+    requirement: "Broken Disc Maker I",
+    category: "Other",
+    ingredients: [
+      {
+        name: "Broken Disc",
+        qty: 1,
+        sourceId: "mmoitem:MUSIC:BROKEN_DISC",
+        texture: "/wiki/textures/mmoitems/broken_disc.png",
+      },
+    ],
+    output: {
+      name: "Music Disc",
+      qty: 1,
+      sourceId: "mmoitem:MUSIC:DISC14",
+      texture: "/wiki/textures/mmoitems/disc14.png",
+    },
+  },
+  {
+    key: "gen-fishing-station-disc15",
+    title: "Music Disc",
+    station: "Fishing Station",
+    time: 5,
+    requirement: "Broken Disc Maker I",
+    category: "Other",
+    ingredients: [
+      {
+        name: "Broken Disc",
+        qty: 1,
+        sourceId: "mmoitem:MUSIC:BROKEN_DISC",
+        texture: "/wiki/textures/mmoitems/broken_disc.png",
+      },
+    ],
+    output: {
+      name: "Music Disc",
+      qty: 1,
+      sourceId: "mmoitem:MUSIC:DISC15",
+      texture: "/wiki/textures/mmoitems/disc15.png",
+    },
+  },
+  {
     key: "gen-forester-station-arrow",
     title: "Arrow",
     station: "Forester Station",
@@ -8538,7 +8599,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Mangrove Log",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Logs & Planks",
     ingredients: [
       {
@@ -8560,7 +8621,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Mangrove Roots",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Plants & Flowers",
     ingredients: [
       {
@@ -8582,7 +8643,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Cherry Log",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Logs & Planks",
     ingredients: [
       {
@@ -8604,7 +8665,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Pale Oak Log",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Logs & Planks",
     ingredients: [
       {
@@ -8626,7 +8687,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Stripped Oak Log",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Logs & Planks",
     ingredients: [
       {
@@ -8648,7 +8709,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Stripped Spruce Log",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Logs & Planks",
     ingredients: [
       {
@@ -8670,7 +8731,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Stripped Birch Log",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Logs & Planks",
     ingredients: [
       {
@@ -8692,7 +8753,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Stripped Jungle Log",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Logs & Planks",
     ingredients: [
       {
@@ -8714,7 +8775,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Stripped Acacia Log",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Logs & Planks",
     ingredients: [
       {
@@ -8736,7 +8797,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Stripped Dark Oak Log",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Logs & Planks",
     ingredients: [
       {
@@ -8758,7 +8819,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Stripped Mangrove Log",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Logs & Planks",
     ingredients: [
       {
@@ -8780,7 +8841,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Stripped Cherry Log",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Logs & Planks",
     ingredients: [
       {
@@ -8802,7 +8863,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Stripped Pale Oak Log",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Logs & Planks",
     ingredients: [
       {
@@ -8824,7 +8885,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Bamboo Block",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Logs & Planks",
     ingredients: [
       {
@@ -8846,7 +8907,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Stripped Bamboo Block",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Logs & Planks",
     ingredients: [
       {
@@ -8868,7 +8929,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Warped Stem",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Logs & Planks",
     ingredients: [
       {
@@ -8890,7 +8951,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Stripped Warped Stem",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Logs & Planks",
     ingredients: [
       {
@@ -8912,7 +8973,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Warped Wart Block",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Fungi, Moss & Nether Growth",
     ingredients: [
       {
@@ -8934,7 +8995,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Crimson Stem",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Logs & Planks",
     ingredients: [
       {
@@ -8956,7 +9017,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Stripped Crimson Stem",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Logs & Planks",
     ingredients: [
       {
@@ -8978,7 +9039,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Nether Wart Block",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Fungi, Moss & Nether Growth",
     ingredients: [
       {
@@ -9000,7 +9061,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Shroomlight",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Light Sources",
     ingredients: [
       {
@@ -9022,7 +9083,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Bookshelf",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Logs & Planks",
     ingredients: [
       {
@@ -9044,7 +9105,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Bee Nest",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Bees & Honey",
     ingredients: [
       {
@@ -9061,7 +9122,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Beehive",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Bees & Honey",
     ingredients: [
       {
@@ -9078,7 +9139,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Oak Leaves",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Leaves",
     ingredients: [
       {
@@ -9100,7 +9161,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Spruce Leaves",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Leaves",
     ingredients: [
       {
@@ -9122,7 +9183,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Birch Leaves",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Leaves",
     ingredients: [
       {
@@ -9144,7 +9205,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Jungle Leaves",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Leaves",
     ingredients: [
       {
@@ -9166,7 +9227,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Acacia Leaves",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Leaves",
     ingredients: [
       {
@@ -9188,7 +9249,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Dark Oak Leaves",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Leaves",
     ingredients: [
       {
@@ -9210,7 +9271,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Mangrove Leaves",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Leaves",
     ingredients: [
       {
@@ -9232,7 +9293,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Cherry Leaves",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Leaves",
     ingredients: [
       {
@@ -9254,7 +9315,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Pale Oak Leaves",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Leaves",
     ingredients: [
       {
@@ -9276,7 +9337,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Azalea Leaves",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Leaves",
     ingredients: [
       {
@@ -9298,7 +9359,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Flowering Azalea Leaves",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Leaves",
     ingredients: [
       {
@@ -9320,7 +9381,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Resin Clump",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Fungi, Moss & Nether Growth",
     ingredients: [
       {
@@ -9342,7 +9403,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Brown Mushroom Block",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Fungi, Moss & Nether Growth",
     ingredients: [
       {
@@ -9364,7 +9425,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Red Mushroom Block",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Fungi, Moss & Nether Growth",
     ingredients: [
       {
@@ -9386,7 +9447,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Mushroom Stem",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Logs & Planks",
     ingredients: [
       {
@@ -9408,7 +9469,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Moss Block",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Fungi, Moss & Nether Growth",
     ingredients: [
       {
@@ -9430,7 +9491,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Pale Moss Block",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Fungi, Moss & Nether Growth",
     ingredients: [
       {
@@ -9452,7 +9513,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Short Grass",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Plants & Flowers",
     ingredients: [
       {
@@ -9474,7 +9535,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Short Dry Grass",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Plants & Flowers",
     ingredients: [
       {
@@ -9496,7 +9557,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Fern",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Plants & Flowers",
     ingredients: [
       {
@@ -9513,7 +9574,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Bush",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Plants & Flowers",
     ingredients: [
       {
@@ -9530,7 +9591,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Firefly Bush",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Plants & Flowers",
     ingredients: [
       {
@@ -9552,7 +9613,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Dead Bush",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Plants & Flowers",
     ingredients: [
       {
@@ -9574,7 +9635,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Tall Grass",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Plants & Flowers",
     ingredients: [
       {
@@ -9596,7 +9657,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Tall Dry Grass",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Plants & Flowers",
     ingredients: [
       {
@@ -9618,7 +9679,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Large Fern",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Plants & Flowers",
     ingredients: [
       {
@@ -9640,7 +9701,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Dandelion",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Plants & Flowers",
     ingredients: [
       {
@@ -9662,7 +9723,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Poppy",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Plants & Flowers",
     ingredients: [
       {
@@ -9679,7 +9740,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Blue Orchid",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Plants & Flowers",
     ingredients: [
       {
@@ -9701,7 +9762,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Allium",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Plants & Flowers",
     ingredients: [
       {
@@ -9718,7 +9779,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Azure Bluet",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Plants & Flowers",
     ingredients: [
       {
@@ -9740,7 +9801,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Red Tulip",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Plants & Flowers",
     ingredients: [
       {
@@ -9762,7 +9823,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Orange Tulip",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Plants & Flowers",
     ingredients: [
       {
@@ -9784,7 +9845,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "White Tulip",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Plants & Flowers",
     ingredients: [
       {
@@ -9806,7 +9867,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Pink Tulip",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Plants & Flowers",
     ingredients: [
       {
@@ -9828,7 +9889,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Oxeye Daisy",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Plants & Flowers",
     ingredients: [
       {
@@ -9850,7 +9911,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Cornflower",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Plants & Flowers",
     ingredients: [
       {
@@ -9872,7 +9933,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Lily Of The Valley",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Plants & Flowers",
     ingredients: [
       {
@@ -9894,7 +9955,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Closed Eyeblossom",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Plants & Flowers",
     ingredients: [
       {
@@ -9916,7 +9977,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Wither Rose",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Plants & Flowers",
     ingredients: [
       {
@@ -9938,7 +9999,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Sunflower",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Plants & Flowers",
     ingredients: [
       {
@@ -9960,7 +10021,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Lilac",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Plants & Flowers",
     ingredients: [
       {
@@ -9977,7 +10038,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Rose Bush",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Plants & Flowers",
     ingredients: [
       {
@@ -9999,7 +10060,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Peony",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Plants & Flowers",
     ingredients: [
       {
@@ -10016,7 +10077,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Pitcher Plant",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Plants & Flowers",
     ingredients: [
       {
@@ -10038,7 +10099,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Torchflower",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Plants & Flowers",
     ingredients: [
       {
@@ -10060,7 +10121,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Cactus Flower",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Plants & Flowers",
     ingredients: [
       {
@@ -10082,7 +10143,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Pink Petals",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Plants & Flowers",
     ingredients: [
       {
@@ -10104,7 +10165,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Leaf Litter",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Leaves",
     ingredients: [
       {
@@ -10126,7 +10187,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Wildflowers",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Plants & Flowers",
     ingredients: [
       {
@@ -10148,7 +10209,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Azalea",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Plants & Flowers",
     ingredients: [
       {
@@ -10165,7 +10226,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Flowering Azalea",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Plants & Flowers",
     ingredients: [
       {
@@ -10187,7 +10248,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Spore Blossom",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Plants & Flowers",
     ingredients: [
       {
@@ -10209,7 +10270,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Big Dripleaf",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Plants & Flowers",
     ingredients: [
       {
@@ -10231,7 +10292,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Small Dripleaf",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Plants & Flowers",
     ingredients: [
       {
@@ -10253,7 +10314,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Lily Pad",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Plants & Flowers",
     ingredients: [
       {
@@ -10270,7 +10331,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Vine",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Plants & Flowers",
     ingredients: [
       {
@@ -10287,7 +10348,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Hanging Roots",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Plants & Flowers",
     ingredients: [
       {
@@ -10309,7 +10370,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Glow Lichen",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Plants & Flowers",
     ingredients: [
       {
@@ -10331,7 +10392,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Pale Hanging Moss",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Fungi, Moss & Nether Growth",
     ingredients: [
       {
@@ -10353,7 +10414,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Seagrass",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Plants & Flowers",
     ingredients: [
       {
@@ -10370,7 +10431,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Sea Pickle",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Plants & Flowers",
     ingredients: [
       {
@@ -10392,7 +10453,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Crimson Fungus",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Fungi, Moss & Nether Growth",
     ingredients: [
       {
@@ -10414,7 +10475,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Warped Fungus",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Fungi, Moss & Nether Growth",
     ingredients: [
       {
@@ -10436,7 +10497,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Crimson Roots",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Plants & Flowers",
     ingredients: [
       {
@@ -10458,7 +10519,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Warped Roots",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Plants & Flowers",
     ingredients: [
       {
@@ -10480,7 +10541,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Nether Sprouts",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Plants & Flowers",
     ingredients: [
       {
@@ -10502,7 +10563,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Weeping Vines",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Plants & Flowers",
     ingredients: [
       {
@@ -10524,7 +10585,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Twisting Vines",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Plants & Flowers",
     ingredients: [
       {
@@ -10546,7 +10607,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Light Gray Dye",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Dyes",
     ingredients: [
       {
@@ -10568,7 +10629,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Gray Dye",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Dyes",
     ingredients: [
       {
@@ -10585,7 +10646,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Black Dye",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Dyes",
     ingredients: [
       {
@@ -10607,7 +10668,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Brown Dye",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Dyes",
     ingredients: [
       {
@@ -10629,7 +10690,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Red Dye",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Dyes",
     ingredients: [
       {
@@ -10646,7 +10707,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Orange Dye",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Dyes",
     ingredients: [
       {
@@ -10668,7 +10729,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Yellow Dye",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Dyes",
     ingredients: [
       {
@@ -10690,7 +10751,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Lime Dye",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Dyes",
     ingredients: [
       {
@@ -10707,7 +10768,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Green Dye",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Dyes",
     ingredients: [
       {
@@ -10729,7 +10790,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Cyan Dye",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Dyes",
     ingredients: [
       {
@@ -10746,7 +10807,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Light Blue Dye",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Dyes",
     ingredients: [
       {
@@ -10768,7 +10829,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Blue Dye",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Dyes",
     ingredients: [
       {
@@ -10785,7 +10846,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Purple Dye",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Dyes",
     ingredients: [
       {
@@ -10807,7 +10868,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Magenta Dye",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Dyes",
     ingredients: [
       {
@@ -10829,7 +10890,7 @@ export const generatedStationRecipes: Recipe[] = [
     title: "Pink Dye",
     station: "Forester Station",
     time: 2,
-    requirement: "Tree Crafer",
+    requirement: "Tree Crafter",
     category: "Dyes",
     ingredients: [
       {
@@ -12528,6 +12589,30 @@ export const generatedStationRecipes: Recipe[] = [
     },
   },
   {
+    key: "gen-instrument-station-music-station",
+    title: "Music Station",
+    station: "Instrument Station",
+    time: 10,
+    category: "Other",
+    ingredients: [
+      {
+        name: "Spruce Planks",
+        qty: 6,
+        sourceId: "vanilla:spruce_planks",
+        texture: "/wiki/textures/vanilla/spruce_planks.png",
+      },
+      { name: "Glass Pane", qty: 4, sourceId: "vanilla:glass_pane", texture: "/wiki/textures/vanilla/glass_pane.png" },
+      { name: "Iron Ingot", qty: 1, sourceId: "vanilla:iron_ingot", texture: "/wiki/textures/vanilla/iron_ingot.png" },
+      { name: "Black Dye", qty: 1, sourceId: "vanilla:black_dye", texture: "/wiki/textures/vanilla/black_dye.png" },
+    ],
+    output: {
+      name: "Music Station",
+      qty: 1,
+      sourceId: "itemsadder:music_station",
+      texture: "/wiki/textures/vanilla/paper.png",
+    },
+  },
+  {
     key: "gen-meal-prep-station-cutting_knife",
     title: "Cutting Knife",
     station: "Meal Prep Station",
@@ -12894,7 +12979,7 @@ export const generatedStationRecipes: Recipe[] = [
         texture: "/wiki/textures/mmoitems/steel_ingot.png",
       },
       {
-        name: "Refined Maplewood",
+        name: "Refined Elderwood",
         qty: 4,
         sourceId: "mmoitem:MATERIALS:REFINED_ELDERWOOD",
         texture: "/wiki/textures/mmoitems/refined_elderwood.png",
@@ -12928,7 +13013,7 @@ export const generatedStationRecipes: Recipe[] = [
         texture: "/wiki/textures/mmoitems/mythril_ingot.png",
       },
       {
-        name: "Refined Maplewood",
+        name: "Refined Demonwood",
         qty: 4,
         sourceId: "mmoitem:MATERIALS:REFINED_DEMONWOOD",
         texture: "/wiki/textures/mmoitems/refined_demonwood.png",
@@ -12984,7 +13069,7 @@ export const generatedStationRecipes: Recipe[] = [
         texture: "/wiki/textures/mmoitems/steel_ingot.png",
       },
       {
-        name: "Refined Maplewood",
+        name: "Refined Elderwood",
         qty: 4,
         sourceId: "mmoitem:MATERIALS:REFINED_ELDERWOOD",
         texture: "/wiki/textures/mmoitems/refined_elderwood.png",
@@ -13018,7 +13103,7 @@ export const generatedStationRecipes: Recipe[] = [
         texture: "/wiki/textures/mmoitems/mythril_ingot.png",
       },
       {
-        name: "Refined Maplewood",
+        name: "Refined Demonwood",
         qty: 4,
         sourceId: "mmoitem:MATERIALS:REFINED_DEMONWOOD",
         texture: "/wiki/textures/mmoitems/refined_demonwood.png",
@@ -15117,6 +15202,111 @@ export const generatedStationRecipes: Recipe[] = [
     },
   },
   {
+    key: "gen-rune-station-sealed-artifact",
+    title: "Sealed Artifact",
+    station: "Rune Station",
+    time: 10,
+    category: "Loot",
+    ingredients: [
+      {
+        name: "Enchanted Dust",
+        qty: 18,
+        sourceId: "mmoitem:CURRENCY:ENCHANTED_DUST",
+        texture: "/wiki/textures/mmoitems/enchanted_dust.png",
+      },
+    ],
+    output: {
+      name: "Sealed Artifact",
+      qty: 1,
+      sourceId: "mmoitem:LOOT:SEALED_ARTIFACT",
+      texture: "/wiki/textures/mmoitems/sealed_artifact.png",
+    },
+  },
+  {
+    key: "gen-rune-station-sealed-oseni-artifact",
+    title: "Sealed Oseni Artifact",
+    station: "Rune Station",
+    time: 10,
+    category: "Loot",
+    ingredients: [
+      {
+        name: "Enchanted Dust",
+        qty: 28,
+        sourceId: "mmoitem:CURRENCY:ENCHANTED_DUST",
+        texture: "/wiki/textures/mmoitems/enchanted_dust.png",
+      },
+    ],
+    output: {
+      name: "Sealed Oseni Artifact",
+      qty: 1,
+      sourceId: "mmoitem:LOOT:SEALED_OSENI_ARTIFACT",
+      texture: "/wiki/textures/mmoitems/sealed_oseni_artifact.png",
+    },
+  },
+  {
+    key: "gen-rune-station-sealed-seithr-artifact",
+    title: "Sealed Seithr Artifact",
+    station: "Rune Station",
+    time: 10,
+    category: "Loot",
+    ingredients: [
+      {
+        name: "Enchanted Dust",
+        qty: 28,
+        sourceId: "mmoitem:CURRENCY:ENCHANTED_DUST",
+        texture: "/wiki/textures/mmoitems/enchanted_dust.png",
+      },
+    ],
+    output: {
+      name: "Sealed Seithr Artifact",
+      qty: 1,
+      sourceId: "mmoitem:LOOT:SEALED_SEITHR_ARTIFACT",
+      texture: "/wiki/textures/mmoitems/sealed_seithr_artifact.png",
+    },
+  },
+  {
+    key: "gen-rune-station-sealed-cerrith-artifact",
+    title: "Sealed Cerrith Artifact",
+    station: "Rune Station",
+    time: 10,
+    category: "Loot",
+    ingredients: [
+      {
+        name: "Enchanted Dust",
+        qty: 28,
+        sourceId: "mmoitem:CURRENCY:ENCHANTED_DUST",
+        texture: "/wiki/textures/mmoitems/enchanted_dust.png",
+      },
+    ],
+    output: {
+      name: "Sealed Cerrith Artifact",
+      qty: 1,
+      sourceId: "mmoitem:LOOT:SEALED_CERRITH_ARTIFACT",
+      texture: "/wiki/textures/mmoitems/sealed_cerrith_artifact.png",
+    },
+  },
+  {
+    key: "gen-rune-station-sealed-mitlan-artifact",
+    title: "Sealed Mitlan Artifact",
+    station: "Rune Station",
+    time: 10,
+    category: "Loot",
+    ingredients: [
+      {
+        name: "Enchanted Dust",
+        qty: 28,
+        sourceId: "mmoitem:CURRENCY:ENCHANTED_DUST",
+        texture: "/wiki/textures/mmoitems/enchanted_dust.png",
+      },
+    ],
+    output: {
+      name: "Sealed Mitlan Artifact",
+      qty: 1,
+      sourceId: "mmoitem:LOOT:SEALED_MITLAN_ARTIFACT",
+      texture: "/wiki/textures/mmoitems/sealed_mitlan_artifact.png",
+    },
+  },
+  {
     key: "gen-tool-station-iron-hunting-knife",
     title: "Iron Hunting Knife",
     station: "Tool Station",
@@ -16139,6 +16329,40 @@ export const generatedStationRecipes: Recipe[] = [
       qty: 1,
       sourceId: "itemsadder:blindfold_helmet",
       texture: "/wiki/textures/itemsadder/blindfold_helmet.png",
+    },
+  },
+  {
+    key: "gen-tool-station-forearm-crutch",
+    title: "Forearm Crutch",
+    station: "Tool Station",
+    time: 5,
+    category: "Other",
+    ingredients: [
+      { name: "Stick", qty: 3, sourceId: "vanilla:stick", texture: "/wiki/textures/vanilla/stick.png" },
+      { name: "Leather", qty: 1, sourceId: "mmoitem:MATERIALS:LEATHER", texture: "/wiki/textures/vanilla/leather.png" },
+    ],
+    output: {
+      name: "Forearm Crutch",
+      qty: 1,
+      sourceId: "mmoitem:PROPS:FOREARM_CRUTCH",
+      texture: "/wiki/textures/mmoitems/forearm_crutch.png",
+    },
+  },
+  {
+    key: "gen-tool-station-forearm-crutch-slim",
+    title: "Slim Forearm Crutch",
+    station: "Tool Station",
+    time: 5,
+    category: "Other",
+    ingredients: [
+      { name: "Stick", qty: 3, sourceId: "vanilla:stick", texture: "/wiki/textures/vanilla/stick.png" },
+      { name: "Leather", qty: 1, sourceId: "mmoitem:MATERIALS:LEATHER", texture: "/wiki/textures/vanilla/leather.png" },
+    ],
+    output: {
+      name: "Slim Forearm Crutch",
+      qty: 1,
+      sourceId: "mmoitem:PROPS:FOREARM_CRUTCH_SLIM",
+      texture: "/wiki/textures/mmoitems/forearm_crutch_slim.png",
     },
   },
   {

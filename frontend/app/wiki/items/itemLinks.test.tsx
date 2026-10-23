@@ -85,7 +85,7 @@ describe("generated item detail routes", () => {
     expect(html).toContain(`<h1`);
     expect(html).toContain(item!.name);
     expect(html).toContain("How to craft");
-    expect(html).toContain("What can be crafted from it");
+    expect(html).toContain("Used to make");
     expect(html).toContain(item!.recipes[0]?.title ?? item!.usedIn[0]?.title);
   });
 });

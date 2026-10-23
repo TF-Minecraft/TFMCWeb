@@ -578,6 +578,22 @@
     "sourceModel": "tfmc_pack/resourcepack/assets/minecraft/models/item/music/disc_dearly_beloved.json",
     "sourceTexture": "tfmc_pack/resourcepack/assets/minecraft/textures/item/music/disc_dearly_beloved.png"
   },
+  "DISC14": {
+    "name": "Music Disc",
+    "material": "RECOVERY_COMPASS",
+    "customModelData": 8,
+    "texture": "mmoitems/disc14.png",
+    "sourceModel": "tfmc_pack/resourcepack/assets/minecraft/models/item/music/disc_kjope_hele_sverige.json",
+    "sourceTexture": "tfmc_pack/resourcepack/assets/minecraft/textures/item/music/disc_kjope_hele_sverige.png"
+  },
+  "DISC15": {
+    "name": "Music Disc",
+    "material": "RECOVERY_COMPASS",
+    "customModelData": 16,
+    "texture": "mmoitems/disc15.png",
+    "sourceModel": "tfmc_pack/resourcepack/assets/minecraft/models/item/music/disc_o_strings_my_strings.json",
+    "sourceTexture": "tfmc_pack/resourcepack/assets/minecraft/textures/item/music/disc_o_strings_my_strings.png"
+  },
   "DISC2": {
     "name": "Music Disc",
     "material": "RECOVERY_COMPASS",
@@ -829,6 +845,22 @@
     "texture": "mmoitems/flute.png",
     "sourceModel": "tfmc_pack/resourcepack/assets/minecraft/models/item/instruments/flute.json",
     "sourceTexture": "tfmc_pack/resourcepack/assets/minecraft/textures/item/instruments/flute.png"
+  },
+  "FOREARM_CRUTCH": {
+    "name": "Forearm Crutch",
+    "material": "STICK",
+    "customModelData": 77,
+    "texture": "mmoitems/forearm_crutch.png",
+    "sourceModel": "tfmc_pack/resourcepack/assets/minecraft/models/item/props/forearm_crutch.json",
+    "sourceTexture": "tfmc_pack/resourcepack/assets/minecraft/textures/item/props/forearm_crutch.png"
+  },
+  "FOREARM_CRUTCH_SLIM": {
+    "name": "Slim Forearm Crutch",
+    "material": "STICK",
+    "customModelData": 78,
+    "texture": "mmoitems/forearm_crutch_slim.png",
+    "sourceModel": "tfmc_pack/resourcepack/assets/minecraft/models/item/props/forearm_crutch_slim.json",
+    "sourceTexture": "tfmc_pack/resourcepack/assets/minecraft/textures/item/props/forearm_crutch.png"
   },
   "FORGING_BRANDING_TOOL": {
     "name": "Forging Branding Tool",
@@ -1562,6 +1594,11 @@
     "material": "CAT_SPAWN_EGG",
     "customModelData": 12015
   },
+  "PET_CAVALIER_KING_CHARLES_SPANIEL_EGG": {
+    "name": "Cavalier King Charles Spaniel Companion Egg",
+    "material": "WOLF_SPAWN_EGG",
+    "customModelData": 12019
+  },
   "PET_CHEW_BONE": {
     "name": "Bone Plush",
     "material": "RABBIT_FOOT",
@@ -1625,6 +1662,11 @@
     "texture": "mmoitems/pet_mouse_plush.png",
     "sourceModel": "tfmc_pack/resourcepack/assets/tfmc/models/item/pets/pet_mouse_plush.json",
     "sourceTexture": "tfmc_pack/resourcepack/assets/tfmc/textures/item/pets/pet_mouse_plush.png"
+  },
+  "PET_SPHYNX_EGG": {
+    "name": "Sphynx Cat Companion Egg",
+    "material": "CAT_SPAWN_EGG",
+    "customModelData": 12020
   },
   "PET_TEDDY_PLUSH": {
     "name": "Teddy Bear Plush",
@@ -1902,6 +1944,31 @@
     "texture": "mmoitems/scribe_paper.png",
     "sourceModel": "tfmc_pack/resourcepack/assets/minecraft/models/item/miscellaneous/parchment_paper.json",
     "sourceTexture": "tfmc_pack/resourcepack/assets/minecraft/textures/item/miscellaneous/parchment_paper.png"
+  },
+  "SEALED_ARTIFACT": {
+    "name": "Sealed Artifact",
+    "material": "PAPER",
+    "customModelData": 10859
+  },
+  "SEALED_CERRITH_ARTIFACT": {
+    "name": "Sealed Cerrith Artifact",
+    "material": "PAPER",
+    "customModelData": 10790
+  },
+  "SEALED_MITLAN_ARTIFACT": {
+    "name": "Sealed Mitlan Artifact",
+    "material": "PAPER",
+    "customModelData": 10810
+  },
+  "SEALED_OSENI_ARTIFACT": {
+    "name": "Sealed Oseni Artifact",
+    "material": "PAPER",
+    "customModelData": 10817
+  },
+  "SEALED_SEITHR_ARTIFACT": {
+    "name": "Sealed Seithr Artifact",
+    "material": "PAPER",
+    "customModelData": 10838
   },
   "SEWING_NEEDLE": {
     "name": "Sewing Needle",

@@ -635,13 +635,30 @@ function asList(value) {
  * `permission{...}` (label taken from `display`) and `class{list=...}` appear
  * in these files; nothing else in `conditions` is rendered.
  */
+/** Misspelt perk names in the server's `display=` labels. */
+const PERK_LABEL_TYPOS = { "Tree Crafer": "Tree Crafter" };
+const ROMAN = ["", "I", "II", "III", "IV", "V"];
+
+/**
+ * A perk label as the wiki shows it. Main's labels are hand-typed, and a few say
+ * "Transmutation II" over a `professions.transmutation_1` check, so the tier the
+ * permission really checks wins over the one the label claims.
+ */
+export function perkLabel(display, node = "") {
+  let label = stripColours(display).replace(/^Requires\s+/i, "");
+  label = PERK_LABEL_TYPOS[label] ?? label;
+  const tier = node.match(/^professions\.[a-z_]+_(\d)$/)?.[1];
+  if (tier && ROMAN[Number(tier)]) label = label.replace(/\s+(?:I|II|III|IV|V)$/, ` ${ROMAN[Number(tier)]}`);
+  return label;
+}
+
 function requirementFor(conditions) {
   const labels = [];
   for (const raw of conditions) {
     const ref = parseRef(raw);
     if (!ref) continue;
     if (ref.kind === "permission" && ref.attrs.display) {
-      labels.push(stripColours(ref.attrs.display).replace(/^Requires\s+/i, ""));
+      labels.push(perkLabel(ref.attrs.display, ref.attrs.list));
     } else if (ref.kind === "class" && ref.attrs.list) {
       labels.push(CLASS_REQUIREMENT_LABELS[ref.attrs.list] ?? `${ref.attrs.list} class`);
     }
@@ -668,6 +685,23 @@ export function build({
     parsed.push({ file, recipes: result.recipes });
   }
 
+  // A `display=` that is the configured name of a *different* MMOItems item is a
+  // config typo (Main's medicine-station.yml labels Refined Elderwood as "Refined
+  // Maplewood"). The wiki shows the item the recipe really takes.
+  const idsByItemName = new Map();
+  for (const [id, record] of items) {
+    if (!record?.name) continue;
+    if (!idsByItemName.has(record.name)) idsByItemName.set(record.name, new Set());
+    idsByItemName.get(record.name).add(id);
+  }
+  const mislabelled = (ref) => {
+    if (ref.kind !== "mmoitem" || !ref.attrs.display) return false;
+    const shown = stripColours(ref.attrs.display);
+    const configured = items.get(ref.attrs.id)?.name;
+    const owners = idsByItemName.get(shown);
+    return Boolean(configured && configured !== shown && owners && !owners.has(ref.attrs.id));
+  };
+
   // Pass 1: collect every `display=` seen on an ingredient, keyed by item
   // identity. Map-form outputs carry no display name; this recovers the real
   // name for the ones that also appear as an ingredient somewhere.
@@ -677,7 +711,7 @@ export function build({
       for (const raw of asList(r.fields.ingredients)) {
         const ref = parseRef(raw);
         // A Cooking `display` names the food ("Beef Steak"), not its vanilla origin.
-        if (!ref?.attrs.display || ref.kind === "cooking") continue;
+        if (!ref?.attrs.display || ref.kind === "cooking" || mislabelled(ref)) continue;
         const id = refIdentity(ref);
         if (!displayByIdentity.has(id)) displayByIdentity.set(id, stripColours(ref.attrs.display));
       }
@@ -688,7 +722,7 @@ export function build({
   // item config's own name, then a `display=` the same item carries somewhere
   // else, then a title-cased id as a last resort.
   const nameFor = (ref) => {
-    if (ref.attrs.display) return stripColours(ref.attrs.display);
+    if (ref.attrs.display && !mislabelled(ref)) return stripColours(ref.attrs.display);
     if (ref.kind === "mmoitem") {
       const configured = items.get(ref.attrs.id)?.name;
       if (configured) return configured;
@@ -741,6 +775,9 @@ export function build({
     if (ref.kind === "mmoitem") {
       const exact = mmoItemsTextures.get(ref.attrs.id)?.texture;
       if (exact && existsSync(path.join(TEXTURE_ROOT, exact))) return `/wiki/textures/${exact}`;
+      // A sprite saved by hand under the item's id, for models the pack extractor can't resolve.
+      const saved = `mmoitems/${(ref.attrs.id ?? "").toLowerCase()}.png`;
+      if (ref.attrs.id && existsSync(path.join(TEXTURE_ROOT, saved))) return `/wiki/textures/${saved}`;
     }
     if (ref.kind === "itemsadder") {
       const item = itemsAdder.get(bareItemsAdderId(ref));

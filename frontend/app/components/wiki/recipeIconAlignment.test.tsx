@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { iconTranslation, recipeIconTransform } from "./recipeIconAlignment";
 import RecipeItemIcon from "./RecipeItemIcon";
 import CraftingGrid from "./CraftingGrid";
-import { materialRecipes } from "../../wiki/data/materials";
+import { magicPartRecipes } from "../../wiki/data/magic-parts";
 
 describe("visible recipe sprite alignment", () => {
   it("corrects the measured Steel Magical Core padding without changing its size", () => {
@@ -37,7 +37,7 @@ describe("visible recipe sprite alignment", () => {
   });
 
   it("applies visible-pixel centering to the actual Steel Magical Core recipe output", () => {
-    const recipe = materialRecipes.find((candidate) => candidate.output.name === "Steel Magical Core")!;
+    const recipe = magicPartRecipes.find((candidate) => candidate.output.name === "Steel Magical Core")!;
     const html = renderToStaticMarkup(CraftingGrid({ recipe }));
     expect(html).toMatch(/<img[^>]*alt="Steel Magical Core"[^>]*style="transform:translate\(-3\.125%, 3\.125%\)"/);
     expect(html).toContain("grid grid-cols-3 gap-1");

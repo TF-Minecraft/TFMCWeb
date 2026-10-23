@@ -4,6 +4,7 @@ import CraftingGrid from "../../../components/wiki/CraftingGrid";
 import RecipeItemIcon from "../../../components/wiki/RecipeItemIcon";
 import { WikiItemText, WikiPage, WikiSectionHeading } from "@/app/components/wiki";
 import { getItemBySlug, itemDetails } from "../../data/items";
+import { stations } from "../../data";
 
 export function generateStaticParams() {
   return itemDetails.map((item) => ({ slug: item.slug }));
@@ -13,13 +14,18 @@ export default async function ItemDetailPage({ params }: { params: Promise<{ slu
   const { slug } = await params;
   const item = getItemBySlug(slug);
   if (!item) notFound();
+  // Back to the station that makes it, or to the station list for items nothing here makes.
+  const station = stations.find((candidate) => candidate.name === item.recipes[0]?.station);
+  const back = station
+    ? { href: `/wiki/stations/${station.slug}`, label: station.name }
+    : { href: "/wiki/stations", label: "Crafting Stations" };
   return (
     <WikiPage
-      lastModified="2026-10-11"
+      lastModified="2026-10-23"
       title={item.name}
       beforeTitle={
-        <Link href="/wiki/materials" className="text-xs text-[var(--tfmc-mist)] hover:text-[var(--tfmc-cream)]">
-          &larr; Materials and crafting
+        <Link href={back.href} className="text-xs text-[var(--tfmc-mist)] hover:text-[var(--tfmc-cream)]">
+          &larr; {back.label}
         </Link>
       }
       titleVisual={
@@ -37,7 +43,7 @@ export default async function ItemDetailPage({ params }: { params: Promise<{ slu
           </div>
         </>
       ) : null}
-      <WikiSectionHeading id="used-in">What can be crafted from it</WikiSectionHeading>
+      <WikiSectionHeading id="used-in">Used to make</WikiSectionHeading>
       {item.usedIn.length ? (
         <div className="mt-4 space-y-4">
           {item.usedIn.map((recipe) => (
@@ -45,9 +51,7 @@ export default async function ItemDetailPage({ params }: { params: Promise<{ slu
           ))}
         </div>
       ) : (
-        <p className="mt-2 text-sm text-[var(--tfmc-mist)]">
-          No recipes in this guide use {item.name} as an ingredient.
-        </p>
+        <p className="mt-2 text-sm text-[var(--tfmc-mist)]">No station recipe uses it.</p>
       )}
     </WikiPage>
   );

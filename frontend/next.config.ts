@@ -30,6 +30,19 @@ const nextConfig: NextConfig = {
       { source: "/drinks", destination: "/profile?tab=drinks", permanent: false },
       // The Drink Builder guide became a section of the Brewing guide.
       { source: "/wiki/drink-builder", destination: "/wiki/brewing#custom-drinks", permanent: true },
+      // Mage weapon parts are paid for at the Magic Station, not crafted as materials.
+      {
+        source:
+          "/wiki/materials/:part((?:basic|petty|heavy)-magical-(?:handle|tome)|(?:iron|steel|abyssalite|mythril)-magical-core)",
+        destination: "/wiki/stations/magic-station#recipes",
+        permanent: false,
+      },
+      // Materials that no player can obtain any more.
+      {
+        source: "/wiki/materials/:gone(bloodmagic-essence|necromancy-essence|smokeless-powder|fossil)",
+        destination: "/wiki/materials",
+        permanent: false,
+      },
       // Staff tools that moved into the staff panel.
       { source: "/precedent", destination: "/admin/precedent", permanent: false },
       { source: "/inspect", destination: "/admin/codes", permanent: false },
