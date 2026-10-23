@@ -279,6 +279,7 @@ export const JAVA_MODEL_EXPORT_HINT = "Export in Blockbench as Java Block/Item (
 export const JAVA_MODEL_ROTATION_ERROR =
   "Cubes may only rotate on one axis, in steps of 22.5°. " + JAVA_MODEL_EXPORT_HINT;
 export const JAVA_MODEL_FACE_ROTATION_ERROR = "Face texture rotation must be 0, 90, 180 or 270.";
+export const JAVA_MODEL_FACE_UV_ERROR = "Face uv must be four numbers.";
 export const JAVA_MODEL_NO_ELEMENTS_ERROR = "Model has no elements. " + JAVA_MODEL_EXPORT_HINT;
 export const JAVA_MODEL_ITEM_WRAPPER_ERROR =
   "This looks like a Minecraft item definition, not a Java Block/Item model. " + JAVA_MODEL_EXPORT_HINT;
@@ -289,6 +290,7 @@ export const JAVA_MODEL_CUBE_ERROR = "Each cube needs from and to as three numbe
 
 const ALLOWED_AXES = new Set(["x", "y", "z"]);
 const ANGLE_STEP = 22.5;
+const MAX_ANGLE = 360;
 const FACE_ROTATIONS = new Set([0, 90, 180, 270]);
 const COORD_MIN = -16;
 const COORD_MAX = 32;
@@ -299,7 +301,7 @@ function isFiniteNumber(value: unknown): value is number {
 
 /** Any multiple of 22.5°; the server bakes turns past ±45° into the cube. */
 function angleAllowed(value: unknown): boolean {
-  if (!isFiniteNumber(value)) return false;
+  if (!isFiniteNumber(value) || Math.abs(value) > MAX_ANGLE) return false;
   const steps = value / ANGLE_STEP;
   return Math.abs(steps - Math.round(steps)) < 1e-6;
 }
@@ -308,9 +310,10 @@ function angleAllowed(value: unknown): boolean {
 function singleAxisEuler(rotation: Record<string, unknown>): [string, number] | null {
   const turned: [string, number][] = [];
   for (const axis of ["x", "y", "z"]) {
-    const value = rotation[axis] ?? 0;
+    if (!(axis in rotation)) continue;
+    const value = rotation[axis];
     if (!isFiniteNumber(value)) return null;
-    if (Math.abs(value) > 1e-6) turned.push([axis, value]);
+    if (value !== 0) turned.push([axis, value]);
   }
   if (turned.length > 1) return null;
   return turned[0] ?? ["y", 0];
@@ -379,6 +382,10 @@ export function assertVanillaJavaBlockModel(data: unknown): void {
         const faceRotation = (face as Record<string, unknown>).rotation ?? 0;
         if (typeof faceRotation !== "number" || !FACE_ROTATIONS.has(faceRotation)) {
           throw new Error(JAVA_MODEL_FACE_ROTATION_ERROR);
+        }
+        const uv = (face as Record<string, unknown>).uv;
+        if (uv !== undefined && !(Array.isArray(uv) && uv.length === 4 && uv.every((n) => isFiniteNumber(n)))) {
+          throw new Error(JAVA_MODEL_FACE_UV_ERROR);
         }
       }
     }

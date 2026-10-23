@@ -9,12 +9,13 @@ import sys
 import unittest
 from pathlib import Path
 
-_BACKEND_SRC = Path(__file__).resolve().parents[1]
-if str(_BACKEND_SRC) not in sys.path:
-    sys.path.insert(0, str(_BACKEND_SRC))
+_BACKEND = Path(__file__).resolve().parents[2]
+if str(_BACKEND) not in sys.path:
+    sys.path.insert(0, str(_BACKEND))
 
 from src.skins.display import (  # noqa: E402
     FACE_ROTATION_ERROR,
+    FACE_UV_ERROR,
     ROTATION_ERROR,
     TURNED_BOUNDS_ERROR,
     DisplayError,
@@ -136,7 +137,7 @@ class BakeQuarterTurnsTests(unittest.TestCase):
         self.assertEqual(ROTATION_ERROR, str(ctx.exception))
 
     def test_off_step_angle_rejected(self) -> None:
-        for angle in (30, 67, 100):
+        for angle in (30, 67, 100, 382.5, 1e300):
             with self.subTest(angle=angle), self.assertRaises(DisplayError) as ctx:
                 parse_and_merge_model(_model(_element(angle)), "item_3d")
             self.assertEqual(ROTATION_ERROR, str(ctx.exception))
@@ -148,6 +149,26 @@ class BakeQuarterTurnsTests(unittest.TestCase):
         with self.assertRaises(DisplayError) as ctx:
             parse_and_merge_model(_model(element), "item_3d")
         self.assertEqual(TURNED_BOUNDS_ERROR, str(ctx.exception))
+
+    def test_tiny_second_euler_axis_rejected(self) -> None:
+        element = _element(0)
+        element["rotation"] = {"x": 1e-7, "y": 22.5, "z": 0, "origin": [8, 7, 7]}
+        with self.assertRaises(DisplayError) as ctx:
+            parse_and_merge_model(_model(element), "item_3d")
+        self.assertEqual(ROTATION_ERROR, str(ctx.exception))
+
+    def test_bad_uv_rejected(self) -> None:
+        for uv in (["a", 0, 1, 2], [None, 0, 1, 2], [0, 1, 2]):
+            element = _element(90)
+            element["faces"]["north"]["uv"] = uv
+            with self.subTest(uv=uv), self.assertRaises(DisplayError) as ctx:
+                parse_and_merge_model(_model(element), "item_3d")
+            self.assertEqual(FACE_UV_ERROR, str(ctx.exception))
+
+    def test_odd_cullface_ignored(self) -> None:
+        element = _element(90)
+        element["faces"]["north"]["cullface"] = ["north"]
+        parse_and_merge_model(_model(element), "item_3d")
 
     def test_bad_face_rotation_rejected(self) -> None:
         element = _element(0)

@@ -13,6 +13,7 @@ import copy
 from typing import Any
 
 ANGLE_STEP = 22.5
+MAX_ANGLE = 360.0
 _EPS = 1e-6
 
 Vec3 = tuple[float, float, float]
@@ -89,6 +90,8 @@ def split_angle(angle: float) -> tuple[int, float]:
 
 
 def is_step_angle(value: float) -> bool:
+    if abs(value) > MAX_ANGLE:
+        return False
     steps = value / ANGLE_STEP
     return abs(steps - round(steps)) < _EPS
 
@@ -143,7 +146,7 @@ def _turn_face(
     else:
         out.pop("rotation", None)
     cull = data.get("cullface")
-    if cull in _FACE_NORMALS:
+    if isinstance(cull, str) and cull in _FACE_NORMALS:
         cull_normal = tuple(
             round(n)
             for n in _quarter_turn(

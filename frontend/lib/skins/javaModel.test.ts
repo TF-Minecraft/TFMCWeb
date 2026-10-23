@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import {
   JAVA_MODEL_BOUNDS_ERROR,
   JAVA_MODEL_FACE_ROTATION_ERROR,
+  JAVA_MODEL_FACE_UV_ERROR,
   JAVA_MODEL_ITEM_WRAPPER_ERROR,
   JAVA_MODEL_NO_ELEMENTS_ERROR,
   JAVA_MODEL_PROJECT_FILE_ERROR,
@@ -79,7 +80,7 @@ describe("assertVanillaJavaBlockModel", () => {
   });
 
   it("rejects angles off the 22.5° grid", () => {
-    for (const angle of [30, 67, 100]) {
+    for (const angle of [30, 67, 100, 382.5]) {
       const model = classicKnife();
       (model.elements as Record<string, unknown>[])[0].rotation = { angle, axis: "y", origin: [8, 8, 8] };
       expect(() => assertVanillaJavaBlockModel(model), String(angle)).toThrow(JAVA_MODEL_ROTATION_ERROR);
@@ -90,6 +91,23 @@ describe("assertVanillaJavaBlockModel", () => {
     const model = classicKnife();
     (model.elements as Record<string, unknown>[])[0].faces = { north: { texture: "#0", rotation: 45 } };
     expect(() => assertVanillaJavaBlockModel(model)).toThrow(JAVA_MODEL_FACE_ROTATION_ERROR);
+  });
+
+  it("rejects a second x/y/z axis however small, and null components", () => {
+    for (const rotation of [
+      { x: 1e-7, y: 22.5, origin: [8, 8, 8] },
+      { x: null, y: 22.5, origin: [8, 8, 8] },
+    ]) {
+      const model = classicKnife();
+      (model.elements as Record<string, unknown>[])[0].rotation = rotation;
+      expect(() => assertVanillaJavaBlockModel(model)).toThrow(JAVA_MODEL_ROTATION_ERROR);
+    }
+  });
+
+  it("rejects face uv that is not four numbers", () => {
+    const model = classicKnife();
+    (model.elements as Record<string, unknown>[])[0].faces = { north: { texture: "#0", uv: ["a", 0, 1, 2] } };
+    expect(() => assertVanillaJavaBlockModel(model)).toThrow(JAVA_MODEL_FACE_UV_ERROR);
   });
 
   it("rejects rotation arrays", () => {

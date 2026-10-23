@@ -154,6 +154,7 @@ ROTATION_ERROR = (
     "Cubes may only rotate on one axis, in steps of 22.5°. " + EXPORT_HINT
 )
 FACE_ROTATION_ERROR = "Face texture rotation must be 0, 90, 180 or 270."
+FACE_UV_ERROR = "Face uv must be four numbers."
 NO_ELEMENTS_ERROR = "Model has no elements. " + EXPORT_HINT
 ITEM_WRAPPER_ERROR = (
     "This looks like a Minecraft item definition, not a Java Block/Item model. "
@@ -192,7 +193,7 @@ def _single_axis_euler(rot: dict[str, Any]) -> tuple[str, float] | None:
         value = rot.get(axis, 0)
         if not _is_number(value) or not math.isfinite(value):
             return None
-        if abs(float(value)) > 1e-6:
+        if value != 0:
             turned.append((axis, float(value)))
     if len(turned) > 1:
         return None
@@ -242,10 +243,13 @@ def validate_java_block_model(model: dict[str, Any]) -> None:
         faces = el.get("faces")
         if isinstance(faces, dict):
             for face in faces.values():
-                if isinstance(face, dict) and not _face_rotation_ok(
-                    face.get("rotation", 0)
-                ):
+                if not isinstance(face, dict):
+                    continue
+                if not _face_rotation_ok(face.get("rotation", 0)):
                     raise DisplayError(FACE_ROTATION_ERROR)
+                uv = face.get("uv")
+                if uv is not None and not _uv4(uv):
+                    raise DisplayError(FACE_UV_ERROR)
         rot = el.get("rotation")
         if rot is None:
             continue
@@ -261,6 +265,14 @@ def validate_java_block_model(model: dict[str, Any]) -> None:
             raise DisplayError(ROTATION_ERROR)
         if not _vec3(rot.get("origin")):
             raise DisplayError(ROTATION_ERROR)
+
+
+def _uv4(value: Any) -> bool:
+    return (
+        isinstance(value, list)
+        and len(value) == 4
+        and all(_is_number(n) and math.isfinite(n) for n in value)
+    )
 
 
 def _face_rotation_ok(value: Any) -> bool:
