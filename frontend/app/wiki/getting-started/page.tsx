@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { DataTable, RankName, SeeAlso, WikiPage, WikiSectionHeading } from "@/app/components/wiki";
+import { DataTable, RankName, SeeAlso, WikiItemLink, WikiPage, WikiSectionHeading } from "@/app/components/wiki";
 import JoinServer from "@/app/components/site/JoinServer";
 import { SITE_DISCORD_URL } from "@/lib/site/config";
 import { gettingStartedSection } from "../data/getting-started";
@@ -38,14 +38,14 @@ export default function GettingStartedPage() {
         <a href={SITE_DISCORD_URL} className={link}>
           TFMC Discord
         </a>{" "}
-        as well. You need it to link your account, and it has the server lore and announcements.
+        as well. You need it to link your account, and it has the server rules, the lore and announcements.
       </p>
 
       <WikiSectionHeading id="lobby">The Lobby and the rules quiz</WikiSectionHeading>
       <p className={body}>
-        Read the server rules, then type <code className={code}>/rulequiz</code> in the Lobby. The questions appear in
-        chat one at a time, and you answer by typing in chat. If you make too many mistakes, you have to wait before you
-        can try again. Passing makes you a <RankName rank="Commoner" />.
+        Read the server rules in the Discord, then type <code className={code}>/rulequiz</code> in the Lobby. The
+        questions appear in chat one at a time, and you answer by typing in chat. If you make too many mistakes, you
+        have to wait before you can try again. Passing makes you a <RankName rank="Commoner" />.
       </p>
       <p className={`mt-3 ${body}`}>
         Then right-click the <strong>TFMC Roleplay</strong> figure to queue for the main server. Next to it,{" "}
@@ -114,6 +114,15 @@ export default function GettingStartedPage() {
         such as voting, playing for an hour or cooking dishes. Click a task to reveal it, because only revealed tasks
         earn points. Points fill your weekly bar. Each time the bar reaches a reward, claim it in the same menu. The bar
         starts again every Monday. <code className={code}>/vote</code> lists the voting sites.
+      </p>
+      <p className={`mt-3 ${body}`}>
+        The rewards make daily tasks worth doing. The first ones each week give metals of the current act:{" "}
+        <WikiItemLink name="Ignitium" />, <WikiItemLink name="Tin" /> or{" "}
+        <WikiItemLink name="Abyssalite Fragment">Abyssalite Fragments</WikiItemLink>. The later ones give{" "}
+        <Link href="/wiki/armour-shop#scrolls" className={link}>
+          Skin Scrolls
+        </Link>{" "}
+        for changing how your gear looks.
       </p>
 
       <WikiSectionHeading id="choose-path">Where to go next</WikiSectionHeading>

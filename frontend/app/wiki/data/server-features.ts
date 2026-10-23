@@ -38,8 +38,8 @@ export const serverFeaturesCommands: WikiCommandSet = {
       description: "Turns the tips shown in chat on or off.",
     },
     {
-      command: "/tfmc pack [auto|manual]",
-      description: "Loads the server resource pack now, or sets whether it loads automatically when you join.",
+      command: "/tfmc pack",
+      description: "Loads the server resource pack again, for example when textures are missing.",
     },
     {
       command: "/tfmc map",
