@@ -25,6 +25,7 @@ import { gettingStartedSection } from "./getting-started";
 import { gunsSection } from "./guns";
 import { infestationsSection } from "./infestations";
 import { instrumentsSection } from "./instruments";
+import { locksSection } from "./locks";
 import { magicSection } from "./magic";
 import { marketBlockSection } from "./market-blocks";
 import { materialsSection } from "./materials";
@@ -70,6 +71,7 @@ export const wikiSections: readonly WikiSection[] = [
   gunsSection,
   armourShopSection,
   infestationsSection,
+  locksSection,
   thieverySection,
   vehiclesSection,
   factionsSection,

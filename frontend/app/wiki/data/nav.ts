@@ -46,7 +46,7 @@ const CATEGORY_DEFS: Record<WikiCategoryKey, Omit<WikiCategory, "key">> = {
   },
   combat: {
     label: "Combat & Danger",
-    blurb: "Guns, thievery, infestations and card games.",
+    blurb: "Guns, infestations, locks and thievery.",
     order: 7,
   },
   vehicles: {
@@ -56,7 +56,7 @@ const CATEGORY_DEFS: Record<WikiCategoryKey, Omit<WikiCategory, "key">> = {
   },
   social: {
     label: "Society & Economy",
-    blurb: "Money, factions, trade, cosmetics and music.",
+    blurb: "Money, factions, trade, card games, cosmetics and music.",
     order: 9,
   },
   reference: {

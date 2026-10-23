@@ -8,7 +8,7 @@ import mmoitems from "./generated/mmoitemsItems.json";
 import itemsadder from "./generated/itemsadderItems.json";
 import { allRecipes } from "./registry";
 import { stationRecipes } from "./station-recipes";
-import { gunAmmo, gunParts } from "./guns";
+import { ammoMetals, gunAmmoKinds, gunParts } from "./guns";
 
 type TextureManifestRecord = {
   name?: string;
@@ -103,7 +103,8 @@ describe("recipe textures", () => {
 
   it("renders every local guns and fishing recipe output with an image", () => {
     const guns = renderToStaticMarkup(GunsPage());
-    for (const name of [...gunParts.map((part) => part.part), ...gunAmmo.map((ammo) => ammo.ammo)]) {
+    const ammo = ammoMetals.flatMap((metal) => gunAmmoKinds.map((kind) => `${metal} ${kind.kind}`));
+    for (const name of [...gunParts.map((part) => part.part), ...ammo]) {
       expect(guns, name).toContain(`alt="${name}"`);
     }
     const fishing = renderToStaticMarkup(FishingPage());

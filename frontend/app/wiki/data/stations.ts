@@ -446,7 +446,7 @@ export const stations: StationInfo[] = [
   {
     slug: "gunsmithing-station",
     name: "Gunsmithing Station",
-    blurb: "Crafts gun parts for players with the Musketeer class.",
+    blurb: "Builds guns from parts.",
     icon: T("ammunition/bronzeshot.png"),
     interaction: "Right click",
     model: gunsmithingStationModel,

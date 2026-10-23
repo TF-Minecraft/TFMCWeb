@@ -37,6 +37,7 @@ export * from "./gem-infusion";
 export * from "./getting-started";
 export * from "./guns";
 export * from "./infestations";
+export * from "./locks";
 export * from "./instruments";
 export * from "./magic";
 export * from "./market-blocks";

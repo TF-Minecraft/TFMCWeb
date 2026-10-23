@@ -1,15 +1,19 @@
 import type { WikiCommandSet, WikiSection } from "./types";
 
 /**
- * No player commands exist. infestations-0.1.0.jar declares exactly one
- * command, `/infestation` (alias `/infestations`), and it is
- * `infestations.admin`/op-only end to end: there is nothing here for a player
- * to type.
+ * Infestations 0.3.2 on Main. `/lure leave` has no permission node, so every
+ * player can use it. `/infestation` (alias `/infestations`) is op-only and not
+ * listed.
  */
 export const infestationsCommands: WikiCommandSet = {
   system: "Infestations",
   href: "/wiki/infestations",
-  commands: [],
+  commands: [
+    {
+      command: "/lure leave",
+      description: "Gives up the Lure fight you joined, so leaving the province no longer hurts you.",
+    },
+  ],
 };
 
 export const infestationsSection: WikiSection = {
@@ -17,7 +21,7 @@ export const infestationsSection: WikiSection = {
     href: "/wiki/infestations",
     label: "Infestations",
     category: "combat",
-    blurb: "Swamp provinces overrun by Bog Monsters: fight the ambient spawns or clear the whole thing with a Lure.",
+    blurb: "Bog provinces overrun by monsters, and how to clear one with a Lure.",
   },
   commands: infestationsCommands,
 };
