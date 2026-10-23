@@ -61,8 +61,8 @@ export default function InfestationsPage() {
         </li>
         <li>Right-click the Lure during the fight to make the remaining monsters glow for 10 seconds.</li>
         <li>
-          There is no time limit. Kill the last monster and the province is cleared. If everyone who joined dies or
-          gives up, the infestation stays.
+          There is no time limit. Kill the last monster and the province is cleared. If everyone who joined dies, gives
+          up or stays logged out, the infestation stays.
         </li>
       </ol>
       <Callout variant="warning" className="mt-4">
@@ -77,8 +77,8 @@ export default function InfestationsPage() {
             <code className={code}>/lure leave</code>.
           </li>
           <li>
-            If you joined and log out, you have 5 minutes to come back. After that, that character dies the next time
-            you play it, unless the fight has already ended.
+            If you joined and log out, you have 5 minutes to come back. After that you are out of the fight, and that
+            character dies the next time you play it, unless the others have won by then.
           </li>
         </ul>
       </Callout>

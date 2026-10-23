@@ -10,7 +10,7 @@ export const thieveryCommandSet: WikiCommandSet = {
   commands: [
     {
       command: "/thievery loadout",
-      description: "Choose which kinds of items you can see and take. Thief only.",
+      description: "Choose which kinds of items you can see and take. Thief or Bandit.",
     },
     {
       command: "/pickpocket start",

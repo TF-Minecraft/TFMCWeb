@@ -52,7 +52,7 @@ export default function ThieveryPage() {
 
       <WikiSectionHeading id="loadout">Your loadout</WikiSectionHeading>
       <p className={body}>
-        Before stealing, a Thief picks which kinds of items they know how to spot with{" "}
+        Before stealing, a Thief or Bandit picks which kinds of items they know how to spot with{" "}
         <code className={code}>/thievery loadout</code>. Each kind costs points, and you have 10 at most. Adding a kind
         uses points that come back at 1 an hour; removing one gives nothing back. Your loadout is shared by all the
         characters on your account. When you steal, items of kinds you didn&apos;t pick show as <em>HIDDEN!</em> and
