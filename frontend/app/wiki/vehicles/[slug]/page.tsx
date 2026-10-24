@@ -13,17 +13,24 @@ export default async function VehicleDetail({ params }: { params: Promise<{ slug
   const vehicle = getVehicleBySlug(slug);
   if (!vehicle) notFound();
   return (
-    <WikiPage lastModified="2026-10-22" title={vehicle.name}>
+    <WikiPage lastModified="2026-10-24" title={vehicle.name}>
       <Link href="/wiki/vehicles" className="text-sm text-[var(--tfmc-accent)] underline">
         All vehicles and operating guide
       </Link>
       <VehiclePreview skins={vehicle.skins} />
+      {vehicle.id === "passenger_car" ? (
+        <p className="mt-3 text-sm text-[var(--tfmc-mist)]">
+          The Passenger Car also has an Open skin. Use Vehicle Paint to select it in game.
+        </p>
+      ) : null}
       <WikiSectionHeading id="blueprint">Build blueprint</WikiSectionHeading>
       <DataTable
         columns={[{ header: "Requirement" }, { header: "Details" }]}
         rows={[
           ["Construction station", <StationLink key="station" name={vehicle.station} />],
           ["Category", vehicle.kind],
+          ["Personal limit", vehicle.personalLimit],
+          ["Daily upkeep", `${vehicle.upkeep} d`],
           ["Profession", vehicle.requirement],
           ["Build time", vehicle.buildTime],
         ]}
@@ -38,9 +45,9 @@ export default async function VehicleDetail({ params }: { params: Promise<{ slug
         })}
       />
       <p className="mt-4 text-sm text-[var(--tfmc-mist)]">
-        Select this blueprint at the station, then left-click the spawn point within 12 blocks before the 30-second
-        selection timer expires. Inputs are consumed at placement. Stay within 96 blocks when construction finishes,
-        then right-click to claim and select a seat. Breaking the station during construction cancels the build and
+        Select this blueprint at the station, stand at the building spot within 12 blocks and left-click before the
+        30-second selection timer expires. Inputs are consumed at placement. Stay within 96 blocks when construction
+        finishes, then right-click to select a seat. Breaking the station during construction cancels the build and
         drops the inputs at the station.
       </p>
       <WikiSectionHeading id="specifications">Specifications</WikiSectionHeading>
@@ -48,8 +55,8 @@ export default async function VehicleDetail({ params }: { params: Promise<{ slug
         columns={[{ header: "Feature" }, { header: "Details" }]}
         rows={[
           ["Seats: captain / mechanic / passenger", vehicle.seats],
-          ["Components and HP", vehicle.components.replaceAll("_", " ")],
-
+          ["Components and HP", vehicle.components],
+          ["Speed", vehicle.speed],
           ["Fuel", <WikiItemLink key="fuel" name={vehicle.fuel} />],
           ["Mounted weapons", vehicle.weapons],
           ["Cargo", vehicle.cargo],
@@ -78,6 +85,11 @@ export default async function VehicleDetail({ params }: { params: Promise<{ slug
             ) : (
               "Coal Blocks can be added while the engine runs."
             )}{" "}
+            {vehicle.category === "planes" || vehicle.category === "airships"
+              ? vehicle.id === "behemoth"
+                ? "The Behemoth can refuel and reload in flight."
+                : "Land before refuelling. Land to reload bomb bays and the Monoplane's or Biplane's front rifles; other mounted guns can reload in flight."
+              : null}{" "}
             Fuel burn is flat whenever the engine runs at nonzero throttle; using 20% throttle does not save fuel.
             {vehicle.category === "train" ? " Overdrive above 100% burns more." : null}
           </Callout>
@@ -110,15 +122,22 @@ export default async function VehicleDetail({ params }: { params: Promise<{ slug
       <p className="text-sm text-[var(--tfmc-mist)]">
         Right-click to select a seat. Only the captain steers; run{" "}
         <code className="text-[var(--tfmc-accent)]">/vf keybinds</code> while seated for this vehicle’s current
-        controls. Shift reopens seat selection. Use{" "}
+        controls.{" "}
+        {vehicle.category === "airships"
+          ? "Use Shift + left-click for seat selection; in flight, Shift alone descends."
+          : vehicle.category === "planes"
+            ? "Use Shift + left-click for seat selection."
+            : "Shift reopens seat selection."}{" "}
+        Use{" "}
         <Link href="/wiki/vehicles#repair" className="underline">
           Vehicle Repair
         </Link>{" "}
         from outside while stationary and grounded, or from a mechanic seat.
       </p>
       <p className="mt-3 text-sm text-[var(--tfmc-mist)]">
-        Newly claimed vehicles are owner-only until their whitelist is changed. Ownership Settings controls passenger
-        access and tickets. Unloading beyond 160 blocks is storage, not destruction; use{" "}
+        Your finished build starts with whitelisting on. Claiming an unowned vehicle, receiving a handover or receiving
+        a faction vehicle starts with whitelisting off. Turn it on in Ownership Settings to control passenger access and
+        tickets. Unloading beyond 160 blocks is storage, not destruction; use{" "}
         <code className="text-[var(--tfmc-accent)]">/vf findvehicles</code> to locate your vehicles.
       </p>
       <Link href="/wiki/vehicles#operation" className="mt-4 inline-block text-[var(--tfmc-accent)] underline">

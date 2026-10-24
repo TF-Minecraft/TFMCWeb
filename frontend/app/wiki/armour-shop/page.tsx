@@ -17,11 +17,11 @@ const code = "text-[var(--tfmc-accent)]";
 export default function ArmourShopPage() {
   return (
     <WikiPage
-      lastModified="2026-10-23"
+      lastModified="2026-10-24"
       title="Armour Shop"
       intro={
         <>
-          The Armour Shop changes how your armour, weapons and tools look. A skin changes only the look: the item keeps
+          The Armour Shop changes how your armour, weapons and tools look. A skin changes only the look. The item keeps
           its stats.
         </>
       }
@@ -60,7 +60,11 @@ export default function ArmourShopPage() {
       <ItemGallery centeredSelectors selectorColumns={2} widePreview items={skinScrolls} />
       <p className={`mt-4 ${body}`}>
         You earn scrolls from the higher weekly activity rewards, from the daily reward ranked players get for revealing
-        all their daily tasks, and from Trial Room loot. A higher tier never stands in for a lower one.
+        all their daily tasks, and from{" "}
+        <Link href="/wiki/trial-rooms" className={link}>
+          Trial Room
+        </Link>{" "}
+        loot. A higher tier never stands in for a lower one.
       </p>
 
       <WikiSectionHeading id="custom-skins" intro="Ranked players can design their own skins on the website.">

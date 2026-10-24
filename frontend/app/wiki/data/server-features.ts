@@ -38,8 +38,8 @@ export const serverFeaturesCommands: WikiCommandSet = {
       description: "Turns the tips shown in chat on or off.",
     },
     {
-      command: "/tfmc pack [auto|manual]",
-      description: "Loads the server resource pack now, or sets whether it loads automatically when you join.",
+      command: "/tfmc pack",
+      description: "Loads the server resource pack again, for example when textures are missing.",
     },
     {
       command: "/tfmc map",
@@ -52,11 +52,6 @@ export const serverFeaturesCommands: WikiCommandSet = {
     {
       command: "/tcore stats <advancedcrafting|factions|rpcharacters|skills|vehicles>",
       description: "Shows your own statistics for that part of the game.",
-    },
-    {
-      command: "/tfmc drinks",
-      description: "Opens the drink builder.",
-      notes: "Noble rank and above.",
     },
     {
       command: "/tfmc booster",

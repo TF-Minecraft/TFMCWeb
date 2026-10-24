@@ -4,6 +4,12 @@ import CraftingGrid from "../../../components/wiki/CraftingGrid";
 import { WikiItemText, WikiPage, WikiSectionHeading } from "@/app/components/wiki";
 import { getMaterialBySlug, materialCatalog } from "../../data";
 
+/** Sources that have their own guide page. The heading links there instead of to an item. */
+const sourcePages: Record<string, string> = {
+  "Trial Rooms": "/wiki/trial-rooms",
+  Infestations: "/wiki/infestations",
+};
+
 export function generateStaticParams() {
   return Array.from(materialCatalog.values()).map((m) => ({ slug: m.slug }));
 }
@@ -16,7 +22,7 @@ export default async function MaterialDetailPage({ params }: { params: Promise<{
 
   return (
     <WikiPage
-      lastModified="2026-10-23"
+      lastModified="2026-10-24"
       title={material.name}
       beforeTitle={
         <Link href="/wiki/materials" className="text-xs text-[var(--tfmc-mist)] hover:text-[var(--tfmc-cream)]">
@@ -42,7 +48,13 @@ export default async function MaterialDetailPage({ params }: { params: Promise<{
               className="rounded-md border border-[color-mix(in_srgb,var(--tfmc-cream)_12%,transparent)] p-4"
             >
               <h3 className="font-semibold text-[var(--tfmc-cream)]">
-                <WikiItemText text={source.method} excludeHref={self} />
+                {sourcePages[source.method] ? (
+                  <Link href={sourcePages[source.method]} className="hover:text-[var(--tfmc-accent)] hover:underline">
+                    {source.method}
+                  </Link>
+                ) : (
+                  <WikiItemText text={source.method} excludeHref={self} />
+                )}
               </h3>
               <p className="mt-1 text-sm text-[var(--tfmc-mist)]">
                 <WikiItemText text={source.detail} excludeHref={self} />

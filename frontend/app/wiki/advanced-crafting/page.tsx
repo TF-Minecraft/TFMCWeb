@@ -196,7 +196,7 @@ const recipeCount = armorRecipeTemplates.length + weaponRecipeTemplates.length +
 export default function AdvancedCraftingPage() {
   return (
     <WikiPage
-      lastModified="2026-10-22"
+      lastModified="2026-10-24"
       title="Advanced Crafting"
       intro={
         <>
@@ -210,9 +210,9 @@ export default function AdvancedCraftingPage() {
       <WikiSectionHeading id="before-you-start">Before you start</WikiSectionHeading>
       <p className={body}>
         Every metal and wood needs a perk from the <strong>Crafter</strong> profession. You earn points by levelling
-        Crafter and spend them in <code className={code}>/profile</code>. Each perk needs the one before it. Without the
-        perk, the station refuses the material with &quot;You are not skilled enough&quot;. Crystals, leather, feathers,
-        wool and Enchanted Dust need no perk.
+        Crafter and spend them in <code className={code}>/profession</code>. Each perk needs the one before it. Without
+        the perk, the station refuses the material with &quot;You are not skilled enough&quot;. Crystals, leather,
+        feathers, wool and Enchanted Dust need no perk.
       </p>
       <DataTable
         className="mt-4"
@@ -229,7 +229,7 @@ export default function AdvancedCraftingPage() {
       />
       <p className={`mt-3 ${body}`}>
         Raw materials have to be turned into ingredients before a station will take them. Right-click an{" "}
-        <StationLink name="Ingredient Converter" /> while holding them: the whole stack is converted and a{" "}
+        <StationLink name="Ingredient Converter" /> while holding them. The whole stack is converted and a{" "}
         <strong>Stat Preview</strong> shows which stats the material adds to each kind of item. You can do the same with
         an ingredient or alloy just to see its preview.
       </p>
@@ -396,8 +396,8 @@ export default function AdvancedCraftingPage() {
       </p>
       <p className={`mt-3 ${body}`}>
         When a new alloy works, it&apos;s saved for the whole server with a made-up name. You have 60 seconds to rename
-        it with <code className={code}>/alloy name &lt;Name&gt;</code>. After that, anyone can load it at a Forging
-        Station.
+        it with <code className={code}>/alloy name Silver_Ash</code>, for example. Underscores become spaces. Names must
+        be unique and use only letters and underscores. After that, anyone can load it at a Forging Station.
       </p>
 
       <WikiSectionHeading id="stations">Building the stations</WikiSectionHeading>

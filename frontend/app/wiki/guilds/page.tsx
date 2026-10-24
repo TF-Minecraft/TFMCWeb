@@ -9,7 +9,7 @@ const code = "text-[var(--tfmc-accent)]";
 export default function GuildsPage() {
   return (
     <WikiPage
-      lastModified="2026-10-23"
+      lastModified="2026-10-24"
       title="Guilds & Trade"
       intro={
         <>
@@ -50,6 +50,33 @@ export default function GuildsPage() {
           , paid for from the guild bank.
         </li>
       </ul>
+
+      <WikiSectionHeading id="money">Guild money and upgrades</WikiSectionHeading>
+      <p className={body}>
+        Open <code className={code}>/guild menu</code> to set dividends and daily donations. The leader chooses the
+        percentage of income paid as dividends. Only members who belonged to the guild at the previous daily tick
+        receive a share. The main guild cannot pay dividends. Daily donations to the realm cost an extra 10% fee.
+      </p>
+      <p className={`mt-3 ${body}`}>
+        To issue a loan to another guild, hold a Book and Quill and use the loans menu. Fill in the amount, interest and
+        repayment terms, then arrange the other leader&apos;s signature. Borrowers can make partial or full payments and
+        toggle daily payments. Unpaid interest adds to the debt, and overdue fees may apply. Defaulting affects the
+        guild&apos;s credit score. The lender can pause interest or forgive the loan.
+      </p>
+      <p className={`mt-3 ${body}`}>
+        Branch upgrades are paid from the guild bank, starting at 100 d, and each level costs more than the last.
+        Downgrading gives back part of the price. Check the menu&apos;s price before buying or removing a level. Every
+        guild has one Blackjack table, and each level of Auto Dealer Tables adds another. The main guild can also
+        upgrade its maximum administrative power, maximum diplomatic capacity and administrative power gain.
+      </p>
+      <WikiSectionHeading id="leader-actions">Leader actions</WikiSectionHeading>
+      <p className={body}>
+        In <code className={code}>/guild menu</code>, Relocate moves the guild capital for at least 100 d from its bank.
+        Moving into another faction&apos;s land needs that faction leader&apos;s acceptance and moves the guild into
+        that faction. The faction leader can Elevate a guild into a subject faction with its capital province, or Evict
+        it into a landless faction. These actions cost administrative power. Favour and Repress are available when the
+        faction&apos;s laws allow them.
+      </p>
 
       <WikiSectionHeading
         id="installations"
@@ -114,26 +141,23 @@ export default function GuildsPage() {
         closed host stays closed to the guest&apos;s law, but not to a trade agreement.
       </p>
 
+      <p className={`mt-3 ${body}`}>
+        Through a tax proposal in Government, a faction can set tariffs under Mercantilism up to 25%, Protectionism up
+        to 50%, or Isolationism up to 75%.
+      </p>
+
       <WikiSectionHeading id="vehicles" intro="Vehicles cost a little upkeep every day.">
         Vehicles and upkeep
       </WikiSectionHeading>
-      <ul className={`mt-3 list-disc space-y-2 pl-5 ${body}`}>
-        <li>
-          Each account can own 3{" "}
-          <Link href="/wiki/vehicles" className={link}>
-            vehicles
-          </Link>
-          ; train cars don&apos;t count. Each one&apos;s daily upkeep comes from its owner&apos;s bank, not the pouch.
-        </li>
-        <li>
-          An unpaid vehicle slowly loses health, though it never sinks or falls, and it can&apos;t be repaired. Pay a
-          day with <code className={code}>/faction vehicle maintenance pay bank</code>, then right-click the vehicle.
-        </li>
-        <li>
-          The faction leader can berth a vehicle at an installation or put it in the faction&apos;s pool, with its owner
-          close by to accept. The faction bank then pays its upkeep.
-        </li>
-      </ul>
+      <p className={body}>
+        Personal vehicles have limits per type and per account. Unpaid vehicles lose health every hour until nearly
+        wrecked. Anyone can pay a day of an unpaid vehicle&apos;s upkeep from their own bank; faction leaders can use
+        their pouch too. For ownership, faction pools and berthing, see{" "}
+        <Link href="/wiki/vehicles#faction-vehicles" className={link}>
+          faction vehicles
+        </Link>
+        .
+      </p>
 
       <WikiSectionHeading id="commands">Commands</WikiSectionHeading>
       <CommandTable commands={guildsCommands.commands} />

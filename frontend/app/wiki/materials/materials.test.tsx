@@ -40,7 +40,8 @@ describe("material acquisition", () => {
 
   it("lists the current act's sources for Tin, and a later act for Mythril materials", () => {
     const tin = getMaterialBySlug("tin")!.acquisition!.map((source) => source.method);
-    expect(tin).toEqual(expect.arrayContaining(["Mining with Lucky Miner I", "Fishing", "World bosses"]));
+    expect(tin).toEqual(expect.arrayContaining(["Mining with Lucky Miner I", "Fishing", "Infestations"]));
+    expect(tin).not.toContain("World bosses");
     for (const slug of ["mythril-fragment", "mythrilite"]) {
       expect(getMaterialBySlug(slug)!.acquisition!.map((source) => source.method)).toEqual(["A later act"]);
     }

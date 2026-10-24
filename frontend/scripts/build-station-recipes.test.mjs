@@ -7,6 +7,7 @@ import {
   build,
   cookingOrigin,
   isHiddenOutput,
+  NO_ITEM_NOTE,
   parseRef,
   parseStationRecipes,
   perkLabel,
@@ -107,6 +108,46 @@ recipes:
     const { recipes } = build({ sourceDir: dir, textureIndex: { byName: new Map() } });
     expect(recipes.map((recipe) => recipe.output.name)).toEqual(["Stick"]);
     expect(isHiddenOutput('itemsadder{id="tfmc_games:yellow_chip"}')).toBe(true);
+  });
+
+  it("notes recipes that grant their effect instead of the item", () => {
+    dir = mkdtempSync(path.join(tmpdir(), "stations-"));
+    writeFileSync(
+      path.join(dir, "tool-station.yml"),
+      `
+recipes:
+    skill-reallocation-point:
+        output:
+            type: BOOKS
+            id: SKILL_REALLOCATION_BOOK
+            amount: 1
+        options:
+            output-item: false
+        ingredients:
+        - 'vanilla{type=PAPER,amount=1}'
+        triggers:
+        - command{format="mmocore admin skill-realloc-points give %player% 1",sender=CONSOLE}
+    iron-hook:
+        output:
+            type: FISHING
+            id: IRON_HOOK
+        options:
+            output-item: false
+        ingredients:
+        - 'vanilla{type=IRON_INGOT,amount=1}'
+        triggers:
+        - command{format="customfishing items give %player% iron_hook 1 --to-inventory",sender=CONSOLE}
+    stick:
+        output: 'vanilla{type=STICK,amount=4}'
+        ingredients:
+        - 'vanilla{type=OAK_PLANKS,amount=2}'
+`,
+    );
+    const { recipes } = build({ sourceDir: dir, textureIndex: { byName: new Map() } });
+    expect(recipes[0].note).toBe(NO_ITEM_NOTE);
+    // The hook is still handed over, by another plugin's give command.
+    expect(recipes[1].note).toBeUndefined();
+    expect(recipes[2].note).toBeUndefined();
   });
 
   it("names the item a recipe really takes when its label names a different item", () => {

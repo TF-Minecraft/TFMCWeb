@@ -5,7 +5,7 @@ import { archaeologyRecipes } from "../data/archaeology";
 export default function ArchaeologyPage() {
   return (
     <WikiPage
-      lastModified="2026-09-27"
+      lastModified="2026-10-24"
       title="Archaeology"
       width="lg"
       intro="Find an unclaimed ruin, confirm it from soil samples, establish a field camp, excavate by sound, and preserve each find for study or display."
@@ -91,23 +91,42 @@ export default function ArchaeologyPage() {
 
       <WikiSectionHeading id="register">6. Clean, sketch, register</WikiSectionHeading>
       <p className="mt-4 text-sm text-[var(--tfmc-mist)]">
-        Take the recovered piece to the cabinet and right-click while holding it. Sneak if you only want the
-        block&apos;s ordinary Minecraft use. A dirty piece opens the lab, where each stain names the tool that removes
-        it. A cleaned piece without a drawing can be registered, and an already filed piece opens its reading.
+        Take the recovered piece to the cabinet and right-click while holding it in your main hand. Sneak if you only
+        want the block&apos;s ordinary Minecraft use. A dirty piece opens the lab, where each stain names the tool that
+        removes it.
       </p>
       <p className="mt-3 text-sm text-[var(--tfmc-mist)]">
-        To make the drawing, click a field sheet onto the pencil in your inventory, or hold the sheet and use the pencil
-        in your other hand. Sign the sketch, then return to the cabinet and register it with the find in hand.
+        To make the drawing, you need ordinary Paper as your field sheet and a{" "}
+        <WikiItemLink name="Field Pencil">field pencil</WikiItemLink>. Click the paper onto the pencil in your
+        inventory, or hold the paper and right-click with the pencil in your other hand. Draw the find, then sign the
+        sketch.
+      </p>
+      <p className="mt-3 text-sm text-[var(--tfmc-mist)]">
+        Go back to the cabinet with the cleaned find in your main hand. Put the signed drawing in the top slot and click{" "}
+        <strong>Register</strong>. Keep the find in your hand the whole time, or the cabinet refuses.
       </p>
 
-      <WikiSectionHeading id="museum">7. Museum</WikiSectionHeading>
+      <WikiSectionHeading id="classify">7. Classify the find</WikiSectionHeading>
       <p className="mt-4 text-sm text-[var(--tfmc-mist)]">
-        Build any room you like. Shift-right-click a recovered find on a frame, lectern, shelf, armor stand, or a case
-        that accepts plaques to open the same reading available from the camp board. Clicking without Shift keeps the
-        ordinary Minecraft action, such as hanging, rotating, or taking an item.
+        After registering, use the cabinet again with the find in your main hand. It asks one question about the piece
+        at a time and offers three readings. Click one to sign it. A signed reading can&apos;t be changed. Keep
+        answering until chat says the record is complete. You can stop at any point. The answers you signed stay on
+        file, and the next visit picks up at the next question.
       </p>
 
-      <WikiSectionHeading id="finish">8. When the site is finished</WikiSectionHeading>
+      <WikiSectionHeading id="museum">8. Museum</WikiSectionHeading>
+      <p className="mt-4 text-sm text-[var(--tfmc-mist)]">
+        Build any room you like. Put a find on an item frame, glow item frame, armor stand, lectern or shelf the
+        ordinary way. Then sneak and right-click the displayed find to read its plaque, the same reading you get from
+        the camp board. Clicking without sneaking keeps the ordinary Minecraft action, such as hanging, rotating, or
+        taking an item.
+      </p>
+      <p className="mt-3 text-sm text-[var(--tfmc-mist)]">
+        You can rename a recovered find at an anvil, and the new name is kept on its record. Finds shaped like blocks
+        can&apos;t be placed as blocks, so show them on a display instead.
+      </p>
+
+      <WikiSectionHeading id="finish">9. When the site is finished</WikiSectionHeading>
       <p className="mt-4 text-sm text-[var(--tfmc-mist)]">
         Once every find has been recovered or destroyed, the excavation is exhausted. Close the camp from the board to
         leave the site and free room for another ruin. You receive a field book; right-click it later to reopen the

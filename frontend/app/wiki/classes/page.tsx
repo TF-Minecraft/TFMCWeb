@@ -4,6 +4,7 @@ import {
   CommandTable,
   DataTable,
   SeeAlso,
+  StationLink,
   WikiItemLink,
   WikiItemText,
   WikiPage,
@@ -27,7 +28,7 @@ const skillKind = (id: string) => {
 export default function ClassesPage() {
   return (
     <WikiPage
-      lastModified="2026-10-22"
+      lastModified="2026-10-24"
       title="Classes & Professions"
       intro="Your class decides what equipment you can use and which skills you get. Professions are levelled separately, through gathering and crafting."
       width="lg"
@@ -35,7 +36,7 @@ export default function ClassesPage() {
       <WikiSectionHeading id="start">Picking a class</WikiSectionHeading>
       <p className={body}>
         You choose one of seven classes while creating your character. Archer, Bard, Guardian, Paladin and Warrior are
-        starting points: they have no skills and no class equipment of their own. At class level 2 each of them splits
+        starting points. They have no skills and no class equipment of their own. At class level 2 each of them splits
         into three <strong>paths</strong> (subclasses), and the path you pick decides your gear and skills. The game
         reminds you to pick one with <code className={code}>/class</code>, and your level carries over. Mage and
         Musketeer have no paths and keep their own equipment from the start.
@@ -91,7 +92,9 @@ export default function ClassesPage() {
         <Link href="/wiki/magic" className={link}>
           Magic
         </Link>
-        ). Only Musketeers can fire guns (see{" "}
+        ). At class level 2 a Mage gets 4 <WikiItemLink name="Minor Runestone">Minor Runestones</WikiItemLink> and 4{" "}
+        <WikiItemLink name="Minor Armor Runestone">Minor Armor Runestones</WikiItemLink> to start with. Only Musketeers
+        can fire guns (see{" "}
         <Link href="/wiki/guns" className={link}>
           Guns &amp; Gunsmithing
         </Link>
@@ -122,8 +125,13 @@ export default function ClassesPage() {
       <p className={`mt-3 ${body}`}>
         Skills unlock at class level 2 and can be upgraded to skill level 4. Paths get 2 skill points at levels 7, 12
         and 17, and each upgrade costs 1 point. Picking a path above those levels still gives you their slots and
-        points. A <WikiItemLink name="Skill Retraining Manual" /> refunds the points you have spent. Foe Sense and Duel
-        Instinct are always on and need no slot.
+        points. Foe Sense and Duel Instinct are always on and need no slot.
+      </p>
+      <p className={`mt-3 ${body}`}>
+        To take your skill points back, craft a <WikiItemLink name="Skill Retraining Manual" /> at the{" "}
+        <StationLink name="Tool Station" />. Instead of an item, you get a Skill Reallocation Point straight away. Then
+        right-click the cauldron, <strong>Reallocate Skill Points</strong>, in <code className={code}>/skills</code> to
+        spend it and get back every skill point you have spent.
       </p>
 
       <WikiSectionHeading id="acts">Level caps</WikiSectionHeading>
@@ -184,10 +192,21 @@ export default function ClassesPage() {
 
       <WikiSectionHeading id="professions">Professions</WikiSectionHeading>
       <p className={body}>
-        Professions are shared by all your characters: each one plays at the highest level any of them has reached.
+        Professions are shared by all your characters. Each one plays at the highest level any of them has reached.
         Profession points arrive unspent on every character, and the upgrades you buy in{" "}
         <code className={code}>/profession</code> stay with the character that bought them.
       </p>
+      <ul className={`mt-3 list-disc space-y-1 pl-5 ${body}`}>
+        <li>Each profession level gives you 1 point to spend on that profession&apos;s perks.</li>
+        <li>
+          A character can spend at most 40 points in all. The menu shows this as <strong>Spent Points</strong>.
+        </li>
+        <li>Most perks are in lines, and each perk in a line needs the one before it.</li>
+        <li>
+          To remove a perk, click it, then run <code className={code}>/profession confirm</code> within 60 seconds. You
+          do not get the points back, and you cannot remove a perk that another of your perks needs.
+        </li>
+      </ul>
       <div className="mt-4">
         <DataTable
           columns={[{ header: "Profession" }, { header: "How to level it" }]}
@@ -223,6 +242,19 @@ export default function ClassesPage() {
           </section>
         ))}
       </div>
+
+      <WikiSectionHeading id="parties">Parties</WikiSectionHeading>
+      <p className={body}>
+        <code className={code}>/party</code> opens the party menu, where you create a party and invite players. They
+        accept by clicking the invite in chat. A party holds up to 8 players. Class EXP is split between members within
+        48 blocks of each other, but profession EXP is not. Start a chat message with <code className={code}>@</code> to
+        talk to your party. This is a different party from the roleplay chat group made with{" "}
+        <code className={code}>/rpcharacter party</code> (see{" "}
+        <Link href="/wiki/characters#chat" className={link}>
+          Chat channels
+        </Link>
+        ).
+      </p>
 
       <WikiSectionHeading id="commands">Commands</WikiSectionHeading>
       <CommandTable commands={classesCommands.commands} />

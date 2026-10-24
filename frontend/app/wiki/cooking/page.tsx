@@ -21,7 +21,7 @@ const piece = (name: string) => (
 export default function CookingPage() {
   return (
     <WikiPage
-      lastModified="2026-10-23"
+      lastModified="2026-10-24"
       title="Cooking"
       width="lg"
       intro="You cook on furniture placed in the world, not in a menu. Food keeps track of how fresh it is, how it was cooked and how it was seasoned, and has a quality from 1 to 5 stars."
@@ -90,7 +90,7 @@ export default function CookingPage() {
             piece("Frying Pan"),
             <WikiItemText
               key="pan"
-              text="Add Butter first: without it, everything in a hot pan burns within 10 seconds. One Butter lasts 30 seconds. Fries raw meat, sausages, eggs, seafood and cut vegetables."
+              text="Add Butter first. Without it, everything in a hot pan burns within 10 seconds. One Butter lasts 30 seconds. Fries raw meat, sausages, eggs, seafood and cut vegetables."
             />,
           ],
           [
@@ -134,7 +134,7 @@ export default function CookingPage() {
             piece("Bread Tray"),
             <WikiItemText
               key="bread"
-              text="Fill the moulds with dough before putting the tray in the Oven Top over a lit Oven Bottom. Each mould bakes 2 bread. Take it out before it burns. Let the dough rise first: its description shows Unrisen, Rising or Risen."
+              text="Fill the moulds with dough before putting the tray in the Oven Top over a lit Oven Bottom. Each mould bakes 2 bread. Take it out before it burns. Let the dough rise first. Its description shows Unrisen, Rising or Risen."
             />,
           ],
           [
@@ -198,9 +198,16 @@ export default function CookingPage() {
       <WikiSectionHeading id="eating">Eating</WikiSectionHeading>
       <p className={`mt-4 ${body}`}>
         Each character has its own hunger, and a full stomach does not heal you the way it does in normal Minecraft. As
-        you eat, your diet is rated from Terrible to Fantastic. A better diet gives you more damage, health, mana and
-        critical chance, and shorter cooldowns. Eating the same few ingredients over and over lowers your rating, so
-        vary your meals.
+        you play, your hunger drains. Filling your hunger bar and keeping a good diet are separate goals. Fresher food
+        and more stars improve your diet, but eating at full hunger does not. Your diet is rated from Terrible to
+        Fantastic. A better diet gives you more damage, health, mana and critical chance, and shorter cooldowns. Eating
+        the same few ingredients over and over lowers your rating, so vary your meals.
+      </p>
+
+      <WikiSectionHeading id="freshness">Keeping food fresh</WikiSectionHeading>
+      <p className={`mt-3 ${body}`}>
+        Perishable food goes from Fresh to Stale to Rotten in real time, including in storage and while you are offline.
+        Shelf life varies by food. Stale and rotten food nourish you less, so check its description before eating.
       </p>
 
       <SeeAlso

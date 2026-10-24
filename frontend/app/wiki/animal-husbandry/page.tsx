@@ -14,13 +14,14 @@ import {
 } from "@/app/components/wiki";
 import { animalHusbandryCommands } from "../data/animal-husbandry";
 
+const code = "text-[var(--tfmc-accent)]";
 const link = "text-[var(--tfmc-accent)] hover:underline";
 
 export default function AnimalHusbandryPage() {
   return (
     <WikiPage
       title="Animal Husbandry"
-      lastModified="2026-10-23"
+      lastModified="2026-10-24"
       intro="Claim farm animals, keep them fed and clean, and breed them for better meat, milk, eggs and materials."
     >
       <WikiSectionHeading id="tools">What you need</WikiSectionHeading>
@@ -92,7 +93,7 @@ export default function AnimalHusbandryPage() {
       </WikiSectionHeading>
       <p className={`mt-4 ${body}`}>
         Every 4 to 8 hours that its area is loaded, an animal becomes Hungry or Dirty, shown next to its name. Feed a
-        hungry animal 1 Universal Feed and clean a dirty one with the Glove. Each time you do, you get a little Farming
+        hungry animal 1 Universal Feed and clean a dirty one with the Glove. Each time you do, you get a little Forager
         experience.
       </p>
       <DataTable
@@ -117,8 +118,10 @@ export default function AnimalHusbandryPage() {
 
       <WikiSectionHeading id="breeding">Breeding and growth</WikiSectionHeading>
       <p className={`mt-4 ${body}`}>
-        Breed animals with their normal Minecraft breeding food. Both parents must be grown, fed, clean and not
-        neutered. If either parent is owned, you must own both. Wild animals start with 0 to 20 genetics and 0 care.
+        Breeding most vanilla animals needs the Forager perk Breeder IV, bought in{" "}
+        <code className={code}>/profession</code>. Breeding gives Forager experience. Breed animals with their normal
+        Minecraft breeding food. Both parents must be grown, fed, clean and not neutered. If either parent is owned, you
+        must own both. Wild animals start with 0 to 20 genetics and 0 care.
       </p>
       <p className={`mt-3 ${body}`}>
         Babies inherit genetics from their parents, with a boost that improves when the parents are well cared for.

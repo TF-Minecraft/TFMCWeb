@@ -5,7 +5,7 @@ import ArchaeologyPage from "./page";
 describe("Archaeology gameplay guide", () => {
   const html = renderToStaticMarkup(<ArchaeologyPage />);
 
-  it("preserves all eight phases from the supplied guide", () => {
+  it("covers every phase from finding a ruin to closing the site", () => {
     for (const heading of [
       "1. Find a ruin",
       "2. Confirm it",
@@ -13,8 +13,9 @@ describe("Archaeology gameplay guide", () => {
       "4. Dig: hear, then release",
       "5. Brush the find out",
       "6. Clean, sketch, register",
-      "7. Museum",
-      "8. When the site is finished",
+      "7. Classify the find",
+      "8. Museum",
+      "9. When the site is finished",
     ]) {
       expect(html, heading).toContain(heading);
     }
@@ -27,8 +28,9 @@ describe("Archaeology gameplay guide", () => {
       "Release on the ready chime",
       "air on at least one face",
       "aiming at a dripping cube",
-      "field sheet onto the pencil",
-      "Shift-right-click a recovered find",
+      "Click the paper onto the pencil",
+      "Put the signed drawing in the top slot",
+      "sneak and right-click the displayed find",
       "right-click it later to reopen the excavation dossier",
     ]) {
       expect(html, phrase).toContain(phrase);
@@ -42,6 +44,7 @@ describe("Archaeology gameplay guide", () => {
       "18 places",
       "8 successful cuts",
       "Brush min(shape size, 6)",
+      "a case that accepts plaques",
     ]) {
       expect(html).not.toContain(staleClaim);
     }

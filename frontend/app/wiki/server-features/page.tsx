@@ -10,7 +10,7 @@ const body = "text-sm text-[var(--tfmc-mist)]";
 export default function ServerFeaturesPage() {
   return (
     <WikiPage
-      lastModified="2026-10-23"
+      lastModified="2026-10-24"
       title="Account & Website"
       intro="Your Minecraft account, your Discord account and the TFMC website work together once they are linked."
     >
@@ -22,18 +22,24 @@ export default function ServerFeaturesPage() {
         within a second or so. <code className={code}>/unlinkdiscord</code> removes it again.
       </p>
       <p className={`mt-3 ${body}`}>
-        If you leave the Discord server, you have a grace period to rejoin. After that your account is unlinked and you
-        cannot play in Survival until you link again.
+        If you leave the Discord server, you have 1 hour to rejoin. After that your account is unlinked and you cannot
+        play in Survival until you link again.
       </p>
 
       <WikiSectionHeading id="profile">Your website profile</WikiSectionHeading>
       <p className={body}>
-        Run <code className={code}>/token create profile</code> in game for a one-time code, then enter it on your{" "}
+        Open your{" "}
         <Link href="/profile" className={link}>
           profile
         </Link>{" "}
-        to sign in. There you can create characters, change their wills, manage wardrobes and kits, and see your custom
-        skins and drinks and your linked accounts.
+        and choose <strong>Sign in with Discord</strong>, or use a one-time code from{" "}
+        <code className={code}>/token create profile</code> in game. There you can create characters, change their
+        wills, manage wardrobes and kits, and see your custom skins and drinks and your linked accounts.
+      </p>
+      <p className={`mt-3 ${body}`}>
+        Once you are signed in with Discord, you can link your Minecraft account on the profile, either by signing in
+        with Microsoft or with the code from <code className={code}>/linkdiscord</code>, and connect your Patreon
+        account. After that, the profile opens without a code.
       </p>
 
       <WikiSectionHeading id="uploads">Skin and drink codes</WikiSectionHeading>

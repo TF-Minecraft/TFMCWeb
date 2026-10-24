@@ -11,7 +11,7 @@ const link = "text-[var(--tfmc-accent)] hover:underline";
 export default function FishingPage() {
   return (
     <WikiPage
-      lastModified="2026-10-22"
+      lastModified="2026-10-24"
       title="Fishing"
       width="lg"
       intro="Cast into water and wait for a bite. What you can catch depends on the biome and on your rod, and the more valuable catches make you win a short minigame first."
@@ -29,6 +29,20 @@ export default function FishingPage() {
         </Link>{" "}
         profession. Time of day and weather make no difference.
       </p>
+
+      <WikiSectionHeading id="minigames">Playing the fishing games</WikiSectionHeading>
+      <ul className={`mt-3 list-disc space-y-2 pl-5 ${body}`}>
+        <li>Timed reeling asks you to reel in when the pointer reaches the target area.</li>
+        <li>In the pointer game, press Sneak to start, then keep the pointer inside the target area.</li>
+        <li>
+          In the tension game, press Sneak to start. Pull the fish in, but ease off when it struggles so the line does
+          not reach maximum tension.
+        </li>
+        <li>
+          In the dance game, follow the prompts in order. Left arrow means left-click, right arrow means right-click, up
+          means Jump and down means Sneak.
+        </li>
+      </ul>
 
       <WikiSectionHeading id="where">What you can catch</WikiSectionHeading>
       <ul className={`mt-3 list-disc space-y-2 pl-5 ${body}`}>
@@ -48,7 +62,7 @@ export default function FishingPage() {
           Cooking
         </Link>{" "}
         seafood with a size and a quality set by your rod: 1–2 stars on an Iron Rod, 2–3 on Steel, 3–4 on Abyssalite and
-        4–5 on Mythril. Cut them up on a cutting board for one portion per 25 cm of fish, up to six.
+        4–5 on Mythril. Cut one whole seafood item on a Cutting Board to get one fillet or serving, whatever its size.
       </p>
 
       <WikiSectionHeading id="tiers">Rods and hooks</WikiSectionHeading>

@@ -74,7 +74,7 @@ for (const route of routes) {
   }
 }
 
-for (const route of ["/wiki/essentials", "/wiki/help-menu", "/wiki/crates", "/wiki/trial-rooms"]) {
+for (const route of ["/wiki/essentials", "/wiki/help-menu", "/wiki/crates"]) {
   const response = await fetch(`${base}${route}`);
   if (response.status !== 404) failures.push(`${route}: retired route returned ${response.status}`);
 }

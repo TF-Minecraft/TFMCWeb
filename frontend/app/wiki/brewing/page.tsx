@@ -17,7 +17,7 @@ const link = "text-[var(--tfmc-accent)] hover:underline";
 export default function BrewingPage() {
   return (
     <WikiPage
-      lastModified="2026-10-22"
+      lastModified="2026-10-24"
       title="Brewing"
       width="lg"
       intro="Brew drinks in a cauldron, then distil and age them when the recipe calls for it. Donators can also design their own drink on the website."
@@ -51,7 +51,12 @@ export default function BrewingPage() {
       <p className={`mt-4 ${body}`}>
         Every brew shows its quality as 1 to 5 stars. Alcoholic drinks are marked <em>Alcoholic</em>, but their exact
         strength stays hidden. Each drink tells you how drunk you are, and <code className={code}>/brew info</code>{" "}
-        shows it again. Bread and milk sober you up a little. Log off very drunk and you may come back with a hangover.
+        shows it again. Bread and milk sober you up a little. When very drunk, you can stumble and vomit, and your chat
+        messages become slurred. Log off very drunk and you may come back with a hangover. If you reconnect while
+        extremely drunk, you may be refused entry and have to try again.
+      </p>
+      <p className={`mt-3 ${body}`}>
+        Empty an unwanted brew into a hopper to discard the drink and keep the glass bottle.
       </p>
       <p className={`mt-3 ${body}`}>
         A Brew Sealing Table is crafted from 2 glass bottles over 4 planks and looks like a smoker. Sealing a brew hides

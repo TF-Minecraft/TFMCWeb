@@ -1,6 +1,6 @@
 import type { WikiCommandSet, WikiSection } from "./types";
 
-// SimpleFactions 4.14.2 with Main's configs. Staff commands (force*, admin, reload and so on),
+// SimpleFactions 4.14.3 with Main's configs. Staff commands (force*, admin, reload and so on),
 // coalitions (off on Main) and the Spymaster's private sabotage are left out.
 
 // ---------- Factions ----------
@@ -64,7 +64,11 @@ export const factionsCommands: WikiCommandSet = {
       notes:
         "Leave any guild other than the main one first with /guild leave. A leader must hand over or delete the faction first.",
     },
-    { command: "/faction kick <player>", description: "Removes a member.", notes: "Leader." },
+    {
+      command: "/faction kick <player>",
+      description: "Removes a member.",
+      notes: "Leader. Members of another guild must first be removed by its leader with /guild kick.",
+    },
     {
       command: "/faction setleader <player>",
       description: "Hands the leadership to another member.",
@@ -144,10 +148,15 @@ export type InstallationInfo = { type: string; upkeepPerDay: string; buildTime: 
 
 /** Level-1 figures from Main's `installations.yml`. Train station levels 2 and 3 are on the page. */
 export const installations: InstallationInfo[] = [
-  { type: "Fort", upkeepPerDay: "30 d", buildTime: "5 days", slots: "8 emplacements, 2 land vehicles" },
+  {
+    type: "Fort",
+    upkeepPerDay: "30 d",
+    buildTime: "5 days",
+    slots: "8 emplacements (Anti-Air Turrets, Anti-Air, Fixed Artillery) and 2 land vehicles (carts, Small Cars)",
+  },
   { type: "Port", upkeepPerDay: "15 d", buildTime: "3 days", slots: "8 ships" },
-  { type: "Airport", upkeepPerDay: "20 d", buildTime: "3 days", slots: "10 aircraft" },
-  { type: "Train station", upkeepPerDay: "5 d", buildTime: "3 days", slots: "2 emplacements" },
+  { type: "Airport", upkeepPerDay: "20 d", buildTime: "3 days", slots: "10 aircraft and airships" },
+  { type: "Train station", upkeepPerDay: "5 d", buildTime: "3 days", slots: "2 emplacements (more after upgrades)" },
 ];
 
 export const guildsCommands: WikiCommandSet = {
@@ -235,7 +244,7 @@ export const guildsCommands: WikiCommandSet = {
       notes: "Faction leader.",
     },
     {
-      command: "/faction vehicle transfer <installation|pool>",
+      command: "/faction vehicle transfer <installation id|pool>",
       description: "Berths a vehicle at an installation, or gives it to the faction's vehicle pool.",
       notes: "Faction leader. The owner must be close by and accept.",
     },
@@ -250,11 +259,12 @@ export const guildsCommands: WikiCommandSet = {
       description: "Offers one of your own vehicles to another player.",
     },
     {
-      command: "/faction vehicle maintenance pay bank",
-      description: "Then right-click a vehicle to pay one day of its upkeep from your bank.",
+      command: "/faction vehicle maintenance pay [bank]",
+      description: "Then right-click an unpaid vehicle to pay one day of its upkeep.",
+      notes: "Anyone can use bank to pay from their own bank. Without bank, faction leaders pay from their pouch.",
     },
     {
-      command: "/faction findvehicles <installation>",
+      command: "/faction findvehicles <installation id>",
       description: "Lists the vehicles berthed at an installation and where they are.",
       notes: "Faction leader.",
     },

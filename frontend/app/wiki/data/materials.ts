@@ -62,10 +62,6 @@ const infestationMonsters: MaterialAcquisition = {
   method: "Infestations",
   detail: "Monsters from an infestation can drop it.",
 };
-const worldBosses: MaterialAcquisition = {
-  method: "World bosses",
-  detail: "Some world bosses drop it when defeated.",
-};
 const actFishing = (rod: string): MaterialAcquisition => ({
   method: "Fishing",
   detail: `Fishing in water with ${rod} can bring it up as treasure.`,
@@ -244,7 +240,6 @@ export const dropOnlyMaterials: CatalogMaterial[] = [
       trialRooms,
       activity,
       infestationMonsters,
-      worldBosses,
       {
         method: "Faction battles",
         detail: "Some faction battles reward their fighters with it.",
@@ -265,7 +260,6 @@ export const dropOnlyMaterials: CatalogMaterial[] = [
       actFishing("an Abyssalite Rod"),
       activity,
       infestationMonsters,
-      worldBosses,
     ],
     usedFor: "A crystal catalyst at the Forging Station.",
   },
@@ -281,7 +275,6 @@ export const dropOnlyMaterials: CatalogMaterial[] = [
       actFishing("an Abyssalite Rod"),
       activity,
       infestationMonsters,
-      worldBosses,
     ],
     usedFor: "A catalyst at the Forging Station.",
   },

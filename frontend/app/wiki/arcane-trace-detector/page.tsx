@@ -1,13 +1,15 @@
+import Link from "next/link";
 import { Callout, StationLink, WikiItemLink, WikiPage, WikiSectionHeading } from "@/app/components/wiki";
 import CraftingGrid from "@/app/components/wiki/CraftingGrid";
 import { detectorRecipes } from "../data/detector";
 
 const body = "text-sm text-[var(--tfmc-mist)]";
+const link = "text-[var(--tfmc-accent)] hover:underline";
 
 export default function ArcaneTraceDetectorPage() {
   return (
     <WikiPage
-      lastModified="2026-10-23"
+      lastModified="2026-10-24"
       title="Arcane Trace Detector"
       width="lg"
       intro="An Arcane Trace Detector leads you to an Arcane Cache buried somewhere far away. Each character has their own cache, and nobody else can see or open it."
@@ -61,6 +63,13 @@ export default function ArcaneTraceDetectorPage() {
         feet if your inventory is full. Chat says <em>You found the arcane source! Your detector is spent.</em> and the
         detector turns back into an Unpowered Trace Detector, ready for another fuel. Your next cache is buried the next
         time you hold a powered detector.
+      </p>
+      <p className={`mt-3 ${body}`}>
+        Now and then a cache holds an <strong>Unknown Key</strong>. Keep it, because it opens the way into the{" "}
+        <Link href="/wiki/trial-rooms" className={link}>
+          Trial Rooms
+        </Link>
+        .
       </p>
 
       <WikiSectionHeading id="limits">Limits</WikiSectionHeading>

@@ -8,7 +8,7 @@ const body = "text-sm text-[var(--tfmc-mist)]";
 export default function FurniturePage() {
   return (
     <WikiPage
-      lastModified="2026-10-22"
+      lastModified="2026-10-24"
       title="Interactive Furniture"
       intro={
         <>
@@ -30,8 +30,13 @@ export default function FurniturePage() {
           Soul Campfire.
         </li>
         <li>
-          <strong>Filling:</strong> right-click a slot with an item to put one in. Right-click it with an empty hand to
-          take it back out.
+          <strong>Filling:</strong> right-click a slot with an item it accepts to put one in. Right-click it with an
+          empty hand to take it back out. Slots accept specific items, and some contents are added or removed through
+          the piece&apos;s cooking interaction. See the{" "}
+          <Link href="/wiki/cooking#stations" className={link}>
+            cooking guide
+          </Link>{" "}
+          for each piece.
         </li>
         <li>
           <strong>Carrying:</strong> the {carriableFurniture.slice(0, -1).join(", ")} and {carriableFurniture.at(-1)}{" "}
@@ -44,6 +49,11 @@ export default function FurniturePage() {
           drops it along with whatever is inside.
         </li>
       </ul>
+
+      <p className={`mt-3 ${body}`}>
+        The Tool Shelf takes Cutting Knives, Ladles and Mashers. The Pedestal and Artifact Display accept any item for
+        display. Cookware has its own ingredient and tool rules.
+      </p>
 
       <WikiSectionHeading id="catalogue">Furniture pieces</WikiSectionHeading>
       <FurnitureGallery pieces={furniture} />

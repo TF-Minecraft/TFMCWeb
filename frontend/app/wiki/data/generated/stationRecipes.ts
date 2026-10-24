@@ -12505,6 +12505,7 @@ export const generatedStationRecipes: Recipe[] = [
     key: "gen-instrument-station-flute",
     title: "Flute",
     station: "Instrument Station",
+    time: 10,
     category: "Instruments",
     ingredients: [
       { name: "Bone", qty: 1, sourceId: "vanilla:bone", texture: "/wiki/textures/vanilla/bone.png" },
@@ -16427,6 +16428,7 @@ export const generatedStationRecipes: Recipe[] = [
       sourceId: "mmoitem:BOOKS:SKILL_REALLOCATION_BOOK",
       texture: "/wiki/textures/mmoitems/skill_reallocation_book.png",
     },
+    note: "Crafting this gives no item. Its effect is applied to you straight away.",
   },
   {
     key: "gen-tool-station-deck-of-cards",

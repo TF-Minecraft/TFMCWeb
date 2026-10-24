@@ -24,7 +24,7 @@ export const playingCards: PlayingCard[] = cardSuits.flatMap((suit) =>
 export const cardBackTexture = T("cards/card_back.png");
 
 /**
- * Games 0.7.1 on Main. games.help, games.bet and games.wager are default: true
+ * Games 0.7.2 on Main. games.help, games.bet and games.wager are default: true
  * in plugin.yml, so every player has these. Staff commands (games.admin) are
  * not listed.
  */
@@ -71,6 +71,11 @@ export const gamesCommands: WikiCommandSet = {
     {
       command: "/games poker kick <player>",
       description: "The host removes a player between hands. After play starts, they lose their buy-in.",
+    },
+    {
+      command: "/wager",
+      description:
+        "Commits the coins you have put out for the current round. Too little to match folds you and refunds them.",
     },
     {
       command: "/wager <denars>",

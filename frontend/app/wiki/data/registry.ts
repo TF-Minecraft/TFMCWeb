@@ -26,6 +26,7 @@ import { gunsSection } from "./guns";
 import { infestationsSection } from "./infestations";
 import { instrumentsSection } from "./instruments";
 import { magicSection } from "./magic";
+import { medicineSection } from "./medicine";
 import { materialsSection } from "./materials";
 import { recyclerSection } from "./recycler";
 import { researchSection } from "./research";
@@ -35,6 +36,7 @@ import { roleplayToolsSection } from "./roleplay-tools";
 import { stationsSection } from "./stations";
 import { thieverySection } from "./thievery";
 import { locksSection } from "./locks";
+import { trialRoomsSection } from "./trial-rooms";
 import { vehiclesSection } from "./vehicles";
 import type { DuplicateCommand, Recipe, RegisteredCommand, WikiCommandSet, WikiSection } from "./types";
 
@@ -53,6 +55,7 @@ export const wikiSections: readonly WikiSection[] = [
   serverFeaturesSection,
   birdMailSection,
   roleplayToolsSection,
+  medicineSection,
   advancedCraftingSection,
   gemInfusionSection,
   woodworkingSection,
@@ -73,6 +76,7 @@ export const wikiSections: readonly WikiSection[] = [
   infestationsSection,
   locksSection,
   thieverySection,
+  trialRoomsSection,
   vehiclesSection,
   economySection,
   factionsSection,

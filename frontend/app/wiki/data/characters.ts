@@ -23,7 +23,8 @@ export const charactersCommands: WikiCommandSet = {
     },
     {
       command: "/rpcharacter clues",
-      description: "Shows your character's clues.",
+      description: "Opens your clue list. Add a clue or click one to remove it.",
+      notes: "Up to 10 clues. Below the minimum (2, or 4 for an evil character) you are frozen.",
     },
     {
       command: "/rpcharacter wardrobe [slot]",
@@ -31,8 +32,9 @@ export const charactersCommands: WikiCommandSet = {
     },
     {
       command: "/rpcharacter party create <name> | invite <player> | join | leave | kick <player> | info",
-      description: "Temporary RP party chat groups. Not the dungeon /party command.",
-      notes: "Talk to your party with /pooc.",
+      description:
+        "RP party chat groups. Members stay in when they log out, and the party ends when its leader leaves.",
+      notes: "Invites expire after 60 seconds. Talk to your party with /pooc. Not the same as /party.",
     },
     {
       command: "/rpcharacter injure <player>",
@@ -46,7 +48,7 @@ export const charactersCommands: WikiCommandSet = {
     {
       command: "/rpcharacter profile [player]",
       description: "Shows your character card, or another player's.",
-      notes: "Masked players cannot be read.",
+      notes: "Masked players' cards cannot be read this way.",
     },
     {
       command: "/rpcharacter alias <name>",
@@ -98,15 +100,14 @@ export const charactersCommands: WikiCommandSet = {
     },
     {
       command: "/players",
-      description: "Opens the list of online players.",
+      description:
+        "Opens the list of online players. Hover a name for the account, rank and ping; click it for the sheet.",
+      notes: "Also Who's online in the Quick Actions menu (G key).",
     },
     {
-      command: "/profession",
-      description: "Opens the profession menu (Crafter, Forager, Herborist).",
-    },
-    {
-      command: "/profession top <profession>",
-      description: "Shows the leaderboard for one profession.",
+      command: "/plushie <character> [1|2|3]",
+      description: "Gives you a plushie of any character, dressed in their wardrobe outfit 1, 2 or 3.",
+      notes: "Gilded rank and above.",
     },
     {
       command: "/pvp start",
@@ -129,7 +130,7 @@ export const charactersCommands: WikiCommandSet = {
     },
     {
       command: "/duel <player> | accept | decline | cancel | yield",
-      description: "Challenges a player to a friendly duel that nobody dies or loses anything in.",
+      description: "Challenges a player to a practice duel. What the duel cost you is given back when it ends.",
       notes: "16-block range, 30 seconds to accept, up to 10 minutes.",
     },
     {

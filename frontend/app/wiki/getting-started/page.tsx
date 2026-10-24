@@ -1,16 +1,21 @@
 import Link from "next/link";
-import { DataTable, SeeAlso, WikiPage, WikiSectionHeading } from "@/app/components/wiki";
+import { DataTable, RankName, SeeAlso, WikiItemLink, WikiPage, WikiSectionHeading } from "@/app/components/wiki";
+import JoinServer from "@/app/components/site/JoinServer";
 import { SITE_DISCORD_URL } from "@/lib/site/config";
 import { gettingStartedSection } from "../data/getting-started";
 
 const code = "text-[var(--tfmc-accent)]";
 const link = "text-[var(--tfmc-accent)] hover:underline";
+const body = "text-sm text-[var(--tfmc-mist)]";
 
 const nextGuides = [
-  ["Pick a class and learn its skills", "/wiki/classes", "Classes"],
-  ["Craft weapons, armour, tools or consumables", "/wiki/advanced-crafting", "Advanced Crafting"],
-  ["Farm crops, fish or collect materials", "/wiki/farming", "Farming"],
-  ["Cook food or brew drinks", "/wiki/cooking", "Cooking"],
+  ["Join or found a faction", "/wiki/factions", "Factions"],
+  ["Choose your skills and level your professions", "/wiki/classes", "Classes & Professions"],
+  ["Forge weapons, armour and tools", "/wiki/advanced-crafting", "Advanced Crafting"],
+  ["Find out where an item is made", "/wiki/stations", "Crafting Stations"],
+  ["Grow crops", "/wiki/farming", "Farming"],
+  ["Catch fish and treasure", "/wiki/fishing", "Fishing"],
+  ["Cook food", "/wiki/cooking", "Cooking"],
   ["Learn magic", "/wiki/magic", "Magic"],
   ["Earn and spend money", "/wiki/economy", "Money & Market Blocks"],
   ["Look up a command", "/wiki/commands", "Command Index"],
@@ -19,58 +24,114 @@ const nextGuides = [
 export default function GettingStartedPage() {
   return (
     <WikiPage
-      lastModified="2026-10-22"
+      lastModified="2026-10-24"
       title={gettingStartedSection.nav.label}
-      intro="Do these steps in order when you first join. After that, pick the guide for whatever you want to do."
+      intro="How to get from the server address to your first day as a character. Each step links to the page with the details."
     >
+      <WikiSectionHeading id="join">Joining the server</WikiSectionHeading>
+      <p className={body}>Connect with Minecraft: Java Edition to this address. You arrive in the Lobby.</p>
+      <div className="mt-4 w-fit" data-wiki-search-exclude>
+        <JoinServer />
+      </div>
+      <p className={`mt-4 ${body}`}>
+        Join the{" "}
+        <a href={SITE_DISCORD_URL} className={link}>
+          TFMC Discord
+        </a>{" "}
+        as well. You need it to link your account, and it has the server rules, the lore and announcements.
+      </p>
+
+      <WikiSectionHeading id="lobby">The Lobby and the rules quiz</WikiSectionHeading>
+      <p className={body}>
+        Read the server rules in the Discord, then type <code className={code}>/rulequiz</code> in the Lobby. The
+        questions appear in chat one at a time, and you answer by typing in chat. If you make too many mistakes, you
+        have to wait before you can try again. Passing makes you a <RankName rank="Commoner" />.
+      </p>
+      <p className={`mt-3 ${body}`}>
+        Then right-click the <strong>TFMC Roleplay</strong> figure to queue for the main server. Next to it,{" "}
+        <strong>TFMC Tutorial</strong> takes you to the Tutorial world at any time, even before the quiz. It explains
+        the server&apos;s features and lets you try them out. Characters and items from the Tutorial do not carry over
+        to the main server.
+      </p>
+
+      <WikiSectionHeading id="discord">Linking Discord</WikiSectionHeading>
+      <p className={body}>
+        You need to link your Discord account before you can play. You can already do it in the Lobby, and the character
+        screen on the main server has a <strong>Link Discord to play</strong> button. You can create a character before
+        you link, but you cannot play one until you have.{" "}
+        <Link href="/wiki/server-features#website-link" className={link}>
+          How to link
+        </Link>
+      </p>
+
+      <WikiSectionHeading id="character">Creating your character</WikiSectionHeading>
+      <p className={body}>
+        When you reach the main server, Minecraft asks you to accept its resource pack. Accept it, and the character
+        screen opens once the pack has loaded. If it does not load, set <strong>Server Resource Packs</strong> to
+        Enabled for the server in your multiplayer list (select it and click Edit), then join again.
+      </p>
+      <p className={`mt-3 ${body}`}>
+        The character screen opens every time you join. With no character yet, it offers{" "}
+        <strong>Create character</strong>. The creator has several screens, from name, class and race to a short
+        description and clues, so set aside some time. When you finish, click <strong>Play</strong>.{" "}
+        <Link href="/wiki/characters#creating" className={link}>
+          Creating a character
+        </Link>
+      </p>
+
       <WikiSectionHeading id="first-steps">Your first steps</WikiSectionHeading>
-      <ol className="mt-4 list-decimal space-y-3 pl-5 text-sm text-[var(--tfmc-mist)]">
+      <ul className={`list-disc space-y-2 pl-5 ${body}`}>
         <li>
-          <strong>Link your Discord account.</strong> You cannot play in Survival until you do. Join the{" "}
-          <a href={SITE_DISCORD_URL} className={link}>
-            TFMC Discord server
-          </a>
-          , type <code className={code}>/linkdiscord</code> in game to get a code, then run{" "}
-          <code className={code}>/linkdiscord &lt;code&gt;</code> in the Discord server. The game confirms the link
-          within a second or so.{" "}
-          <Link href="/wiki/server-features#website-link" className={link}>
-            More on linking
-          </Link>
-        </li>
-        <li>
-          <strong>Create a character.</strong> On the character selection screen you see when you join, choose New
-          character, then Create character. You choose a name, class, race, traits and attributes, and write a short
-          description, so set aside some time. Until you pick a character, you cannot chat or use any command except{" "}
-          <code className={code}>/linkdiscord</code> and <code className={code}>/rpcharacter menu</code>.{" "}
+          <code className={code}>/rpcharacter kit starter</code> gives each new character a starter kit.{" "}
           <Link href="/wiki/characters#creating" className={link}>
-            Character guide
+            What it holds
           </Link>
         </li>
         <li>
-          <strong>Claim your starter kit.</strong> Type <code className={code}>/rpcharacter kit starter</code> for a
-          knife, 32 gold coins, 32 dry rations, a book, a bundle and a bed.
-        </li>
-        <li>
-          <strong>Learn how chat works.</strong> By default, anything you type without a command is spoken by your
-          character and heard within 15 blocks. Use <code className={code}>/ooc</code> to talk out of character to the
-          whole server.{" "}
+          By default, what you type is spoken by your character, and only people nearby hear it. Use{" "}
+          <code className={code}>/ooc &lt;message&gt;</code> to talk out of character to everyone online.{" "}
           <Link href="/wiki/characters#chat" className={link}>
             Chat channels
           </Link>
         </li>
         <li>
-          <strong>Find a crafting station.</strong> Most custom items are made at stations: ordinary-looking blocks that
-          open a custom menu when you right-click them, or sneak and right-click for a few of them. Every recipe in this
-          guide names the station that makes it, and the stations guide shows how to open each one.{" "}
-          <Link href="/wiki/stations" className={link}>
-            Crafting Stations
+          Some regions are permadeath zones, and you are warned when you enter one. Read how death works before you
+          travel far.{" "}
+          <Link href="/wiki/characters#injuries-graves" className={link}>
+            Death and permadeath
           </Link>
         </li>
-      </ol>
+        <li>The world has an edge. As you get close, you are warned to turn back, and going any farther hurts you.</li>
+        <li>
+          <code className={code}>/helpop &lt;message&gt;</code> reaches the staff and helpers who are online. For
+          anything else, open a ticket in the Discord. Tips show up in chat now and then, and{" "}
+          <code className={code}>/tfmc tips disable</code> turns them off.
+        </li>
+      </ul>
 
-      <WikiSectionHeading id="choose-path">Choose your next guide</WikiSectionHeading>
+      <WikiSectionHeading id="activity">Daily tasks</WikiSectionHeading>
+      <p className={body}>
+        <code className={code}>/activity</code> opens your activity menu. Each day it deals you a set of hidden tasks,
+        such as voting, playing for an hour or cooking dishes. Click a task to reveal it, because only revealed tasks
+        earn points. Points fill your weekly bar. Each time the bar reaches a reward, claim it in the same menu. The bar
+        starts again every Monday. <code className={code}>/vote</code> lists the voting sites.
+      </p>
+
+      <p className={`mt-3 ${body}`}>
+        The rewards make daily tasks worth doing. The first ones each week give metals of the current act:{" "}
+        <WikiItemLink name="Ignitium" />, <WikiItemLink name="Tin" /> or{" "}
+        <WikiItemLink name="Abyssalite Fragment">Abyssalite Fragments</WikiItemLink>. The later ones give{" "}
+        <Link href="/wiki/armour-shop#scrolls" className={link}>
+          Skin Scrolls
+        </Link>{" "}
+        for changing how your gear looks. <RankName rank="Noble" /> and above also get a daily Skin Scroll once they
+        have revealed all of that day&apos;s tasks, and <RankName rank="Ascended" /> and <RankName rank="Legacy" /> can
+        reroll their daily tasks once a day before earning any points.
+      </p>
+
+      <WikiSectionHeading id="choose-path">Where to go next</WikiSectionHeading>
       <DataTable
-        columns={[{ header: "If you want to…" }, { header: "Start here" }]}
+        columns={[{ header: "If you want to…" }, { header: "Read" }]}
         rows={nextGuides.map(([goal, href, label]) => [
           goal,
           <Link key={href} href={href} className={link}>
@@ -78,7 +139,8 @@ export default function GettingStartedPage() {
           </Link>,
         ])}
       />
-      <SeeAlso hrefs={["/wiki/characters", "/wiki/classes", "/wiki/commands"]} />
+
+      <SeeAlso hrefs={["/wiki/characters", "/wiki/server-features", "/wiki/classes"]} />
     </WikiPage>
   );
 }
