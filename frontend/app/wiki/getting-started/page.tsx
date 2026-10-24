@@ -129,6 +129,28 @@ export default function GettingStartedPage() {
         reroll their daily tasks once a day before earning any points.
       </p>
 
+      <WikiSectionHeading id="referrals">Referrals</WikiSectionHeading>
+      <p className={body}>
+        If someone invited you to the server, name them as your inviter and you both get rewards as you play. Open{" "}
+        <code className={code}>/referral</code>, or click the <strong>Referrals</strong> head in{" "}
+        <code className={code}>/activity</code>, then click <strong>Who invited you?</strong> and pick the player. You
+        can also type <code className={code}>/referral invitedby &lt;name&gt;</code>. Either way you confirm the choice
+        before it is saved. You can only name one inviter, and you cannot change them later.
+      </p>
+      <p className={`mt-3 ${body}`}>
+        Referrals run in seasons. During the first 14 days of a season, any player can name an inviter. After that, only
+        accounts in their first week on the server can. Your playtime this season counts even before you name anyone.
+      </p>
+      <p className={`mt-3 ${body}`}>
+        Rewards unlock at 1, 4, 12 and 24 hours of the invited player&apos;s playtime, and both of you claim them in the
+        same menu. AFK time does not count. The invited player&apos;s first reward is steel tools, rations and denars,
+        and the later ones add metals of the current act. The inviter gets denars and act metals for each player they
+        invited. Inviters also have a <strong>rare track</strong> that pays Tin and Abyssalite Fragments: its first step
+        opens once two of your invited players have reached 24 hours, and the next ones at four, six, eight and ten
+        players, where it ends. Claim each reward while playing a character, because it goes to the character you are
+        playing.
+      </p>
+
       <WikiSectionHeading id="choose-path">Where to go next</WikiSectionHeading>
       <DataTable
         columns={[{ header: "If you want to…" }, { header: "Read" }]}

@@ -8,7 +8,8 @@ import type { CatalogMaterial, MaterialAcquisition, WikiSection } from "./types"
 // perk drops), `Dowsing/production_methods.yml` (node focuses), the active
 // detector list in `geiger_counter/config.yml`, `TrialRooms/loot-tables.yml`,
 // `CustomFishing` loot, `Cooking/husbandry.yml` and the MMOItems station
-// configs. Drop chances stay off the wiki.
+// configs; referral rewards from `activity/referral.yml` (2026-10-24). Drop
+// chances stay off the wiki.
 //
 // Recipes are not written here: every station recipe comes from
 // `generated/stationRecipes.ts`, and `catalog.ts` attaches the ones that make
@@ -57,6 +58,10 @@ const forgingUse = (kind: string) => `Used in Forging Station recipes for ${kind
 const activity: MaterialAcquisition = {
   method: "Weekly activity rewards",
   detail: "Part of the rewards for reaching your weekly activity goals.",
+};
+const referrals: MaterialAcquisition = {
+  method: "Referral rewards",
+  detail: "Part of the rewards for inviting a player, or for being invited, as the invited player's playtime grows.",
 };
 const infestationMonsters: MaterialAcquisition = {
   method: "Infestations",
@@ -239,6 +244,7 @@ export const dropOnlyMaterials: CatalogMaterial[] = [
       fishing,
       trialRooms,
       activity,
+      referrals,
       infestationMonsters,
       {
         method: "Faction battles",
@@ -259,6 +265,7 @@ export const dropOnlyMaterials: CatalogMaterial[] = [
       detector,
       actFishing("an Abyssalite Rod"),
       activity,
+      referrals,
       infestationMonsters,
     ],
     usedFor: "A crystal catalyst at the Forging Station.",
@@ -274,6 +281,7 @@ export const dropOnlyMaterials: CatalogMaterial[] = [
       detector,
       actFishing("an Abyssalite Rod"),
       activity,
+      referrals,
       infestationMonsters,
     ],
     usedFor: "A catalyst at the Forging Station.",

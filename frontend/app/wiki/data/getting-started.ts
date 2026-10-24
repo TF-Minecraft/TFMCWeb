@@ -1,6 +1,6 @@
 import type { WikiCommandSet, WikiSection } from "./types";
 
-// ---------- Lobby RuleQuiz, ActivityTF, VotingPlugin and Essentials /helpop ----------
+// ---------- Lobby RuleQuiz, ActivityTF (activity and referrals), VotingPlugin and Essentials /helpop ----------
 
 export const gettingStartedCommands: WikiCommandSet = {
   system: "Getting Started",
@@ -14,6 +14,16 @@ export const gettingStartedCommands: WikiCommandSet = {
     {
       command: "/activity",
       description: "Opens your daily tasks and weekly activity bar, where you also claim the rewards.",
+    },
+    {
+      command: "/referral",
+      aliases: ["/referrals"],
+      description: "Opens the referral menu, where you name who invited you and claim referral rewards.",
+    },
+    {
+      command: "/referral invitedby <name>",
+      description: "Names the player who invited you. You confirm before it is saved, and it cannot be changed.",
+      notes: "Anyone can do this in the first 14 days of a referral season, after that only in your first week.",
     },
     {
       command: "/vote",
