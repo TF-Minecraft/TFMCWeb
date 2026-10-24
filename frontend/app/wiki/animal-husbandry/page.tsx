@@ -14,6 +14,7 @@ import {
 } from "@/app/components/wiki";
 import { animalHusbandryCommands } from "../data/animal-husbandry";
 
+const code = "text-[var(--tfmc-accent)]";
 const link = "text-[var(--tfmc-accent)] hover:underline";
 
 export default function AnimalHusbandryPage() {
@@ -117,9 +118,10 @@ export default function AnimalHusbandryPage() {
 
       <WikiSectionHeading id="breeding">Breeding and growth</WikiSectionHeading>
       <p className={`mt-4 ${body}`}>
-        Breeding vanilla animals needs the Forager perk Breeder IV, bought in /profession. Breeding gives Forager
-        experience. Breed animals with their normal Minecraft breeding food. Both parents must be grown, fed, clean and
-        not neutered. If either parent is owned, you must own both. Wild animals start with 0 to 20 genetics and 0 care.
+        Breeding vanilla animals needs the Forager perk Breeder IV, bought in <code className={code}>/profession</code>.
+        Breeding gives Forager experience. Breed animals with their normal Minecraft breeding food. Both parents must be
+        grown, fed, clean and not neutered. If either parent is owned, you must own both. Wild animals start with 0 to
+        20 genetics and 0 care.
       </p>
       <p className={`mt-3 ${body}`}>
         Babies inherit genetics from their parents, with a boost that improves when the parents are well cared for.

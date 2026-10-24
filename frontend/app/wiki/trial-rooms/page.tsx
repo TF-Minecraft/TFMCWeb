@@ -29,7 +29,7 @@ export default function TrialRoomsPage() {
 
       <WikiSectionHeading id="inside">Inside</WikiSectionHeading>
       <ul className={`mt-3 list-disc space-y-2 pl-5 ${body}`}>
-        <li>Natural healing is off while you are inside. Bring potions or other ways to heal.</li>
+        <li>Bring potions or other ways to heal.</li>
         <li>Players inside can&apos;t hit each other in melee.</li>
       </ul>
 
@@ -56,9 +56,7 @@ export default function TrialRoomsPage() {
       </p>
 
       <WikiSectionHeading id="leaving">Leaving</WikiSectionHeading>
-      <p className={body}>
-        Walk into the red ring of particles at the exit to return to the entrance. Natural healing comes back.
-      </p>
+      <p className={body}>Walk into the red ring of particles at the exit to return to the entrance.</p>
       <Callout className="mt-4" title="Trial potions turn into money">
         Some potions you find inside say in their description that they convert to denars on exit. Any of those you
         still carry when you leave are taken and paid out in denars. Drink them inside if you would rather use them.

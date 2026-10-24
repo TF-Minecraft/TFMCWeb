@@ -259,7 +259,7 @@ export const guildsCommands: WikiCommandSet = {
       notes: "Anyone can use bank to pay from their own bank. Without bank, faction leaders pay from their pouch.",
     },
     {
-      command: "/faction findvehicles <installation>",
+      command: "/faction findvehicles <installation id>",
       description: "Lists the vehicles berthed at an installation and where they are.",
       notes: "Faction leader.",
     },

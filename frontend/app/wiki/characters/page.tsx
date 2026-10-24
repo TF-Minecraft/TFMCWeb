@@ -177,7 +177,7 @@ export default function CharactersPage() {
       <p className={body}>
         Sneak and right-click another player with an empty hand to see their character card: name, gender, age,
         birthday, race and description. <code className={code}>/rpcharacter profile &lt;player&gt;</code> shows the same
-        card. A player wearing a mask hides their identity: in-character chat shows them as <strong>Masked</strong>, and
+        card. A player wearing a mask hides their identity. In-character chat shows them as <strong>Masked</strong>, and
         their card cannot be read in either of these ways. <code className={code}>/tfmc masks</code> gives you one (see{" "}
         <Link href="/wiki/roleplay-tools#masks" className={link}>
           Roleplay Tools
@@ -354,9 +354,10 @@ export default function CharactersPage() {
       <p className={`mt-3 ${body}`}>
         Check your strikes with <code className={code}>/rpcharacter strikes</code>. For practice,{" "}
         <code className={code}>/duel &lt;player&gt;</code> challenges someone within 16 blocks to a duel of up to 10
-        minutes. When it ends, each of you gets back the health the other took, and a blow that would kill just ends the
-        duel. Everything else stays real. Lava, mobs and other damage can still hurt or kill you, and a hit from a mob
-        or another player interrupts the duel. Moving more than 32 blocks apart ends it as a draw.
+        minutes. When it ends, you get back the health, hunger, mana and stamina the duel cost you, and duel blows do
+        not wear your gear. A blow that would kill just ends the duel. Lava, mobs and other damage can still hurt or
+        kill you. A hit from a mob or another player interrupts the duel, and then only the health the duel took is
+        given back. Moving more than 32 blocks apart ends it as a draw.
       </p>
 
       <WikiSectionHeading id="armour">Putting on armour</WikiSectionHeading>
@@ -412,7 +413,7 @@ export default function CharactersPage() {
       </p>
       <p className={`mt-3 ${body}`}>
         When a clue is left at a scene, characters within a few blocks of it can notice it over time, and Wisdom and
-        Intelligence improve the odds. Clues fade: an old clue is harder to read than a fresh one, and each disappears
+        Intelligence improve the odds. Clues fade. An old clue is harder to read than a fresh one, and each disappears
         within two days.
       </p>
 

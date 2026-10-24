@@ -36,7 +36,7 @@ export default function ClassesPage() {
       <WikiSectionHeading id="start">Picking a class</WikiSectionHeading>
       <p className={body}>
         You choose one of seven classes while creating your character. Archer, Bard, Guardian, Paladin and Warrior are
-        starting points: they have no skills and no class equipment of their own. At class level 2 each of them splits
+        starting points. They have no skills and no class equipment of their own. At class level 2 each of them splits
         into three <strong>paths</strong> (subclasses), and the path you pick decides your gear and skills. The game
         reminds you to pick one with <code className={code}>/class</code>, and your level carries over. Mage and
         Musketeer have no paths and keep their own equipment from the start.
@@ -192,7 +192,7 @@ export default function ClassesPage() {
 
       <WikiSectionHeading id="professions">Professions</WikiSectionHeading>
       <p className={body}>
-        Professions are shared by all your characters: each one plays at the highest level any of them has reached.
+        Professions are shared by all your characters. Each one plays at the highest level any of them has reached.
         Profession points arrive unspent on every character, and the upgrades you buy in{" "}
         <code className={code}>/profession</code> stay with the character that bought them.
       </p>
@@ -246,7 +246,7 @@ export default function ClassesPage() {
       <WikiSectionHeading id="parties">Parties</WikiSectionHeading>
       <p className={body}>
         <code className={code}>/party</code> opens the party menu, where you create a party and invite players. They
-        accept by clicking the invite in chat. A party holds up to 8 players. Class EXP is shared between members within
+        accept by clicking the invite in chat. A party holds up to 8 players. Class EXP is split between members within
         48 blocks of each other, but profession EXP is not. Start a chat message with <code className={code}>@</code> to
         talk to your party. This is a different party from the roleplay chat group made with{" "}
         <code className={code}>/rpcharacter party</code> (see{" "}

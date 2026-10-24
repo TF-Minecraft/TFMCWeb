@@ -132,12 +132,12 @@ export default function FactionsPage() {
       </p>
       <p className={`mt-3 ${body}`}>
         Government shows whether the ruler is Legitimate, Contested or Illegitimate. A doubtful claim to rule, the Weak
-        State penalty, holding more land than you can manage, civil war, declining an ally&apos;s call to arms and
-        bankruptcy all lower stability. Low stability reduces administrative power, tax income and prestige, raises
-        upkeep, and makes titles harder to claim. A collapsing state cannot wage war or form titles. The Weak State
-        penalty applies when the main guild has too few branch levels compared with the largest other guild, depending
-        on the government law. Repression and Favouring laws let the government penalise or support chosen guilds and
-        subjects, changing their trade and their support for the government.
+        State penalty, a Community government holding more land than it can manage, civil war, declining an ally&apos;s
+        call to arms and bankruptcy all lower stability. Low stability reduces administrative power, tax income and
+        prestige, raises upkeep, and makes titles harder to claim. A collapsing state cannot wage war or form titles.
+        The Weak State penalty applies when the main guild has too few branch levels compared with the largest other
+        guild, depending on the government law. Repression and Favouring laws let the government penalise or support
+        chosen guilds and subjects, changing their trade and their support for the government.
       </p>
 
       <WikiSectionHeading id="diplomacy" intro="The leader sets relations with other factions from the Diplomacy menu.">
@@ -153,8 +153,8 @@ export default function FactionsPage() {
 
       <p className={`mt-3 ${body}`}>
         Choose Friendly, Neutral, Unfriendly or Hostile to move opinion over time. Diplomatic capacity limits the
-        relations you can maintain. An ally can call you to war. Declining costs stability; an unanswered call expires
-        after 5 minutes without counting as a decline.
+        relations you can maintain. An ally can call you to war. An unanswered call expires after 5 minutes without
+        counting as a decline.
       </p>
       <DataTable
         columns={[{ header: "Relation" }, { header: "What it means" }]}

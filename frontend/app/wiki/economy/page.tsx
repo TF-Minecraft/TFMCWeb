@@ -109,7 +109,7 @@ export default function EconomyPage() {
 
       <WikiSectionHeading
         id="market-blocks"
-        intro="A Market Block buys raw goods for denars. It only buys: you can't purchase anything from it."
+        intro="A Market Block buys raw goods for denars. It only buys. You can't purchase anything from it."
       >
         Market Blocks
       </WikiSectionHeading>

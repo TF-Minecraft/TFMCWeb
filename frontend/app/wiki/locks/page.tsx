@@ -90,7 +90,7 @@ export default function LocksPage() {
         </li>
         <li>Nobody can break a container they can&apos;t open, or turn your chest into a double chest with theirs.</li>
         <li>Hoppers only move items between containers that have the same owner.</li>
-        <li>Ender chests are not part of this: everyone sees only their own.</li>
+        <li>Ender chests are not part of this. Everyone sees only their own.</li>
       </ul>
 
       <WikiSectionHeading id="thieves">Keeping thieves out</WikiSectionHeading>

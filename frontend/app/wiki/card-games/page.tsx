@@ -54,14 +54,14 @@ export default function CardGamesPage() {
           Your cards float in front of you. Only you see their faces. Left-click one to look closer, and press your
           swap-hands key (F) to show your whole hand to the table.
         </li>
-        <li>The deck on the table is the shoe: right-click it to draw, deal or take your turn.</li>
+        <li>The deck on the table is the shoe. Right-click it to draw, deal or take your turn.</li>
         <li>
           Bets are made with gold coins in your inventory, not your pouch or bank. Withdraw some first with{" "}
           <Word>/deco toitem</Word> (see{" "}
           <Link href="/wiki/economy" className={link}>
             Denar Economy
           </Link>
-          ). Right-click the felt holding coins: each click puts one coin item down at its full value, so a{" "}
+          ). Right-click the felt holding coins. Each click puts one coin item down at its full value, so a{" "}
           <WikiItemLink name="Pouch of Gold Denars" /> is 100. Gold Ingots are also accepted at 1 d each. Silver coins
           aren&apos;t accepted.
         </li>
@@ -90,7 +90,7 @@ export default function CardGamesPage() {
         <Link href="/wiki/guilds#guilds" className={link}>
           guilds
         </Link>
-        ). The house plays with the guild bank&apos;s money: if the bank can&apos;t cover the bets, the round is called
+        ). The house plays with the guild bank&apos;s money. If the bank can&apos;t cover the bets, the round is called
         off and everyone gets their bet back.
       </p>
       <ul className={`mt-3 list-disc space-y-2 pl-5 ${body}`}>
@@ -157,7 +157,7 @@ export default function CardGamesPage() {
       <WikiSectionHeading id="wagering-items">Betting items instead of coins</WikiSectionHeading>
       <p className={body}>
         At Hold&apos;em, Five-Draw and Free play cash tables, once you have coins on the table, you can also stake an
-        item. Hold it and type <Word>/wager</Word> with what each item is worth in denars: the whole stack you hold is
+        item. Hold it and type <Word>/wager</Word> with what each item is worth in denars. The whole stack you hold is
         offered. The other seated players have 30 seconds to vote with <Word>/wager accept</Word> or{" "}
         <Word>/wager decline</Word>, and more than half must agree. If nobody else is seated, it counts straight away.
         Then you have 10 seconds to click the felt with the item.

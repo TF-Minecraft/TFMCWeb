@@ -74,7 +74,7 @@ export default function ThieveryPage() {
 
       <WikiSectionHeading id="doors">Doors</WikiSectionHeading>
       <p className={body}>
-        Right-click a locked door within 3 blocks. A bar runs across your screen: right-click again when the marker is
+        Right-click a locked door within 3 blocks. A bar runs across your screen. Right-click again when the marker is
         on green. Red breaks your lockpick, yellow just fails, and walking away cancels. A picked door swings open and
         stays unlocked for everyone for an hour. A door locked with a Golden Key needs a Strong Lockpick.
       </p>
@@ -87,7 +87,7 @@ export default function ThieveryPage() {
           Set all 4 to open the lock. One slip and it fails. Sneak to give up.
         </li>
         <li>
-          The container opens hidden. Click a slot to look at it: the first look is always safe, and each safe slot
+          The container opens hidden. Click a slot to look at it. The first look is always safe, and each safe slot
           shows how many seized pins are next to it. Right-click a slot to mark it as a pin. Clicking a pin snaps a
           lockpick and ends the search, but you can still take what you found.
         </li>
@@ -137,7 +137,7 @@ export default function ThieveryPage() {
           through everything they carry, armour included.
         </li>
         <li>
-          If your loadout includes money, their coin pouch is there too: click it to take 10 denars, or shift-click for
+          If your loadout includes money, their coin pouch is there too. Click it to take 10 denars, or shift-click for
           100.
         </li>
         <li>Closing the menu ends the robbery. If your victim logs out during it, everything they carry drops.</li>

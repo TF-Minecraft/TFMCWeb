@@ -56,7 +56,7 @@ export default function CodexPage() {
       </WikiSectionHeading>
       <p className={body}>
         When another of your characters starts playing, it receives your discoveries and their experience. Research
-        entries and a few achievements are the exception: they stay with the character who earned them. Your other
+        entries and a few achievements are the exception. They stay with the character who earned them. Your other
         characters can still read an entry they did not find themselves, and the entry shows which of your characters
         knows it in character. Play the others as if they don&apos;t.
       </p>

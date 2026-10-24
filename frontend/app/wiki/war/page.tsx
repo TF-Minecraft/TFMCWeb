@@ -31,10 +31,10 @@ export default function WarPage() {
           online.
         </li>
         <li>No truce can stand between you. A truce lasts 10 days after a war ends.</li>
-        <li>You need regiments that can attack. Staff create a war code in Discord; type it in chat when declaring.</li>
+        <li>You need regiments that can attack, and a war code that staff create for you in Discord.</li>
         <li>
           Choose what you are fighting for in the Declare War menu, such as taking land, making them your subject, or
-          pillaging. Confirming asks for the war code. Defenders can set a counter-demand.
+          pillaging. Confirming asks you to type the war code in chat. Defenders can set a counter-demand.
         </li>
       </ul>
 
@@ -79,7 +79,7 @@ export default function WarPage() {
         the battle is postponed once. If the next vote also falls short, the battle is decided automatically.
       </p>
       <p className={`mt-3 ${body}`}>
-        Leaders commit installations to the next battle from this menu. An attacking naval invasion loses automatically
+        Leaders commit installations to the next battle from this menu. An attacking naval slot loses automatically
         without a ship berthed at a committed port. After winning a battle, choose Push to advance or Hold to stay put.
         Leaders can offer white peace or surrender to end the war, concede a battle slot, or ask for an automatic result
         instead of fighting it. For an agreed automatic result, the other leader must answer with{" "}

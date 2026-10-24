@@ -21,7 +21,7 @@ export default function ArmourShopPage() {
       title="Armour Shop"
       intro={
         <>
-          The Armour Shop changes how your armour, weapons and tools look. A skin changes only the look: the item keeps
+          The Armour Shop changes how your armour, weapons and tools look. A skin changes only the look. The item keeps
           its stats.
         </>
       }

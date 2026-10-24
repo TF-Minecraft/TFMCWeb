@@ -89,14 +89,14 @@ export default function MedicinePage() {
       <WikiSectionHeading id="vitals">Keeping the patient alive</WikiSectionHeading>
       <p className={body}>
         The menu shows the patient&apos;s consciousness, pulse and temperature, whether the operation site is clean and
-        how many incisions are open. Chat tells you when they bleed. They change with every move. Chloroform wears off,
-        cutting dirties the wound and can weaken the pulse, blood loss weakens it further, and a fever keeps climbing.
-        Some injuries bring complications, such as a wound that keeps bleeding, a patient who goes into shock, or an
-        infection. Any move can slip, and working in blood makes it more likely.
+        how many incisions are open. They change with every move. Chloroform wears off, cutting dirties the wound and
+        can weaken the pulse, blood loss weakens it further, and a fever keeps climbing. Some injuries bring
+        complications, such as a wound that keeps bleeding, a patient who goes into shock, or an infection. Any move can
+        slip, and working in blood makes it more likely.
       </p>
       <p className={`mt-3 ${body}`}>
-        Examine the patient first, and sedate them before you cut. Cutting dirties the wound, so clean it again before
-        you finish. Chat messages tell you when a bone turns up, when bleeding starts and when the patient is waking.
+        Examine the patient first, and sedate them before you cut, then clean the wound again before you finish. Chat
+        messages tell you when a bone turns up, when bleeding starts and when the patient is waking.
       </p>
 
       <WikiSectionHeading id="outcome">Success and failure</WikiSectionHeading>

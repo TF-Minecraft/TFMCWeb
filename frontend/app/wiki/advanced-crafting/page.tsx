@@ -229,7 +229,7 @@ export default function AdvancedCraftingPage() {
       />
       <p className={`mt-3 ${body}`}>
         Raw materials have to be turned into ingredients before a station will take them. Right-click an{" "}
-        <StationLink name="Ingredient Converter" /> while holding them: the whole stack is converted and a{" "}
+        <StationLink name="Ingredient Converter" /> while holding them. The whole stack is converted and a{" "}
         <strong>Stat Preview</strong> shows which stats the material adds to each kind of item. You can do the same with
         an ingredient or alloy just to see its preview.
       </p>

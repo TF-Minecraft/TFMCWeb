@@ -52,7 +52,7 @@ export default function RoleplayToolsPage() {
       <WikiSectionHeading id="armor-statues">Posing armor stands</WikiSectionHeading>
       <p className={body}>
         <code className={code}>/tfmc statues</code> gives you the Armor Statues book, free and as often as you need it.
-        Open the book and click an option to change the nearest armor stand within 3 blocks. Use Check Target first: it
+        Open the book and click an option to change the nearest armor stand within 3 blocks. Use Check Target first. It
         makes the stand that will be edited glow for a few seconds.
       </p>
       <DataTable

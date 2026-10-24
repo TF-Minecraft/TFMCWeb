@@ -184,8 +184,8 @@ export default function VehiclesPage() {
       <p className="mt-3 text-sm text-[var(--tfmc-mist)]">
         Nobody can claim a berthed or pool vehicle. The faction leader becomes its owner, and faction members can always
         board. The leader can also allow Allies and Vassals in Ownership Settings, and can run{" "}
-        <code className="text-[var(--tfmc-accent)]">/faction findvehicles &lt;installation id or name&gt;</code> to
-        locate installation vehicles.
+        <code className="text-[var(--tfmc-accent)]">/faction findvehicles &lt;installation id&gt;</code> to locate
+        installation vehicles.
       </p>
       <p className="mt-3 text-sm text-[var(--tfmc-mist)]">
         The leader runs <code className="text-[var(--tfmc-accent)]">/faction vehicle take</code>, then right-clicks the
@@ -275,7 +275,7 @@ export default function VehiclesPage() {
       <p className="text-sm text-[var(--tfmc-mist)]">
         Build trains on custom <WikiItemLink name="Train Track">train tracks</WikiItemLink>. Craft{" "}
         <WikiItemLink name="Train Track" /> in batches of 64 at the <StationLink name="Block Station" />. Leave room for
-        wide bends and gentle slopes: turns have a 35-degree limit, and slopes have a 10-degree maximum.
+        wide bends and gentle slopes. Turns have a 35-degree limit, and slopes have a 10-degree maximum.
       </p>
       <DataTable
         className="mt-4"
@@ -303,8 +303,8 @@ export default function VehiclesPage() {
       <WikiSectionHeading id="destruction">Losing a vehicle</WikiSectionHeading>
       <p className="text-sm text-[var(--tfmc-mist)]">
         A vehicle is destroyed when its hull reaches 0 HP, a fire burns it out or a ship reaches 100% flooding. Aircraft
-        can explode when they hit a block at speed or land badly. Cargo drops on the ground. A destroyed vehicle is gone
-        for good and frees its personal limit slot.
+        and airships can explode when they hit a block at speed or land badly. Two trains that collide on a track both
+        explode. Cargo drops on the ground. A destroyed vehicle is gone for good and frees its personal limit slot.
       </p>
       <WikiSectionHeading id="commands">Commands</WikiSectionHeading>
       <CommandTable commands={vehicleCommands.commands} />

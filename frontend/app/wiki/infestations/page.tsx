@@ -56,7 +56,7 @@ export default function InfestationsPage() {
           a province that isn&apos;t infested, and each province can only have one Lure at a time.
         </li>
         <li>
-          Everyone in the province gets 20 seconds to decide: right-click the Lure to join, or leave the province.
+          Everyone in the province gets 20 seconds to decide. Right-click the Lure to join, or leave the province.
         </li>
         <li>
           Then the wave starts: 20, 40, 60 or 80 monsters from Mild to Extreme, let out over about two minutes. Monsters

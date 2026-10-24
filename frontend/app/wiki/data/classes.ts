@@ -758,7 +758,7 @@ export const classesCommands: WikiCommandSet = {
     {
       command: "/party",
       description: "Opens the party menu, where you create a party, invite players and see your members.",
-      notes: "Up to 8 players. Class EXP is shared within 48 blocks. Start a message with @ for party chat.",
+      notes: "Up to 8 players. Class EXP is split within 48 blocks. Start a message with @ for party chat.",
     },
   ],
 };

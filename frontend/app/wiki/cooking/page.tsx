@@ -90,7 +90,7 @@ export default function CookingPage() {
             piece("Frying Pan"),
             <WikiItemText
               key="pan"
-              text="Add Butter first: without it, everything in a hot pan burns within 10 seconds. One Butter lasts 30 seconds. Fries raw meat, sausages, eggs, seafood and cut vegetables."
+              text="Add Butter first. Without it, everything in a hot pan burns within 10 seconds. One Butter lasts 30 seconds. Fries raw meat, sausages, eggs, seafood and cut vegetables."
             />,
           ],
           [
@@ -134,7 +134,7 @@ export default function CookingPage() {
             piece("Bread Tray"),
             <WikiItemText
               key="bread"
-              text="Fill the moulds with dough before putting the tray in the Oven Top over a lit Oven Bottom. Each mould bakes 2 bread. Take it out before it burns. Let the dough rise first: its description shows Unrisen, Rising or Risen."
+              text="Fill the moulds with dough before putting the tray in the Oven Top over a lit Oven Bottom. Each mould bakes 2 bread. Take it out before it burns. Let the dough rise first. Its description shows Unrisen, Rising or Risen."
             />,
           ],
           [
