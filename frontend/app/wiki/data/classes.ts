@@ -675,7 +675,7 @@ export const professions: ProfessionInfo[] = [
     id: "forager",
     displayName: "Forager",
     howItLevels:
-      "Kill farm animals, harvest crops that you grow, and breed animals (breeding needs the Breeder IV perk).",
+      "Kill farm animals, harvest crops that you grow, and breed animals (breeding most animals needs the Breeder IV perk).",
     activities: [
       { label: "Animals", items: ["Cow", "Chicken", "Pig", "Sheep", "Rabbit"] },
       {

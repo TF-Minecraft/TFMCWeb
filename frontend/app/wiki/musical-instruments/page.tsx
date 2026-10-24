@@ -99,12 +99,12 @@ export default function MusicalInstrumentsPage() {
           Song settings change the title and the metronome, which only you hear and is never recorded.
         </li>
         <li>
-          Get a music disc from{" "}
+          Get a music disc (for example from{" "}
           <Link href="/wiki/fishing" className={link}>
             fishing
-          </Link>{" "}
-          and place it on <strong>Publish full song</strong>. The disc now plays your song in any jukebox, heard within
-          32 blocks, and shows its title and you as the author.
+          </Link>
+          ) and place it on <strong>Publish full song</strong>. The disc now plays your song in any jukebox, heard
+          within 32 blocks, and shows its title and you as the author.
         </li>
       </ol>
       <p className={`mt-3 ${body}`}>

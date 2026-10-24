@@ -29,7 +29,13 @@ export default function TrialRoomsPage() {
 
       <WikiSectionHeading id="inside">Inside</WikiSectionHeading>
       <ul className={`mt-3 list-disc space-y-2 pl-5 ${body}`}>
-        <li>Bring potions or other ways to heal.</li>
+        <li>
+          Bring potions or other ways to heal, because a full stomach does not heal you (see{" "}
+          <Link href="/wiki/cooking#eating" className={link}>
+            Eating
+          </Link>
+          ).
+        </li>
         <li>Players inside can&apos;t hit each other in melee.</li>
       </ul>
 

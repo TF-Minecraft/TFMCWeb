@@ -95,8 +95,9 @@ export default function MedicinePage() {
         slip, and working in blood makes it more likely.
       </p>
       <p className={`mt-3 ${body}`}>
-        Examine the patient first, and sedate them before you cut, then clean the wound again before you finish. Chat
-        messages tell you when a bone turns up, when bleeding starts and when the patient is waking.
+        Examine the patient first, and sedate them before you cut. Clean the wound with Carbolic Acid after your last
+        cut, before you finish. Chat messages tell you when a bone turns up, when bleeding starts and when the patient
+        is waking.
       </p>
 
       <WikiSectionHeading id="outcome">Success and failure</WikiSectionHeading>

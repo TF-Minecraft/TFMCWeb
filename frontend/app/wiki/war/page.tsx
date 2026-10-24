@@ -79,10 +79,10 @@ export default function WarPage() {
         the battle is postponed once. If the next vote also falls short, the battle is decided automatically.
       </p>
       <p className={`mt-3 ${body}`}>
-        Leaders commit installations to the next battle from this menu. An attacking naval slot loses automatically
-        without a ship berthed at a committed port. After winning a battle, choose Push to advance or Hold to stay put.
-        Leaders can offer white peace or surrender to end the war, concede a battle slot, or ask for an automatic result
-        instead of fighting it. For an agreed automatic result, the other leader must answer with{" "}
+        Leaders commit installations to the next battle from this menu. In a naval battle slot, the attacking side loses
+        automatically if it has no ship berthed at a committed port. After winning a battle, choose Push to advance or
+        Hold to stay put. Leaders can offer white peace or surrender to end the war, concede a battle slot, or ask for
+        an automatic result instead of fighting it. For an agreed automatic result, the other leader must answer with{" "}
         <code className={code}>/faction accept</code> within 60 seconds.
       </p>
       <WikiSectionHeading id="in-battle">In battle</WikiSectionHeading>

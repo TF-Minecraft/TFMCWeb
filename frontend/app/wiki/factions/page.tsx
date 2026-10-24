@@ -29,7 +29,7 @@ export default function FactionsPage() {
         <Link href="/wiki/guilds" className={link}>
           guilds
         </Link>
-        : you start in the main guild, which the faction leader runs. The main guild holds up to 64 members.
+        . You start in the main guild, which the faction leader runs. The main guild holds up to 64 members.
       </p>
 
       <WikiSectionHeading id="founding" intro="You become the leader of a faction of one.">

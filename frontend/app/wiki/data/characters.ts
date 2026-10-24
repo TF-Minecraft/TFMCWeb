@@ -130,7 +130,7 @@ export const charactersCommands: WikiCommandSet = {
     },
     {
       command: "/duel <player> | accept | decline | cancel | yield",
-      description: "Challenges a player to a practice duel. Health your opponent takes is given back when it ends.",
+      description: "Challenges a player to a practice duel. What the duel cost you is given back when it ends.",
       notes: "16-block range, 30 seconds to accept, up to 10 minutes.",
     },
     {
