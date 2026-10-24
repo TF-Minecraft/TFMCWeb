@@ -866,6 +866,11 @@ export const vehicleTrackItems: string[][] = [
   ],
   ["Train Track Remover", "m.utils.train_track_remover", "Left-click track to remove it. Move trains off it first."],
   [
+    "Train Track Recorder",
+    "m.utils.train_track_recorder",
+    "Records one lap of a looping track so the Locomotive can drive it by itself.",
+  ],
+  [
     "Train Track Junction",
     "m.utils.train_track_junction",
     "Right-click existing track, then right-click the branch end with the Train Track Layer.",

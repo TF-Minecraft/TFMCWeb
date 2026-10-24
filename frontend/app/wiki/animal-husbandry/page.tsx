@@ -92,7 +92,7 @@ export default function AnimalHusbandryPage() {
       </WikiSectionHeading>
       <p className={`mt-4 ${body}`}>
         Every 4 to 8 hours that its area is loaded, an animal becomes Hungry or Dirty, shown next to its name. Feed a
-        hungry animal 1 Universal Feed and clean a dirty one with the Glove. Each time you do, you get a little Farming
+        hungry animal 1 Universal Feed and clean a dirty one with the Glove. Each time you do, you get a little Forager
         experience.
       </p>
       <DataTable

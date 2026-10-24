@@ -307,9 +307,9 @@ export default function CharactersPage() {
       <WikiSectionHeading id="injuries-graves">Death and permadeath</WikiSectionHeading>
       <p className={body}>
         Some regions are <strong>permadeath zones</strong>, and a title tells you when you enter one. Dying there can
-        kill your character for good: the chance is 10% for each injury your character already has. If your character
-        survives, the death costs an injury instead. A healing injury you already have turns permanent, or, if you have
-        none, you gain a new healing injury. Deaths while you fight in a started war battle (see{" "}
+        kill your character for good, and the more injuries your character already has, the more likely that is. If your
+        character survives, the death costs an injury instead. A healing injury you already have turns permanent, or, if
+        you have none, you gain a new healing injury. Deaths while you fight in a started war battle (see{" "}
         <Link href="/wiki/war" className={link}>
           War
         </Link>
