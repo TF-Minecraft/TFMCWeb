@@ -9,7 +9,7 @@ export default function TrialRoomsPage() {
     <WikiPage
       lastModified="2026-10-24"
       title="Trial Rooms"
-      intro="Trial Rooms are a dungeon crawl. Use an Unknown Key to get in, fight the monsters that guard each room, and open chests with the keys they leave behind."
+      intro="Trial Rooms are a series of guarded rooms. Use an Unknown Key to get in, fight the monsters that guard each room, and open chests with the keys they leave behind."
     >
       <WikiSectionHeading id="key">The Unknown Key</WikiSectionHeading>
       <p className={body}>
@@ -62,6 +62,7 @@ export default function TrialRoomsPage() {
       <Callout className="mt-4" title="Trial potions turn into money">
         Some potions you find inside say in their description that they convert to denars on exit. Any of those you
         still carry when you leave are taken and paid out in denars. Drink them inside if you would rather use them.
+        Dying with them also loses them.
       </Callout>
 
       <SeeAlso hrefs={["/wiki/arcane-trace-detector", "/wiki/materials"]} />

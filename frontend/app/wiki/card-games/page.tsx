@@ -79,7 +79,8 @@ export default function CardGamesPage() {
       </p>
 
       <p className={body}>
-        Use <Word>/wager</Word> without an argument to commit the coins you have put out for the current round.
+        Use <Word>/wager</Word> without an argument to commit the coins you have put out for the current round. If that
+        is less than you need to match, you fold and get the coins back.
       </p>
 
       <WikiSectionHeading id="blackjack">Blackjack</WikiSectionHeading>

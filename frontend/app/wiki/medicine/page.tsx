@@ -27,8 +27,8 @@ export default function MedicinePage() {
         <Link href="/wiki/classes#professions" className={link}>
           Professions
         </Link>
-        ). It lets your character operate, and it unlocks the recipes at the <StationLink name="Medicine Station" />:
-        the surgical instruments, the prosthetic limbs and the doctor&apos;s outfit.
+        ). It lets your character operate, and it unlocks the recipes at the <StationLink name="Medicine Station" />,
+        including the surgical instruments, the prosthetic limbs and the doctor&apos;s outfit.
       </p>
 
       <WikiSectionHeading id="operating">Starting an operation</WikiSectionHeading>
@@ -71,7 +71,7 @@ export default function MedicinePage() {
         rows={[
           ["Stethoscope", "Examines the patient, showing the operation needed and how many incisions reach the injury"],
           ["Clinical Thermometer", "Takes the patient's temperature, so you can then give the tincture"],
-          ["Chloroform", "Puts the patient under. It wears off, and too much means the patient will not wake"],
+          ["Chloroform", "Puts the patient under. It wears off, and giving more too soon fails the operation"],
           ["Smelling Salts", "Revives a patient who has collapsed"],
           ["Scalpel", "Makes an incision. Never cut a patient who is awake"],
           ["Splint", "Sets a broken bone"],
@@ -88,11 +88,11 @@ export default function MedicinePage() {
 
       <WikiSectionHeading id="vitals">Keeping the patient alive</WikiSectionHeading>
       <p className={body}>
-        The menu shows the patient&apos;s consciousness, pulse, temperature and bleeding, and whether the wound is
-        clean. They change with every move. Chloroform wears off, cutting dirties the wound and can weaken the pulse,
-        blood loss weakens it further, and a fever keeps climbing. Some injuries bring complications, such as a wound
-        that keeps bleeding, a patient who goes into shock, or an infection. Any move can slip, and working in blood
-        makes it more likely.
+        The menu shows the patient&apos;s consciousness, pulse and temperature, whether the operation site is clean and
+        how many incisions are open. Chat tells you when they bleed. They change with every move. Chloroform wears off,
+        cutting dirties the wound and can weaken the pulse, blood loss weakens it further, and a fever keeps climbing.
+        Some injuries bring complications, such as a wound that keeps bleeding, a patient who goes into shock, or an
+        infection. Any move can slip, and working in blood makes it more likely.
       </p>
       <p className={`mt-3 ${body}`}>
         Examine the patient first, and sedate them before you cut. Cutting dirties the wound, so clean it again before

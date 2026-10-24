@@ -58,13 +58,13 @@ export const roleplayToolsCommands: WikiCommandSet = {
     {
       command: "/image create <url> [scale]",
       aliases: ["/images", "/img"],
-      description: "Makes map art from a picture online. Click the block where it should go.",
+      description: "Makes map art from a picture online. Right-click the block where it should go.",
       notes: "The scale is a percentage of the picture's size.",
     },
     {
       command: "/image delete",
       aliases: ["/images", "/img"],
-      description: "Removes a picture. Click the picture after running it.",
+      description: "Removes a picture. Right-click the picture after running it.",
       notes: "Anyone can delete any picture.",
     },
     {

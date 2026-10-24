@@ -45,7 +45,7 @@ export const vehicles: VehicleInfo[] = [
     seats: "1/0/0",
     components: "geared engine 200, hull 150",
     fuel: "Arcane Fuel",
-    speed: "0.45 (3rd gear) ≈ 9 b/s",
+    speed: "0.65 (3rd gear) ≈ 13 b/s",
     turn: "0.70",
     weapons: "N/A",
     cargo: "N/A",

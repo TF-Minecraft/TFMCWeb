@@ -92,9 +92,9 @@ export default function RoleplayToolsPage() {
       <WikiSectionHeading id="images">Pictures</WikiSectionHeading>
       <p className={body}>
         <code className={code}>/image create &lt;url&gt; [scale]</code> turns a picture from the internet into map art.
-        Run it, then click the block where the picture should go. The scale is a percentage of the picture&apos;s size.
-        To remove a picture, run <code className={code}>/image delete</code> and click it. Anyone can delete any
-        picture.
+        Run it, then right-click the block where the picture should go (left-click cancels). The scale is a percentage
+        of the picture&apos;s size. To remove a picture, run <code className={code}>/image delete</code> and right-click
+        it. Anyone can delete any picture.
       </p>
 
       <WikiSectionHeading id="books">Books and anvils</WikiSectionHeading>

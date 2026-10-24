@@ -124,18 +124,20 @@ export default function FactionsPage() {
 
       <p className={body}>
         To hold a council session, the leader picks a Lantern. At least 75% of the council must be online. When
-        elections are allowed, sign up in the Government menu before voting begins. Each guild other than the main guild
-        may put forward one candidate for leader and one for council. Leaders of other guilds cannot stand for faction
-        leader. An election starts on a Monday, at least 21 days after the previous election ended, and only if someone
-        has signed up. Voting lasts 7 days. Council elections follow the same cycle when the laws allow them.
+        elections are allowed, sign up as a candidate at your faction&apos;s Voting Booth before voting begins. Each
+        guild other than the main guild may put forward one candidate for leader and one for council. Leaders of other
+        guilds cannot stand for faction leader. An election starts on a Monday, at least 21 days after the previous
+        election ended, and only if someone has signed up. Voting lasts 7 days. Council elections follow the same cycle
+        when the laws allow them.
       </p>
       <p className={`mt-3 ${body}`}>
-        Government shows whether the ruler is Legitimate, Contested or Illegitimate. Weak support and an unbalanced
-        economy lower stability. Low stability reduces administrative power, tax income and prestige, raises upkeep, and
-        makes titles harder to claim. A collapsing state cannot wage war or form titles. The Weak State penalty applies
-        when the main guild has too few branch levels compared with the largest other guild, depending on the government
-        law. Repression and Favouring laws let the government penalise or support chosen guilds and subjects, changing
-        their trade and their support for the government.
+        Government shows whether the ruler is Legitimate, Contested or Illegitimate. A doubtful claim to rule, the Weak
+        State penalty, holding more land than you can manage, civil war, declining an ally&apos;s call to arms and
+        bankruptcy all lower stability. Low stability reduces administrative power, tax income and prestige, raises
+        upkeep, and makes titles harder to claim. A collapsing state cannot wage war or form titles. The Weak State
+        penalty applies when the main guild has too few branch levels compared with the largest other guild, depending
+        on the government law. Repression and Favouring laws let the government penalise or support chosen guilds and
+        subjects, changing their trade and their support for the government.
       </p>
 
       <WikiSectionHeading id="diplomacy" intro="The leader sets relations with other factions from the Diplomacy menu.">

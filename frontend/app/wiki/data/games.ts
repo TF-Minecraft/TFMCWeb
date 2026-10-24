@@ -74,7 +74,8 @@ export const gamesCommands: WikiCommandSet = {
     },
     {
       command: "/wager",
-      description: "Commits the coins you have put out for the current round.",
+      description:
+        "Commits the coins you have put out for the current round. Too little to match folds you and refunds them.",
     },
     {
       command: "/wager <denars>",

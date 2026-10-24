@@ -20,7 +20,7 @@ export const trialRoomsSection: WikiSection = {
     href: "/wiki/trial-rooms",
     label: "Trial Rooms",
     category: "combat",
-    blurb: "Use an Unknown Key to enter a dungeon crawl, clear its spawners and open its chests.",
+    blurb: "Use an Unknown Key to enter a series of guarded rooms, clear their spawners and open their chests.",
   },
   commands: trialRoomsCommands,
 };

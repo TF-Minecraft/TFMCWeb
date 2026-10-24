@@ -67,8 +67,9 @@ export default function GuildsPage() {
         Branch upgrades are paid from the guild bank, starting at 100 d, and each level costs more than the last.
         Downgrading gives back part of the price. Check the menu&apos;s price before buying or removing a level. Guild
         Halls, Workshops, Storehouses and Counting Houses are the trade branches; the main guild uses Bureaucracy in
-        place of Guild Halls. Auto Dealer Tables adds one Blackjack table per level. The main guild can also upgrade its
-        maximum administrative power, maximum diplomatic capacity and administrative power gain.
+        place of Guild Halls. Every guild has one Blackjack table, and each level of Auto Dealer Tables adds another.
+        The main guild can also upgrade its maximum administrative power, maximum diplomatic capacity and administrative
+        power gain.
       </p>
       <WikiSectionHeading id="leader-actions">Leader actions</WikiSectionHeading>
       <p className={body}>
@@ -143,7 +144,8 @@ export default function GuildsPage() {
       </p>
 
       <p className={body}>
-        The leader can set tariffs under Mercantilism up to 25%, Protectionism up to 50%, or Isolationism up to 75%.
+        Through a tax proposal in Government, a faction can set tariffs under Mercantilism up to 25%, Protectionism up
+        to 50%, or Isolationism up to 75%.
       </p>
 
       <WikiSectionHeading id="vehicles" intro="Vehicles cost a little upkeep every day.">
@@ -152,7 +154,7 @@ export default function GuildsPage() {
       <p className={body}>
         Personal vehicles have limits per type and per account. Unpaid vehicles lose health every hour until nearly
         wrecked. Anyone can pay a day of an unpaid vehicle&apos;s upkeep from their own bank; faction leaders can use
-        their pouch too. For ownership, faction pools, berthing and payment steps, see{" "}
+        their pouch too. For ownership, faction pools and berthing, see{" "}
         <Link href="/wiki/vehicles#faction-vehicles" className={link}>
           faction vehicles
         </Link>

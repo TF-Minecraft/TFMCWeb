@@ -80,7 +80,7 @@ export default function VehiclesPage() {
         </li>
         <li>
           Wait for the build to finish. Stay within 96 blocks so the completed vehicle can appear, then right-click it
-          to select a seat. It already belongs to you, with whitelisting on.
+          to select a seat.
         </li>
       </ol>
       <div className="mt-5 grid gap-4 lg:grid-cols-2">
@@ -139,8 +139,8 @@ export default function VehiclesPage() {
         handover or receiving a faction vehicle starts with whitelisting off. Open Ownership Settings in Select Seat and
         turn it on to control who can board. Add players by name or enable passenger tickets. With tickets enabled, hold
         Paper and right-click your vehicle to make matching tickets. Remove Ownership releases the vehicle, and the next
-        player to right-click it claims it. Clicking an occupied yellow seat ejects its passenger and prevents re-entry
-        for 60 seconds.
+        player to right-click it claims it. As the owner, clicking an occupied yellow seat ejects its passenger and
+        prevents re-entry for 60 seconds.
       </p>
       <p className="mt-3 text-sm text-[var(--tfmc-mist)]">
         Use <code className="text-[var(--tfmc-accent)]">/vf findvehicles</code> to locate your vehicles. Vehicles more
@@ -155,9 +155,11 @@ export default function VehiclesPage() {
       </p>
       <WikiSectionHeading id="faction-vehicles">Faction vehicles</WikiSectionHeading>
       <p className="text-sm text-[var(--tfmc-mist)]">
-        The faction leader runs <code>/faction vehicle transfer &lt;installation-id|pool&gt;</code>, then right-clicks
-        the vehicle within 60 seconds. The leader’s own vehicle moves at once. For another owner’s vehicle, that owner
-        must be online, within 20 blocks and confirm with <code>/faction accept</code> within 60 seconds. To berth at an
+        The faction leader runs{" "}
+        <code className="text-[var(--tfmc-accent)]">/faction vehicle transfer &lt;installation-id|pool&gt;</code>, then
+        right-clicks the vehicle within 60 seconds. The leader’s own vehicle moves at once. For another owner’s vehicle,
+        that owner must be online, within 20 blocks and confirm with{" "}
+        <code className="text-[var(--tfmc-accent)]">/faction accept</code> within 60 seconds. To berth at an
         installation, the vehicle must be within its 80-block radius.
       </p>
       <DataTable
@@ -181,14 +183,16 @@ export default function VehiclesPage() {
       </p>
       <p className="mt-3 text-sm text-[var(--tfmc-mist)]">
         Nobody can claim a berthed or pool vehicle. The faction leader becomes its owner, and faction members can always
-        board. The leader can also allow Allies and Vassals in Ownership Settings. Use{" "}
-        <code>/faction findvehicles &lt;installation id or name&gt;</code> to locate installation vehicles.
+        board. The leader can also allow Allies and Vassals in Ownership Settings, and can run{" "}
+        <code className="text-[var(--tfmc-accent)]">/faction findvehicles &lt;installation id or name&gt;</code> to
+        locate installation vehicles.
       </p>
       <p className="mt-3 text-sm text-[var(--tfmc-mist)]">
-        The leader runs <code>/faction vehicle take</code>, then right-clicks the vehicle to make it personal again. To
-        give it to someone else, run <code>/faction vehicle give &lt;player&gt;</code>, then right-click it. The
-        recipient must be online and accept with <code>/faction accept</code>. Berthing and unberthing are blocked at
-        installations under a battle or raid embargo. See{" "}
+        The leader runs <code className="text-[var(--tfmc-accent)]">/faction vehicle take</code>, then right-clicks the
+        vehicle to make it personal again. To give it to someone else, run{" "}
+        <code className="text-[var(--tfmc-accent)]">/faction vehicle give &lt;player&gt;</code>, then right-click it.
+        The recipient must be online and accept with <code className="text-[var(--tfmc-accent)]">/faction accept</code>.
+        Berthing and unberthing are blocked at installations under a battle or raid embargo. See{" "}
         <Link href="/wiki/war#in-battle" className={linkClass}>
           vehicle restrictions during campaign battles
         </Link>

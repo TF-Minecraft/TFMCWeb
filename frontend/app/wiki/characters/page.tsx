@@ -158,7 +158,11 @@ export default function CharactersPage() {
       <p className={`mt-3 ${body}`}>
         After creation, <code className={code}>/rpcharacter edit</code> reopens your choices, and the editor shows how
         long each one has left. Race, backstory injuries and prosthetic lock after 24 hours. Class, age, background
-        traits and attributes lock after 5 days. Personality and evil archetypes never lock.
+        traits and attributes lock after 5 days, though you can still change class for a fee (see{" "}
+        <Link href="/wiki/classes" className={link}>
+          Classes &amp; Professions
+        </Link>
+        ). Personality and evil archetypes never lock.
       </p>
       <p className={`mt-3 ${body}`}>
         Once you are playing, <code className={code}>/rpcharacter kit starter</code> gives you an{" "}

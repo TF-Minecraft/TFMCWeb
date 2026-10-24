@@ -47,17 +47,16 @@ export default async function VehicleDetail({ params }: { params: Promise<{ slug
       <p className="mt-4 text-sm text-[var(--tfmc-mist)]">
         Select this blueprint at the station, stand at the building spot within 12 blocks and left-click before the
         30-second selection timer expires. Inputs are consumed at placement. Stay within 96 blocks when construction
-        finishes, then right-click to select a seat. It already belongs to you, with whitelisting on. Breaking the
-        station during construction cancels the build and drops the inputs at the station.
+        finishes, then right-click to select a seat. Breaking the station during construction cancels the build and
+        drops the inputs at the station.
       </p>
       <WikiSectionHeading id="specifications">Specifications</WikiSectionHeading>
       <DataTable
         columns={[{ header: "Feature" }, { header: "Details" }]}
         rows={[
           ["Seats: captain / mechanic / passenger", vehicle.seats],
-          ["Components and HP", vehicle.components.replaceAll("_", " ")],
+          ["Components and HP", vehicle.components],
           ["Speed", vehicle.speed],
-
           ["Fuel", <WikiItemLink key="fuel" name={vehicle.fuel} />],
           ["Mounted weapons", vehicle.weapons],
           ["Cargo", vehicle.cargo],
