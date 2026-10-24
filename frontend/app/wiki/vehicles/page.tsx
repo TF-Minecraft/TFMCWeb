@@ -295,8 +295,9 @@ export default function VehiclesPage() {
       <p className="mt-3 text-sm text-[var(--tfmc-mist)]">
         On a track that loops back on itself, the Locomotive&apos;s owner can teach it the route. Right-click the
         Locomotive with a Train Track Recorder and drive one full lap; right-click again to cancel. Then
-        sneak-right-click the Locomotive with the recorded Recorder to load the tape, and it drives that lap by itself.
-        A tape only fits the track it was recorded on. Sneak-right-click with an empty hand to take the tape back out.
+        sneak-right-click the Locomotive with the recorded Recorder to load the tape, leave the driver&apos;s seat, and
+        it drives that lap by itself. A tape only fits the track it was recorded on. Sneak-right-click with an empty
+        hand to take the tape back out.
       </p>
       <WikiSectionHeading id="horses">Hitch horses to a cart</WikiSectionHeading>
       <p className="text-sm text-[var(--tfmc-mist)]">
