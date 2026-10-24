@@ -163,8 +163,8 @@ export default function VehiclesPage() {
         installation, the vehicle must be within its 80-block radius.
       </p>
       <p className="mt-3 text-sm text-[var(--tfmc-mist)]">
-        Ports take ships, airports take aircraft and airships, forts take emplacements and land vehicles, and train
-        stations take emplacements. The number of slots for each is in the{" "}
+        Ports take ships, airports take aircraft and airships, forts take fixed emplacements and land vehicles, and
+        train stations take emplacements. The number of slots for each is in the{" "}
         <Link href="/wiki/guilds#installations" className={linkClass}>
           installations table
         </Link>
@@ -299,8 +299,8 @@ export default function VehiclesPage() {
       <p className="text-sm text-[var(--tfmc-mist)]">
         A vehicle is destroyed when its hull reaches 0 HP, a fire burns it out or a ship reaches 100% flooding. Aircraft
         and airships can explode when they hit a block at speed or land badly. A locomotive that runs into another train
-        at speed explodes, along with what it hits. At low speed both just stop. Cargo drops on the ground. A destroyed
-        vehicle is gone for good and frees its personal limit slot.
+        at speed explodes, along with what it hits. At low speed the moving train just stops. Cargo drops on the ground.
+        A destroyed vehicle is gone for good and frees its personal limit slot.
       </p>
       <WikiSectionHeading id="commands">Commands</WikiSectionHeading>
       <CommandTable commands={vehicleCommands.commands} />

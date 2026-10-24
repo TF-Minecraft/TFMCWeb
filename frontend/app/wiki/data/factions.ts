@@ -152,7 +152,7 @@ export const installations: InstallationInfo[] = [
     type: "Fort",
     upkeepPerDay: "30 d",
     buildTime: "5 days",
-    slots: "8 emplacements (AA Turret, Anti-Air, Fixed Artillery) and 2 land vehicles (carts, Small Car)",
+    slots: "8 emplacements (Anti-Air Turrets, Anti-Air, Fixed Artillery) and 2 land vehicles (carts, Small Cars)",
   },
   { type: "Port", upkeepPerDay: "15 d", buildTime: "3 days", slots: "8 ships" },
   { type: "Airport", upkeepPerDay: "20 d", buildTime: "3 days", slots: "10 aircraft and airships" },
