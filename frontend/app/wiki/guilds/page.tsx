@@ -64,12 +64,11 @@ export default function GuildsPage() {
         guild&apos;s credit score. The lender can pause interest or forgive the loan.
       </p>
       <p className={`mt-3 ${body}`}>
-        Branch upgrades start at 100 d from the guild bank. Each existing branch level raises the next price by 7%.
-        Downgrading refunds 80% of the price for the last level at the guild&apos;s current size. Check the menu&apos;s
-        price before buying or removing a level. Guild Halls, Workshops, Storehouses and Counting Houses are the trade
-        branches; the main guild uses Bureaucracy in place of Guild Halls. Auto Dealer Tables adds one Blackjack table
-        per level. The main guild can also upgrade its maximum administrative power, maximum diplomatic capacity and
-        administrative power gain.
+        Branch upgrades are paid from the guild bank, starting at 100 d, and each level costs more than the last.
+        Downgrading gives back part of the price. Check the menu&apos;s price before buying or removing a level. Guild
+        Halls, Workshops, Storehouses and Counting Houses are the trade branches; the main guild uses Bureaucracy in
+        place of Guild Halls. Auto Dealer Tables adds one Blackjack table per level. The main guild can also upgrade its
+        maximum administrative power, maximum diplomatic capacity and administrative power gain.
       </p>
       <WikiSectionHeading id="leader-actions">Leader actions</WikiSectionHeading>
       <p className={body}>
