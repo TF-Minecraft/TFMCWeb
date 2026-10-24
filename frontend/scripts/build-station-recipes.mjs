@@ -109,6 +109,9 @@ const ITEMSADDER_ID_ALIASES = {
 // YAML subset parser
 // ---------------------------------------------------------------------------
 
+/** Note shown on recipes that grant their effect instead of handing over the item. */
+export const NO_ITEM_NOTE = "Crafting this gives no item. Its effect is applied to you straight away.";
+
 /**
  * Parses just the `recipes:` block of an MMOItems station config. This is not a
  * general YAML parser; it handles exactly the shape these files use:
@@ -126,8 +129,6 @@ const ITEMSADDER_ID_ALIASES = {
  * Any line inside `recipes:` matching none of those forms is returned in
  * `unparsed`, so a config change cannot be dropped silently.
  */
-export const NO_ITEM_NOTE = "Crafting this gives no item: its effect is applied to you straight away.";
-
 export function parseStationRecipes(text) {
   const recipes = [];
   const unparsed = [];

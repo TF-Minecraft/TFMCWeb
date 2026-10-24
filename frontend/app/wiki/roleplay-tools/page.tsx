@@ -99,9 +99,9 @@ export default function RoleplayToolsPage() {
 
       <WikiSectionHeading id="books">Books and anvils</WikiSectionHeading>
       <p className={body}>
-        Hold a written book you signed and run <code className={code}>/book</code> to make it editable again. Run it
-        while holding a book and quill to sign it. <code className={code}>/book title &lt;title&gt;</code> and{" "}
-        <code className={code}>/book author &lt;name&gt;</code> change the title and author of a signed book you wrote.{" "}
+        Hold a signed book and run <code className={code}>/book</code> to make it editable again. Run it while holding a
+        book and quill to sign it. <code className={code}>/book title &lt;title&gt;</code> and{" "}
+        <code className={code}>/book author &lt;name&gt;</code> change the title and author of the signed book you hold.{" "}
         <code className={code}>/anvil</code> opens an anvil wherever you are.
       </p>
 

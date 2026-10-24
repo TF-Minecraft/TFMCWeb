@@ -104,7 +104,8 @@ export default function VehiclesPage() {
       <ol className="list-decimal space-y-3 pl-5 text-sm text-[var(--tfmc-mist)]">
         <li>
           <strong>Enter:</strong> right-click the vehicle and choose a seat. Shift reopens seat selection while aboard.
-          In aircraft and airships, use Shift + left-click; Shift alone descends. Only the captain steers.
+          In aircraft and airships, use Shift + left-click; in a flying airship, Shift alone descends. Only the captain
+          steers.
         </li>
         <li>
           <strong>Drive:</strong> run <code className="text-[var(--tfmc-accent)]">/vf keybinds</code> while seated to
@@ -150,7 +151,7 @@ export default function VehiclesPage() {
         You can own three personal vehicles in total. Trains do not count toward this total, including the Locomotive.
         Each type also has its own limit. You can own one of each type, except Horse Carts, Wooden Carts, Small Cars,
         Coal Cars and Passenger Cars, which allow three each. Construction is refused when you reach a limit. Each
-        vehicle page lists its daily upkeep in Denars.
+        vehicle page lists its daily upkeep, paid from the owner&apos;s bank.
       </p>
       <WikiSectionHeading id="faction-vehicles">Faction vehicles</WikiSectionHeading>
       <p className="text-sm text-[var(--tfmc-mist)]">
@@ -275,16 +276,7 @@ export default function VehiclesPage() {
       <DataTable
         className="mt-4"
         columns={[{ header: "Track item" }, { header: "Use" }]}
-        rows={vehicleTrackItems.map((row) => [
-          <WikiItemLink key={row[0]} name={row[0]} />,
-          row[0] === "Train Track" ? (
-            <>
-              the track piece itself (64 per craft at the <StationLink name="Block Station" />)
-            </>
-          ) : (
-            row[2]
-          ),
-        ])}
+        rows={vehicleTrackItems.map((row) => [<WikiItemLink key={row[0]} name={row[0]} />, row[2]])}
       />
       <p className="mt-3 text-sm text-[var(--tfmc-mist)]">
         Craft these tools at the <StationLink name="Engineer Station" />. Sneak-right-click a train car, then

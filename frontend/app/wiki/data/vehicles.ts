@@ -875,5 +875,4 @@ export const vehicleTrackItems: string[][] = [
     "m.utils.train_track_junction",
     "Right-click existing track, then right-click the branch end with the Train Track Layer.",
   ],
-  ["Train Track Recorder", "m.utils.train_track_recorder", "Crafted at the Engineer Station."],
 ];

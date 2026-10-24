@@ -30,12 +30,12 @@ export default function TrialRoomsPage() {
       <WikiSectionHeading id="inside">Inside</WikiSectionHeading>
       <ul className={`mt-3 list-disc space-y-2 pl-5 ${body}`}>
         <li>Natural healing is off while you are inside. Bring potions or other ways to heal.</li>
-        <li>Players inside can&apos;t hurt each other.</li>
+        <li>Players inside can&apos;t hit each other in melee.</li>
       </ul>
 
       <WikiSectionHeading id="spawners">Spawners</WikiSectionHeading>
       <p className={body}>
-        Each room is guarded by a spawner with its level shown above it. Walk close and it wakes up: doors seal the area
+        Each room is guarded by a spawner with its level shown above it. Walk close and it wakes up. Doors seal the area
         and it releases its monsters. Higher levels mean tougher monsters that hit harder. Kill them all and the doors
         open, and the spawner drops a key.
       </p>
@@ -49,7 +49,7 @@ export default function TrialRoomsPage() {
 
       <WikiSectionHeading id="chests">Chests</WikiSectionHeading>
       <p className={body}>
-        Some chests are always there. Others belong to a spawner: they appear when it is cleared and disappear again
+        Some chests are always there. Others belong to a spawner. They appear when it is cleared and disappear again
         when its hour of rest is over, so open them in time. Hold a key and right-click a chest. The key is used up, the
         chest vanishes and its loot pops out onto the ground. Any key opens any chest. Each key has a rarity, and its
         description lists what it can give.

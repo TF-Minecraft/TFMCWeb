@@ -26,12 +26,15 @@ export default function WarPage() {
         Declaring war
       </WikiSectionHeading>
       <ul className={`mt-3 list-disc space-y-2 pl-5 ${body}`}>
-        <li>Your faction&apos;s opinion of the target must be -50 or lower, with a Hostile attitude.</li>
+        <li>
+          Your faction&apos;s opinion of the target must be -50 or lower, and at least one of its members must be
+          online.
+        </li>
         <li>No truce can stand between you. A truce lasts 10 days after a war ends.</li>
         <li>You need regiments that can attack. Staff create a war code in Discord; type it in chat when declaring.</li>
         <li>
-          The code sets what you are fighting for, such as taking land, making them your subject, or pillaging.
-          Defenders can set a counter-demand.
+          Choose what you are fighting for in the Declare War menu, such as taking land, making them your subject, or
+          pillaging. Confirming asks for the war code. Defenders can set a counter-demand.
         </li>
       </ul>
 
@@ -135,8 +138,8 @@ export default function WarPage() {
           to a faction with <code className={code}>/company offer &lt;faction&gt;</code>.
         </li>
         <li>
-          Factions browse companies with <code className={code}>/mercenaries</code>. To hire, any member of their
-          government goes to the province of the company&apos;s guild capital and signs the contract there.
+          Factions browse companies with <code className={code}>/mercenaries</code>. To hire, their leader or a council
+          member goes to the province of the company&apos;s guild capital and signs the contract there.
         </li>
       </ol>
 

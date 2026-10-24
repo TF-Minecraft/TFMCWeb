@@ -124,10 +124,10 @@ export default function FactionsPage() {
 
       <p className={body}>
         To hold a council session, the leader picks a Lantern. At least 75% of the council must be online. When
-        elections are allowed, sign up in the Government menu before voting begins. Each guild may put forward one
-        candidate for leader and one for council. Leaders of other guilds cannot stand for faction leader. An election
-        starts on a Monday, at least 21 days after the previous election ended, and only if someone has signed up.
-        Voting lasts 7 days. Council elections follow the same cycle when the laws allow them.
+        elections are allowed, sign up in the Government menu before voting begins. Each guild other than the main guild
+        may put forward one candidate for leader and one for council. Leaders of other guilds cannot stand for faction
+        leader. An election starts on a Monday, at least 21 days after the previous election ended, and only if someone
+        has signed up. Voting lasts 7 days. Council elections follow the same cycle when the laws allow them.
       </p>
       <p className={`mt-3 ${body}`}>
         Government shows whether the ruler is Legitimate, Contested or Illegitimate. Weak support and an unbalanced
@@ -143,10 +143,10 @@ export default function FactionsPage() {
       </WikiSectionHeading>
       <p className={body}>
         Each faction has an opinion of every other, which slowly moves toward what your relations call for. An alliance
-        needs both sides at 40 or more, a rivalry -10 or less, and declaring war needs -50 or less and a Hostile
-        attitude. You can also sign trade agreements and non-aggression pacts, place embargoes, and take smaller
-        factions as subjects. Agreements that need both sides are answered by the other leader with{" "}
-        <code className={code}>/faction accept</code> while online.
+        needs both sides at 40 or more, a rivalry -10 or less, and declaring war needs -50 or less. You can also sign
+        trade agreements and non-aggression pacts, place embargoes, and take smaller factions as subjects. Agreements
+        that need both sides are answered by the other leader with <code className={code}>/faction accept</code> while
+        online.
       </p>
 
       <p className={`mt-3 ${body}`}>

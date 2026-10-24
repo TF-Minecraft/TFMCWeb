@@ -69,15 +69,15 @@ export const roleplayToolsCommands: WikiCommandSet = {
     },
     {
       command: "/book",
-      description: "Makes a signed book you wrote editable again, or signs the book and quill you hold.",
+      description: "Makes the signed book you hold editable again, or signs the book and quill you hold.",
     },
     {
       command: "/book title <title>",
-      description: "Changes the title of a signed book you wrote.",
+      description: "Changes the title of the signed book you hold.",
     },
     {
       command: "/book author <name>",
-      description: "Changes the author of a signed book you wrote.",
+      description: "Changes the author of the signed book you hold.",
     },
     {
       command: "/anvil",

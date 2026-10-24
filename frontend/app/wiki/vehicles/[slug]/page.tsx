@@ -30,7 +30,7 @@ export default async function VehicleDetail({ params }: { params: Promise<{ slug
           ["Construction station", <StationLink key="station" name={vehicle.station} />],
           ["Category", vehicle.kind],
           ["Personal limit", vehicle.personalLimit],
-          ["Daily upkeep", `${vehicle.upkeep} Denars`],
+          ["Daily upkeep", `${vehicle.upkeep} d`],
           ["Profession", vehicle.requirement],
           ["Build time", vehicle.buildTime],
         ]}
@@ -124,9 +124,11 @@ export default async function VehicleDetail({ params }: { params: Promise<{ slug
         Right-click to select a seat. Only the captain steers; run{" "}
         <code className="text-[var(--tfmc-accent)]">/vf keybinds</code> while seated for this vehicle’s current
         controls.{" "}
-        {vehicle.category === "planes" || vehicle.category === "airships"
-          ? "Use Shift + left-click for seat selection; Shift alone descends."
-          : "Shift reopens seat selection."}{" "}
+        {vehicle.category === "airships"
+          ? "Use Shift + left-click for seat selection; in flight, Shift alone descends."
+          : vehicle.category === "planes"
+            ? "Use Shift + left-click for seat selection."
+            : "Shift reopens seat selection."}{" "}
         Use{" "}
         <Link href="/wiki/vehicles#repair" className="underline">
           Vehicle Repair
