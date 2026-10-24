@@ -13,7 +13,7 @@ export const medicineCommands: WikiCommandSet = {
     },
     {
       command: "/surgery accept",
-      description: "Accepts a surgery offer and lies you down on the operating table.",
+      description: "Accepts a surgery offer and starts the operation.",
       notes: "Within 60 seconds of the offer.",
     },
     {

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import {
   Callout,
   CommandTable,
@@ -13,6 +14,7 @@ import { roleplayToolsCommands } from "../data/roleplay-tools";
 import { stationRecipe } from "../data/station-recipes";
 
 const code = "text-[var(--tfmc-accent)]";
+const link = "text-[var(--tfmc-accent)] hover:underline";
 const body = "text-sm text-[var(--tfmc-mist)]";
 
 const stoneRecipes = [stationRecipe("gen-tool-station-lorestone"), stationRecipe("gen-tool-station-namestone")];
@@ -71,10 +73,11 @@ export default function RoleplayToolsPage() {
       <WikiSectionHeading id="masks">Masks and banner patterns</WikiSectionHeading>
       <p className={body}>
         <code className={code}>/tfmc masks</code> gives you a random mask. Most masks hide who you are while you wear
-        them on your head: in-character chat shows you as <strong>Masked</strong>, and nobody can read your character
-        card by sneak-right-clicking you or with <code className={code}>/rpcharacter profile</code>. The{" "}
-        <code className={code}>/players</code> list is out of character, so it still shows your sheet.{" "}
-        <code className={code}>/tfmc patterns</code> gives you all ten banner patterns for the loom: Flower, Guster,
+        them on your head (see{" "}
+        <Link href="/wiki/characters#looking-at-someone" className={link}>
+          Reading a character card
+        </Link>
+        ). <code className={code}>/tfmc patterns</code> gives you all ten banner patterns for the loom: Flower, Guster,
         Field Masoned, Skull, Thing, Globe, Snout, Flow, Creeper and Bordure Indented. You can use each command once
         every 10 seconds.
       </p>
