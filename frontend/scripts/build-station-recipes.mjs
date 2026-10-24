@@ -126,6 +126,8 @@ const ITEMSADDER_ID_ALIASES = {
  * Any line inside `recipes:` matching none of those forms is returned in
  * `unparsed`, so a config change cannot be dropped silently.
  */
+export const NO_ITEM_NOTE = "Crafting this gives no item: its effect is applied to you straight away.";
+
 export function parseStationRecipes(text) {
   const recipes = [];
   const unparsed = [];
@@ -835,6 +837,11 @@ export function build({
 
       const requirement = requirementFor(asList(r.fields.conditions));
       const time = Number(r.fields["crafting-time"]);
+      // `output-item: false` keeps the item only as the recipe's icon and runs the triggers instead. A trigger that
+      // gives an item (e.g. CustomFishing rods) still hands one over; anything else (e.g. a skill point) gives none.
+      const noItem =
+        String(r.fields.options?.["output-item"] ?? "").toLowerCase() === "false" &&
+        !asList(r.fields.triggers).some((trigger) => /\bgive\b/i.test(trigger) && !/\bpoints?\b/i.test(trigger));
       recipes.push({
         key: `gen-${fileSlug}-${r.key}`,
         title: outputSlot.name,
@@ -844,6 +851,7 @@ export function build({
         category: categoryFor(output),
         ingredients,
         output: outputSlot,
+        ...(noItem ? { note: NO_ITEM_NOTE } : {}),
       });
     }
   }
@@ -874,6 +882,7 @@ export function serialise(recipes) {
       lines.push(`    category: ${JSON.stringify(r.category)},`);
       lines.push(`    ingredients: [${r.ingredients.map(serialiseSlot).join(", ")}],`);
       lines.push(`    output: ${serialiseSlot(r.output)},`);
+      if (r.note) lines.push(`    note: ${JSON.stringify(r.note)},`);
       return `  {\n${lines.join("\n")}\n  },`;
     })
     .join("\n");

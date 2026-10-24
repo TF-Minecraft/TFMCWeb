@@ -32,15 +32,17 @@ export const denarCommands: WikiCommandSet = {
     },
     {
       command: "/deco toitem <amount> [coin]",
-      description: "Turns pouch money into coins in your inventory. Name a coin to get only that kind.",
+      description: "Turns pouch money into coins in your inventory. With a coin name, the amount counts coin items.",
+      notes: "/deco toitem 5 gold_pouch makes five 100 d pouches and takes 500 d.",
     },
     {
       command: "/deco topouch",
-      description: "Puts the coins in your hand into your pouch.",
+      description:
+        "Puts eligible coins in your hand into your pouch. If stored coins are refused, drop them and pick them up yourself.",
     },
     {
       command: "/deco pay <amount>",
-      description: "Drops that much from your pouch at your feet as coins, for someone to pick up.",
+      description: "Tosses that much from your pouch forward from eye level as coins.",
     },
     {
       command: "/deco deposit <amount>",

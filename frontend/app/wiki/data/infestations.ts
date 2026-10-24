@@ -1,7 +1,7 @@
 import type { WikiCommandSet, WikiSection } from "./types";
 
 /**
- * Infestations 0.3.2 on Main. `/lure leave` has no permission node, so every
+ * Infestations 0.3.3 on Main. `/lure leave` has no permission node, so every
  * player can use it. `/infestation` (alias `/infestations`) is op-only and not
  * listed.
  */

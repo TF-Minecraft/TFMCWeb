@@ -8,7 +8,7 @@ const body = "text-sm text-[var(--tfmc-mist)]";
 export default function CodexPage() {
   return (
     <WikiPage
-      lastModified="2026-10-23"
+      lastModified="2026-10-24"
       title="Codex"
       width="lg"
       intro="The Codex is your character's journal of discoveries. Type /codex while playing a character to open it."
@@ -17,11 +17,14 @@ export default function CodexPage() {
       <ul className={`mt-3 list-disc space-y-2 pl-5 ${body}`}>
         <li>The first page shows each category and how much of it you have unlocked.</li>
         <li>
-          Inside a category, locked entries are hidden. An unlocked entry shows its name and description, and some also
-          show the date you found it and the percentage of players who have unlocked it.
+          Inside a category, entries you haven&apos;t found yet show as locked placeholders. Their names and
+          descriptions stay hidden, though some placeholders give a hint. An unlocked entry shows its name and
+          description, and some also show the date you found it and the percentage of players who have unlocked it.
         </li>
         <li>Some entries, such as research and important figures, can be clicked to read more.</li>
-        <li>Every new entry gives you experience, and chat tells you how much.</li>
+        <li>
+          Many discoveries give you experience. The message you get when you unlock one tells you what you received.
+        </li>
       </ul>
 
       <WikiSectionHeading id="categories">Categories</WikiSectionHeading>

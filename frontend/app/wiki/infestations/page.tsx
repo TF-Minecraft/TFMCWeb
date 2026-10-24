@@ -9,7 +9,7 @@ const code = "text-[var(--tfmc-accent)]";
 export default function InfestationsPage() {
   return (
     <WikiPage
-      lastModified="2026-10-23"
+      lastModified="2026-10-24"
       title="Infestations"
       intro={
         <>
@@ -29,8 +29,8 @@ export default function InfestationsPage() {
       </p>
       <p className={`mt-3 ${body}`}>
         There are four levels: <strong>Mild</strong>, <strong>Worrying</strong>, <strong>Severe</strong> and{" "}
-        <strong>Extreme</strong>. Left alone, an infestation slowly gets worse and can spread into neighbouring bog
-        provinces, even ones that were cleared before.
+        <strong>Extreme</strong>. Left alone, an infestation slowly gets worse and can spread to nearby bog provinces,
+        even across a lake or sea to a bog on the far side, and even into ones that were cleared before.
       </p>
 
       <WikiSectionHeading id="monsters">The monsters</WikiSectionHeading>
@@ -38,7 +38,11 @@ export default function InfestationsPage() {
         While you are in an infested province, monsters keep spawning around you, a little way off rather than right
         next to you. The worse the infestation, the more of them and the faster they come. They don&apos;t spawn below Y
         56. You get ghouls, rats, slime cubes and skeletons, and bug-like creatures that burst into parasitic worms when
-        they die. The worms bite through armour and poison you.
+        they die. The worms bite through armour and poison you. Infestation monsters sometimes drop{" "}
+        <Link href="/wiki/materials" className={link}>
+          materials
+        </Link>
+        .
       </p>
 
       <WikiSectionHeading id="lure">Clearing a province with a Lure</WikiSectionHeading>
@@ -77,8 +81,9 @@ export default function InfestationsPage() {
             <code className={code}>/lure leave</code>.
           </li>
           <li>
-            If you joined and log out, you have 5 minutes to come back. After that you are out of the fight, and that
-            character dies the next time you play it, unless the others have won by then.
+            If you joined and log out or switch to another character, you have 5 minutes to come back as the same
+            character. After that you are out of the fight, and that character dies the next time you play it, unless
+            the others have won by then.
           </li>
         </ul>
       </Callout>

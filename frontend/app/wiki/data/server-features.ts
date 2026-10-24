@@ -54,11 +54,6 @@ export const serverFeaturesCommands: WikiCommandSet = {
       description: "Shows your own statistics for that part of the game.",
     },
     {
-      command: "/tfmc drinks",
-      description: "Opens the drink builder.",
-      notes: "Noble rank and above.",
-    },
-    {
       command: "/tfmc booster",
       description: "Starts a one-hour profession EXP booster for everyone on the server.",
       notes: "Ascended and Legacy only, once every 3 days.",

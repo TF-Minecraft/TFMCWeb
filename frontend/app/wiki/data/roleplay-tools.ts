@@ -1,6 +1,6 @@
 import type { WikiCommandSet, WikiSection } from "./types";
 
-// ---------- GSit, the Armor Statues datapack, TFMCCore lore and name stones ----------
+// ---------- GSit, the Armor Statues datapack, TFMCCore lore and name stones, Images, Essentials books ----------
 
 export const roleplayToolsCommands: WikiCommandSet = {
   system: "Roleplay Tools",
@@ -55,6 +55,34 @@ export const roleplayToolsCommands: WikiCommandSet = {
       description: "Gives you all ten banner patterns.",
       notes: "Once every 10 seconds.",
     },
+    {
+      command: "/image create <url> [scale]",
+      aliases: ["/images", "/img"],
+      description: "Makes map art from a picture online. Click the block where it should go.",
+      notes: "The scale is a percentage of the picture's size.",
+    },
+    {
+      command: "/image delete",
+      aliases: ["/images", "/img"],
+      description: "Removes a picture. Click the picture after running it.",
+      notes: "Anyone can delete any picture.",
+    },
+    {
+      command: "/book",
+      description: "Makes a signed book you wrote editable again, or signs the book and quill you hold.",
+    },
+    {
+      command: "/book title <title>",
+      description: "Changes the title of a signed book you wrote.",
+    },
+    {
+      command: "/book author <name>",
+      description: "Changes the author of a signed book you wrote.",
+    },
+    {
+      command: "/anvil",
+      description: "Opens an anvil wherever you are.",
+    },
   ],
 };
 
@@ -63,7 +91,7 @@ export const roleplayToolsSection: WikiSection = {
     href: "/wiki/roleplay-tools",
     label: "Roleplay Tools",
     category: "character",
-    blurb: "Sit, lie down and crawl, pose armor stands, wear masks, and write your own item names and lore.",
+    blurb: "Sit, lie down and crawl, pose armor stands, wear masks, hang pictures, edit books, and name your items.",
   },
   commands: roleplayToolsCommands,
 };

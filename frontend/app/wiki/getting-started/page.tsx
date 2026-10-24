@@ -24,7 +24,7 @@ const nextGuides = [
 export default function GettingStartedPage() {
   return (
     <WikiPage
-      lastModified="2026-10-23"
+      lastModified="2026-10-24"
       title={gettingStartedSection.nav.label}
       intro="How to get from the server address to your first day as a character. Each step links to the page with the details."
     >
@@ -101,6 +101,7 @@ export default function GettingStartedPage() {
             Death and permadeath
           </Link>
         </li>
+        <li>The world has an edge. As you get close, you are warned to turn back, and going any farther hurts you.</li>
         <li>
           <code className={code}>/helpop &lt;message&gt;</code> reaches the staff and helpers who are online. For
           anything else, open a ticket in the Discord. Tips show up in chat now and then, and{" "}
@@ -115,6 +116,7 @@ export default function GettingStartedPage() {
         earn points. Points fill your weekly bar. Each time the bar reaches a reward, claim it in the same menu. The bar
         starts again every Monday. <code className={code}>/vote</code> lists the voting sites.
       </p>
+
       <p className={`mt-3 ${body}`}>
         The rewards make daily tasks worth doing. The first ones each week give metals of the current act:{" "}
         <WikiItemLink name="Ignitium" />, <WikiItemLink name="Tin" /> or{" "}
@@ -122,7 +124,9 @@ export default function GettingStartedPage() {
         <Link href="/wiki/armour-shop#scrolls" className={link}>
           Skin Scrolls
         </Link>{" "}
-        for changing how your gear looks.
+        for changing how your gear looks. <RankName rank="Noble" /> and above also get a daily Skin Scroll once they
+        have revealed all of that day&apos;s tasks, and <RankName rank="Ascended" /> and <RankName rank="Legacy" /> can
+        reroll their daily tasks once a day before earning any points.
       </p>
 
       <WikiSectionHeading id="choose-path">Where to go next</WikiSectionHeading>

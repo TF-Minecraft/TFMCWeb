@@ -21,7 +21,7 @@ const piece = (name: string) => (
 export default function CookingPage() {
   return (
     <WikiPage
-      lastModified="2026-10-23"
+      lastModified="2026-10-24"
       title="Cooking"
       width="lg"
       intro="You cook on furniture placed in the world, not in a menu. Food keeps track of how fresh it is, how it was cooked and how it was seasoned, and has a quality from 1 to 5 stars."
@@ -198,9 +198,16 @@ export default function CookingPage() {
       <WikiSectionHeading id="eating">Eating</WikiSectionHeading>
       <p className={`mt-4 ${body}`}>
         Each character has its own hunger, and a full stomach does not heal you the way it does in normal Minecraft. As
-        you eat, your diet is rated from Terrible to Fantastic. A better diet gives you more damage, health, mana and
-        critical chance, and shorter cooldowns. Eating the same few ingredients over and over lowers your rating, so
-        vary your meals.
+        you play, your hunger drains. Filling your hunger bar and keeping a good diet are separate goals. Fresher food
+        and more stars improve your diet, but eating at full hunger does not. Your diet is rated from Terrible to
+        Fantastic. A better diet gives you more damage, health, mana and critical chance, and shorter cooldowns. Eating
+        the same few ingredients over and over lowers your rating, so vary your meals.
+      </p>
+
+      <WikiSectionHeading id="freshness">Keeping food fresh</WikiSectionHeading>
+      <p className={`mt-3 ${body}`}>
+        Perishable food goes from Fresh to Stale to Rotten in real time, including in storage and while you are offline.
+        Shelf life varies by food. Stale and rotten food nourish you less, so check its description before eating.
       </p>
 
       <SeeAlso

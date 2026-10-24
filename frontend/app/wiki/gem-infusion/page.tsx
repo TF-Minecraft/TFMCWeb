@@ -9,7 +9,7 @@ const subheading = "mt-6 text-sm font-semibold uppercase tracking-wide text-[var
 export default function GemInfusionPage() {
   return (
     <WikiPage
-      lastModified="2026-10-22"
+      lastModified="2026-10-24"
       title="Gems & Goldsmithing"
       width="lg"
       intro="Blank gemstones are infused with a stat at an Enchanting Table. Infused gems go into the sockets of forged gear, or a goldsmith can set one in a piece of gold jewellery."
@@ -76,8 +76,9 @@ export default function GemInfusionPage() {
       </ol>
       <p className={`mt-3 ${body}`}>
         When you finish, you see your Recipe, Hits and Total percentages and the quality, from Rusted up to Masterwork.
-        Better work and a higher tier keep more of the gem&apos;s stat. Benches in progress survive restarts. If someone
-        breaks a bench, the gold and gem go to whoever broke it.
+        Masterwork needs both the correct gold mixture and exact tool work. Overworking lowers quality. Better work and
+        a higher tier keep more of the gem&apos;s stat. Benches in progress survive restarts. If someone breaks a bench,
+        the gold and gem go to whoever broke it.
       </p>
       <Callout variant="warning" title="Golden Key">
         The Golden Key needs no gem, but it has to be made exactly: the right gold mix and the right hits. Anything else

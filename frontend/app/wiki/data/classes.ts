@@ -674,7 +674,8 @@ export const professions: ProfessionInfo[] = [
   {
     id: "forager",
     displayName: "Forager",
-    howItLevels: "Kill farm animals and harvest crops that you grow.",
+    howItLevels:
+      "Kill farm animals, harvest crops that you grow, and breed animals (breeding needs the Breeder IV perk).",
     activities: [
       { label: "Animals", items: ["Cow", "Chicken", "Pig", "Sheep", "Rabbit"] },
       {
@@ -682,6 +683,7 @@ export const professions: ProfessionInfo[] = [
         items: ["Wheat", "Beetroots", "Carrots", "Potatoes", "Cocoa", "Melon", "Pumpkin", "Sugar Cane", "Cactus"],
       },
       { label: "Mushrooms", items: ["Red Mushroom", "Brown Mushroom"] },
+      { label: "Breeding", items: ["Any animal you breed"] },
     ],
   },
   {
@@ -739,6 +741,24 @@ export const classesCommands: WikiCommandSet = {
       aliases: ["/s"],
       description: "Opens your skill list, where you bind skills to slots and spend skill points.",
       notes: "Upgrading a skill costs 1 skill point.",
+    },
+    {
+      command: "/profession",
+      description: "Opens the profession menu (Crafter, Forager, Herborist).",
+    },
+    {
+      command: "/profession top <profession>",
+      description: "Shows the leaderboard for one profession.",
+    },
+    {
+      command: "/profession confirm",
+      description: "Confirms removing the perk you just clicked in the profession menu.",
+      notes: "Within 60 seconds. The points are not refunded.",
+    },
+    {
+      command: "/party",
+      description: "Opens the party menu, where you create a party, invite players and see your members.",
+      notes: "Up to 8 players. Class EXP is shared within 48 blocks. Start a message with @ for party chat.",
     },
   ],
 };

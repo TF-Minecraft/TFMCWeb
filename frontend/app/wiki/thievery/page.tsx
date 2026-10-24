@@ -17,7 +17,7 @@ const code = "text-[var(--tfmc-accent)]";
 export default function ThieveryPage() {
   return (
     <WikiPage
-      lastModified="2026-10-23"
+      lastModified="2026-10-24"
       title="Thievery"
       intro={
         <>
@@ -65,6 +65,11 @@ export default function ThieveryPage() {
         <WikiItemLink name="Strong Lockpick" /> (2 Steel Ingots) are made at the <StationLink name="Tool Station" />.
         Hold one and right-click what you want to open. When a lockpick breaks, only one from the stack is lost. After a
         failed try, give it a minute before trying the same lock again.
+      </p>
+      <p className={`mt-3 ${body}`}>
+        Your Dexterity and your lockpick both matter. Higher Dexterity makes the lockpicking bar and the chest tumbler
+        ring move slower. A Strong Lockpick puts more green and less red on the bar. Both leave fewer seized pins in a
+        chest and make a clue less likely to name you.
       </p>
 
       <WikiSectionHeading id="doors">Doors</WikiSectionHeading>

@@ -24,7 +24,7 @@ const lockStates = [
 export default function LocksPage() {
   return (
     <WikiPage
-      lastModified="2026-10-23"
+      lastModified="2026-10-24"
       title="Locks & Keys"
       intro="Lock your doors with a key and choose who can open your chests. You need to be playing a character for any of it."
     >
@@ -83,7 +83,7 @@ export default function LocksPage() {
       <ul className={`mt-3 list-disc space-y-2 pl-5 ${body}`}>
         <li>
           Guild and faction mean your{" "}
-          <Link href="/wiki/factions#guilds" className={link}>
+          <Link href="/wiki/guilds#guilds" className={link}>
             guild
           </Link>{" "}
           and its faction. Your other characters count as strangers.

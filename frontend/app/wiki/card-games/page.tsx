@@ -20,7 +20,7 @@ function Word({ children }: { children: string }) {
 export default function CardGamesPage() {
   return (
     <WikiPage
-      lastModified="2026-10-23"
+      lastModified="2026-10-24"
       title="Card Games"
       intro="Set up a card table almost anywhere and play for real denars: Blackjack, Tenceur Hold'em, Five-Draw, or Free play with no rules at all."
     >
@@ -62,7 +62,8 @@ export default function CardGamesPage() {
             Denar Economy
           </Link>
           ). Right-click the felt holding coins: each click puts one coin item down at its full value, so a{" "}
-          <WikiItemLink name="Pouch of Gold Denars" /> is 100. Silver coins aren&apos;t accepted.
+          <WikiItemLink name="Pouch of Gold Denars" /> is 100. Gold Ingots are also accepted at 1 d each. Silver coins
+          aren&apos;t accepted.
         </li>
         <li>
           On your turn, type your move in chat as a single word, like <Word>hit</Word> or <Word>fold</Word>.
@@ -77,11 +78,15 @@ export default function CardGamesPage() {
         <Word>/games help</Word> opens a rule book for each game.
       </p>
 
+      <p className={body}>
+        Use <Word>/wager</Word> without an argument to commit the coins you have put out for the current round.
+      </p>
+
       <WikiSectionHeading id="blackjack">Blackjack</WikiSectionHeading>
       <p className={body}>
         Blackjack tables are run by guilds. Only a guild leader can place one, and the guild needs a free table from its{" "}
         <strong>Auto Dealer Tables</strong> upgrade (see{" "}
-        <Link href="/wiki/factions#guilds" className={link}>
+        <Link href="/wiki/guilds#guilds" className={link}>
           guilds
         </Link>
         ). The house plays with the guild bank&apos;s money: if the bank can&apos;t cover the bets, the round is called

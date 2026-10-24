@@ -27,7 +27,7 @@ function ItemName({ name, texture, qty }: { name: string; texture: string; qty?:
 export default function GunsPage() {
   return (
     <WikiPage
-      lastModified="2026-10-23"
+      lastModified="2026-10-24"
       title="Guns & Gunsmithing"
       intro={
         <>
@@ -79,6 +79,10 @@ export default function GunsPage() {
 
       <WikiSectionHeading id="firing">Loading and firing</WikiSectionHeading>
       <ul className={`mt-2 list-disc space-y-2 pl-5 ${body}`}>
+        <li>Guns only work while you are playing a character.</li>
+        <li>
+          Rifles and launchers are two-handed, and their tooltip says so. Keep your off hand empty while you use one.
+        </li>
         <li>
           Hold the gun in your main hand with its ammunition in your inventory. When it is empty, right-click to reload.
           It loads as many rounds as it holds, or as many as you carry.
@@ -100,8 +104,8 @@ export default function GunsPage() {
       <p className={`mt-3 ${body}`}>
         Bullets drop over distance and fly through leaves and glass without breaking them. A shot to a player&apos;s
         head does extra damage. Shot and rockets push part of each hit straight through armour. Rockets explode when
-        they hit something and hurt everyone nearby, you included, but they never break blocks. Your Charisma tightens
-        your aim and speeds up your reloads.
+        they hit something and hurt everyone nearby, you included, but they never break blocks. Bullets and rockets also
+        damage vehicles. Your Charisma tightens your aim and speeds up your reloads.
       </p>
 
       <WikiSectionHeading id="parts">Parts</WikiSectionHeading>

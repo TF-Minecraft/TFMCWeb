@@ -11,7 +11,7 @@ const returns = [
     <Link key="ac" href="/wiki/advanced-crafting" className={link}>
       Forged weapons and armour
     </Link>,
-    "Up to half the materials. An alloy comes back as its base metal or wood and its crystals.",
+    "Up to half the materials. An alloy comes back as its base metal or wood and its crystals. Take socketed gems and runes out first, or recycling destroys them.",
   ],
   ["Guns", "Up to half the materials the gun was made from. Broken guns and guns made before tracking began can't."],
   [
@@ -39,7 +39,7 @@ const returns = [
 export default function RecyclerPage() {
   return (
     <WikiPage
-      lastModified="2026-10-22"
+      lastModified="2026-10-24"
       title="Recycling"
       intro={
         <>

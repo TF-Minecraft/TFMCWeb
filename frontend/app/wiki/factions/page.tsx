@@ -9,7 +9,7 @@ const code = "text-[var(--tfmc-accent)]";
 export default function FactionsPage() {
   return (
     <WikiPage
-      lastModified="2026-10-23"
+      lastModified="2026-10-24"
       title="Factions"
       intro={
         <>
@@ -29,7 +29,7 @@ export default function FactionsPage() {
         <Link href="/wiki/guilds" className={link}>
           guilds
         </Link>
-        : you start in the main guild, which the faction leader runs.
+        : you start in the main guild, which the faction leader runs. The main guild holds up to 64 members.
       </p>
 
       <WikiSectionHeading id="founding" intro="You become the leader of a faction of one.">
@@ -122,14 +122,75 @@ export default function FactionsPage() {
         </li>
       </ul>
 
+      <p className={body}>
+        To hold a council session, the leader picks a Lantern. At least 75% of the council must be online. When
+        elections are allowed, sign up in the Government menu before voting begins. Each guild may put forward one
+        candidate for leader and one for council. Leaders of other guilds cannot stand for faction leader. An election
+        starts on a Monday, at least 21 days after the previous election ended, and only if someone has signed up.
+        Voting lasts 7 days. Council elections follow the same cycle when the laws allow them.
+      </p>
+      <p className={`mt-3 ${body}`}>
+        Government shows whether the ruler is Legitimate, Contested or Illegitimate. Weak support and an unbalanced
+        economy lower stability. Low stability reduces administrative power, tax income and prestige, raises upkeep, and
+        makes titles harder to claim. A collapsing state cannot wage war or form titles. The Weak State penalty applies
+        when the main guild has too few branch levels compared with the largest other guild, depending on the government
+        law. Repression and Favouring laws let the government penalise or support chosen guilds and subjects, changing
+        their trade and their support for the government.
+      </p>
+
       <WikiSectionHeading id="diplomacy" intro="The leader sets relations with other factions from the Diplomacy menu.">
         Diplomacy
       </WikiSectionHeading>
       <p className={body}>
         Each faction has an opinion of every other, which slowly moves toward what your relations call for. An alliance
-        needs both sides at 40 or more, a rivalry -10 or less, and a war -50 or less. You can also sign trade agreements
-        and non-aggression pacts, place embargoes, and take smaller factions as subjects. Agreements that need both
-        sides are answered by the other leader with <code className={code}>/faction accept</code> while online.
+        needs both sides at 40 or more, a rivalry -10 or less, and declaring war needs -50 or less and a Hostile
+        attitude. You can also sign trade agreements and non-aggression pacts, place embargoes, and take smaller
+        factions as subjects. Agreements that need both sides are answered by the other leader with{" "}
+        <code className={code}>/faction accept</code> while online.
+      </p>
+
+      <p className={`mt-3 ${body}`}>
+        Choose Friendly, Neutral, Unfriendly or Hostile to move opinion over time. Diplomatic capacity limits the
+        relations you can maintain. An ally can call you to war. Declining costs stability; an unanswered call expires
+        after 5 minutes without counting as a decline.
+      </p>
+      <DataTable
+        columns={[{ header: "Relation" }, { header: "What it means" }]}
+        rows={[
+          ["Subject", "A realm under an overlord, contributing taxes and levies."],
+          [
+            "Integrated Subject",
+            "A closer subject with heavier taxes and more levies, using less diplomatic capacity.",
+          ],
+          ["March", "A military subject with lighter taxes and cheaper troops. At most one."],
+          ["Mercantile", "A trading subject with heavier taxes, faster resource work and fewer levies."],
+          ["Palatinate", "A privileged subject that helps diplomacy, prestige and title claims. At most one."],
+          ["Tributary / Suzerain", "The tributary pays tribute to its suzerain."],
+          ["Unequal Treaty", "A trade agreement that gives one side better trade access than the other."],
+        ]}
+      />
+
+      <WikiSectionHeading id="movements" intro="Open Government in /faction menu to choose a cause and rally support.">
+        Movements and civil war
+      </WikiSectionHeading>
+      <p className={body}>
+        Main-guild members, other guild leaders and subject leaders can start movements when they cannot put the
+        proposal through government. A guild in a faction with only one province cannot start or join one. Causes
+        include Change Leader, Nationhood for guilds, Independence for guilds or subjects, Snap Elections, Dissolve,
+        White Peace and Surrender. A qualifying subject can choose Usurp to take its overlord&apos;s highest title and
+        become the overlord instead. Choose a cause that applies to your group, then invite support. Foreign factions
+        can back a movement too.
+      </p>
+      <p className={`mt-3 ${body}`}>
+        Once ready, the movement leader sends its demands to the faction leader. Accepting applies them. Refusing starts
+        a civil war, with the movement and its backers fighting the government.
+      </p>
+
+      <WikiSectionHeading id="inactivity">Inactivity</WikiSectionHeading>
+      <p className={body}>
+        If every member stays offline for 3 weeks, the faction slowly loses prestige. As it loses the prestige needed to
+        hold its land, it loses provinces too, with the capital last. Inactive guilds keep their upgrade levels, but the
+        output from those upgrades fades while they remain inactive.
       </p>
 
       <WikiSectionHeading

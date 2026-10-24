@@ -1,4 +1,5 @@
 import {
+  Callout,
   CommandTable,
   DataTable,
   SeeAlso,
@@ -15,13 +16,14 @@ const code = "text-[var(--tfmc-accent)]";
 const body = "text-sm text-[var(--tfmc-mist)]";
 
 const stoneRecipes = [stationRecipe("gen-tool-station-lorestone"), stationRecipe("gen-tool-station-namestone")];
+const blindfoldRecipe = stationRecipe("gen-tool-station-blindfold");
 
 export default function RoleplayToolsPage() {
   return (
     <WikiPage
-      lastModified="2026-10-22"
+      lastModified="2026-10-24"
       title="Roleplay Tools"
-      intro="Small tools for setting a scene: sit down, lie down or crawl, pose armor stands, put on a mask, and give your items their own names and lore. Every player can use them."
+      intro="Small tools for setting a scene: sit down, lie down or crawl, pose armor stands, put on a mask or a blindfold, hang pictures, edit books, and give your items their own names and lore. Every player can use them."
     >
       <WikiSectionHeading id="sitting">Sitting</WikiSectionHeading>
       <p className={body}>
@@ -70,9 +72,34 @@ export default function RoleplayToolsPage() {
       <p className={body}>
         <code className={code}>/tfmc masks</code> gives you a random mask. Most masks hide who you are while you wear
         them on your head: in-character chat shows you as <strong>Masked</strong>, and nobody can read your character
-        card. <code className={code}>/tfmc patterns</code> gives you all ten banner patterns for the loom: Flower,
-        Guster, Field Masoned, Skull, Thing, Globe, Snout, Flow, Creeper and Bordure Indented. You can use each command
-        once every 10 seconds.
+        card by sneak-right-clicking you or with <code className={code}>/rpcharacter profile</code>. The{" "}
+        <code className={code}>/players</code> list is out of character, so it still shows your sheet.{" "}
+        <code className={code}>/tfmc patterns</code> gives you all ten banner patterns for the loom: Flower, Guster,
+        Field Masoned, Skull, Thing, Globe, Snout, Flow, Creeper and Bordure Indented. You can use each command once
+        every 10 seconds.
+      </p>
+      <p className={`mt-3 ${body}`}>
+        A <WikiItemLink name="Blindfold" />, made at the <StationLink name="Tool Station" /> from 2 Leather, blinds
+        whoever wears it on their head until they take it off.
+      </p>
+      <div className="mt-4 grid gap-4 sm:grid-cols-2">
+        <CraftingGrid recipe={blindfoldRecipe} />
+      </div>
+
+      <WikiSectionHeading id="images">Pictures</WikiSectionHeading>
+      <p className={body}>
+        <code className={code}>/image create &lt;url&gt; [scale]</code> turns a picture from the internet into map art.
+        Run it, then click the block where the picture should go. The scale is a percentage of the picture&apos;s size.
+        To remove a picture, run <code className={code}>/image delete</code> and click it. Anyone can delete any
+        picture.
+      </p>
+
+      <WikiSectionHeading id="books">Books and anvils</WikiSectionHeading>
+      <p className={body}>
+        Hold a written book you signed and run <code className={code}>/book</code> to make it editable again. Run it
+        while holding a book and quill to sign it. <code className={code}>/book title &lt;title&gt;</code> and{" "}
+        <code className={code}>/book author &lt;name&gt;</code> change the title and author of a signed book you wrote.{" "}
+        <code className={code}>/anvil</code> opens an anvil wherever you are.
       </p>
 
       <WikiSectionHeading id="lorestones">
@@ -82,10 +109,14 @@ export default function RoleplayToolsPage() {
       <p className={body}>
         Craft them at the <StationLink name="Tool Station" />. Pick the stone up on your cursor and click it onto a
         single, unstacked item in your inventory, then type your text in chat within 60 seconds, or type{" "}
-        <code className={code}>cancel</code>. A <WikiItemLink name="Lorestone" /> adds a line of lore, and typing{" "}
-        <code className={code}>clear</code> instead removes all of the item&apos;s lore. A{" "}
-        <WikiItemLink name="Namestone" /> renames the item. If something goes wrong, you get the stone back.
+        <code className={code}>cancel</code>. A <WikiItemLink name="Lorestone" /> adds a line of lore, and a{" "}
+        <WikiItemLink name="Namestone" /> renames the item. The stone is used up when it works. If you cancel, run out
+        of time or something goes wrong, you get it back.
       </p>
+      <Callout variant="warning" className="mt-4">
+        Typing <code className={code}>clear</code> into a lorestone removes every lore line on the item, including the
+        lines that describe its stats and what it does. They do not come back.
+      </Callout>
       <p className={`mt-3 ${body}`}>
         A line can be up to 100 characters, colour codes included, and an item can have up to 10 lore lines, counting
         the ones it already has. Use <code className={code}>&amp;</code> colour codes or{" "}

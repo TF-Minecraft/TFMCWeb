@@ -9,7 +9,7 @@ const code = "text-[var(--tfmc-accent)]";
 export default function WarPage() {
   return (
     <WikiPage
-      lastModified="2026-10-23"
+      lastModified="2026-10-24"
       title="War & Mercenaries"
       intro={
         <>
@@ -26,10 +26,13 @@ export default function WarPage() {
         Declaring war
       </WikiSectionHeading>
       <ul className={`mt-3 list-disc space-y-2 pl-5 ${body}`}>
-        <li>Your faction&apos;s opinion of the target must be -50 or lower.</li>
+        <li>Your faction&apos;s opinion of the target must be -50 or lower, with a Hostile attitude.</li>
         <li>No truce can stand between you. A truce lasts 10 days after a war ends.</li>
-        <li>You need regiments that can attack, and staff must approve the declaration.</li>
-        <li>You choose what you are fighting for, such as taking land, making them your subject, or pillaging.</li>
+        <li>You need regiments that can attack. Staff create a war code in Discord; type it in chat when declaring.</li>
+        <li>
+          The code sets what you are fighting for, such as taking land, making them your subject, or pillaging.
+          Defenders can set a counter-demand.
+        </li>
       </ul>
 
       <WikiSectionHeading id="battles" intro="All times are Paris time (CET/CEST).">
@@ -66,14 +69,40 @@ export default function WarPage() {
         for 10 days.
       </p>
 
+      <WikiSectionHeading id="campaign">Managing the campaign</WikiSectionHeading>
+      <p className={body}>
+        Open <code className={code}>/war list</code> and select the war to see its campaign menu. Vote for a battle hour
+        before voting closes. The vote needs at least 4 voters, or every member of the smaller side. If it falls short,
+        the battle is postponed once. If the next vote also falls short, the battle is decided automatically.
+      </p>
+      <p className={`mt-3 ${body}`}>
+        Leaders commit installations to the next battle from this menu. An attacking naval invasion loses automatically
+        without a ship berthed at a committed port. After winning a battle, choose Push to advance or Hold to stay put.
+        Leaders can offer white peace or surrender to end the war, concede a battle slot, or ask for an automatic result
+        instead of fighting it. For an agreed automatic result, the other leader must answer with{" "}
+        <code className={code}>/faction accept</code> within 60 seconds.
+      </p>
+      <WikiSectionHeading id="in-battle">In battle</WikiSectionHeading>
+      <p className={body}>
+        You keep your inventory when you die, and your gear wears much more slowly. Friendly fire is on, so take care
+        around your own side. Field battles use capture points and shared lives. Sieges use a contest timer. Every 5
+        deaths in a field or siege battle costs that side a regiment.
+      </p>
+      <p className={`mt-3 ${body}`}>
+        In a campaign battle, you can only use faction pool vehicles from your side, or vehicles berthed at an
+        installation on your side that was committed to that battle. Signed-up players cannot use vehicles before the
+        battle starts. You cannot join a warband while mounted.
+      </p>
+
       <WikiSectionHeading id="raids" intro="A short attack launched from a port or airport.">
         Raids
       </WikiSectionHeading>
       <p className={body}>
         During the raid hour, a faction leader at war can launch a raid from one of their own ports or airports. A port
-        can raid an enemy port, an airport an enemy airport, and either one an enemy fort. Each side can only launch a
-        few. The attackers have 60 seconds to join with <code className={code}>/raid join &lt;raid&gt;</code>, and the
-        raid then lasts 10 minutes.
+        can raid an enemy port, an airport an enemy airport, and either one an enemy fort. Each side can launch one raid
+        per battle day. The attackers have 60 seconds to join with <code className={code}>/raid join &lt;raid&gt;</code>
+        , and the raid then lasts 10 minutes. You cannot join while mounted. A raided installation cannot berth or
+        unberth vehicles for 48 hours.
       </p>
 
       <WikiSectionHeading
@@ -106,10 +135,23 @@ export default function WarPage() {
           to a faction with <code className={code}>/company offer &lt;faction&gt;</code>.
         </li>
         <li>
-          Factions browse companies with <code className={code}>/mercenaries</code>. To hire, their leader or a council
-          member goes to the province of the company&apos;s guild capital and signs the contract there.
+          Factions browse companies with <code className={code}>/mercenaries</code>. To hire, any member of their
+          government goes to the province of the company&apos;s guild capital and signs the contract there.
         </li>
       </ol>
+
+      <p className={body}>
+        Contracts charge a day price and a battle price for each place hired. Battle days cost both. The minimum prices
+        are 10 d per day and 50 d per battle, and a contract lasts at most 14 days. Read the absence and breach refund
+        terms before signing. Missing mercenaries trigger absence refunds. Dropping below the number of places promised
+        triggers the breach refund. Absences and breaches harm the company&apos;s reputation. Days already served still
+        have to be paid.
+      </p>
+      <p className={`mt-3 ${body}`}>
+        Company upgrades are Hardened Bodies for health, Warding Sigils for mana and Steady Focus for mana recovery.
+        Each costs 10 d per day per level from the host guild and goes up to level 10. Their benefits apply only while
+        fighting as hired mercenaries.
+      </p>
 
       <Callout variant="note">
         Staff sometimes run battles outside wars. For those, make your own warband with{" "}
