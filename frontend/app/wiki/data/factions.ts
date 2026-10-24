@@ -148,10 +148,15 @@ export type InstallationInfo = { type: string; upkeepPerDay: string; buildTime: 
 
 /** Level-1 figures from Main's `installations.yml`. Train station levels 2 and 3 are on the page. */
 export const installations: InstallationInfo[] = [
-  { type: "Fort", upkeepPerDay: "30 d", buildTime: "5 days", slots: "8 emplacements, 2 land vehicles" },
+  {
+    type: "Fort",
+    upkeepPerDay: "30 d",
+    buildTime: "5 days",
+    slots: "8 emplacements (AA Turret, Anti-Air, Fixed Artillery) and 2 land vehicles (carts, Small Car)",
+  },
   { type: "Port", upkeepPerDay: "15 d", buildTime: "3 days", slots: "8 ships" },
-  { type: "Airport", upkeepPerDay: "20 d", buildTime: "3 days", slots: "10 aircraft" },
-  { type: "Train station", upkeepPerDay: "5 d", buildTime: "3 days", slots: "2 emplacements" },
+  { type: "Airport", upkeepPerDay: "20 d", buildTime: "3 days", slots: "10 aircraft and airships" },
+  { type: "Train station", upkeepPerDay: "5 d", buildTime: "3 days", slots: "2 emplacements (more after upgrades)" },
 ];
 
 export const guildsCommands: WikiCommandSet = {
@@ -239,7 +244,7 @@ export const guildsCommands: WikiCommandSet = {
       notes: "Faction leader.",
     },
     {
-      command: "/faction vehicle transfer <installation|pool>",
+      command: "/faction vehicle transfer <installation id|pool>",
       description: "Berths a vehicle at an installation, or gives it to the faction's vehicle pool.",
       notes: "Faction leader. The owner must be close by and accept.",
     },

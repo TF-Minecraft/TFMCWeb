@@ -48,7 +48,7 @@ export default function EconomyPage() {
         never touched. Other deaths, and deaths in a scheduled battle, don&apos;t cost you your pouch.
       </Callout>
 
-      <p className={body}>
+      <p className={`mt-3 ${body}`}>
         When a character dies permanently, their pouch and bank pass to their heir. Set this up in your{" "}
         <Link href="/wiki/characters#wills" className={link}>
           will

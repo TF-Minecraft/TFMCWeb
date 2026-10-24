@@ -143,7 +143,7 @@ export default function WarPage() {
         </li>
       </ol>
 
-      <p className={body}>
+      <p className={`mt-3 ${body}`}>
         Contracts charge a day price and a battle price for each place hired. Battle days cost both. The minimum prices
         are 10 d per day and 50 d per battle, and a contract lasts at most 14 days. Read the absence and breach refund
         terms before signing. Missing mercenaries trigger absence refunds. Dropping below the number of places promised

@@ -122,7 +122,7 @@ export default function FactionsPage() {
         </li>
       </ul>
 
-      <p className={body}>
+      <p className={`mt-3 ${body}`}>
         To hold a council session, the leader picks a Lantern. At least 75% of the council must be online. When
         elections are allowed, sign up as a candidate at your faction&apos;s Voting Booth before voting begins. Each
         guild other than the main guild may put forward one candidate for leader and one for council. Leaders of other

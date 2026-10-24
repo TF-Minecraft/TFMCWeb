@@ -156,25 +156,20 @@ export default function VehiclesPage() {
       <WikiSectionHeading id="faction-vehicles">Faction vehicles</WikiSectionHeading>
       <p className="text-sm text-[var(--tfmc-mist)]">
         The faction leader runs{" "}
-        <code className="text-[var(--tfmc-accent)]">/faction vehicle transfer &lt;installation-id|pool&gt;</code>, then
+        <code className="text-[var(--tfmc-accent)]">/faction vehicle transfer &lt;installation id|pool&gt;</code>, then
         right-clicks the vehicle within 60 seconds. The leader’s own vehicle moves at once. For another owner’s vehicle,
         that owner must be online, within 20 blocks and confirm with{" "}
         <code className="text-[var(--tfmc-accent)]">/faction accept</code> within 60 seconds. To berth at an
         installation, the vehicle must be within its 80-block radius.
       </p>
-      <DataTable
-        className="mt-4"
-        columns={[{ header: "Installation" }, { header: "Vehicles and slots" }]}
-        rows={[
-          ["Port", "Ships, 8 slots"],
-          ["Airport", "Aircraft and airships, 10 slots"],
-          [
-            "Fort",
-            "8 emplacement slots for Anti-Air Turret, Anti-Air and Fixed Artillery, plus 2 land-vehicle slots for carts and Small Cars",
-          ],
-          ["Train Station", "Emplacements only, 2 slots at level 1, 3 at level 2 and 4 at level 3"],
-        ]}
-      />
+      <p className="mt-3 text-sm text-[var(--tfmc-mist)]">
+        Ports take ships, airports take aircraft and airships, forts take emplacements and land vehicles, and train
+        stations take emplacements. The number of slots for each is in the{" "}
+        <Link href="/wiki/guilds#installations" className={linkClass}>
+          installations table
+        </Link>
+        .
+      </p>
       <p className="mt-3 text-sm text-[var(--tfmc-mist)]">
         Each vehicle uses one slot, except the Cruiser, Bomber and Gyrobomber, which use two, and the Behemoth, which
         uses four. The faction pool accepts only trains and Field Artillery. Vehicles that can berth at an installation
@@ -303,8 +298,9 @@ export default function VehiclesPage() {
       <WikiSectionHeading id="destruction">Losing a vehicle</WikiSectionHeading>
       <p className="text-sm text-[var(--tfmc-mist)]">
         A vehicle is destroyed when its hull reaches 0 HP, a fire burns it out or a ship reaches 100% flooding. Aircraft
-        and airships can explode when they hit a block at speed or land badly. Two trains that collide on a track both
-        explode. Cargo drops on the ground. A destroyed vehicle is gone for good and frees its personal limit slot.
+        and airships can explode when they hit a block at speed or land badly. A locomotive that runs into another train
+        at speed explodes, along with what it hits. At low speed both just stop. Cargo drops on the ground. A destroyed
+        vehicle is gone for good and frees its personal limit slot.
       </p>
       <WikiSectionHeading id="commands">Commands</WikiSectionHeading>
       <CommandTable commands={vehicleCommands.commands} />

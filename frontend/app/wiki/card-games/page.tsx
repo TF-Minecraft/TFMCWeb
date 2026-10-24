@@ -78,7 +78,7 @@ export default function CardGamesPage() {
         <Word>/games help</Word> opens a rule book for each game.
       </p>
 
-      <p className={body}>
+      <p className={`mt-3 ${body}`}>
         Use <Word>/wager</Word> without an argument to commit the coins you have put out for the current round. If that
         is less than you need to match, you fold and get the coins back.
       </p>

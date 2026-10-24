@@ -65,11 +65,9 @@ export default function GuildsPage() {
       </p>
       <p className={`mt-3 ${body}`}>
         Branch upgrades are paid from the guild bank, starting at 100 d, and each level costs more than the last.
-        Downgrading gives back part of the price. Check the menu&apos;s price before buying or removing a level. Guild
-        Halls, Workshops, Storehouses and Counting Houses are the trade branches; the main guild uses Bureaucracy in
-        place of Guild Halls. Every guild has one Blackjack table, and each level of Auto Dealer Tables adds another.
-        The main guild can also upgrade its maximum administrative power, maximum diplomatic capacity and administrative
-        power gain.
+        Downgrading gives back part of the price. Check the menu&apos;s price before buying or removing a level. Every
+        guild has one Blackjack table, and each level of Auto Dealer Tables adds another. The main guild can also
+        upgrade its maximum administrative power, maximum diplomatic capacity and administrative power gain.
       </p>
       <WikiSectionHeading id="leader-actions">Leader actions</WikiSectionHeading>
       <p className={body}>
@@ -143,7 +141,7 @@ export default function GuildsPage() {
         closed host stays closed to the guest&apos;s law, but not to a trade agreement.
       </p>
 
-      <p className={body}>
+      <p className={`mt-3 ${body}`}>
         Through a tax proposal in Government, a faction can set tariffs under Mercantilism up to 25%, Protectionism up
         to 50%, or Isolationism up to 75%.
       </p>
