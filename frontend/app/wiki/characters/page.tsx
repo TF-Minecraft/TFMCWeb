@@ -396,8 +396,10 @@ export default function CharactersPage() {
         the heir receives everything except your guild&apos;s locks, which go to the guild&apos;s leader, or to the
         realm&apos;s leader if the guild has none. The heir collects stored items with{" "}
         <code className={code}>/estate collect</code>. With no living heir, money goes to your guild and property to its
-        leader; with no guild, the estate waits 7 days and is then held by staff. Leading a guild or realm never passes
-        by will. You can also change your will on your website profile.
+        leader; with no guild, the estate waits 7 days and is then held by staff. Leading a guild or realm does not pass
+        by will, with one exception: if your character was the last member of their realm, your heir becomes its leader
+        24 hours after the death, as long as they are alive and in no other faction. An heir who is still in another
+        faction has a week from the death to leave it. You can also change your will on your website profile.
       </p>
 
       <WikiSectionHeading id="clues">Clues</WikiSectionHeading>
