@@ -292,7 +292,7 @@ export default function CharactersPage() {
         <DataTable
           columns={[{ header: "Item", nowrap: true }, { header: "Becomes", nowrap: true }, { header: "Effects" }]}
           rows={[
-            ["Wood Claw Arm", "Wooden Claw Arm", "−2 Strength, −1 Constitution, no off hand"],
+            ["Wood Claw Arm", "Wooden Claw Arm", "−2 Strength, −1 Constitution, no off hand or two-handed items"],
             ["Iron Claw Arm", "Basic Prosthetic Arm", "−2 Strength"],
             ["Arcane Claw Arm", "Arcane Prosthetic Arm", "−1 Strength. Depowered: −3 Strength, −1 Constitution"],
             ["Wood Claw Leg", "Pegleg", "−2 Dexterity, Slowness"],
