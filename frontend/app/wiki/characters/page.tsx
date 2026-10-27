@@ -19,7 +19,7 @@ const body = "text-sm text-[var(--tfmc-mist)]";
 export default function CharactersPage() {
   return (
     <WikiPage
-      lastModified="2026-10-24"
+      lastModified="2026-10-27"
       title="Characters"
       intro={
         <>
@@ -293,10 +293,10 @@ export default function CharactersPage() {
           columns={[{ header: "Item", nowrap: true }, { header: "Becomes", nowrap: true }, { header: "Effects" }]}
           rows={[
             ["Wood Claw Arm", "Wooden Claw Arm", "−2 Strength, −1 Constitution, no off hand"],
-            ["Iron Claw Arm", "Basic Prosthetic Arm", "−1 Strength"],
+            ["Iron Claw Arm", "Basic Prosthetic Arm", "−2 Strength"],
             ["Arcane Claw Arm", "Arcane Prosthetic Arm", "−1 Strength. Depowered: −3 Strength, −1 Constitution"],
             ["Wood Claw Leg", "Pegleg", "−2 Dexterity, Slowness"],
-            ["Iron Claw Leg", "Basic Prosthetic Leg", "−1 Dexterity"],
+            ["Iron Claw Leg", "Basic Prosthetic Leg", "−2 Dexterity"],
             ["Arcane Claw Leg", "Arcane Prosthetic Leg", "−1 Dexterity. Depowered: −3 Dexterity, Slowness"],
           ]}
         />
@@ -304,8 +304,8 @@ export default function CharactersPage() {
       <p className={`mt-3 ${body}`}>
         Arcane limbs run on <WikiItemLink name="Arcane Fuel" />, made at the <StationLink name="Engineer Station" />. A
         new arcane limb starts full. Right-click Arcane Fuel to refill it. One fuel lasts about 50 hours of playing that
-        character, and it only burns while you play them. When it runs out, the limb becomes Depowered and its penalties
-        get heavier.
+        character, and it only burns while you play them. While it has fuel, an arcane limb has the lightest penalty of
+        any prosthetic. When it runs out, the limb becomes Depowered and its penalties get heavier.
       </p>
 
       <WikiSectionHeading id="injuries-graves">Death and permadeath</WikiSectionHeading>
