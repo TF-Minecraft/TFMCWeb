@@ -33,6 +33,21 @@ PostgreSQL types; timestamp serialization and public JSON formats stay compatibl
 settings bound queries and locks. Domain advisory locks coordinate checks that span multiple rows or the
 absence of a row; file guards coordinate wardrobe and map assets across workers.
 
+### Looking up records by hand
+
+Site records such as `discord_links` are only in PostgreSQL. There is no live `province.db`; the
+`province*.db` files under `src/data/` are stale backups from before the move to PostgreSQL, so don't
+search the container's filesystem for a database. A recursive search from `/`, such as Python's
+`glob('/**/…', recursive=True)`, follows the looping symlinks under `/sys` and never finishes. Query the
+site's `db` service instead, with read-only SQL:
+
+```bash
+sudo -n -u tfmc /usr/local/sbin/ps-compose main exec -T db psql -U provincesystem -d provincesystem \
+  -c "select * from discord_links where lower(discord_username) like '%name%'"
+```
+
+Use `dev` instead of `main` for the Dev site.
+
 An hourly housekeeping loop in the backend, which also runs at startup, clears data that has outlived its use.
 It clears the plaintext of login codes that expired unused and deletes expired code sessions
 ([opaque Bearer sessions](../identity/auth-security.md#opaque-bearer-sessions)).
