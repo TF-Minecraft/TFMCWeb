@@ -26,6 +26,10 @@ services:
         condition: service_healthy
     security_opt:
       - no-new-privileges:true
+    # Caps a runaway process, such as a stray `docker exec` command; normal use is about 5 GB and one core.
+    cpus: 4
+    mem_limit: 12g
+    pids_limit: 1024
     restart: unless-stopped
 
   db:
