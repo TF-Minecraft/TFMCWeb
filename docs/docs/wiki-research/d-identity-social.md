@@ -164,7 +164,7 @@ RPCharacters is the roleplay-character backbone of the server: it makes each pla
 
 **`traits\injury-traits.yml`** — healing injuries last **72 h**. broken_arm: strength −4, constitution −2, Weakness I, offhand blocked. broken_leg: dexterity −4, Slowness I. half_blind: dexterity −1. Permanent — one_handed: str −3, con −1, Weakness I, offhand blocked. one_legged: dex −3, Slowness I. blind: dex −4, wisdom −2, **Blindness V**.
 
-**`traits\prosthetic-traits.yml` / `fuel-templates.yml`** — all prosthetics cost 1. Arcane arm/leg: `fuel-capacity: 50`; `arcane_fuel` gives 50 units, burning **1 per hour**, so a full prosthetic runs ~50 hours. Depowered penalties are roughly double the powered ones.
+**`traits\prosthetic-traits.yml` / `fuel-templates.yml`** — all prosthetics cost 1. Arcane arm/leg: `fuel-capacity: 50`; `arcane_fuel` gives 50 units, burning **1 per hour**, so a full prosthetic runs ~50 hours. Powered: arm `strength.-1`, leg `dexterity.-1`. Depowered (fuel at 0): arm `strength.-3, constitution.-1`, leg `dexterity.-3` with Slowness I. From the 2026-10-28 restart on Main (RPCharacters #140, staged 2026-10-27) the Basic (Iron) arm is `strength.-2` and leg `dexterity.-2`, so a powered arcane limb (`-1`) is the lightest tier; the wooden claw arm is `strength.-2, constitution.-1` with no offhand, and the pegleg `dexterity.-2` with Slowness.
 
 **`zones.yml`** — `permadeath-chance-per-injury: 10` (read as +10% per injury from the tutorial text).
 
