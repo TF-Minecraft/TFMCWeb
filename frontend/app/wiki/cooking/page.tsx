@@ -87,9 +87,6 @@ export default function CookingPage() {
             className="h-auto w-full rounded-md border border-[color-mix(in_srgb,var(--tfmc-cream)_12%,transparent)]"
           />
         </a>
-        <figcaption className={`mt-2 ${body}`}>
-          The whole soup pot at a glance: thickness, seasoning and the best bowl. Open the image for full size.
-        </figcaption>
       </figure>
 
       <WikiSectionHeading id="stations">Station by station</WikiSectionHeading>
