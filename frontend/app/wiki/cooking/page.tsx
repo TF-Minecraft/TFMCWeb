@@ -21,7 +21,7 @@ const piece = (name: string) => (
 export default function CookingPage() {
   return (
     <WikiPage
-      lastModified="2026-10-24"
+      lastModified="2026-10-29"
       title="Cooking"
       width="lg"
       intro="You cook on furniture placed in the world, not in a menu. Food keeps track of how fresh it is, how it was cooked and how it was seasoned, and has a quality from 1 to 5 stars."
@@ -75,6 +75,22 @@ export default function CookingPage() {
       <p className={`mt-3 ${body}`}>
         Once mashed, a soup takes one salt, one pepper, one garnish and one spice to season it.
       </p>
+      <figure className="mt-6">
+        <a href="/wiki/guides/soup-pot-chart.png" target="_blank" rel="noopener noreferrer">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/wiki/guides/soup-pot-chart.png"
+            alt="Soup pot chart. Boil water, add one main ingredient, then mash it. Left on heat, the soup thickens from Thin to Thick over 80 seconds, or at once when you add anything. Salt, pepper, a garnish and a spice add Seasoned, Well Seasoned, Rounded and Flavourful. Ladle 3 servings into bowls and eat them while hot."
+            width={1600}
+            height={1500}
+            loading="lazy"
+            className="h-auto w-full rounded-md border border-[color-mix(in_srgb,var(--tfmc-cream)_12%,transparent)]"
+          />
+        </a>
+        <figcaption className={`mt-2 ${body}`}>
+          The whole soup pot at a glance: thickness, seasoning and the best bowl. Open the image for full size.
+        </figcaption>
+      </figure>
 
       <WikiSectionHeading id="stations">Station by station</WikiSectionHeading>
       <DataTable
