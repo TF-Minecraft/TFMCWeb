@@ -9,6 +9,10 @@ from src import database
 from src.characters.times import api_time, utcnow
 from src.name_colours import MAX_NAME_COLOURS, effective_colour_cap
 
+# Most swappable wardrobe skins per character (base + Skin 2 … Skin 5). The wardrobe,
+# RPCharacters and TFMCWebBridge use the same cap.
+MAX_WARDROBE_SKIN_SLOTS = 5
+
 # Mirrors submissions.ALLOWED_KINDS; keep in sync for the staff redeem UI.
 _STAFF_SKIN_KINDS = (
     "armor_set",
@@ -216,7 +220,7 @@ def _row_to_dict(row: Any) -> dict[str, Any]:
             max_alive = None
     wardrobe_slots = 1
     try:
-        wardrobe_slots = max(1, min(3, int(row["wardrobe_skin_slots"] or 1)))
+        wardrobe_slots = max(1, min(MAX_WARDROBE_SKIN_SLOTS, int(row["wardrobe_skin_slots"] or 1)))
     except (TypeError, ValueError):
         wardrobe_slots = 1
     pair = EMERGENCY_MAX_3D_PAIR_BYTES
@@ -296,7 +300,7 @@ def upsert_web_entitlements(raw: dict[str, Any]) -> dict[str, Any]:
         max_alive = max(1, _nonneg_int(max_alive_raw, "max_alive_characters"))
     wardrobe_slots = max(
         1,
-        min(3, _nonneg_int(raw.get("wardrobe_skin_slots", 1), "wardrobe_skin_slots")),
+        min(MAX_WARDROBE_SKIN_SLOTS, _nonneg_int(raw.get("wardrobe_skin_slots", 1), "wardrobe_skin_slots")),
     )
     pair = _nonneg_int(raw.get("max_3d_pair_bytes", 0), "max_3d_pair_bytes")
     cooldown = _cooldown_days(

@@ -70,7 +70,9 @@ export default function WardrobeSlotFrame({
               : "border-[color-mix(in_srgb,var(--tfmc-cream)_22%,transparent)] hover:bg-[color-mix(in_srgb,var(--tfmc-cream)_6%,transparent)]"
         }`}
         aria-label={
-          locked ? `${label} locked` : `${label}${slot.filled ? "" : " empty"}${pending ? " syncing" : ""} - edit`
+          locked
+            ? `${label} locked${slot.filled ? ", skin kept" : ""}`
+            : `${label}${slot.filled ? "" : " empty"}${pending ? " syncing" : ""} - edit`
         }
       >
         {locked ? (
@@ -82,6 +84,9 @@ export default function WardrobeSlotFrame({
               You need{" "}
               {lockRuns && lockRuns.length > 0 ? <FormattedMcRuns runs={lockRuns} /> : lockPlain || "a higher rank"}
             </p>
+            {slot.filled ? (
+              <p className="text-center text-[10px] leading-snug text-[var(--tfmc-mist)]">Your saved skin stays here</p>
+            ) : null}
           </div>
         ) : (
           <>

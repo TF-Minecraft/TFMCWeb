@@ -10,6 +10,7 @@ import {
   CharactersApiError,
   getCreationCatalog,
   listCharacters,
+  WARDROBE_MAX_SWAPPABLE,
   type CreationCatalog,
 } from "../../../lib/characters/api";
 import creationCatalogDev from "../../../lib/characters/fixtures/creationCatalog.dev.json";
@@ -68,7 +69,7 @@ export default function CharacterCreatePage() {
       }
       const wardrobeSlotsRaw = params?.get("wardrobeSlots");
       if (wardrobeSlotsRaw != null && wardrobeSlotsRaw !== "") {
-        setWardrobeSkinSlots(Math.max(1, Math.min(3, Number(wardrobeSlotsRaw) || 1)));
+        setWardrobeSkinSlots(Math.max(1, Math.min(WARDROBE_MAX_SWAPPABLE, Number(wardrobeSlotsRaw) || 1)));
       } else {
         setWardrobeSkinSlots(1);
       }
@@ -110,7 +111,7 @@ export default function CharacterCreatePage() {
           setEvilUnlocked(ageSec >= unlockHours * 3600);
         }
         setNameColourStops(Math.max(0, Math.min(8, Number(list.name_colour_stops) || 0)));
-        setWardrobeSkinSlots(Math.max(1, Math.min(3, Number(list.wardrobe_skin_slots) || 1)));
+        setWardrobeSkinSlots(Math.max(1, Math.min(WARDROBE_MAX_SWAPPABLE, Number(list.wardrobe_skin_slots) || 1)));
       } catch (err) {
         if (err instanceof CharactersApiError && err.status === 401) {
           clearSession();

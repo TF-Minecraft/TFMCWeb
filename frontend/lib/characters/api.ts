@@ -345,7 +345,7 @@ export type CharacterListResponse = {
   evil_unlocked?: boolean;
   /** Rank perk: max name colour stops (0 = locked). */
   name_colour_stops?: number;
-  /** Swappable wardrobe skins (1–3). */
+  /** Swappable wardrobe skins (1–5). */
   wardrobe_skin_slots?: number;
   /** Snapshot seconds remaining until next kit grant is allowed. */
   kit_cooldown_seconds_remaining?: number;
@@ -375,7 +375,7 @@ export async function listCharacters(sessionToken: string): Promise<CharacterLis
     name_colour_stops: typeof body.name_colour_stops === "number" ? Math.max(0, body.name_colour_stops) : 0,
     wardrobe_skin_slots: Math.max(
       1,
-      Math.min(3, typeof body.wardrobe_skin_slots === "number" ? body.wardrobe_skin_slots : 1),
+      Math.min(WARDROBE_MAX_SWAPPABLE, typeof body.wardrobe_skin_slots === "number" ? body.wardrobe_skin_slots : 1),
     ),
     kit_cooldown_seconds_remaining:
       typeof body.kit_cooldown_seconds_remaining === "number" ? Math.max(0, body.kit_cooldown_seconds_remaining) : 0,
@@ -711,7 +711,18 @@ export async function deleteLoreItemCustomise(
 
 /* --- Character skin wardrobe (Phase 4) --- */
 
-export type WardrobeSlotId = "base" | "extra_1" | "extra_2" | "masked";
+/** Swappable slots in fill order. Masked is separate and always open. */
+export const WARDROBE_SWAPPABLE_SLOTS = ["base", "extra_1", "extra_2", "extra_3", "extra_4"] as const;
+
+/** Most swappable skins per character (base + Skin 2 … Skin 5); the backend and RPCharacters match. */
+export const WARDROBE_MAX_SWAPPABLE = WARDROBE_SWAPPABLE_SLOTS.length;
+
+export type WardrobeSwappableSlotId = (typeof WARDROBE_SWAPPABLE_SLOTS)[number];
+
+export type WardrobeSlotId = WardrobeSwappableSlotId | "masked";
+
+/** Every wardrobe slot in display order. */
+export const WARDROBE_SLOTS: readonly WardrobeSlotId[] = [...WARDROBE_SWAPPABLE_SLOTS, "masked"];
 
 export type WardrobeSlot = {
   slot: WardrobeSlotId | string;
@@ -741,8 +752,35 @@ export const WARDROBE_DEFAULT_LABELS: Record<string, string> = {
   base: "Base",
   extra_1: "Skin 2",
   extra_2: "Skin 3",
+  extra_3: "Skin 4",
+  extra_4: "Skin 5",
   masked: "Masked",
 };
+
+/** Skins a rank must grant before this slot unlocks (base 1, Skin N needs N; masked 0). */
+export function wardrobeSkinsNeeded(slot: string): number {
+  return WARDROBE_SWAPPABLE_SLOTS.indexOf(slot as WardrobeSwappableSlotId) + 1;
+}
+
+/**
+ * Why a skin can't be uploaded into `slot` yet, or null. Each empty skin needs the one before it
+ * (Skin 2 needs Base); a filled skin can always be replaced, since a kept skin can sit behind a gap.
+ * Mirrors the backend's `_require_sequential_fill`.
+ */
+export function wardrobeFillOrderError(slot: string, filled: (slot: string) => boolean): string | null {
+  const index = WARDROBE_SWAPPABLE_SLOTS.indexOf(slot as WardrobeSwappableSlotId);
+  if (index <= 0 || filled(slot)) return null;
+  const previous = WARDROBE_SWAPPABLE_SLOTS[index - 1]!;
+  if (filled(previous)) return null;
+  return `Upload ${WARDROBE_DEFAULT_LABELS[previous]} before ${WARDROBE_DEFAULT_LABELS[slot]}`;
+}
+
+/** Whether a rank with `swappable` skins unlocks this slot. Masked is always open. */
+export function wardrobeSlotUnlocked(slot: string, swappable: number): boolean {
+  if (slot === "masked") return true;
+  const needed = wardrobeSkinsNeeded(slot);
+  return needed > 0 && needed <= swappable;
+}
 
 export function wardrobeSlotLabel(slot: string, displayName?: string | null): string {
   const custom = String(displayName || "").trim();

@@ -108,6 +108,184 @@ class WardrobeEntitlementsTest(unittest.TestCase):
         swappable = enforce_pending_wardrobe_slot_limits(PLAYER, CREATE_ID)
         self.assertEqual(swappable, 3)
 
+    def _entitle(self, slots: int) -> None:
+        from src.characters.web_entitlements import upsert_web_entitlements
+
+        upsert_web_entitlements(
+            {
+                "player_uuid": PLAYER,
+                "name_colour_stops": 0,
+                "allow_drink_texture": False,
+                "max_alive_characters": 3,
+                "wardrobe_skin_slots": slots,
+                "max_3d_pair_bytes": 30720,
+                "skin_token_cooldown_days": -1,
+                "skin_kinds": [],
+                "allow_armor_3d_helmet": False,
+            }
+        )
+
+    def _put_slot(self, slot: str) -> Path:
+        from src.characters import wardrobe
+
+        rel = f"wardrobe/{PLAYER}/{CHAR_ID}/{slot}.png"
+        path = wardrobe.DATA_DIR / rel
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(b"png")
+        with database.connect() as conn:
+            conn.execute(
+                """
+                INSERT INTO character_wardrobe_slots (
+                    player_uuid, character_id, slot, png_relpath, texture_value,
+                    texture_signature, apply_pending, updated_at
+                ) VALUES (%s, %s, %s, %s, 'v', 's', false, %s)
+                """,
+                (PLAYER, CHAR_ID, slot, rel, NOW),
+            )
+        return path
+
+    def _set_worn(self, slot: str) -> None:
+        with database.connect() as conn:
+            conn.execute(
+                "UPDATE character_roster SET wardrobe_active_slot = %s WHERE character_id = %s",
+                (slot, CHAR_ID),
+            )
+
+    def test_ranks_unlock_up_to_five_skins(self) -> None:
+        from src.characters.wardrobe import get_wardrobe
+
+        self._entitle(5)
+        out = get_wardrobe(PLAYER, CHAR_ID)
+        self.assertEqual(out["swappable_slots"], 5)
+        self.assertEqual(
+            [(s["slot"], s["unlocked"], s["display_name"]) for s in out["slots"]],
+            [
+                ("base", True, "Base"),
+                ("extra_1", True, "Skin 2"),
+                ("extra_2", True, "Skin 3"),
+                ("extra_3", True, "Skin 4"),
+                ("extra_4", True, "Skin 5"),
+                ("masked", True, "Masked"),
+            ],
+        )
+        self._entitle(9)
+        self.assertEqual(get_wardrobe(PLAYER, CHAR_ID)["swappable_slots"], 5)
+
+    def test_skins_in_locked_slots_stay_saved_and_the_worn_one_moves_to_base(self) -> None:
+        from src.characters.wardrobe import get_wardrobe, get_wardrobe_for_plugin
+
+        self._entitle(5)
+        files = [self._put_slot(slot) for slot in ("base", "extra_1", "extra_2", "extra_3")]
+        self._set_worn("extra_3")
+
+        self._entitle(2)
+        out = get_wardrobe_for_plugin(PLAYER, CHAR_ID)
+        by_slot = {s["slot"]: s for s in out["slots"]}
+        self.assertEqual(out["active_slot"], "base")
+        self.assertEqual(
+            [(by_slot[k]["unlocked"], by_slot[k]["filled"]) for k in ("base", "extra_1", "extra_2", "extra_3")],
+            [(True, True), (True, True), (False, True), (False, True)],
+        )
+        self.assertTrue(all(path.is_file() for path in files))
+
+        self._entitle(5)
+        back = {s["slot"]: s for s in get_wardrobe(PLAYER, CHAR_ID)["slots"]}
+        self.assertTrue(back["extra_3"]["unlocked"] and back["extra_3"]["filled"])
+
+    def _rows(self, table: str = "character_wardrobe_slots", key: str = "player_uuid", value: str = PLAYER) -> dict:
+        with database.connect() as conn:
+            rows = conn.execute(
+                f"SELECT slot, png_relpath, display_name, updated_at FROM {table} WHERE {key} = %s", (value,)
+            ).fetchall()
+        return {r["slot"]: dict(r) for r in rows}
+
+    def test_locked_slots_refuse_wearing_renaming_and_replacing_and_keep_the_skin(self) -> None:
+        from src.characters.wardrobe import WardrobeError, set_active_slot, set_slot_display_name, upload_slot
+
+        self._entitle(5)
+        self._put_slot("base")
+        kept = self._put_slot("extra_1")
+        before = self._rows()
+        self._entitle(1)
+        with self.assertRaises(WardrobeError) as worn:
+            set_active_slot(PLAYER, CHAR_ID, "extra_1")
+        self.assertEqual(worn.exception.status_code, 403)
+        with self.assertRaises(WardrobeError) as rename:
+            set_slot_display_name(PLAYER, CHAR_ID, "extra_1", "Coat")
+        self.assertEqual(rename.exception.status_code, 403)
+        # The rank check runs before MineSkin signing, so no signing mock is needed.
+        with self.assertRaises(WardrobeError) as replace:
+            upload_slot(PLAYER, CHAR_ID, "extra_1", _png())
+        self.assertEqual(replace.exception.status_code, 403)
+        self.assertEqual(self._rows(), before)
+        self.assertEqual(kept.read_bytes(), b"png")
+
+    def test_clearing_an_open_slot_leaves_kept_skins_where_they_are(self) -> None:
+        from src.characters.wardrobe import clear_slot
+
+        self._entitle(5)
+        files = {slot: self._put_slot(slot) for slot in ("base", "extra_1", "extra_2", "extra_3")}
+        self._entitle(2)
+        before = self._rows()
+
+        out = clear_slot(PLAYER, CHAR_ID, "base")
+        by_slot = {s["slot"]: s for s in out["slots"]}
+        after = self._rows()
+        # Skin 2 packs down into Base; the kept Skins 3 and 4 are not pulled into the open Skin 2.
+        self.assertEqual(sorted(after), ["base", "extra_2", "extra_3"])
+        self.assertEqual({k: after[k] for k in ("extra_2", "extra_3")}, {k: before[k] for k in ("extra_2", "extra_3")})
+        self.assertTrue(files["extra_2"].is_file() and files["extra_3"].is_file())
+        self.assertFalse(by_slot["extra_1"]["filled"])
+        self.assertEqual(out["active_slot"], "base")
+
+    def test_clearing_a_kept_skin_deletes_it(self) -> None:
+        from src.characters.wardrobe import clear_slot
+
+        self._entitle(5)
+        self._put_slot("base")
+        kept = self._put_slot("extra_1")
+        self._entitle(1)
+        out = clear_slot(PLAYER, CHAR_ID, "extra_1")
+        self.assertFalse(kept.exists())
+        self.assertFalse({s["slot"]: s for s in out["slots"]}["extra_1"]["filled"])
+
+    def test_pending_skins_in_locked_slots_stay_saved_and_the_choice_falls_back_to_base(self) -> None:
+        from src.characters import wardrobe
+
+        files = {}
+        with database.connect() as conn:
+            for slot in ("base", "extra_2"):
+                rel = f"wardrobe/pending/{CREATE_ID}/{slot}.png"
+                files[slot] = wardrobe.DATA_DIR / rel
+                files[slot].parent.mkdir(parents=True, exist_ok=True)
+                files[slot].write_bytes(b"png")
+                conn.execute(
+                    """
+                    INSERT INTO character_creation_wardrobe (
+                        create_id, slot, png_relpath, texture_value, texture_signature, updated_at
+                    ) VALUES (%s, %s, %s, 'v', 's', %s)
+                    """,
+                    (CREATE_ID, slot, rel, NOW),
+                )
+            conn.execute(
+                "UPDATE character_creation_requests SET wardrobe_active_slot = 'extra_2' WHERE id = %s", (CREATE_ID,)
+            )
+        self._entitle(1)
+        self.assertEqual(wardrobe.enforce_pending_wardrobe_slot_limits(PLAYER, CREATE_ID), 1)
+        self.assertEqual(sorted(self._rows("character_creation_wardrobe", "create_id", CREATE_ID)), ["base", "extra_2"])
+        self.assertTrue(all(path.is_file() for path in files.values()))
+        self.assertEqual(wardrobe._get_pending_active(CREATE_ID), "base")
+
+
+def _png() -> bytes:
+    import io
+
+    from PIL import Image
+
+    buf = io.BytesIO()
+    Image.new("RGBA", (64, 64), (200, 40, 40, 255)).save(buf, format="PNG")
+    return buf.getvalue()
+
 
 if __name__ == "__main__":
     unittest.main()

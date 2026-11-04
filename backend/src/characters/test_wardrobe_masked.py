@@ -15,9 +15,13 @@ if str(_BACKEND) not in sys.path:
 from PIL import Image  # noqa: E402
 
 from src.characters.wardrobe import (  # noqa: E402
+    DEFAULT_SLOT_NAMES,
+    SLOTS,
+    SWAPPABLE_ORDER,
     WardrobeError,
     compose_masked_skin,
     _require_sequential_fill,
+    _slot_unlocked,
 )
 
 
@@ -61,6 +65,37 @@ class SequentialFillTest(unittest.TestCase):
             "extra_1": {"png_relpath": "b"},
         }
         _require_sequential_fill("extra_2", slots)
+
+    def test_fifth_skin_needs_the_fourth(self) -> None:
+        slots = {key: {"png_relpath": key} for key in ("base", "extra_1", "extra_2")}
+        with self.assertRaises(WardrobeError) as ctx:
+            _require_sequential_fill("extra_4", slots)
+        self.assertEqual(str(ctx.exception), "Upload Skin 4 before Skin 5")
+        slots["extra_3"] = {"png_relpath": "d"}
+        _require_sequential_fill("extra_4", slots)
+
+    def test_a_filled_skin_behind_a_gap_can_be_replaced(self) -> None:
+        _require_sequential_fill("extra_2", {"base": {"png_relpath": "a"}, "extra_2": {"png_relpath": "c"}})
+
+    def test_base_and_masked_need_nothing_before_them(self) -> None:
+        _require_sequential_fill("base", {})
+        _require_sequential_fill("masked", {})
+
+
+class SlotLayoutTest(unittest.TestCase):
+    def test_five_swappable_slots_then_masked(self) -> None:
+        self.assertEqual(SWAPPABLE_ORDER, ("base", "extra_1", "extra_2", "extra_3", "extra_4"))
+        self.assertEqual(SLOTS, SWAPPABLE_ORDER + ("masked",))
+        self.assertEqual(
+            [DEFAULT_SLOT_NAMES[s] for s in SLOTS],
+            ["Base", "Skin 2", "Skin 3", "Skin 4", "Skin 5", "Masked"],
+        )
+
+    def test_a_rank_unlocks_that_many_skins_and_masked_is_always_open(self) -> None:
+        self.assertEqual([_slot_unlocked(s, 3) for s in SWAPPABLE_ORDER], [True, True, True, False, False])
+        self.assertTrue(all(_slot_unlocked(s, 5) for s in SWAPPABLE_ORDER))
+        self.assertTrue(_slot_unlocked("masked", 1))
+        self.assertFalse(_slot_unlocked("extra_5", 9))
 
 
 if __name__ == "__main__":

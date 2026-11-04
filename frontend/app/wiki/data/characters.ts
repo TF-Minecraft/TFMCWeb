@@ -80,20 +80,6 @@ export const charactersCommands: WikiCommandSet = {
       description: "Lists or unlists your character as a bird mail recipient.",
     },
     {
-      command: "/rpcharacter tempalias <name>",
-      description: "Sets a session-only alias (or /rpcharacter tempalias clear).",
-      access: "permission",
-      permission: "rpchar.tempalias",
-      notes: "No player rank has this permission.",
-    },
-    {
-      command: "/rpcharacter sethidden <slug> [clear]",
-      description: "Hides one of your characters from TAB and character lists.",
-      access: "permission",
-      permission: "rpchar.character.hidden",
-      notes: "No player rank has this permission.",
-    },
-    {
       command: "/roll [max or attribute] [+/-mod]",
       description: "Rolls dice and shows the result to players within 20 blocks.",
       notes: "Bare /roll is 1 to 200; attribute rolls use a d20 plus the attribute's modifier.",

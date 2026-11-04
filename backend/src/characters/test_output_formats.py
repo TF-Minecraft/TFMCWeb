@@ -69,6 +69,7 @@ def test_wardrobe_payload_is_byte_for_byte_the_same():
 
     expected = {"character_id": "c-ana", "player_uuid": OWNER, "active_slot": "base", "swappable_slots": 1,
                 "slots": [slot, empty("extra_1", "Skin 2", False), empty("extra_2", "Skin 3", False),
+                          empty("extra_3", "Skin 4", False), empty("extra_4", "Skin 5", False),
                           empty("masked", "Masked", True)]}
     assert json.dumps(wardrobe.get_wardrobe(OWNER, "c-ana")) == json.dumps(expected)
     plugin = wardrobe.get_wardrobe_for_plugin(OWNER, "c-ana")

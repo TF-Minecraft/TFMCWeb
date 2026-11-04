@@ -58,20 +58,20 @@ function stubObjectUrls() {
   return revokeObjectURL;
 }
 
-it("keeps four slot-shaped placeholders noninteractive until live metadata arrives", async () => {
+it("keeps six slot-shaped placeholders noninteractive until live metadata arrives", async () => {
   const request = deferred<api.WardrobeResponse>();
   vi.mocked(api.getWardrobe).mockReturnValue(request.promise);
   const { container } = render(<WardrobeEditor mode="live" characterId="character" sessionToken="token" />);
 
   expect(screen.getByRole("status").textContent).toContain("Loading wardrobe");
-  expect(container.querySelectorAll(".aspect-\\[3\\/5\\]")).toHaveLength(4);
+  expect(container.querySelectorAll(".aspect-\\[3\\/5\\]")).toHaveLength(6);
   expect(screen.queryAllByRole("button")).toHaveLength(0);
   expect(screen.queryByText("Empty")).toBeNull();
   expect(screen.queryByText("Locked")).toBeNull();
 
   await act(async () => request.resolve({ ...wardrobe, active_slot: null, slots: [] }));
   expect(screen.queryByRole("status")).toBeNull();
-  expect(screen.getAllByRole("button")).toHaveLength(4);
+  expect(screen.getAllByRole("button")).toHaveLength(6);
   expect(screen.getByRole("button", { name: "Base empty - edit" })).toBeTruthy();
 });
 
@@ -79,8 +79,38 @@ it("shows UI-dev slots immediately without a live metadata request", () => {
   render(<WardrobeEditor mode="live" characterId="character" sessionToken="token" uiDev uiDevSwappableSlots={3} />);
   expect(api.getWardrobe).not.toHaveBeenCalled();
   expect(screen.queryByRole("status")).toBeNull();
-  expect(screen.getAllByRole("button")).toHaveLength(4);
+  expect(screen.getAllByRole("button")).toHaveLength(6);
   expect(screen.getByRole("button", { name: "Skin 3 empty - edit" })).toBeTruthy();
+  expect(screen.getByRole("button", { name: "Skin 4 locked" })).toBeTruthy();
+  expect(screen.getByRole("button", { name: "Skin 5 locked" })).toBeTruthy();
+});
+
+it("unlocks all five skins for the top rank and keeps fill order up to Skin 5", async () => {
+  const filled = (slot: string) => ({ slot, filled: true, unlocked: true, model: "classic" });
+  vi.mocked(api.getWardrobe).mockResolvedValue({
+    ...wardrobe,
+    swappable_slots: 5,
+    slots: [filled("base"), filled("extra_1"), filled("extra_2")],
+  });
+  render(<WardrobeEditor mode="live" characterId="character" sessionToken="token" />);
+  fireEvent.click(await screen.findByRole("button", { name: "Skin 5 empty - edit" }));
+  expect(screen.getByRole("alert").textContent).toBe("Upload Skin 4 before Skin 5");
+  expect(screen.getByRole("button", { name: "Skin 4 empty - edit" })).toBeTruthy();
+});
+
+it("says a locked slot keeps its saved skin", async () => {
+  vi.mocked(api.getWardrobe).mockResolvedValue({
+    ...wardrobe,
+    slots: [
+      { slot: "base", filled: true, unlocked: true, model: "classic" },
+      { slot: "extra_1", filled: true, unlocked: false, model: "classic", display_name: "Winter Coat" },
+    ],
+  });
+  render(<WardrobeEditor mode="live" characterId="character" sessionToken="token" />);
+  const kept = await screen.findByRole("button", { name: "Winter Coat locked, skin kept" });
+  expect(within(kept).getByText("Your saved skin stays here")).toBeTruthy();
+  const empty = screen.getByRole("button", { name: "Skin 3 locked" });
+  expect(within(empty).queryByText("Your saved skin stays here")).toBeNull();
 });
 
 it("ends initial loading on metadata errors without exposing unknown slots for editing", async () => {

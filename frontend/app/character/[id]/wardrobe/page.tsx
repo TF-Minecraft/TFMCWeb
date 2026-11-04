@@ -5,20 +5,25 @@ import LoadingSkeleton from "@/app/components/shared/LoadingSkeleton";
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { getCreationCatalog, type CreationCatalog, type SlotLimits } from "../../../../lib/characters/api";
+import {
+  getCreationCatalog,
+  WARDROBE_MAX_SWAPPABLE,
+  type CreationCatalog,
+  type SlotLimits,
+} from "../../../../lib/characters/api";
 import { getSession, isSessionValid, type CharacterSession } from "../../../../lib/characters/session";
 import { isCharacterUiDev, uiDevSession } from "../../../../lib/characters/uiDev";
 import { PERMISSION_GROUP_DISPLAY_NAMES } from "../../../../lib/characters/fixtures/permissionGroupDisplayNames.dev";
 import WardrobeEditor from "../../../components/character/WardrobeEditor";
 import { characterPath } from "../../../../lib/profile/paths";
 
-/** UI-dev: unlocked swappable count from URL (always 3 frames shown). */
+/** UI-dev: unlocked swappable count from URL (every frame is always shown). */
 function parseUiDevUnlocked(): number {
   if (typeof window === "undefined") return 1;
   const search = new URLSearchParams(window.location.search);
   const raw = search.get("wardrobeSlots") ?? search.get("skinslots") ?? search.get("skinSlots");
   if (raw == null || raw === "") return 1;
-  return Math.max(1, Math.min(3, Number(raw) || 1));
+  return Math.max(1, Math.min(WARDROBE_MAX_SWAPPABLE, Number(raw) || 1));
 }
 
 /** Mock rank ladder for lock-label preview only (UI-dev). */
@@ -27,17 +32,24 @@ function uiDevSlotLimits(): SlotLimits {
     defaults: { wardrobe_skin_slots: 1 },
     groups: [
       {
+        id: "noble",
+        tier: 1,
+        visible: true,
+        wardrobe_skin_slots: 2,
+        display_name: PERMISSION_GROUP_DISPLAY_NAMES.noble,
+      },
+      {
         id: "gilded",
         tier: 2,
         visible: true,
-        wardrobe_skin_slots: 2,
+        wardrobe_skin_slots: 3,
         display_name: PERMISSION_GROUP_DISPLAY_NAMES.gilded,
       },
       {
         id: "ascended",
         tier: 3,
         visible: true,
-        wardrobe_skin_slots: 3,
+        wardrobe_skin_slots: 5,
         display_name: PERMISSION_GROUP_DISPLAY_NAMES.ascended,
       },
     ],
@@ -113,8 +125,9 @@ export default function CharacterWardrobePage() {
           <h1 className="mt-2 font-[family-name:var(--font-display)] text-3xl text-[var(--tfmc-cream)]">Wardrobe</h1>
           {uiDev ? (
             <p className="mt-2 text-xs text-[var(--tfmc-stone)]">
-              UI-dev: 3 swappable frames · <span className="text-[var(--tfmc-cream)]">{uiDevUnlocked} unlocked</span>{" "}
-              (?wardrobeSlots=1|2|3)
+              UI-dev: {WARDROBE_MAX_SWAPPABLE} swappable frames ·{" "}
+              <span className="text-[var(--tfmc-cream)]">{uiDevUnlocked} unlocked</span> (?wardrobeSlots=1–
+              {WARDROBE_MAX_SWAPPABLE})
             </p>
           ) : null}
         </div>
