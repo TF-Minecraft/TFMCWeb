@@ -106,7 +106,7 @@ export const advancedCraftingCommands: WikiCommandSet = {
     {
       command: "/alloy recipe [name]",
       description:
-        "Shows the base and catalysts of an alloy you have forged. Without a name, it uses the alloy in your main hand.",
+        "Shows the base and crystals of an alloy you have forged. Without a name, it uses the alloy in your main hand.",
     },
   ],
 };

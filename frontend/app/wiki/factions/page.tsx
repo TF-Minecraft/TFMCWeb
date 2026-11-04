@@ -64,7 +64,7 @@ export default function FactionsPage() {
       </WikiSectionHeading>
       <p className={body}>
         Stand in a province and run <code className={code}>/faction claim</code>. It must border your land or lie across
-        a river or lake from it. You can also claim any coast you can reach by sea from the land connected to your
+        a river or lake from it. You can also claim any coast you can reach over water from the land connected to your
         capital, however far, as long as no land is in the way. Sea provinces can&apos;t be claimed.
       </p>
       <ul className={`mt-3 list-disc space-y-2 pl-5 ${body}`}>

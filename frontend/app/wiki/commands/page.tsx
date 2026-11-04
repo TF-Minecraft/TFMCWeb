@@ -31,7 +31,7 @@ export default function CommandIndexPage() {
   const groups = commandGroups();
   return (
     <WikiPage
-      lastModified="2026-10-23"
+      lastModified="2026-11-04"
       title="Command Index"
       width="lg"
       intro="Every command a player can type, grouped by topic. Each one links to the guide page that explains it."

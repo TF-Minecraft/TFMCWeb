@@ -136,7 +136,7 @@ export const skills: Record<string, Skill> = {
   FROSTVEIL: {
     name: "Frostveil",
     description:
-      "Cover the ground within 12 blocks of where you look in frost. Anyone inside it is slowed and cannot cast spells.",
+      "Cover the ground in frost within 12 blocks of where you look. Anyone inside is slowed and cannot cast spells.",
   },
   // Bard
   RHAPSODY: { name: "Rhapsody", description: "Play a song that keeps you and players around you at Speed II." },
@@ -189,7 +189,7 @@ export const skills: Record<string, Skill> = {
   MITLAN_GLYPH: {
     name: "Mitlan Glyph",
     description:
-      "Draw a glyph on the ground. When someone steps on it, it goes off and throws up, damages and slows everyone on it.",
+      "Draw a glyph on the ground. When someone steps on it, it goes off, damaging and slowing everyone on it and throwing them into the air.",
   },
   MAELSTROM: {
     name: "Maelstrom",
@@ -309,7 +309,7 @@ export const skills: Record<string, Skill> = {
   MANA_TRANSFER: {
     name: "Mana Transfer",
     description:
-      "Toggle: bind yourself to a player right next to you and give them your mana. You are both held in place and cannot cast other spells. It ends when you cast it again or run out of mana, or when either of you takes damage, teleports, moves away or loses sight of the other.",
+      "Toggle: bind yourself to a player right next to you and pour your mana into them. You are both held in place and cannot cast other spells. It ends when you cast it again or run out of mana, or when either of you takes damage, teleports, moves away or loses sight of the other.",
   },
   // Warrior
   BLOODLUST: { name: "Bloodlust", passive: true, description: "Your hits heal you." },

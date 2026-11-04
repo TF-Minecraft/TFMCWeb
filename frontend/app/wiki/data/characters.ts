@@ -28,7 +28,7 @@ export const charactersCommands: WikiCommandSet = {
     },
     {
       command: "/rpcharacter placeclue <text>",
-      description: "Leaves a clue of your own. Then right-click the block where you want it, within 30 seconds.",
+      description: "Leaves a clue of your own on the next block you right-click, within 30 seconds.",
       notes: "12 to 48 characters. It is anonymous and fades like any other clue.",
     },
     {

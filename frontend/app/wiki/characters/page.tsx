@@ -88,7 +88,7 @@ export default function CharactersPage() {
       />
       <p className={`mt-3 ${body}`}>
         Name colours is how many colours your character&apos;s name can blend into a gradient. With 0, your name stays
-        white. Wardrobe slots is how many skins each character can wear, counting the base skin. If your rank drops, the
+        white. Wardrobe slots counts the skins each character can wear, including the base skin. If your rank drops, the
         skins in slots it no longer unlocks stay saved and come back when you regain the rank.
       </p>
       <p className={`mt-3 ${body}`}>
@@ -420,9 +420,9 @@ export default function CharactersPage() {
       </p>
       <p className={`mt-3 ${body}`}>
         You can also leave clues yourself for roleplay. Run <code className={code}>/rpcharacter placeclue</code>{" "}
-        followed by the clue (12 to 48 characters), then, within 30 seconds, right-click the block where you want to
-        leave it. It is anonymous and fades like any other clue. <code className={code}>/rpcharacter removeclue</code>{" "}
-        removes the clues you placed within 10 blocks of you.
+        followed by the clue (12 to 48 characters), then right-click the block where you want to leave it. You have 30
+        seconds to click. The clue is anonymous and fades like any other.{" "}
+        <code className={code}>/rpcharacter removeclue</code> removes the clues you placed within 10 blocks of you.
       </p>
 
       <WikiSectionHeading id="persona">Customising your character</WikiSectionHeading>

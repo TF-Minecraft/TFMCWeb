@@ -401,7 +401,7 @@ export default function AdvancedCraftingPage() {
       </p>
       <p className={`mt-3 ${body}`}>
         To look up an alloy you have forged before, run <code className={code}>/alloy recipes</code> and click its name,
-        or hold the alloy and run <code className={code}>/alloy recipe</code>. It shows only the base and catalysts, and
+        or hold the alloy and run <code className={code}>/alloy recipe</code>. It shows only the base and crystals, and
         only for alloys you have forged yourself.
       </p>
 
