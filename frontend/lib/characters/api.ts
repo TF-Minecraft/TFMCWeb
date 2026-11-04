@@ -762,6 +762,19 @@ export function wardrobeSkinsNeeded(slot: string): number {
   return WARDROBE_SWAPPABLE_SLOTS.indexOf(slot as WardrobeSwappableSlotId) + 1;
 }
 
+/**
+ * Why a skin can't be uploaded into `slot` yet, or null. Each empty skin needs the one before it
+ * (Skin 2 needs Base); a filled skin can always be replaced, since a kept skin can sit behind a gap.
+ * Mirrors the backend's `_require_sequential_fill`.
+ */
+export function wardrobeFillOrderError(slot: string, filled: (slot: string) => boolean): string | null {
+  const index = WARDROBE_SWAPPABLE_SLOTS.indexOf(slot as WardrobeSwappableSlotId);
+  if (index <= 0 || filled(slot)) return null;
+  const previous = WARDROBE_SWAPPABLE_SLOTS[index - 1]!;
+  if (filled(previous)) return null;
+  return `Upload ${WARDROBE_DEFAULT_LABELS[previous]} before ${WARDROBE_DEFAULT_LABELS[slot]}`;
+}
+
 /** Whether a rank with `swappable` skins unlocks this slot. Masked is always open. */
 export function wardrobeSlotUnlocked(slot: string, swappable: number): boolean {
   if (slot === "masked") return true;

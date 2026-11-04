@@ -74,6 +74,9 @@ class SequentialFillTest(unittest.TestCase):
         slots["extra_3"] = {"png_relpath": "d"}
         _require_sequential_fill("extra_4", slots)
 
+    def test_a_filled_skin_behind_a_gap_can_be_replaced(self) -> None:
+        _require_sequential_fill("extra_2", {"base": {"png_relpath": "a"}, "extra_2": {"png_relpath": "c"}})
+
     def test_base_and_masked_need_nothing_before_them(self) -> None:
         _require_sequential_fill("base", {})
         _require_sequential_fill("masked", {})

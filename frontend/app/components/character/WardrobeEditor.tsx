@@ -10,6 +10,7 @@ import {
   renameWardrobeSlot,
   setWardrobeActive,
   uploadWardrobeSlot,
+  wardrobeFillOrderError,
   wardrobeSlotLabel,
   wardrobeSlotUnlocked,
   WARDROBE_DEFAULT_LABELS,
@@ -74,20 +75,6 @@ type DraftProps = {
 };
 
 export type WardrobeEditorProps = LiveProps | DraftProps;
-
-/** Swappable fill order: each skin needs the one before it (Skin 2 needs Base, and so on). */
-function fillOrderOk(slot: string, filled: (id: string) => boolean): { ok: boolean; message?: string } {
-  const index = SWAPPABLE_ORDER.indexOf(slot as (typeof SWAPPABLE_ORDER)[number]);
-  if (index <= 0) return { ok: true };
-  const previous = SWAPPABLE_ORDER[index - 1];
-  if (!filled(previous)) {
-    return {
-      ok: false,
-      message: `Upload ${WARDROBE_DEFAULT_LABELS[previous]} before ${WARDROBE_DEFAULT_LABELS[slot]}`,
-    };
-  }
-  return { ok: true };
-}
 
 function compactDraftSwappable(
   files: WardrobeDraftFiles,
@@ -418,9 +405,11 @@ export default function WardrobeEditor(props: WardrobeEditorProps) {
   }) {
     if (!modalSlot) return;
     if (isDraft) {
-      const order = fillOrderOk(modalSlot, (id) => Boolean(props.draftFiles[id as keyof WardrobeDraftFiles]));
-      if (input.file && !order.ok) {
-        setModalError(order.message || "Upload earlier skins first");
+      const orderError = wardrobeFillOrderError(modalSlot, (id) =>
+        Boolean(props.draftFiles[id as keyof WardrobeDraftFiles]),
+      );
+      if (input.file && orderError) {
+        setModalError(orderError);
         return;
       }
       let nextFiles = { ...props.draftFiles };
@@ -479,9 +468,9 @@ export default function WardrobeEditor(props: WardrobeEditorProps) {
       setModalError("UI dev mode cannot upload.");
       return;
     }
-    const order = fillOrderOk(modalSlot, (id) => Boolean(slotsById.get(id)?.filled));
-    if (input.file && !order.ok) {
-      setModalError(order.message || "Upload earlier skins first");
+    const orderError = wardrobeFillOrderError(modalSlot, (id) => Boolean(slotsById.get(id)?.filled));
+    if (input.file && orderError) {
+      setModalError(orderError);
       return;
     }
     setSaving(true);
@@ -564,13 +553,11 @@ export default function WardrobeEditor(props: WardrobeEditorProps) {
     }
     const filled = (sid: string) =>
       isDraft ? Boolean(props.draftFiles[sid as keyof WardrobeDraftFiles]) : Boolean(slotsById.get(sid)?.filled);
-    // Opening empty extra out of order → block; opening filled is ok (edit/clear)
-    if (!filled(id)) {
-      const order = fillOrderOk(id, filled);
-      if (!order.ok) {
-        setError(order.message || "Upload earlier skins first");
-        return;
-      }
+    // Opening an empty skin out of order → block; opening a filled one is ok (edit/clear)
+    const orderError = wardrobeFillOrderError(id, filled);
+    if (orderError) {
+      setError(orderError);
+      return;
     }
     setError(null);
     setModalSlot(id);

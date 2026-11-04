@@ -312,7 +312,8 @@ def _slot_filled(slots: dict[str, dict[str, Any]], slot: str) -> bool:
 def _require_sequential_fill(
     slot_key: str, slots: dict[str, dict[str, Any]]
 ) -> None:
-    if slot_key not in SWAPPABLE_SLOTS or slot_key == "base":
+    # Replacing a filled skin is always allowed: a kept skin can sit behind a gap.
+    if slot_key not in SWAPPABLE_SLOTS or slot_key == "base" or _slot_filled(slots, slot_key):
         return
     previous = SWAPPABLE_ORDER[SWAPPABLE_ORDER.index(slot_key) - 1]
     if not _slot_filled(slots, previous):

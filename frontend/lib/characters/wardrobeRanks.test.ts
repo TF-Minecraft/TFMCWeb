@@ -3,6 +3,7 @@ import {
   WARDROBE_MAX_SWAPPABLE,
   WARDROBE_SLOTS,
   WARDROBE_SWAPPABLE_SLOTS,
+  wardrobeFillOrderError,
   wardrobeSkinsNeeded,
   wardrobeSlotUnlocked,
   type SlotLimits,
@@ -43,6 +44,22 @@ describe("wardrobe slots", () => {
     ]);
     expect(wardrobeSlotUnlocked("masked", 1)).toBe(true);
     expect(wardrobeSlotUnlocked("extra_5", 9)).toBe(false);
+  });
+
+  it("asks for each empty skin's predecessor and always lets a filled skin be replaced", () => {
+    const filledSet =
+      (...slots: string[]) =>
+      (slot: string) =>
+        slots.includes(slot);
+    expect(wardrobeFillOrderError("base", filledSet())).toBeNull();
+    expect(wardrobeFillOrderError("extra_1", filledSet())).toBe("Upload Base before Skin 2");
+    expect(wardrobeFillOrderError("extra_4", filledSet("base", "extra_1", "extra_2"))).toBe(
+      "Upload Skin 4 before Skin 5",
+    );
+    expect(wardrobeFillOrderError("extra_4", filledSet("extra_3"))).toBeNull();
+    // A kept Skin 3 behind an empty Skin 2 can still be replaced.
+    expect(wardrobeFillOrderError("extra_2", filledSet("base", "extra_2"))).toBeNull();
+    expect(wardrobeFillOrderError("masked", filledSet())).toBeNull();
   });
 
   it("asks for the extra frames only", () => {
