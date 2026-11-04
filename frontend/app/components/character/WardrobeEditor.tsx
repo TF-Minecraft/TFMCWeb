@@ -75,8 +75,6 @@ type DraftProps = {
 
 export type WardrobeEditorProps = LiveProps | DraftProps;
 
-const slotUnlocked = wardrobeSlotUnlocked;
-
 /** Swappable fill order: each skin needs the one before it (Skin 2 needs Base, and so on). */
 function fillOrderOk(slot: string, filled: (id: string) => boolean): { ok: boolean; message?: string } {
   const index = SWAPPABLE_ORDER.indexOf(slot as (typeof SWAPPABLE_ORDER)[number]);
@@ -142,7 +140,7 @@ function compactDraftSwappable(
 function emptySlots(swappable: number): WardrobeSlot[] {
   return SLOT_ORDER.map((slot) => ({
     slot,
-    unlocked: slotUnlocked(slot, swappable),
+    unlocked: wardrobeSlotUnlocked(slot, swappable),
     filled: false,
     display_name: WARDROBE_DEFAULT_LABELS[slot],
     apply_pending: false,
@@ -371,7 +369,7 @@ export default function WardrobeEditor(props: WardrobeEditorProps) {
         const name = props.draftNames[id];
         map.set(id, {
           slot: id,
-          unlocked: slotUnlocked(id, swappable),
+          unlocked: wardrobeSlotUnlocked(id, swappable),
           filled: Boolean(file),
           model: armModelToWardrobeModel(props.draftModels[id] ?? "default"),
           display_name: wardrobeSlotLabel(id, name),
@@ -388,7 +386,7 @@ export default function WardrobeEditor(props: WardrobeEditorProps) {
       if (!map.has(id)) {
         map.set(id, {
           slot: id,
-          unlocked: slotUnlocked(id, liveSwappable),
+          unlocked: wardrobeSlotUnlocked(id, liveSwappable),
           filled: false,
           display_name: WARDROBE_DEFAULT_LABELS[id],
           apply_pending: false,
@@ -559,7 +557,7 @@ export default function WardrobeEditor(props: WardrobeEditorProps) {
 
   function tryOpenSlot(id: string) {
     setModalError(null);
-    if (!slotUnlocked(id, isDraft ? swappable : liveSwappable)) {
+    if (!wardrobeSlotUnlocked(id, isDraft ? swappable : liveSwappable)) {
       setModalSlot(id);
       return;
     }
