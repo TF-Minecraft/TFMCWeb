@@ -34,7 +34,7 @@ function MedicineStation() {
 export default function CompanionPetsPage() {
   return (
     <WikiPage
-      lastModified="2026-10-11"
+      lastModified="2026-11-04"
       title="Companion Pets"
       intro="A companion is a little personality to share your adventures with. Give it a name, look after it, play together and teach it tricks. The more time you spend together, the stronger your bond becomes."
     >
@@ -194,8 +194,8 @@ export default function CompanionPetsPage() {
         your routine.
       </p>
       <Callout variant="warning">
-        Keep your companion away from danger: a pet that dies is lost. Releasing a pet through{" "}
-        <strong>Release forever</strong> also means saying goodbye permanently.
+        Companions can&apos;t be hurt by players, monsters or anything else, and neglect leaves them weak but never
+        kills them. Releasing a pet through <strong>Release forever</strong>, though, means saying goodbye permanently.
       </Callout>
 
       <SeeAlso hrefs={["/wiki/animal-husbandry", "/wiki/characters", "/wiki/server-features"]} />

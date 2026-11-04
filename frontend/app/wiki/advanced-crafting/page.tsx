@@ -196,7 +196,7 @@ const recipeCount = armorRecipeTemplates.length + weaponRecipeTemplates.length +
 export default function AdvancedCraftingPage() {
   return (
     <WikiPage
-      lastModified="2026-10-24"
+      lastModified="2026-11-04"
       title="Advanced Crafting"
       intro={
         <>
@@ -398,6 +398,11 @@ export default function AdvancedCraftingPage() {
         When a new alloy works, it&apos;s saved for the whole server with a made-up name. You have 60 seconds to rename
         it with <code className={code}>/alloy name Silver_Ash</code>, for example. Underscores become spaces. Names must
         be unique and use only letters and underscores. After that, anyone can load it at a Forging Station.
+      </p>
+      <p className={`mt-3 ${body}`}>
+        To look up an alloy you have forged before, run <code className={code}>/alloy recipes</code> and click its name,
+        or hold the alloy and run <code className={code}>/alloy recipe</code>. It shows only the base and crystals, and
+        only for alloys you have forged yourself.
       </p>
 
       <WikiSectionHeading id="stations">Building the stations</WikiSectionHeading>

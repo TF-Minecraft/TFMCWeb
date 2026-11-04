@@ -114,7 +114,7 @@ export const skills: Record<string, Skill> = {
   },
   SEITHR_GLYPH: {
     name: "Seithr Glyph",
-    description: "Draw a glyph that freezes everyone within 6 blocks when someone steps on it.",
+    description: "Draw a glyph on the ground. When someone steps on it, it goes off and freezes everyone on it.",
   },
   VENOM_TIPS: { name: "Venom Tips", passive: true, description: "Your arrows blind the target." },
   CAMOUFLAGE: {
@@ -135,7 +135,8 @@ export const skills: Record<string, Skill> = {
   ARROW_VOLLEY: { name: "Arrow Volley", description: "Your next shot becomes a wide volley of 40 arrows." },
   FROSTVEIL: {
     name: "Frostveil",
-    description: "Freeze a 10-block area where you look. Anyone inside it cannot cast spells.",
+    description:
+      "Cover the ground in frost within 12 blocks of where you look. Anyone inside is slowed and cannot cast spells.",
   },
   // Bard
   RHAPSODY: { name: "Rhapsody", description: "Play a song that keeps you and players around you at Speed II." },
@@ -187,7 +188,8 @@ export const skills: Record<string, Skill> = {
   },
   MITLAN_GLYPH: {
     name: "Mitlan Glyph",
-    description: "Draw a glyph that throws up, damages and slows everyone within 6 blocks when someone steps on it.",
+    description:
+      "Draw a glyph on the ground. When someone steps on it, it goes off, damaging and slowing everyone on it and throwing them into the air.",
   },
   MAELSTROM: {
     name: "Maelstrom",
@@ -298,7 +300,7 @@ export const skills: Record<string, Skill> = {
   },
   CERRITH_GLYPH: {
     name: "Cerrith Glyph",
-    description: "Draw a glyph that shields every player within 6 blocks when someone steps on it.",
+    description: "Draw a glyph on the ground. When someone steps on it, it goes off and shields every player on it.",
   },
   BLESSING_OF_HEALING: {
     name: "Blessing of Healing",
@@ -306,7 +308,8 @@ export const skills: Record<string, Skill> = {
   },
   MANA_TRANSFER: {
     name: "Mana Transfer",
-    description: "Toggle: give your mana to a player right next to you until you stop or step apart.",
+    description:
+      "Toggle: bind yourself to a player right next to you and pour your mana into them. You are both held in place and cannot cast other spells. It ends when you cast it again or run out of mana, or when either of you takes damage, teleports, moves away or loses sight of the other.",
   },
   // Warrior
   BLOODLUST: { name: "Bloodlust", passive: true, description: "Your hits heal you." },
@@ -347,7 +350,7 @@ export const skills: Record<string, Skill> = {
   },
   OSENI_GLYPH: {
     name: "Oseni Glyph",
-    description: "Draw a glyph that damages everyone within 6 blocks when someone steps on it.",
+    description: "Draw a glyph on the ground. When someone steps on it, it goes off and damages everyone on it.",
   },
   EMBER_BURST: {
     name: "Ember Burst",

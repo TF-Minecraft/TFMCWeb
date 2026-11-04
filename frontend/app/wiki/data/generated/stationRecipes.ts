@@ -172,6 +172,28 @@ export const generatedStationRecipes: Recipe[] = [
     },
   },
   {
+    key: "gen-alchemy-station-alchemy-powder-64",
+    title: "Alchemy Powder",
+    station: "Alchemy Station",
+    time: 2,
+    requirement: "Transmutation I",
+    category: "Materials",
+    ingredients: [
+      {
+        name: "Nether Wart",
+        qty: 256,
+        sourceId: "vanilla:nether_wart",
+        texture: "/wiki/textures/vanilla/nether_wart.png",
+      },
+    ],
+    output: {
+      name: "Alchemy Powder",
+      qty: 64,
+      sourceId: "mmoitem:MATERIALS:ALCHEMY_POWDER",
+      texture: "/wiki/textures/mmoitems/alchemy_powder.png",
+    },
+  },
+  {
     key: "gen-alchemy-station-transmutation-powder",
     title: "Transmutation Powder",
     station: "Alchemy Station",
@@ -11664,13 +11686,13 @@ export const generatedStationRecipes: Recipe[] = [
     ingredients: [
       {
         name: "Raw Copper Block",
-        qty: 18,
+        qty: 7,
         sourceId: "vanilla:raw_copper_block",
         texture: "/wiki/textures/vanilla/raw_copper_block.png",
       },
       {
         name: "Redstone Block",
-        qty: 16,
+        qty: 7,
         sourceId: "vanilla:redstone_block",
         texture: "/wiki/textures/vanilla/redstone_block.png",
       },
@@ -11691,13 +11713,13 @@ export const generatedStationRecipes: Recipe[] = [
     ingredients: [
       {
         name: "Raw Copper Block",
-        qty: 18,
+        qty: 8,
         sourceId: "vanilla:raw_copper_block",
         texture: "/wiki/textures/vanilla/raw_copper_block.png",
       },
       {
         name: "Lapis Block",
-        qty: 8,
+        qty: 3,
         sourceId: "vanilla:lapis_block",
         texture: "/wiki/textures/vanilla/lapis_block.png",
       },
@@ -11713,11 +11735,11 @@ export const generatedStationRecipes: Recipe[] = [
     ingredients: [
       {
         name: "Raw Copper Block",
-        qty: 18,
+        qty: 8,
         sourceId: "vanilla:raw_copper_block",
         texture: "/wiki/textures/vanilla/raw_copper_block.png",
       },
-      { name: "Diamond", qty: 8, sourceId: "vanilla:diamond", texture: "/wiki/textures/vanilla/diamond.png" },
+      { name: "Diamond", qty: 3, sourceId: "vanilla:diamond", texture: "/wiki/textures/vanilla/diamond.png" },
     ],
     output: {
       name: "Pearl",
@@ -11735,11 +11757,11 @@ export const generatedStationRecipes: Recipe[] = [
     ingredients: [
       {
         name: "Raw Copper Block",
-        qty: 18,
+        qty: 10,
         sourceId: "vanilla:raw_copper_block",
         texture: "/wiki/textures/vanilla/raw_copper_block.png",
       },
-      { name: "Emerald", qty: 4, sourceId: "vanilla:emerald", texture: "/wiki/textures/vanilla/emerald.png" },
+      { name: "Emerald", qty: 3, sourceId: "vanilla:emerald", texture: "/wiki/textures/vanilla/emerald.png" },
     ],
     output: {
       name: "Chrysoprase",
@@ -11757,13 +11779,13 @@ export const generatedStationRecipes: Recipe[] = [
     ingredients: [
       {
         name: "Redstone Block",
-        qty: 12,
+        qty: 8,
         sourceId: "vanilla:redstone_block",
         texture: "/wiki/textures/vanilla/redstone_block.png",
       },
       {
         name: "Lapis Block",
-        qty: 8,
+        qty: 5,
         sourceId: "vanilla:lapis_block",
         texture: "/wiki/textures/vanilla/lapis_block.png",
       },
@@ -11784,11 +11806,11 @@ export const generatedStationRecipes: Recipe[] = [
     ingredients: [
       {
         name: "Redstone Block",
-        qty: 12,
+        qty: 8,
         sourceId: "vanilla:redstone_block",
         texture: "/wiki/textures/vanilla/redstone_block.png",
       },
-      { name: "Diamond", qty: 8, sourceId: "vanilla:diamond", texture: "/wiki/textures/vanilla/diamond.png" },
+      { name: "Diamond", qty: 5, sourceId: "vanilla:diamond", texture: "/wiki/textures/vanilla/diamond.png" },
     ],
     output: {
       name: "Coral",
@@ -11806,11 +11828,11 @@ export const generatedStationRecipes: Recipe[] = [
     ingredients: [
       {
         name: "Redstone Block",
-        qty: 12,
+        qty: 4,
         sourceId: "vanilla:redstone_block",
         texture: "/wiki/textures/vanilla/redstone_block.png",
       },
-      { name: "Emerald", qty: 4, sourceId: "vanilla:emerald", texture: "/wiki/textures/vanilla/emerald.png" },
+      { name: "Emerald", qty: 2, sourceId: "vanilla:emerald", texture: "/wiki/textures/vanilla/emerald.png" },
     ],
     output: {
       name: "Tourmaline",
@@ -11828,11 +11850,11 @@ export const generatedStationRecipes: Recipe[] = [
     ingredients: [
       {
         name: "Lapis Block",
-        qty: 6,
+        qty: 4,
         sourceId: "vanilla:lapis_block",
         texture: "/wiki/textures/vanilla/lapis_block.png",
       },
-      { name: "Diamond", qty: 8, sourceId: "vanilla:diamond", texture: "/wiki/textures/vanilla/diamond.png" },
+      { name: "Diamond", qty: 5, sourceId: "vanilla:diamond", texture: "/wiki/textures/vanilla/diamond.png" },
     ],
     output: {
       name: "Larimar",
@@ -11850,11 +11872,11 @@ export const generatedStationRecipes: Recipe[] = [
     ingredients: [
       {
         name: "Lapis Block",
-        qty: 6,
+        qty: 3,
         sourceId: "vanilla:lapis_block",
         texture: "/wiki/textures/vanilla/lapis_block.png",
       },
-      { name: "Emerald", qty: 4, sourceId: "vanilla:emerald", texture: "/wiki/textures/vanilla/emerald.png" },
+      { name: "Emerald", qty: 3, sourceId: "vanilla:emerald", texture: "/wiki/textures/vanilla/emerald.png" },
     ],
     output: {
       name: "Vesuvianite",
@@ -11870,8 +11892,8 @@ export const generatedStationRecipes: Recipe[] = [
     time: 5,
     category: "Other",
     ingredients: [
-      { name: "Diamond", qty: 6, sourceId: "vanilla:diamond", texture: "/wiki/textures/vanilla/diamond.png" },
-      { name: "Emerald", qty: 4, sourceId: "vanilla:emerald", texture: "/wiki/textures/vanilla/emerald.png" },
+      { name: "Diamond", qty: 2, sourceId: "vanilla:diamond", texture: "/wiki/textures/vanilla/diamond.png" },
+      { name: "Emerald", qty: 2, sourceId: "vanilla:emerald", texture: "/wiki/textures/vanilla/emerald.png" },
     ],
     output: {
       name: "Agate",
@@ -15211,7 +15233,7 @@ export const generatedStationRecipes: Recipe[] = [
     ingredients: [
       {
         name: "Enchanted Dust",
-        qty: 18,
+        qty: 24,
         sourceId: "mmoitem:CURRENCY:ENCHANTED_DUST",
         texture: "/wiki/textures/mmoitems/enchanted_dust.png",
       },
@@ -15232,7 +15254,7 @@ export const generatedStationRecipes: Recipe[] = [
     ingredients: [
       {
         name: "Enchanted Dust",
-        qty: 28,
+        qty: 37,
         sourceId: "mmoitem:CURRENCY:ENCHANTED_DUST",
         texture: "/wiki/textures/mmoitems/enchanted_dust.png",
       },
@@ -15253,7 +15275,7 @@ export const generatedStationRecipes: Recipe[] = [
     ingredients: [
       {
         name: "Enchanted Dust",
-        qty: 28,
+        qty: 37,
         sourceId: "mmoitem:CURRENCY:ENCHANTED_DUST",
         texture: "/wiki/textures/mmoitems/enchanted_dust.png",
       },
@@ -15274,7 +15296,7 @@ export const generatedStationRecipes: Recipe[] = [
     ingredients: [
       {
         name: "Enchanted Dust",
-        qty: 28,
+        qty: 37,
         sourceId: "mmoitem:CURRENCY:ENCHANTED_DUST",
         texture: "/wiki/textures/mmoitems/enchanted_dust.png",
       },
@@ -15295,7 +15317,7 @@ export const generatedStationRecipes: Recipe[] = [
     ingredients: [
       {
         name: "Enchanted Dust",
-        qty: 28,
+        qty: 37,
         sourceId: "mmoitem:CURRENCY:ENCHANTED_DUST",
         texture: "/wiki/textures/mmoitems/enchanted_dust.png",
       },

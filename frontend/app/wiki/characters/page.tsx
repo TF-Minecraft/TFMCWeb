@@ -19,7 +19,7 @@ const body = "text-sm text-[var(--tfmc-mist)]";
 export default function CharactersPage() {
   return (
     <WikiPage
-      lastModified="2026-10-27"
+      lastModified="2026-11-04"
       title="Characters"
       intro={
         <>
@@ -80,20 +80,20 @@ export default function CharactersPage() {
         ]}
         rows={[
           [<RankName key="commoner" rank="Commoner" />, "7 days", 3, 0, 1],
-          [<RankName key="noble" rank="Noble" />, "5 days", 3, 1, 1],
-          [<RankName key="gilded" rank="Gilded" />, "4 days", 4, 2, 2],
-          [<RankName key="ascended" rank="Ascended" />, "3 days", 5, 20, 3],
-          [<RankName key="legacy" rank="Legacy" />, "2 days", 5, 20, 3],
+          [<RankName key="noble" rank="Noble" />, "5 days", 3, 1, 2],
+          [<RankName key="gilded" rank="Gilded" />, "4 days", 4, 2, 3],
+          [<RankName key="ascended" rank="Ascended" />, "3 days", 5, 20, 5],
+          [<RankName key="legacy" rank="Legacy" />, "2 days", 5, 20, 5],
         ]}
       />
       <p className={`mt-3 ${body}`}>
         Name colours is how many colours your character&apos;s name can blend into a gradient. With 0, your name stays
-        white.
+        white. Wardrobe slots counts the skins each character can wear, including the base skin. If your rank drops, the
+        skins in slots it no longer unlocks stay saved and come back when you regain the rank.
       </p>
       <p className={`mt-3 ${body}`}>
-        <RankName rank="Gilded" /> and above can also run{" "}
-        <code className={code}>/plushie &lt;character&gt; [1|2|3]</code> to get a plushie of any character, dressed in
-        their wardrobe outfit 1, 2 or 3.
+        <RankName rank="Gilded" /> and above can also run <code className={code}>/plushie &lt;character&gt; [1-5]</code>{" "}
+        to get a plushie of any character, dressed in one of their wardrobe outfits.
       </p>
 
       <WikiSectionHeading id="creating" intro="The creator takes a while, so set aside some time.">
@@ -384,9 +384,9 @@ export default function CharactersPage() {
         ).
       </p>
       <p className={`mt-3 ${body}`}>
-        Carry a <WikiItemLink name="Grave Insurance" /> ticket when you die and it binds to your grave. Right-click the
-        ticket from anywhere to get your items back. The ticket is used up, and it cannot open a grave that only your
-        killer can open.
+        Right-click a <WikiItemLink name="Grave Insurance" /> ticket from anywhere to get your items back from your
+        character&apos;s newest grave. Any ticket works, even one you got after you died. The ticket is used up, and it
+        cannot open a grave that only your killer can open.
       </p>
 
       <WikiSectionHeading id="wills">Wills and inheritance</WikiSectionHeading>
@@ -417,6 +417,12 @@ export default function CharactersPage() {
         When a clue is left at a scene, characters within a few blocks of it can notice it over time, and Wisdom and
         Intelligence improve the odds. Clues fade. An old clue is harder to read than a fresh one, and each disappears
         within two days.
+      </p>
+      <p className={`mt-3 ${body}`}>
+        You can also leave clues yourself for roleplay. Run <code className={code}>/rpcharacter placeclue</code>{" "}
+        followed by the clue (12 to 48 characters), then right-click the block where you want to leave it. You have 30
+        seconds to click. The clue is anonymous and fades like any other.{" "}
+        <code className={code}>/rpcharacter removeclue</code> removes the clues you placed within 10 blocks of you.
       </p>
 
       <WikiSectionHeading id="persona">Customising your character</WikiSectionHeading>

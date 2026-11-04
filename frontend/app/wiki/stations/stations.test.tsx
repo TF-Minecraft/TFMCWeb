@@ -48,7 +48,7 @@ describe("station registry and source coverage", () => {
 
   it("assigns each recipe source to its correct station detail page", () => {
     const expectedCounts: Record<string, number> = {
-      "alchemy-station": 53,
+      "alchemy-station": 54,
       "animal-station": 57,
       "archeology-station": 12,
       "block-station": 133,

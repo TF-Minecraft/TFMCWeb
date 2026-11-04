@@ -98,6 +98,16 @@ export const advancedCraftingCommands: WikiCommandSet = {
       description: "Names a new alloy you just forged. You have 60 seconds after forging it.",
       notes: "Letters and underscores only; underscores show as spaces. The name must not already be taken.",
     },
+    {
+      command: "/alloy recipes",
+      description: "Lists the alloys you have forged. Click one to see its recipe.",
+      notes: "Your characters share this list.",
+    },
+    {
+      command: "/alloy recipe [name]",
+      description:
+        "Shows the base and crystals of an alloy you have forged. Without a name, it uses the alloy in your main hand.",
+    },
   ],
 };
 

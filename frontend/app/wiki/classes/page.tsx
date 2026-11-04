@@ -28,7 +28,7 @@ const skillKind = (id: string) => {
 export default function ClassesPage() {
   return (
     <WikiPage
-      lastModified="2026-10-24"
+      lastModified="2026-11-04"
       title="Classes & Professions"
       intro="Your class decides what equipment you can use and which skills you get. Professions are levelled separately, through gathering and crafting."
       width="lg"

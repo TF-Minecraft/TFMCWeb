@@ -10,7 +10,7 @@ const body = "text-sm text-[var(--tfmc-mist)]";
 export default function ServerFeaturesPage() {
   return (
     <WikiPage
-      lastModified="2026-10-24"
+      lastModified="2026-11-04"
       title="Account & Website"
       intro="Your Minecraft account, your Discord account and the TFMC website work together once they are linked."
     >
