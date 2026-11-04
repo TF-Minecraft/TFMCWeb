@@ -82,7 +82,7 @@ type Props = {
   accountAgeSeconds?: number;
   /** Rank perk: max name colour stops (0 = locked / donators only). */
   nameColourStops?: number;
-  /** Swappable wardrobe skins (1–3). */
+  /** Swappable wardrobe skins (1–5). */
   wardrobeSkinSlots?: number;
 };
 

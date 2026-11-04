@@ -225,7 +225,8 @@ export default function WardrobeEditor(props: WardrobeEditorProps) {
       const next: Record<string, string> = {};
       await Promise.all(
         data.slots
-          .filter((s) => s.filled)
+          // Locked frames never show a preview, so kept skins in locked slots are not fetched.
+          .filter((s) => s.filled && s.unlocked)
           .map(async (s) => {
             try {
               next[s.slot] = await fetchWardrobeTextureBlob(token, characterId, s.slot, s.updated_at ?? Date.now());

@@ -26,9 +26,9 @@ queue, like web creation ([creator.md](creator.md)).
 - **Wardrobe and kits** refuse dead and missing characters: the pages say so and
   the backend answers `403 Character is not alive` to every edit. The wardrobe
   read (`GET /characters/{id}/wardrobe`) and the kit list refuse them too,
-  because the wardrobe read also moves the worn skin off slots the rank no longer
-  unlocks. The face and
-  figure pictures still load, for the cards and the memorial.
+  because the wardrobe read also moves the worn skin off slots the rank no
+  longer unlocks. The face and figure pictures still load, for the cards and
+  the memorial.
 
 ## Data
 

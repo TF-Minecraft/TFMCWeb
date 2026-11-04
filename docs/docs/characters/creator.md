@@ -154,7 +154,7 @@ Editable templates: `2d-template` (required), optional `3d-template`. Book journ
 
 | Concern | Choice |
 |---------|--------|
-| Slots | `base` + `masked` + up to 4 extras (`extra_1`…`extra_4`, Skin 2…Skin 5) by rank. A skin in a slot the rank no longer unlocks stays saved but locked: it can't be worn, renamed or replaced until the rank unlocks the slot again |
+| Slots | `base` + `masked` + up to 4 extras (`extra_1`…`extra_4`, Skin 2…Skin 5) by rank. A skin in a slot the rank no longer unlocks stays saved but locked: it can't be worn, renamed or replaced until the rank unlocks the slot again. Clearing an open slot packs only the open slots, so kept skins never move into use; `DELETE /characters/{id}/wardrobe/{slot}` still deletes a kept skin, though the page offers no button for it |
 | PNG | **64×64 only**; MineSkin v2 sign |
 | Apply | Join, character switch and a 45s refresh while online; `/rpcharacter wardrobe` in-game |
 | Web | Standing frames; modal preview. New uploads can be equipped and edited at once; a **Syncing** chip shows until RPCharacters applies them |

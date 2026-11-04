@@ -484,10 +484,16 @@ def _compact_swappable_slots(
     *,
     previous_active: str | None,
 ) -> None:
-    """Pack filled swappable skins into base → extra_1 → … without gaps."""
+    """Pack the filled skins in the slots the rank unlocks into base → extra_1 → … without gaps.
+
+    Skins kept in locked slots are left where they are, so clearing an open slot never
+    pulls a locked skin into use or rewrites it.
+    """
     slots = _load_slots(uuid, cid)
+    swappable = _swappable_for_roster(uuid, cid)
+    order = SWAPPABLE_ORDER[:swappable]
     packed: list[dict[str, Any]] = []
-    for key in SWAPPABLE_ORDER:
+    for key in order:
         row = slots.get(key)
         if not row or not row.get("png_relpath"):
             continue
@@ -500,16 +506,15 @@ def _compact_swappable_slots(
         packed.append(entry)
 
     # Already contiguous from the start?
-    expected = list(SWAPPABLE_ORDER[: len(packed)])
+    expected = list(order[: len(packed)])
     actual = [e["_old_slot"] for e in packed]
     if actual == expected:
         # Still may need active normalize after a clear
-        swappable = _swappable_for_roster(uuid, cid)
         _normalize_active(uuid, cid, previous_active, slots, swappable)
         return
 
-    # Delete all swappable rows/files then rewrite packed
-    for key in SWAPPABLE_ORDER:
+    # Delete the open slots' rows/files then rewrite packed
+    for key in order:
         row = slots.get(key)
         if row:
             with assets.asset_transaction() as conn:
@@ -524,7 +529,7 @@ def _compact_swappable_slots(
 
     active_new: str | None = None
     for i, entry in enumerate(packed):
-        new_slot = SWAPPABLE_ORDER[i]
+        new_slot = order[i]
         if previous_active and entry["_old_slot"] == previous_active:
             active_new = new_slot
         _upsert_live_slot(
@@ -544,15 +549,16 @@ def _compact_swappable_slots(
         _set_active(uuid, cid, active_new)
     else:
         slots_after = _load_slots(uuid, cid)
-        swappable = _swappable_for_roster(uuid, cid)
         _normalize_active(uuid, cid, previous_active, slots_after, swappable)
 
 
 @assets.guarded
-def _compact_pending_swappable(create_id: str) -> None:
+def _compact_pending_swappable(create_id: str, swappable: int) -> None:
+    """Pending-create twin of _compact_swappable_slots: packs only the unlocked slots."""
     slots = _load_pending_slots(create_id)
+    order = SWAPPABLE_ORDER[:swappable]
     packed: list[dict[str, Any]] = []
-    for key in SWAPPABLE_ORDER:
+    for key in order:
         row = slots.get(key)
         if not row or not row.get("png_relpath"):
             continue
@@ -563,14 +569,14 @@ def _compact_pending_swappable(create_id: str) -> None:
         entry["_png_bytes"] = path.read_bytes()
         packed.append(entry)
 
-    expected = list(SWAPPABLE_ORDER[: len(packed)])
+    expected = list(order[: len(packed)])
     actual = [
-        k for k in SWAPPABLE_ORDER if _slot_filled(slots, k)
+        k for k in order if _slot_filled(slots, k)
     ]
     if actual == expected:
         return
 
-    for key in SWAPPABLE_ORDER:
+    for key in order:
         row = slots.get(key)
         if row:
             with assets.asset_transaction() as conn:
@@ -584,7 +590,7 @@ def _compact_pending_swappable(create_id: str) -> None:
                 )
 
     for i, entry in enumerate(packed):
-        new_slot = SWAPPABLE_ORDER[i]
+        new_slot = order[i]
         _upsert_pending_slot(
             create_id,
             new_slot,
@@ -1270,11 +1276,11 @@ def clear_slot(
                     """,
                     (cid, slot_key),
                 )
+        swappable = swappable_slot_count(uuid, realm_id=access.get("realm_id"))
         if slot_key in SWAPPABLE_SLOTS:
-            _compact_pending_swappable(cid)
+            _compact_pending_swappable(cid, swappable)
         elif previous_active and previous_active == slot_key:
             remaining = _load_pending_slots(cid)
-            swappable = swappable_slot_count(uuid, realm_id=access.get("realm_id"))
             _normalize_pending_active(
                 cid, slot_key, remaining, swappable
             )
@@ -1741,7 +1747,9 @@ def clear_pending_create_wardrobe(
                 (cid, slot_key),
             )
     if slot_key in SWAPPABLE_SLOTS:
-        _compact_pending_swappable(cid)
+        _compact_pending_swappable(
+            cid, swappable_slot_count(str(create["player_uuid"]), realm_id=create.get("realm_id"))
+        )
     return {"ok": True, "create_id": cid, "slot": slot_key, "cleared": True}
 
 

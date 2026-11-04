@@ -345,7 +345,7 @@ export type CharacterListResponse = {
   evil_unlocked?: boolean;
   /** Rank perk: max name colour stops (0 = locked). */
   name_colour_stops?: number;
-  /** Swappable wardrobe skins (1–3). */
+  /** Swappable wardrobe skins (1–5). */
   wardrobe_skin_slots?: number;
   /** Snapshot seconds remaining until next kit grant is allowed. */
   kit_cooldown_seconds_remaining?: number;
@@ -711,11 +711,11 @@ export async function deleteLoreItemCustomise(
 
 /* --- Character skin wardrobe (Phase 4) --- */
 
-/** Most swappable skins per character (base + Skin 2 … Skin 5); the backend and RPCharacters match. */
-export const WARDROBE_MAX_SWAPPABLE = 5;
-
 /** Swappable slots in fill order. Masked is separate and always open. */
 export const WARDROBE_SWAPPABLE_SLOTS = ["base", "extra_1", "extra_2", "extra_3", "extra_4"] as const;
+
+/** Most swappable skins per character (base + Skin 2 … Skin 5); the backend and RPCharacters match. */
+export const WARDROBE_MAX_SWAPPABLE = WARDROBE_SWAPPABLE_SLOTS.length;
 
 export type WardrobeSwappableSlotId = (typeof WARDROBE_SWAPPABLE_SLOTS)[number];
 

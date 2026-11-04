@@ -32,6 +32,13 @@ function uiDevSlotLimits(): SlotLimits {
     defaults: { wardrobe_skin_slots: 1 },
     groups: [
       {
+        id: "noble",
+        tier: 1,
+        visible: true,
+        wardrobe_skin_slots: 2,
+        display_name: PERMISSION_GROUP_DISPLAY_NAMES.noble,
+      },
+      {
         id: "gilded",
         tier: 2,
         visible: true,
