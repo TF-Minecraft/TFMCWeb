@@ -12,6 +12,7 @@ import {
   releaseCreate,
   uploadPendingCreateWardrobe,
   wardrobeSlotLabel,
+  WARDROBE_SLOTS,
   type CatalogStage,
   type CreationCatalog,
 } from "../../../lib/characters/api";
@@ -502,7 +503,7 @@ function StageBody({
       const t = catalog.traits.find((x) => x.id === id);
       return t ? displayName(t) : id;
     });
-    const skinSummary = (["base", "extra_1", "extra_2", "masked"] as const).flatMap((slot) => {
+    const skinSummary = WARDROBE_SLOTS.flatMap((slot) => {
       if (slot === "masked" && wardrobeAutoMasked && wardrobeDraft.base) return ["Masked: from base"];
       const file = wardrobeDraft[slot];
       if (!file) return [];
@@ -716,11 +717,11 @@ export default function CreationWizard({
         setUiDevDone(true);
         return;
       }
-      const order = ["base", "extra_1", "extra_2", "masked"] as const;
+      const order: readonly string[] = WARDROBE_SLOTS;
       const slots = (Object.entries(wardrobeDraft).filter(([, file]) => file instanceof File) as [string, File][])
         // Server composes masked from base when create_masked is set
         .filter(([slot]) => !(slot === "masked" && wardrobeAutoMasked))
-        .sort((a, b) => order.indexOf(a[0] as (typeof order)[number]) - order.indexOf(b[0] as (typeof order)[number]));
+        .sort((a, b) => order.indexOf(a[0]) - order.indexOf(b[0]));
       for (const [slot, file] of slots) {
         try {
           await assertWardrobeSkinPng(file);

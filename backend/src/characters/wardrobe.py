@@ -20,18 +20,20 @@ from src.characters.pending_create import (
     resolve_player_character,
 )
 from src.characters.times import api_time
+from src.characters.web_entitlements import MAX_WARDROBE_SKIN_SLOTS
 from src.skins.db import DATA_DIR, WARDROBE_DIR
 from src.skins.storage import StorageError, validate_png
 from src.text_validation import TextValidationError, assert_optional_display_name
 
-SLOTS = ("base", "extra_1", "extra_2", "masked")
-SWAPPABLE_SLOTS = frozenset({"base", "extra_1", "extra_2"})
-SWAPPABLE_ORDER = ("base", "extra_1", "extra_2")
+# Most swappable skins a character can hold (RPCharacters WardrobeSlots matches it).
+MAX_SWAPPABLE_SLOTS = MAX_WARDROBE_SKIN_SLOTS
+SWAPPABLE_ORDER = ("base",) + tuple(f"extra_{i}" for i in range(1, MAX_SWAPPABLE_SLOTS))
+SWAPPABLE_SLOTS = frozenset(SWAPPABLE_ORDER)
+SLOTS = SWAPPABLE_ORDER + ("masked",)
 WARDROBE_PNG_SIZE = (64, 64)
 DEFAULT_SLOT_NAMES = {
     "base": "Base",
-    "extra_1": "Skin 2",
-    "extra_2": "Skin 3",
+    **{slot: f"Skin {i + 1}" for i, slot in enumerate(SWAPPABLE_ORDER) if i},
     "masked": "Masked",
 }
 DISPLAY_NAME_MAX = 24
@@ -111,7 +113,7 @@ def swappable_slot_count(
     uuid = (player_uuid or "").strip()
     ent = resolve_web_entitlements(uuid, realm_id=realm_id)
     try:
-        return max(1, min(3, int(ent.get("wardrobe_skin_slots") or 1)))
+        return max(1, min(MAX_SWAPPABLE_SLOTS, int(ent.get("wardrobe_skin_slots") or 1)))
     except (TypeError, ValueError):
         return 1
 
@@ -133,13 +135,11 @@ def _swappable_for_pending(player_uuid: str, create_id: str) -> int:
 
 
 def _slot_unlocked(slot: str, swappable: int) -> bool:
-    if slot == "base" or slot == "masked":
+    if slot == "masked":
         return True
-    if slot == "extra_1":
-        return swappable >= 2
-    if slot == "extra_2":
-        return swappable >= 3
-    return False
+    if slot not in SWAPPABLE_SLOTS:
+        return False
+    return SWAPPABLE_ORDER.index(slot) < swappable
 
 
 def _normalize_slot(slot: str | None) -> str:
@@ -312,10 +312,14 @@ def _slot_filled(slots: dict[str, dict[str, Any]], slot: str) -> bool:
 def _require_sequential_fill(
     slot_key: str, slots: dict[str, dict[str, Any]]
 ) -> None:
-    if slot_key == "extra_1" and not _slot_filled(slots, "base"):
-        raise WardrobeError("Upload Base before Skin 2", status_code=400)
-    if slot_key == "extra_2" and not _slot_filled(slots, "extra_1"):
-        raise WardrobeError("Upload Skin 2 before Skin 3", status_code=400)
+    if slot_key not in SWAPPABLE_SLOTS or slot_key == "base":
+        return
+    previous = SWAPPABLE_ORDER[SWAPPABLE_ORDER.index(slot_key) - 1]
+    if not _slot_filled(slots, previous):
+        raise WardrobeError(
+            f"Upload {default_slot_label(previous)} before {default_slot_label(slot_key)}",
+            status_code=400,
+        )
 
 
 @assets.guarded
@@ -480,7 +484,7 @@ def _compact_swappable_slots(
     *,
     previous_active: str | None,
 ) -> None:
-    """Pack filled swappable skins into base → extra_1 → extra_2 without gaps."""
+    """Pack filled swappable skins into base → extra_1 → … without gaps."""
     slots = _load_slots(uuid, cid)
     packed: list[dict[str, Any]] = []
     for key in SWAPPABLE_ORDER:
@@ -709,30 +713,15 @@ def _normalize_active(
 
 @assets.guarded
 def enforce_wardrobe_slot_limits(player_uuid: str, character_id: str) -> int:
-    """Delete locked extra slots (and PNGs); fix active. Returns swappable count."""
+    """Move the worn skin off a locked slot. Returns swappable count.
+
+    Skins in slots the player's rank no longer unlocks stay saved (locked, not worn or
+    editable) so a rank that lapses or a helper going off duty loses nothing.
+    """
     uuid = (player_uuid or "").strip()
     cid = (character_id or "").strip()
     swappable = _swappable_for_roster(uuid, cid)
     slots = _load_slots(uuid, cid)
-    wiped = False
-    for slot in ("extra_1", "extra_2"):
-        if _slot_unlocked(slot, swappable):
-            continue
-        row = slots.get(slot)
-        if not row:
-            continue
-        with assets.asset_transaction() as conn:
-            _delete_png(row.get("png_relpath"))
-            conn.execute(
-                """
-                DELETE FROM character_wardrobe_slots
-                WHERE player_uuid = %s AND character_id = %s AND slot = %s
-                """,
-                (uuid, cid, slot),
-            )
-        wiped = True
-    if wiped:
-        slots = _load_slots(uuid, cid)
     with database.connect() as conn:
         row = conn.execute(
             """
@@ -860,30 +849,11 @@ def _normalize_pending_active(
 def enforce_pending_wardrobe_slot_limits(
     player_uuid: str, create_id: str
 ) -> int:
-    """Delete locked extra pending slots; fix active. Returns swappable count."""
+    """Move the chosen skin off a locked pending slot, keeping its skin. Returns swappable count."""
     uuid = (player_uuid or "").strip()
     cid = (create_id or "").strip()
     swappable = _swappable_for_pending(uuid, cid)
     slots = _load_pending_slots(cid)
-    wiped = False
-    for slot in ("extra_1", "extra_2"):
-        if _slot_unlocked(slot, swappable):
-            continue
-        row = slots.get(slot)
-        if not row:
-            continue
-        with assets.asset_transaction() as conn:
-            _delete_png(row.get("png_relpath"))
-            conn.execute(
-                """
-                DELETE FROM character_creation_wardrobe
-                WHERE create_id = %s AND slot = %s
-                """,
-                (cid, slot),
-            )
-        wiped = True
-    if wiped:
-        slots = _load_pending_slots(cid)
     active = _get_pending_active(cid)
     _normalize_pending_active(cid, active, slots, swappable)
     return swappable
@@ -1540,7 +1510,7 @@ def _active_slot(
 
 def worn_skin_name(player_uuid: str, character_id: str) -> str | None:
     """The name of the skin a roster or pending character wears, for Profile. Read-only like
-    _active_slot: get_wardrobe would delete skins in slots the player's rank no longer unlocks."""
+    _active_slot: get_wardrobe would save a new worn slot when the old one is locked."""
     access = _resolve_player_wardrobe_access(player_uuid, character_id)
     uuid = access["player_uuid"]
     cid = access["character_id"]

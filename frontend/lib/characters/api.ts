@@ -375,7 +375,7 @@ export async function listCharacters(sessionToken: string): Promise<CharacterLis
     name_colour_stops: typeof body.name_colour_stops === "number" ? Math.max(0, body.name_colour_stops) : 0,
     wardrobe_skin_slots: Math.max(
       1,
-      Math.min(3, typeof body.wardrobe_skin_slots === "number" ? body.wardrobe_skin_slots : 1),
+      Math.min(WARDROBE_MAX_SWAPPABLE, typeof body.wardrobe_skin_slots === "number" ? body.wardrobe_skin_slots : 1),
     ),
     kit_cooldown_seconds_remaining:
       typeof body.kit_cooldown_seconds_remaining === "number" ? Math.max(0, body.kit_cooldown_seconds_remaining) : 0,
@@ -711,7 +711,18 @@ export async function deleteLoreItemCustomise(
 
 /* --- Character skin wardrobe (Phase 4) --- */
 
-export type WardrobeSlotId = "base" | "extra_1" | "extra_2" | "masked";
+/** Most swappable skins per character (base + Skin 2 … Skin 5); the backend and RPCharacters match. */
+export const WARDROBE_MAX_SWAPPABLE = 5;
+
+/** Swappable slots in fill order. Masked is separate and always open. */
+export const WARDROBE_SWAPPABLE_SLOTS = ["base", "extra_1", "extra_2", "extra_3", "extra_4"] as const;
+
+export type WardrobeSwappableSlotId = (typeof WARDROBE_SWAPPABLE_SLOTS)[number];
+
+export type WardrobeSlotId = WardrobeSwappableSlotId | "masked";
+
+/** Every wardrobe slot in display order. */
+export const WARDROBE_SLOTS: readonly WardrobeSlotId[] = [...WARDROBE_SWAPPABLE_SLOTS, "masked"];
 
 export type WardrobeSlot = {
   slot: WardrobeSlotId | string;
@@ -741,8 +752,22 @@ export const WARDROBE_DEFAULT_LABELS: Record<string, string> = {
   base: "Base",
   extra_1: "Skin 2",
   extra_2: "Skin 3",
+  extra_3: "Skin 4",
+  extra_4: "Skin 5",
   masked: "Masked",
 };
+
+/** Skins a rank must grant before this slot unlocks (base 1, Skin N needs N; masked 0). */
+export function wardrobeSkinsNeeded(slot: string): number {
+  return WARDROBE_SWAPPABLE_SLOTS.indexOf(slot as WardrobeSwappableSlotId) + 1;
+}
+
+/** Whether a rank with `swappable` skins unlocks this slot. Masked is always open. */
+export function wardrobeSlotUnlocked(slot: string, swappable: number): boolean {
+  if (slot === "masked") return true;
+  const needed = wardrobeSkinsNeeded(slot);
+  return needed > 0 && needed <= swappable;
+}
 
 export function wardrobeSlotLabel(slot: string, displayName?: string | null): string {
   const custom = String(displayName || "").trim();

@@ -1,6 +1,6 @@
 /** Wardrobe lock labels from catalog slot_limits groups (RPC sync). */
 
-import type { SlotLimits } from "./api";
+import { wardrobeSkinsNeeded, type SlotLimits } from "./api";
 import { parseNameRuns, type LoreRun } from "./lorePreview";
 import type { ArmModel } from "../skins/steveMannequin";
 
@@ -36,14 +36,12 @@ export function groupUnlockingSlots(
 }
 
 /**
- * How many swappable slots a frame needs to unlock.
- * Structural (base=1, Skin 2 needs 2, Skin 3 needs 3) — not which rank name.
+ * How many swappable slots an extra frame needs to unlock (Skin N needs N); 0 for base,
+ * masked and unknown slots. Structural, not which rank name.
  */
 export function minSlotsForExtra(slot: string): number {
-  const key = String(slot || "").toLowerCase();
-  if (key === "extra_2") return 3;
-  if (key === "extra_1") return 2;
-  return 0;
+  const needed = wardrobeSkinsNeeded(String(slot || "").toLowerCase());
+  return needed > 1 ? needed : 0;
 }
 
 /** Lock copy for a wardrobe extra slot from catalog groups. */
