@@ -42,6 +42,11 @@ export const serverFeaturesCommands: WikiCommandSet = {
       description: "Loads the server resource pack again, for example when textures are missing.",
     },
     {
+      command: "/tfmc drinks",
+      description: "Gives you the link to design your custom drinks on the website.",
+      notes: "Noble rank and above.",
+    },
+    {
       command: "/tfmc map",
       description: "Gives you the link to the nations map on the website.",
     },

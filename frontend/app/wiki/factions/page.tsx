@@ -9,7 +9,7 @@ const code = "text-[var(--tfmc-accent)]";
 export default function FactionsPage() {
   return (
     <WikiPage
-      lastModified="2026-10-24"
+      lastModified="2026-11-04"
       title="Factions"
       intro={
         <>
@@ -63,8 +63,9 @@ export default function FactionsPage() {
         Land and prestige
       </WikiSectionHeading>
       <p className={body}>
-        Stand in a province and run <code className={code}>/faction claim</code>. It must border your land, or lie
-        across a single stretch of water from it. Sea provinces can&apos;t be claimed.
+        Stand in a province and run <code className={code}>/faction claim</code>. It must border your land or lie across
+        a river or lake from it. You can also claim any coast you can reach by sea from the land connected to your
+        capital, however far, as long as no land is in the way. Sea provinces can&apos;t be claimed.
       </p>
       <ul className={`mt-3 list-disc space-y-2 pl-5 ${body}`}>
         <li>

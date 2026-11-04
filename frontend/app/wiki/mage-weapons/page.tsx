@@ -26,7 +26,7 @@ const body = "text-sm text-[var(--tfmc-mist)]";
 export default function MageWeaponsPage() {
   return (
     <WikiPage
-      lastModified="2026-10-23"
+      lastModified="2026-11-04"
       title="Mage Weapons"
       width="lg"
       intro={

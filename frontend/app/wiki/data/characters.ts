@@ -27,8 +27,19 @@ export const charactersCommands: WikiCommandSet = {
       notes: "Up to 10 clues. Below the minimum (2, or 4 for an evil character) you are frozen.",
     },
     {
+      command: "/rpcharacter placeclue <text>",
+      description: "Leaves a clue of your own. Then right-click the block where you want it, within 30 seconds.",
+      notes: "12 to 48 characters. It is anonymous and fades like any other clue.",
+    },
+    {
+      command: "/rpcharacter removeclue",
+      description: "Removes the clues you placed within 10 blocks of you.",
+    },
+    {
       command: "/rpcharacter wardrobe [slot]",
-      description: "Opens the wardrobe menu, or equips a slot directly (base, extra_1, extra_2, or a saved name).",
+      description:
+        "Opens the wardrobe menu, or equips a slot directly (base, extra_1 to extra_4, a skin number from 1 to 5, or a saved name).",
+      notes: "How many skins you can wear depends on your rank.",
     },
     {
       command: "/rpcharacter party create <name> | invite <player> | join | leave | kick <player> | info",
@@ -91,8 +102,8 @@ export const charactersCommands: WikiCommandSet = {
       notes: "Also Who's online in the Quick Actions menu (G key).",
     },
     {
-      command: "/plushie <character> [1|2|3]",
-      description: "Gives you a plushie of any character, dressed in their wardrobe outfit 1, 2 or 3.",
+      command: "/plushie <character> [1-5]",
+      description: "Gives you a plushie of any character, dressed in one of their wardrobe outfits, 1 to 5.",
       notes: "Gilded rank and above.",
     },
     {
