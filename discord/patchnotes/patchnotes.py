@@ -2015,6 +2015,13 @@ class PatchNotes(commands.Cog):
         )
 
     async def undo_week_postpone(self, interaction: discord.Interaction, week: str) -> None:
+        async with self._week_lock:
+            await self._undo_week_postpone(interaction, week)
+
+    async def _undo_week_postpone(self, interaction: discord.Interaction, week: str) -> None:
+        if await self._keep_undo_cancel(interaction, week):
+            await self._forget_week_flag("week_postpone_undo", week)
+            return
         status, text, data = await self.api_request(
             "POST", f"/patchnotes/staff/weeks/{week}/undo-postpone"
         )
@@ -2061,6 +2068,17 @@ class PatchNotes(commands.Cog):
     async def is_cancelled(self, week: str) -> bool:
         return week in {str(item) for item in await self.config.cancelled_weeks()}
 
+    async def _keep_undo_cancel(self, interaction: discord.Interaction, week: str) -> bool:
+        """A stale Back or Undo postpone on a week someone else cancelled shows Undo cancel again."""
+        if not await self.is_cancelled(week):
+            return False
+        await self._set_review_view(interaction, WeekUndoCancelView(self, week))
+        await interaction.followup.send(
+            "This week's post was already cancelled. Use Undo cancel to take it back.",
+            ephemeral=True,
+        )
+        return True
+
     async def _review_view(self, week: str) -> discord.ui.View:
         """Buttons for a new review message: a cancelled week only offers Undo cancel."""
         if await self.is_cancelled(week):
@@ -2104,6 +2122,13 @@ class PatchNotes(commands.Cog):
         )
 
     async def back_from_week_cancel(self, interaction: discord.Interaction, week: str) -> None:
+        async with self._week_lock:
+            await self._back_from_week_cancel(interaction, week)
+
+    async def _back_from_week_cancel(self, interaction: discord.Interaction, week: str) -> None:
+        if await self._keep_undo_cancel(interaction, week):
+            await self._forget_week_flag("week_cancel_confirm", week)
+            return
         try:
             postponed = bool((await self.fetch_week_status(week)).get("postponed"))
         except Exception as exc:

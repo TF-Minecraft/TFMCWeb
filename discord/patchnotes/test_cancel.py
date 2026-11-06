@@ -240,6 +240,34 @@ class CancelPostTest(unittest.IsolatedAsyncioTestCase):
         self.assertIsInstance(interaction.message.view, pn.WeekUndoPostponeView)
         self.assertEqual(await cog.config.week_cancel_confirm(), [])
 
+    async def test_a_stale_back_or_undo_postpone_keeps_undo_cancel(self) -> None:
+        status = {"postponed": False, "deferred_to": None}
+        cog = _cog(status)
+        cog.config.cancelled_weeks.value = [WEEK]
+        cog.config.week_cancel_confirm.value = [WEEK]
+        cog.config.week_postpone_undo.value = [WEEK]
+        back = _Interaction()
+        await cog.back_from_week_cancel(back, WEEK)
+        self.assertIsInstance(back.message.view, pn.WeekUndoCancelView)
+        self.assertIn("already cancelled", back.said[-1])
+        undo = _Interaction()
+        await cog.undo_week_postpone(undo, WEEK)
+        self.assertIsInstance(undo.message.view, pn.WeekUndoCancelView)
+        self.assertEqual(cog.calls, [])
+        self.assertEqual(await cog.config.week_cancel_confirm(), [])
+        self.assertEqual(await cog.config.week_postpone_undo(), [])
+        self.assertTrue(await cog.is_cancelled(WEEK))
+
+    async def test_back_waits_for_a_cancel_in_progress(self) -> None:
+        cog = _cog({"postponed": False, "deferred_to": None})
+        interaction = _Interaction()
+        async with cog._week_lock:
+            back = asyncio.create_task(cog.back_from_week_cancel(interaction, WEEK))
+            await asyncio.sleep(0)
+            cog.config.cancelled_weeks.value = [WEEK]
+        await back
+        self.assertIsInstance(interaction.message.view, pn.WeekUndoCancelView)
+
     async def test_back_keeps_the_confirm_when_the_status_fails(self) -> None:
         cog = _cog({"postponed": True, "deferred_to": None}, status_error=True)
         cog.config.week_cancel_confirm.value = [WEEK]
