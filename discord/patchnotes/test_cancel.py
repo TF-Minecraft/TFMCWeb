@@ -210,14 +210,17 @@ class CancelPostTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(await cog.config.week_post_messages(), {})
         self.assertEqual(await cog.config.week_messages(), {})
         self.assertIn("was removed", interaction.said[-1])
+        self.assertNotIn("could not be removed", interaction.said[-1])
 
     async def test_messages_that_could_not_be_deleted_are_kept(self) -> None:
         cog = _cog({"postponed": False, "deferred_to": None}, posts={WEEK: [11, 12]}, undeletable={12})
+        interaction = _Interaction()
         with _at(AFTER):
-            await cog.confirm_week_cancel(_Interaction(), WEEK)
+            await cog.confirm_week_cancel(interaction, WEEK)
         self.assertEqual(cog.channel.deleted, [11])
         self.assertEqual(await cog.config.week_post_messages(), {WEEK: [12]})
         self.assertEqual(await cog.config.week_messages(), {WEEK: 12})
+        self.assertIn("could not be removed", interaction.said[-1])
 
     async def test_a_deferred_week_cannot_be_cancelled(self) -> None:
         cog = _cog({"postponed": True, "deferred_to": "2026-W46"})

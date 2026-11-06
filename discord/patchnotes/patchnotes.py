@@ -2174,9 +2174,13 @@ class PatchNotes(commands.Cog):
                 logger.exception("Cancelled %s but its notes were not approved yet", week)
             else:
                 await self._mark_published(week)
-        lines = ["Cancelled. Nothing goes to #updates for this week."]
+        lines = ["Cancelled. Nothing more goes to #updates for this week."]
         if removed:
             lines.append("The post already in #updates was removed.")
+        if await self._post_left(week):
+            lines.append(
+                "Some of its messages could not be removed from #updates. Delete them by hand."
+            )
         lines.append("The notes stay on the website. Use Undo cancel if this was a misclick.")
         await interaction.followup.send(" ".join(lines), ephemeral=True)
 
@@ -2206,7 +2210,7 @@ class PatchNotes(commands.Cog):
                 logger.warning("Could not remove a %s update message", week)
                 kept.append(message_id)
         if kept:
-            # Remembered, so cancelling again or a refresh after Undo cancel reaches them.
+            # Remembered, so a later cancel (after Undo cancel) still reaches them.
             posts[week] = kept
             legacy[week] = kept[0]
         await self.config.week_post_messages.set(posts)
@@ -2215,6 +2219,12 @@ class PatchNotes(commands.Cog):
         if notices.pop(week, None) is not None:
             await self.config.postponement_messages.set(notices)
         return removed
+
+    async def _post_left(self, week: str) -> bool:
+        """True while #updates may still hold messages of this week that the bot knows of."""
+        return week in dict(await self.config.week_post_messages()) or week in dict(
+            await self.config.week_messages()
+        )
 
     async def undo_week_cancel(self, interaction: discord.Interaction, week: str) -> None:
         async with self._week_lock:
