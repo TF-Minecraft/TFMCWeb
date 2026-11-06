@@ -369,6 +369,60 @@ class CancelPostTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(cog.channel.deleted, [1001])
         self.assertEqual(await cog.config.week_post_messages(), {})
 
+    async def test_undo_holds_the_poller_off_until_it_has_posted(self) -> None:
+        # Cancelled before 18:00 and undone just after, before the poller released it.
+        cog = _cog({"postponed": False, "deferred_to": None})
+        cog.config.cancelled_weeks.value = [WEEK]
+        gate = asyncio.Event()
+        started = asyncio.Event()
+
+        async def slow_publish(week, post, *, ping=True):
+            started.set()
+            await gate.wait()
+            cog.calls.append(("PUBLISH", week))
+
+        cog.publish_post = slow_publish
+        with _at(AFTER):
+            undo = asyncio.create_task(cog.undo_week_cancel(_Interaction(), WEEK))
+            await started.wait()
+            poller = asyncio.create_task(cog._publish_due_weeks(AFTER, []))
+            await asyncio.sleep(0)
+            gate.set()
+            await asyncio.gather(undo, poller)
+        self.assertEqual(cog.calls.count(("PUBLISH", WEEK)), 1)
+        self.assertEqual(await cog.config.published_weeks(), [WEEK])
+
+    async def test_a_line_postpone_waits_for_a_cancel_and_then_refuses(self) -> None:
+        status = {"postponed": False, "deferred_to": None}
+        cog = _cog(status)
+        interaction = _Interaction()
+        async with cog._week_lock:
+            postpone = asyncio.create_task(cog.confirm_postpone(interaction, WEEK, "bullet-1"))
+            await asyncio.sleep(0)
+            cog.config.cancelled_weeks.value = [WEEK]
+        await postpone
+        self.assertEqual(interaction.said, [pn._CANCELLED_REPLY])
+        self.assertFalse(status["postponed"])
+
+    async def test_a_plain_list_post_racing_a_cancel_is_removed(self) -> None:
+        cog = _cog({"postponed": False, "deferred_to": None})
+
+        async def no_post(_week):
+            return None
+
+        cog.fetch_post = no_post
+        cog.page_url = "https://www.tfminecraft.net/updates"
+        cog.channel.gate = asyncio.Event()
+        with _at(AFTER):
+            publish = asyncio.create_task(pn.PatchNotes.publish_week(cog, WEEK, ping=False))
+            await cog.channel.sending.wait()
+            await cog.confirm_week_cancel(_Interaction(), WEEK)
+            cog.channel.gate.set()
+            await publish
+        self.assertEqual(len(cog.channel.sent), 1)
+        self.assertEqual(cog.channel.deleted, [1001])
+        self.assertEqual(await cog.config.week_messages(), {})
+
     async def test_a_postpone_waits_for_a_cancel_and_then_refuses(self) -> None:
         status = {"postponed": False, "deferred_to": None}
         cog = _cog(status)

@@ -1449,9 +1449,6 @@ class PatchNotes(commands.Cog):
             await self.config.week_messages.set(updates)
         notices[week] = message.id
         await self.config.postponement_messages.set(notices)
-        if await self.is_cancelled(week):
-            await self._remove_week_post(week)
-            return
         # A posted multi-message update keeps only its first message, now the notice.
         posts = dict(await self.config.week_post_messages())
         for extra in (posts.pop(week, None) or [])[1:]:
@@ -2414,6 +2411,9 @@ class PatchNotes(commands.Cog):
         if week not in announced:
             announced.append(week)
             await self.config.announced_weeks.set(announced)
+        if await self.is_cancelled(week):
+            # Cancelled while this was sending: the cancel found no id yet, so remove it here.
+            await self._remove_week_post(week)
 
     async def apply_decision(
         self,
