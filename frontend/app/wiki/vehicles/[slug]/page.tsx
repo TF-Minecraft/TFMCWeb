@@ -13,7 +13,7 @@ export default async function VehicleDetail({ params }: { params: Promise<{ slug
   const vehicle = getVehicleBySlug(slug);
   if (!vehicle) notFound();
   return (
-    <WikiPage lastModified="2026-10-24" title={vehicle.name}>
+    <WikiPage lastModified={vehicle.id === "flat_car" ? "2026-11-06" : "2026-10-24"} title={vehicle.name}>
       <Link href="/wiki/vehicles" className="text-sm text-[var(--tfmc-accent)] underline">
         All vehicles and operating guide
       </Link>
@@ -21,6 +21,12 @@ export default async function VehicleDetail({ params }: { params: Promise<{ slug
       {vehicle.id === "passenger_car" ? (
         <p className="mt-3 text-sm text-[var(--tfmc-mist)]">
           The Passenger Car also has an Open skin. Use Vehicle Paint to select it in game.
+        </p>
+      ) : null}
+      {vehicle.id === "flat_car" ? (
+        <p className="mt-3 text-sm text-[var(--tfmc-mist)]">
+          The Flat Car has no seats: riders stand on its deck. Right-click the car and click the chest in its menu to
+          open its hold.
         </p>
       ) : null}
       <WikiSectionHeading id="blueprint">Build blueprint</WikiSectionHeading>
@@ -120,14 +126,20 @@ export default async function VehicleDetail({ params }: { params: Promise<{ slug
       ) : null}
       <WikiSectionHeading id="operating">Operate and maintain</WikiSectionHeading>
       <p className="text-sm text-[var(--tfmc-mist)]">
-        Right-click to select a seat. Only the captain steers; run{" "}
-        <code className="text-[var(--tfmc-accent)]">/vf keybinds</code> while seated for this vehicle’s current
-        controls.{" "}
-        {vehicle.category === "airships"
-          ? "Use Shift + left-click for seat selection; in flight, Shift alone descends."
-          : vehicle.category === "planes"
-            ? "Use Shift + left-click for seat selection."
-            : "Shift reopens seat selection."}{" "}
+        {vehicle.id === "flat_car" ? (
+          <>Riders stand on the deck, and the car follows the train it is coupled to. </>
+        ) : (
+          <>
+            Right-click to select a seat. Only the captain steers; run{" "}
+            <code className="text-[var(--tfmc-accent)]">/vf keybinds</code> while seated for this vehicle’s current
+            controls.{" "}
+            {vehicle.category === "airships"
+              ? "Use Shift + left-click for seat selection; in flight, Shift alone descends."
+              : vehicle.category === "planes"
+                ? "Use Shift + left-click for seat selection."
+                : "Shift reopens seat selection."}{" "}
+          </>
+        )}
         Use{" "}
         <Link href="/wiki/vehicles#repair" className="underline">
           Vehicle Repair

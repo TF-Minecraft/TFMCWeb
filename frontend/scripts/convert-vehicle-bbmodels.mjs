@@ -53,6 +53,7 @@ export const VEHICLES = {
   cruiser: "cruiser",
   field_artillery: "field_artillery",
   fixed_artillery: "fixed_artillery",
+  flat_car: "vehicles/trains/flat_car",
   gunboat: "gunboat",
   gyrobomber: "gyrobomber",
   horse_cart: "vehicles/land/horse_cart",

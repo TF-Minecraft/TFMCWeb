@@ -42,14 +42,14 @@ const ammunitionName = (name: string) => {
 export default function VehiclesPage() {
   return (
     <WikiPage
-      lastModified="2026-10-24"
+      lastModified="2026-11-06"
       title="Vehicles & Construction"
       width="lg"
       intro="Build a cart, crew a ship or fly an airship. Choose a vehicle below for its materials, build time, fuel and 3D preview."
     >
       <StatGrid
         stats={[
-          { label: "Vehicles", value: 21 },
+          { label: "Vehicles", value: vehicles.length },
           { label: "Construction", value: "2 hours to 3 days" },
           { label: "Air vehicle unlock", value: "6 Crafter points total" },
         ]}
@@ -119,8 +119,9 @@ export default function VehiclesPage() {
           ground to refuel, except the Behemoth, which can also refuel in flight.
         </li>
         <li>
-          <strong>Carry cargo:</strong> sit in the seat assigned to the hold, then right-click to open it. Each vehicle
-          page lists its cargo seats and capacity.
+          <strong>Carry cargo:</strong> sit in the seat assigned to the hold, then right-click to open it. The Flat
+          Car&apos;s hold has no seat: right-click the car and click the chest in its menu. Each vehicle page lists its
+          cargo seats and capacity.
         </li>
         <li>
           <strong>Tow:</strong> sneak-right-click Field Artillery, then sneak-right-click a Horse Cart or Wooden Cart to
@@ -144,14 +145,19 @@ export default function VehiclesPage() {
       </p>
       <p className="mt-3 text-sm text-[var(--tfmc-mist)]">
         Use <code className="text-[var(--tfmc-accent)]">/vf findvehicles</code> to locate your vehicles. Vehicles more
-        than 160 blocks from players unload into storage; they are not destroyed.
+        than 160 blocks from players unload into storage; they are not destroyed. A train driving a recorded route keeps
+        running instead (see{" "}
+        <Link href="#routes" className={linkClass}>
+          Teach a train a route
+        </Link>
+        ).
       </p>
       <WikiSectionHeading id="limits">Personal limits and upkeep</WikiSectionHeading>
       <p className="text-sm text-[var(--tfmc-mist)]">
         You can own three personal vehicles in total. Trains do not count toward this total, including the Locomotive.
         Each type also has its own limit. You can own one of each type, except Horse Carts, Wooden Carts, Small Cars,
-        Coal Cars and Passenger Cars, which allow three each. Construction is refused when you reach a limit. Each
-        vehicle page lists its daily upkeep, paid from the owner&apos;s bank.
+        Coal Cars, Passenger Cars and Flat Cars, which allow three each. Construction is refused when you reach a limit.
+        Each vehicle page lists its daily upkeep, paid from the owner&apos;s bank.
       </p>
       <WikiSectionHeading id="faction-vehicles">Faction vehicles</WikiSectionHeading>
       <p className="text-sm text-[var(--tfmc-mist)]">
@@ -283,12 +289,47 @@ export default function VehiclesPage() {
         Couple a Coal Car behind the Locomotive and fill its Coal Bunker with Coal Blocks to refuel the engine along the
         way.
       </p>
+      <WikiSectionHeading id="routes">Teach a train a route</WikiSectionHeading>
+      <p className="text-sm text-[var(--tfmc-mist)]">
+        The Locomotive&apos;s owner can teach it a route on any track: one lap of a loop, or a run out along a line and
+        back. Stop the train where the route should start, right-click the Locomotive with a Train Track Recorder and
+        drive. Stop for at least 2 seconds wherever the train should stop. On a loop, the recording ends after one lap.
+        On a line, drive to the far end, stop, reverse back to where you started, then set off again the way you first
+        went: the recording ends there. Right-click again to cancel a recording.
+      </p>
       <p className="mt-3 text-sm text-[var(--tfmc-mist)]">
-        On a track that loops back on itself, the Locomotive&apos;s owner can teach it the route. Right-click the
-        Locomotive with a Train Track Recorder and drive one full lap; right-click again to cancel. Then
-        sneak-right-click the Locomotive with the recorded Recorder to load the tape, leave the driver&apos;s seat, and
-        it drives that lap by itself. A tape only fits the track it was recorded on. Sneak-right-click with an empty
-        hand to take the tape back out.
+        Sneak-right-click the Locomotive with the recorded Recorder to load the tape, then leave the driver&apos;s seat.
+        It drives the route by itself, stops where you stopped and sets the switches the way you went. Anyone who takes
+        the driver&apos;s seat drives it by hand until they leave. A tape only fits the track it was recorded on, so
+        record again if the track is rebuilt. Sneak-right-click with an empty hand to take the tape back out.
+      </p>
+      <p className="mt-3 text-sm text-[var(--tfmc-mist)]">
+        A train on its route keeps running when nobody is near, as long as it has fuel and nobody is aboard, and uses
+        less fuel while it does. It appears where it has got to when a player comes close. While nobody is near, it
+        keeps its distance from other trains and waits behind them; two trains meeting head-on on one line wait for each
+        other until someone moves one. With players close by, trains on the same track can still collide. Give each line
+        one train, or run several trains the same way round a loop with room between them.
+      </p>
+      <WikiSectionHeading id="cargo-docks">Cargo docks</WikiSectionHeading>
+      <p className="text-sm text-[var(--tfmc-mist)]">
+        Craft a <WikiItemLink name="Train Track Dock" /> at the <StationLink name="Engineer Station" /> and right-click
+        a chest, barrel, shulker box, hopper, dispenser or dropper that you can open. The first click makes it a load
+        dock, the second an unload dock and the third removes it. Breaking the block also removes the dock.
+      </p>
+      <p className="mt-3 text-sm text-[var(--tfmc-mist)]">
+        When your train stops at a recorded stop next to one of your docks, each car with storage moves items: it takes
+        items from a load dock and leaves its cargo in an unload dock, up to a limit at each stop. A car only takes the
+        items it accepts, and Coal Cars are left alone. Docks only trade with trains owned by the same character that
+        marked them, and keep working while the train runs with nobody near.
+      </p>
+      <p className="mt-3 text-sm text-[var(--tfmc-mist)]">
+        The{" "}
+        <Link href="/wiki/vehicles/flat-car" className={linkClass}>
+          Flat Car
+        </Link>{" "}
+        is an open car that players ride standing on its deck, with a 54-slot hold that takes any item. Right-click the
+        car and click the chest in its menu to open it. Its owner can always open it, and so can the faction of a
+        faction-owned car. Players on the car&apos;s whitelist can open it while the owner has whitelisting on.
       </p>
       <WikiSectionHeading id="horses">Hitch horses to a cart</WikiSectionHeading>
       <p className="text-sm text-[var(--tfmc-mist)]">
