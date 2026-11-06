@@ -2060,12 +2060,13 @@ class PatchNotes(commands.Cog):
         )
 
     async def back_from_week_cancel(self, interaction: discord.Interaction, week: str) -> None:
-        await self._forget_week_flag("week_cancel_confirm", week)
         try:
             postponed = bool((await self.fetch_week_status(week)).get("postponed"))
-        except Exception:
-            logger.exception("Could not load the week status for %s", week)
-            postponed = False
+        except Exception as exc:
+            # Without the status the right buttons are unknown, so the confirm stays up.
+            await interaction.followup.send(str(exc)[:300], ephemeral=True)
+            return
+        await self._forget_week_flag("week_cancel_confirm", week)
         if postponed:
             await self._set_review_view(interaction, WeekUndoPostponeView(self, week))
         else:
@@ -2109,8 +2110,10 @@ class PatchNotes(commands.Cog):
             try:
                 await self.auto_approve_week(week)
             except Exception:
-                logger.exception("Cancelled %s but its notes were not approved", week)
-            await self._mark_published(week)
+                # Left unmarked, so the poller approves it on its next pass.
+                logger.exception("Cancelled %s but its notes were not approved yet", week)
+            else:
+                await self._mark_published(week)
         lines = ["Cancelled. Nothing goes to #updates for this week."]
         if removed:
             lines.append("The post already in #updates was removed.")
@@ -2132,6 +2135,7 @@ class PatchNotes(commands.Cog):
             logger.warning("Updates channel is not available; %s messages were left", week)
             return False
         removed = False
+        kept: list[int] = []
         for message_id in ids:
             try:
                 await (await channel.fetch_message(message_id)).delete()
@@ -2140,6 +2144,11 @@ class PatchNotes(commands.Cog):
                 continue
             except discord.HTTPException:
                 logger.warning("Could not remove a %s update message", week)
+                kept.append(message_id)
+        if kept:
+            # Remembered, so cancelling again or a refresh after Undo cancel reaches them.
+            posts[week] = kept
+            legacy[week] = kept[0]
         await self.config.week_post_messages.set(posts)
         await self.config.week_messages.set(legacy)
         notices = dict(await self.config.postponement_messages())
@@ -2149,6 +2158,8 @@ class PatchNotes(commands.Cog):
 
     async def undo_week_cancel(self, interaction: discord.Interaction, week: str) -> None:
         await self._forget_week_flag("cancelled_weeks", week)
+        # A cancel after 18:00 marked the week done; reopen it so a failed post is retried.
+        await self._forget_week_flag("published_weeks", week)
         await self._set_review_view(interaction, WeekReviewView(self, week))
         try:
             due = publish_due(week, datetime.now(timezone.utc), self.zone)
@@ -2166,8 +2177,7 @@ class PatchNotes(commands.Cog):
         except Exception:
             logger.exception("Undid the cancel for %s but the post was not sent", week)
             await interaction.followup.send(
-                "Cancel undone, but the post could not be sent. "
-                f"Use `/patchnotes refresh {week}` once the channel is reachable.",
+                "Cancel undone, but the post could not be sent yet. It is retried automatically.",
                 ephemeral=True,
             )
             return

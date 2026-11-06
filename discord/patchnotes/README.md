@@ -43,4 +43,7 @@ staff key and stays as it is. Then reload the cog in Discord with
 `[p]reload patchnotes`, or restart the bot instance.
 
 Tests: run `python -m unittest test_format test_safety test_schedule` from
-this folder. They need no Discord install.
+this folder. They need no Discord install. The Cancel post flow is covered by
+`test_cancel.py`, which needs `discord/requirements-test.txt` and runs from the
+repository root with `python -m pytest -q discord/patchnotes/test_cancel.py`
+(CI runs it in the `discord` job).
