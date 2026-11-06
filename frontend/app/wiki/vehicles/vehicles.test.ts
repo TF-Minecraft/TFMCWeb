@@ -23,6 +23,7 @@ describe("vehicle catalogue and actual assets", () => {
     expect(skins.filter((s) => s.modelUrl)).toHaveLength(38);
     expect(skins.filter((s) => !s.modelUrl)).toHaveLength(0);
     for (const vehicle of vehicles) {
+      expect(vehicle.seats, vehicle.slug).toMatch(/^\d+\/\d+\/\d+$/);
       expect(getVehicleBySlug(vehicle.slug)).toBe(vehicle);
       expect(vehicle.skins[0].modelUrl).toBeTruthy();
       expect(vehicleRecipes.find((r) => r.output.name === vehicle.name)?.ingredients.length).toBeGreaterThan(0);

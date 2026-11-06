@@ -105,7 +105,7 @@ export default function VehiclesPage() {
         <li>
           <strong>Enter:</strong> right-click the vehicle and choose a seat. Shift reopens seat selection while aboard.
           In aircraft and airships, use Shift + left-click; in a flying airship, Shift alone descends. Only the captain
-          steers.
+          steers. The Flat Car has no seats: riders stand on its deck.
         </li>
         <li>
           <strong>Drive:</strong> run <code className="text-[var(--tfmc-accent)]">/vf keybinds</code> while seated to
