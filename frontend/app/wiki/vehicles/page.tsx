@@ -105,7 +105,7 @@ export default function VehiclesPage() {
         <li>
           <strong>Enter:</strong> right-click the vehicle and choose a seat. Shift reopens seat selection while aboard.
           In aircraft and airships, use Shift + left-click; in a flying airship, Shift alone descends. Only the captain
-          steers. The Flat Car has no seats: riders stand on its deck.
+          steers. The Flat Car has no seats, so riders stand on its deck.
         </li>
         <li>
           <strong>Drive:</strong> run <code className="text-[var(--tfmc-accent)]">/vf keybinds</code> while seated to
@@ -120,8 +120,8 @@ export default function VehiclesPage() {
         </li>
         <li>
           <strong>Carry cargo:</strong> sit in the seat assigned to the hold, then right-click to open it. The Flat
-          Car&apos;s hold has no seat: right-click the car and click the chest in its menu. Each vehicle page lists its
-          cargo seats and capacity.
+          Car&apos;s hold has no seat; right-click the car and click the chest in its menu. Each vehicle page lists
+          where its hold opens and how many slots it has.
         </li>
         <li>
           <strong>Tow:</strong> sneak-right-click Field Artillery, then sneak-right-click a Horse Cart or Wooden Cart to
@@ -293,20 +293,22 @@ export default function VehiclesPage() {
       <p className="text-sm text-[var(--tfmc-mist)]">
         The Locomotive&apos;s owner can teach it a route on any track: one lap of a loop, or a run out along a line and
         back. Stop the train where the route should start and right-click the Locomotive with a{" "}
-        <WikiItemLink name="Train Track Recorder" /> to start recording. Switch to another item before you board:
-        right-clicking the Locomotive with the Recorder again cancels the recording. Drive the route and stop for at
-        least 2 seconds wherever the train should stop. On a loop, the recording ends after one lap. On a line, drive to
-        the far end, stop, reverse back to where you started, then set off again the way you first went: the recording
-        ends there.
+        <WikiItemLink name="Train Track Recorder" /> to start recording. Switch to another item before you board,
+        because right-clicking the Locomotive with the Recorder again cancels the recording. Once aboard you can hold
+        the Recorder again, so the finished tape goes onto it. Drive the route and stop for at least 2 seconds wherever
+        the train should stop. On a loop, the recording ends after one lap. On a line, drive to the far end, stop,
+        reverse back to where you started, then set off again the way you first went. The recording ends there.
       </p>
       <p className="mt-3 text-sm text-[var(--tfmc-mist)]">
         When the recording ends, the tape goes onto the Recorder if you are holding it, or straight into the Locomotive
         if you are not. Starting a recording erases any tape already on that Recorder, and a new tape that goes into the
-        Locomotive replaces the one loaded there. To load a tape from a Recorder, sneak-right-click the Locomotive with
-        it. Then leave the driver&apos;s seat: the train drives the route by itself, stops where you stopped and sets
-        the switches the way you went. Whoever takes the driver&apos;s seat drives it by hand until they leave. Only the
-        owner can load a tape or take it out; sneak-right-click with an empty hand to take it out. A tape only fits the
-        track it was recorded on, so record again if the track is rebuilt.
+        Locomotive replaces the one loaded there. To load a tape, take out any tape already loaded, then
+        sneak-right-click the Locomotive with the recorded Recorder; the Recorder goes into the Locomotive. With a tape
+        loaded and nobody in the driver&apos;s seat, the train drives the route by itself, stops where you stopped and
+        sets the switches the way you went. Whoever takes the driver&apos;s seat drives it by hand until they leave.
+        Only the owner can load a tape or take it out. Sneak-right-click with an empty hand to take it out, and it comes
+        back to you on a Recorder, so hold another item (not fuel) when you sneak-right-click the Locomotive to couple
+        it. A tape only fits the track it was recorded on, so record again if the track is rebuilt.
       </p>
       <p className="mt-3 text-sm text-[var(--tfmc-mist)]">
         A train on its route keeps running when nobody is near, as long as it has fuel and nobody is aboard, and uses

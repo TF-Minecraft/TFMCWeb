@@ -115,6 +115,8 @@ describe("vehicle page rendering", () => {
       expect(html).toContain(`>${vehicle.name}</button>`);
     }
     for (const skin of vehicles[0].skins) expect(html).toContain(skin.name);
+    expect(html).toContain('id="routes"');
+    expect(html).toContain('id="cargo-docks"');
   });
 
   it("words seat, captain and mechanic instructions from each vehicle's seats", async () => {
@@ -126,7 +128,8 @@ describe("vehicle page rendering", () => {
     const flatCar = await detail("flat-car");
     expect(flatCar).toContain("riders stand on its deck");
     expect(flatCar).toContain('href="/wiki/vehicles#cargo-docks"');
-    expect(flatCar).toContain("Turn whitelisting on in Ownership Settings to let whitelisted players");
+    expect(flatCar).toContain("While whitelisting is on, whitelisted players and allowed groups can open it too");
+    expect(flatCar).toContain('href="/wiki/vehicles#routes"');
     expect(flatCar).not.toContain("passenger access and tickets");
     expect(flatCar).not.toContain("select a seat");
     expect(flatCar).not.toContain("mechanic seat");
@@ -137,10 +140,19 @@ describe("vehicle page rendering", () => {
     expect(coalCar).not.toContain("Only the captain steers");
     expect(coalCar).not.toContain("mechanic seat");
 
+    expect(await detail("simple-locomotive")).toContain('href="/wiki/vehicles#routes"');
+
     const ironclad = await detail("ironclad");
     expect(ironclad).toContain("Only the captain steers");
     expect(ironclad).toContain("or from a mechanic seat");
     expect(ironclad).toContain("passenger access and tickets");
+    expect(ironclad).not.toContain('href="/wiki/vehicles#routes"');
+
+    // Seatless wording assumes a coupled train car with a hold opened from its menu.
+    for (const vehicle of vehicles.filter((v) => getSeatCounts(v).total === 0)) {
+      expect(vehicle.category, vehicle.slug).toBe("train");
+      expect(vehicle.cargo, vehicle.slug).not.toBe("N/A");
+    }
   });
 });
 
