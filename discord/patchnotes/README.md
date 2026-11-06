@@ -13,17 +13,20 @@ this cog shows it to staff and posts it to #updates.
    waits up to an hour for the post; without one it falls back to the old line
    review.
 3. Deny asks what should change and rewrites the whole post.
+4. Postpone and Cancel post both ask for confirmation and have an undo button.
    - **Postpone** holds the week: #updates says so at 18:00 and the notes move
      to next week.
    - **Cancel post** sends nothing to #updates for this week and announces
      nothing. The notes stay on the website (approved at 18:00) and are not
-     moved. It also takes back a postponement that has not been announced yet,
-     and deletes the week's messages from #updates if they were already posted.
-     Both ask for confirmation and have an undo button; undoing a cancel after
-     18:00 posts the update straight away.
-4. Friday 18:00 posts it to #updates as several messages. Only the first
+     moved. It takes back a postponement whose notes have not moved yet, and
+     deletes the week's messages from #updates (a posted update or a
+     postponement notice). A week whose notes already moved can't be
+     cancelled. Undoing a cancel after 18:00 posts the update straight away.
+   - Buttons left on older messages check the current state, so a stale click
+     on a cancelled week shows Undo cancel again instead of changing it.
+5. Friday 18:00 posts it to #updates as several messages. Only the first
    message pings the update role (`update_ping_role_id`, the TFer role).
-5. The website keeps the full line list, including technical changes.
+6. The website keeps the full line list, including technical changes.
 
 ## Commands
 

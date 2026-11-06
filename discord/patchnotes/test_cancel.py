@@ -94,6 +94,9 @@ def _cog(status: dict, *, posts: dict | None = None, undeletable=(), status_erro
     cog.config = _Config(
         cancelled_weeks=[],
         week_cancel_confirm=[],
+        week_postpone_confirm=[],
+        postpone_confirm={},
+        postpone_undo={},
         week_postpone_undo=[WEEK] if status.get("postponed") else [],
         week_post_messages=dict(posts),
         week_messages={week: ids[0] for week, ids in posts.items()},
@@ -229,7 +232,7 @@ class CancelPostTest(unittest.IsolatedAsyncioTestCase):
             await cog.begin_week_cancel(interaction, WEEK)
             await cog.confirm_week_cancel(interaction, WEEK)
         self.assertFalse(await cog.is_cancelled(WEEK))
-        self.assertIn("2026-W46", interaction.said[-1])
+        self.assertIn("Week of 9 November 2026", interaction.said[-1])
 
     async def test_back_restores_the_postponed_buttons(self) -> None:
         cog = _cog({"postponed": True, "deferred_to": None})
@@ -249,7 +252,7 @@ class CancelPostTest(unittest.IsolatedAsyncioTestCase):
         back = _Interaction()
         await cog.back_from_week_cancel(back, WEEK)
         self.assertIsInstance(back.message.view, pn.WeekUndoCancelView)
-        self.assertIn("already cancelled", back.said[-1])
+        self.assertEqual(back.said[-1], pn._CANCELLED_REPLY)
         undo = _Interaction()
         await cog.undo_week_postpone(undo, WEEK)
         self.assertIsInstance(undo.message.view, pn.WeekUndoCancelView)
@@ -267,6 +270,90 @@ class CancelPostTest(unittest.IsolatedAsyncioTestCase):
             cog.config.cancelled_weeks.value = [WEEK]
         await back
         self.assertIsInstance(interaction.message.view, pn.WeekUndoCancelView)
+
+    async def test_approve_waits_for_an_undo_cancel_and_posts_once(self) -> None:
+        cog = _cog({"postponed": False, "deferred_to": None})
+        cog.config.cancelled_weeks.value = [WEEK]
+        cog.publish_post = pn.PatchNotes.publish_post.__get__(cog)
+        cog.channel.gate = asyncio.Event()
+        with _at(AFTER):
+            undo = asyncio.create_task(cog.undo_week_cancel(_Interaction(), WEEK))
+            await cog.channel.sending.wait()
+            approve = asyncio.create_task(cog.approve_week_review(_Interaction(), WEEK))
+            await asyncio.sleep(0)
+            cog.channel.gate.set()
+            await asyncio.gather(undo, approve)
+        self.assertEqual(cog.channel.sent, ["# Update 5.7"])
+
+    async def test_stale_postpone_buttons_on_a_cancelled_week_keep_undo_cancel(self) -> None:
+        status = {"postponed": False, "deferred_to": None}
+        cog = _cog(status)
+        cog.config.cancelled_weeks.value = [WEEK]
+        cog.config.week_postpone_confirm.value = [WEEK]
+        cog.config.postpone_confirm.value = {"bullet-1": WEEK}
+        cog.config.postpone_undo.value = {WEEK: "bullet-1"}
+        handlers = (
+            lambda i: cog.cancel_week_postpone(i, WEEK),
+            lambda i: cog.cancel_postpone(i, WEEK, "bullet-1"),
+            lambda i: cog.confirm_week_postpone(i, WEEK),
+            lambda i: cog.confirm_postpone(i, WEEK, "bullet-1"),
+            lambda i: cog.undo_postpone(i, WEEK, "bullet-1"),
+            lambda i: cog.begin_week_postpone(i, WEEK),
+        )
+        for handler in handlers:
+            interaction = _Interaction()
+            await handler(interaction)
+            self.assertIsInstance(interaction.message.view, pn.WeekUndoCancelView)
+            self.assertEqual(interaction.said, [pn._CANCELLED_REPLY])
+        self.assertEqual(cog.calls, [])
+        self.assertFalse(status["postponed"])
+        self.assertEqual(await cog.config.week_postpone_confirm(), [])
+        self.assertEqual(await cog.config.postpone_confirm(), {})
+        self.assertEqual(await cog.config.postpone_undo(), {})
+
+    async def test_back_on_a_postpone_confirm_restores_the_review(self) -> None:
+        cog = _cog({"postponed": False, "deferred_to": None})
+        cog.config.week_postpone_confirm.value = [WEEK]
+        interaction = _Interaction()
+        await cog.cancel_week_postpone(interaction, WEEK)
+        self.assertIsInstance(interaction.message.view, pn.WeekReviewView)
+        self.assertEqual(await cog.config.week_postpone_confirm(), [])
+
+    async def test_cancel_forgets_every_postpone_button_of_the_week(self) -> None:
+        cog = _cog({"postponed": True, "deferred_to": None})
+        cog.config.week_postpone_confirm.value = [WEEK]
+        cog.config.postpone_undo.value = {WEEK: "bullet-1", "2026-W44": "bullet-0"}
+        with _at(BEFORE):
+            await cog.confirm_week_cancel(_Interaction(), WEEK)
+        self.assertEqual(await cog.config.week_postpone_undo(), [])
+        self.assertEqual(await cog.config.week_postpone_confirm(), [])
+        self.assertEqual(await cog.config.postpone_undo(), {"2026-W44": "bullet-0"})
+
+    async def test_a_stale_undo_cancel_shows_the_postponed_buttons(self) -> None:
+        cog = _cog({"postponed": True, "deferred_to": None})
+        interaction = _Interaction()
+        await cog.undo_week_cancel(interaction, WEEK)
+        self.assertIsInstance(interaction.message.view, pn.WeekUndoPostponeView)
+        self.assertIn("not cancelled", interaction.said[-1])
+
+    async def test_a_deny_rewrite_leaves_a_cancelled_week_alone(self) -> None:
+        cog = _cog({"postponed": False, "deferred_to": None}, posts={WEEK: [11]})
+        cog.config.cancelled_weeks.value = [WEEK]
+
+        async def rewritten(_week, _feedback):
+            return {"messages": ["# Update 5.7 (rewritten)"], "source": "writer"}
+
+        async def nothing(*_args, **_kwargs):
+            return None
+
+        cog.submit_post_feedback = rewritten
+        cog._clear_message_buttons = nothing
+        cog.retire_review_message = nothing
+        cog.post_post_review = nothing
+        cog.publish_post = pn.PatchNotes.publish_post.__get__(cog)
+        with self.assertNoLogs(pn.logger, level="ERROR"):
+            await cog.post_post_denial(_Interaction(), WEEK, "shorter")
+        self.assertEqual(cog.channel.sent, [])
 
     async def test_back_keeps_the_confirm_when_the_status_fails(self) -> None:
         cog = _cog({"postponed": True, "deferred_to": None}, status_error=True)
@@ -386,16 +473,16 @@ class CancelPostTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(cog.calls.count(("PUBLISH", WEEK)), 1)
         self.assertIn("not cancelled", second.said[-1])
 
-    async def test_a_staff_publish_racing_a_cancel_is_removed(self) -> None:
+    async def test_publish_post_racing_a_cancel_removes_what_it_sent(self) -> None:
         cog = _cog({"postponed": False, "deferred_to": None})
         cog.publish_post = pn.PatchNotes.publish_post.__get__(cog)
         cog.channel.gate = asyncio.Event()
         with _at(AFTER):
-            approve = asyncio.create_task(cog.publish_post(WEEK, {"messages": ["# Update 5.7"]}, ping=False))
+            publish = asyncio.create_task(cog.publish_post(WEEK, {"messages": ["# Update 5.7"]}, ping=False))
             await cog.channel.sending.wait()
             await cog.confirm_week_cancel(_Interaction(), WEEK)
             cog.channel.gate.set()
-            await approve
+            await publish
         self.assertEqual(cog.channel.sent, ["# Update 5.7"])
         self.assertEqual(cog.channel.deleted, [1001])
         self.assertEqual(await cog.config.week_post_messages(), {})
