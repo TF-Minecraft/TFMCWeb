@@ -48,6 +48,9 @@ jobs:
         run: python -m pip install -r discord/requirements-test.txt
       - name: Test Discord commands
         run: python -m pytest -q discord/test_identity_commands.py discord/patchnotes/test_cancel.py --junitxml=test-results/discord.xml
+      - name: Test patch notes formatting
+        working-directory: discord/patchnotes
+        run: python -m unittest test_format test_safety test_schedule
       - name: Upload Discord test report
         if: ${{ !cancelled() && hashFiles('test-results/discord.xml') != '' }}
         uses: actions/upload-artifact@v7
