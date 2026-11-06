@@ -64,6 +64,10 @@ _MAX_POLL_SECONDS = 600
 _CONFIG_PATH = Path(__file__).resolve().parent / "config.yml"
 # How long the Friday review waits for the weekly post before using the line review.
 _POST_WAIT = timedelta(hours=1)
+_CANCELLED_REPLY = "This week's post is cancelled. Use Undo cancel to take it back."
+# Every API call the cog makes is a quick database call, and jobs are polled with separate
+# requests. A hung API must not hold the week lock (and a staff click) for aiohttp's 5 minutes.
+_API_TIMEOUT = aiohttp.ClientTimeout(total=60)
 # How long Deny waits for the writer to rewrite the post.
 _POST_JOB_SECONDS = 540
 
@@ -255,7 +259,8 @@ class PostponeConfirmView(discord.ui.View):
                 ephemeral=True,
             )
             return
-        await self.cog.cancel_postpone(interaction, self.bullet_id)
+        await interaction.response.defer(ephemeral=True)
+        await self.cog.cancel_postpone(interaction, self.week, self.bullet_id)
 
 
 class UndoPostponeView(discord.ui.View):
@@ -506,6 +511,7 @@ class WeekPostponeConfirmView(discord.ui.View):
                 ephemeral=True,
             )
             return
+        await interaction.response.defer(ephemeral=True)
         await self.cog.cancel_week_postpone(interaction, self.week)
 
 
@@ -521,8 +527,15 @@ class WeekUndoPostponeView(discord.ui.View):
             style=discord.ButtonStyle.secondary,
             custom_id=f"patchnotes:week-postpone-undo:{week}",
         )
+        cancel = discord.ui.Button(
+            label="Cancel post instead",
+            style=discord.ButtonStyle.secondary,
+            custom_id=f"patchnotes:week-postponed-cancel:{week}",
+        )
         undo.callback = self._undo  # type: ignore[method-assign]
+        cancel.callback = self._cancel  # type: ignore[method-assign]
         self.add_item(undo)
+        self.add_item(cancel)
 
     async def _undo(self, interaction: discord.Interaction):
         if not self.cog.member_is_staff(interaction):
@@ -534,9 +547,88 @@ class WeekUndoPostponeView(discord.ui.View):
         await interaction.response.defer(ephemeral=True)
         await self.cog.undo_week_postpone(interaction, self.week)
 
+    async def _cancel(self, interaction: discord.Interaction):
+        if not self.cog.member_is_staff(interaction):
+            await interaction.response.send_message(
+                "You need the Staff role to cancel the update post.",
+                ephemeral=True,
+            )
+            return
+        await interaction.response.defer(ephemeral=True)
+        await self.cog.begin_week_cancel(interaction, self.week)
+
+
+class WeekCancelConfirmView(discord.ui.View):
+    """Confirm that this week gets no post in #updates, or go back."""
+
+    def __init__(self, cog: "PatchNotes", week: str):
+        super().__init__(timeout=None)
+        self.cog = cog
+        self.week = week
+        yes = discord.ui.Button(
+            label="Confirm cancel",
+            style=discord.ButtonStyle.danger,
+            custom_id=f"patchnotes:week-cancel-yes:{week}",
+        )
+        no = discord.ui.Button(
+            label="Back",
+            style=discord.ButtonStyle.secondary,
+            custom_id=f"patchnotes:week-cancel-no:{week}",
+        )
+        yes.callback = self._yes  # type: ignore[method-assign]
+        no.callback = self._no  # type: ignore[method-assign]
+        self.add_item(yes)
+        self.add_item(no)
+
+    async def _yes(self, interaction: discord.Interaction):
+        if not self.cog.member_is_staff(interaction):
+            await interaction.response.send_message(
+                "You need the Staff role to cancel the update post.",
+                ephemeral=True,
+            )
+            return
+        await interaction.response.defer(ephemeral=True)
+        await self.cog.confirm_week_cancel(interaction, self.week)
+
+    async def _no(self, interaction: discord.Interaction):
+        if not self.cog.member_is_staff(interaction):
+            await interaction.response.send_message(
+                "You need the Staff role to cancel the update post.",
+                ephemeral=True,
+            )
+            return
+        await interaction.response.defer(ephemeral=True)
+        await self.cog.back_from_week_cancel(interaction, self.week)
+
+
+class WeekUndoCancelView(discord.ui.View):
+    """Take back a cancelled update post from the single review message."""
+
+    def __init__(self, cog: "PatchNotes", week: str):
+        super().__init__(timeout=None)
+        self.cog = cog
+        self.week = week
+        undo = discord.ui.Button(
+            label="Undo cancel",
+            style=discord.ButtonStyle.secondary,
+            custom_id=f"patchnotes:week-cancel-undo:{week}",
+        )
+        undo.callback = self._undo  # type: ignore[method-assign]
+        self.add_item(undo)
+
+    async def _undo(self, interaction: discord.Interaction):
+        if not self.cog.member_is_staff(interaction):
+            await interaction.response.send_message(
+                "You need the Staff role to undo a cancelled post.",
+                ephemeral=True,
+            )
+            return
+        await interaction.response.defer(ephemeral=True)
+        await self.cog.undo_week_cancel(interaction, self.week)
+
 
 class WeekReviewView(discord.ui.View):
-    """Approve, Deny, and Postpone for one week's notes."""
+    """Approve, Deny, Postpone, and Cancel for one week's notes."""
 
     def __init__(self, cog: "PatchNotes", week: str):
         super().__init__(timeout=None)
@@ -557,12 +649,19 @@ class WeekReviewView(discord.ui.View):
             style=discord.ButtonStyle.secondary,
             custom_id=f"patchnotes:week-postpone:{week}",
         )
+        cancel_btn = discord.ui.Button(
+            label="Cancel post",
+            style=discord.ButtonStyle.secondary,
+            custom_id=f"patchnotes:week-cancel:{week}",
+        )
         approve_btn.callback = self._approve  # type: ignore[method-assign]
         deny_btn.callback = self._deny  # type: ignore[method-assign]
         postpone_btn.callback = self._postpone  # type: ignore[method-assign]
+        cancel_btn.callback = self._cancel  # type: ignore[method-assign]
         self.add_item(approve_btn)
         self.add_item(deny_btn)
         self.add_item(postpone_btn)
+        self.add_item(cancel_btn)
 
     async def _approve(self, interaction: discord.Interaction):
         if not self.cog.member_is_staff(interaction):
@@ -573,6 +672,16 @@ class WeekReviewView(discord.ui.View):
             return
         await interaction.response.defer(ephemeral=True)
         await self.cog.approve_week_review(interaction, self.week)
+
+    async def _cancel(self, interaction: discord.Interaction):
+        if not self.cog.member_is_staff(interaction):
+            await interaction.response.send_message(
+                "You need the Staff role to cancel the update post.",
+                ephemeral=True,
+            )
+            return
+        await interaction.response.defer(ephemeral=True)
+        await self.cog.begin_week_cancel(interaction, self.week)
 
     async def _deny(self, interaction: discord.Interaction):
         if not self.cog.member_is_staff(interaction):
@@ -690,10 +799,14 @@ class PatchNotes(commands.Cog):
             review_bundles={},
             week_postpone_confirm=[],
             week_postpone_undo=[],
+            week_cancel_confirm=[],
+            cancelled_weeks=[],
             post_review_messages={},
             week_post_messages={},
         )
         self._poll_task: Optional[asyncio.Task] = None
+        # Publishing, cancelling and undoing a cancel take turns, so none sees another half done.
+        self._week_lock = asyncio.Lock()
         self.apply_settings(self.load_settings())
 
     def load_settings(self) -> dict[str, Any]:
@@ -784,6 +897,10 @@ class PatchNotes(commands.Cog):
             self.bot.add_view(WeekPostponeConfirmView(self, str(week)))
         for week in await self.config.week_postpone_undo():
             self.bot.add_view(WeekUndoPostponeView(self, str(week)))
+        for week in await self.config.week_cancel_confirm():
+            self.bot.add_view(WeekCancelConfirmView(self, str(week)))
+        for week in await self.config.cancelled_weeks():
+            self.bot.add_view(WeekUndoCancelView(self, str(week)))
         self._poll_task = asyncio.create_task(self._poll_loop())
         logger.info(
             "PatchNotes poller started (interval=%ss, api=%s)",
@@ -928,7 +1045,7 @@ class PatchNotes(commands.Cog):
         for content in post_messages(post, self.ping_mention()):
             message = await channel.send(content, allowed_mentions=discord.AllowedMentions.none())
             sent.append(message.id)
-        view = WeekReviewView(self, week)
+        view = await self._review_view(week)
         self.bot.add_view(view)
         control = await channel.send(
             post_review_controls(post), view=view, allowed_mentions=discord.AllowedMentions.none()
@@ -982,6 +1099,8 @@ class PatchNotes(commands.Cog):
 
     async def publish_post(self, week: str, post: dict, *, ping: bool = True) -> None:
         """Send or edit the post in #updates. Only a first send pings."""
+        if await self.is_cancelled(week):
+            raise RuntimeError(f"The post for {week_label(week)} is cancelled. Use Undo cancel to take it back.")
         channel = await self._channel(self.updates_channel_id)
         if channel is None:
             raise RuntimeError("Updates channel is not available.")
@@ -1022,6 +1141,9 @@ class PatchNotes(commands.Cog):
         if week not in announced:
             announced.append(week)
             await self.config.announced_weeks.set(announced)
+        if await self.is_cancelled(week):
+            # Cancelled while this was sending: the cancel found no ids yet, so remove them here.
+            await self._remove_week_post(week)
 
     async def send_test_post(self, channel: discord.abc.Messageable, week: str, post: dict) -> None:
         """A copy of the post for staff to read. No buttons, and nobody is pinged."""
@@ -1039,7 +1161,7 @@ class PatchNotes(commands.Cog):
         headers = self.staff_headers()
         if payload is not None:
             headers["Content-Type"] = "application/json"
-        async with aiohttp.ClientSession() as session:
+        async with aiohttp.ClientSession(timeout=_API_TIMEOUT) as session:
             async with session.request(
                 method, f"{self.api_base_url}{path}", headers=headers, json=payload
             ) as resp:
@@ -1135,6 +1257,10 @@ class PatchNotes(commands.Cog):
         await self.config.postpone_undo.set(held)
 
     async def begin_postpone(self, interaction: discord.Interaction, bullet_id: str) -> None:
+        async with self._week_lock:
+            await self._begin_postpone(interaction, bullet_id)
+
+    async def _begin_postpone(self, interaction: discord.Interaction, bullet_id: str) -> None:
         try:
             bullet = await self.fetch_bullet(bullet_id)
         except Exception as exc:
@@ -1143,6 +1269,8 @@ class PatchNotes(commands.Cog):
         week = str(bullet.get("week") or "").strip()
         if not week:
             await interaction.followup.send("That note has no week.", ephemeral=True)
+            return
+        if await self._keep_undo_cancel(interaction, week):
             return
         try:
             state = await self.fetch_week_status(week)
@@ -1172,15 +1300,26 @@ class PatchNotes(commands.Cog):
             ephemeral=True,
         )
 
-    async def cancel_postpone(self, interaction: discord.Interaction, bullet_id: str) -> None:
-        await self._forget_confirm(bullet_id)
-        view = PatchNotesView(self, bullet_id)
-        self.bot.add_view(view)
-        await interaction.response.edit_message(view=view)
+    async def cancel_postpone(self, interaction: discord.Interaction, week: str, bullet_id: str) -> None:
+        async with self._week_lock:
+            await self._forget_confirm(bullet_id)
+            if await self._keep_undo_cancel(interaction, week):
+                return
+            await self._set_review_view(interaction, PatchNotesView(self, bullet_id))
+            await interaction.followup.send("Not postponed.", ephemeral=True)
 
     async def confirm_postpone(
         self, interaction: discord.Interaction, week: str, bullet_id: str
     ) -> None:
+        async with self._week_lock:
+            await self._confirm_postpone(interaction, week, bullet_id)
+
+    async def _confirm_postpone(
+        self, interaction: discord.Interaction, week: str, bullet_id: str
+    ) -> None:
+        if await self._keep_undo_cancel(interaction, week):
+            await self._forget_confirm(bullet_id)
+            return
         status, text, data = await self.api_request(
             "POST", f"/patchnotes/staff/weeks/{week}/postpone"
         )
@@ -1227,6 +1366,15 @@ class PatchNotes(commands.Cog):
     async def undo_postpone(
         self, interaction: discord.Interaction, week: str, bullet_id: str
     ) -> None:
+        async with self._week_lock:
+            await self._undo_postpone(interaction, week, bullet_id)
+
+    async def _undo_postpone(
+        self, interaction: discord.Interaction, week: str, bullet_id: str
+    ) -> None:
+        if await self._keep_undo_cancel(interaction, week):
+            await self._forget_line_undo(week)
+            return
         status, text, data = await self.api_request(
             "POST", f"/patchnotes/staff/weeks/{week}/undo-postpone"
         )
@@ -1273,6 +1421,8 @@ class PatchNotes(commands.Cog):
         await interaction.followup.send("Postpone undone. This week's notes were posted.", ephemeral=True)
 
     async def finish_postponement(self, week: str) -> None:
+        if await self.is_cancelled(week):
+            return
         state = await self.fetch_week_status(week)
         if not state.get("postponed"):
             return
@@ -1590,7 +1740,7 @@ class PatchNotes(commands.Cog):
             colour=discord.Color.orange(),
         )
         embed.set_footer(text=f"{len(prepared)} lines")
-        view = WeekReviewView(self, week)
+        view = await self._review_view(week)
         self.bot.add_view(view)
         message = await channel.send(
             content,
@@ -1678,10 +1828,12 @@ class PatchNotes(commands.Cog):
         published = {str(item) for item in await self.config.published_weeks()}
         messages = dict(await self.config.week_messages())
         if week in published or week in messages:
-            try:
-                await self.publish_week(week, ping=False)
-            except Exception:
-                logger.exception("Rewrote %s but the public update was not refreshed", week)
+            async with self._week_lock:
+                if not await self.is_cancelled(week):
+                    try:
+                        await self.publish_week(week, ping=False)
+                    except Exception:
+                        logger.exception("Rewrote %s but the public update was not refreshed", week)
         await interaction.followup.send(
             "Rewrote the note from that feedback. The updated note is in the review channel. "
             "Deny again if it is still not right.",
@@ -1707,10 +1859,12 @@ class PatchNotes(commands.Cog):
             )
             return
         if week in dict(await self.config.week_post_messages()):
-            try:
-                await self.publish_post(week, post, ping=False)
-            except Exception:
-                logger.exception("Rewrote %s but #updates was not refreshed", week)
+            async with self._week_lock:
+                if not await self.is_cancelled(week):
+                    try:
+                        await self.publish_post(week, post, ping=False)
+                    except Exception:
+                        logger.exception("Rewrote %s but #updates was not refreshed", week)
         await interaction.followup.send(
             "Rewrote the post from that feedback. The new version is in the review channel. "
             "Deny again if it is still not right.",
@@ -1736,6 +1890,12 @@ class PatchNotes(commands.Cog):
         await self.post_week_denial(interaction, week, feedback)
 
     async def approve_week_review(self, interaction: discord.Interaction, week: str) -> None:
+        async with self._week_lock:
+            await self._approve_week_review(interaction, week)
+
+    async def _approve_week_review(self, interaction: discord.Interaction, week: str) -> None:
+        if await self._keep_undo_cancel(interaction, week):
+            return
         try:
             await self.auto_approve_week(week)
         except Exception as exc:
@@ -1791,6 +1951,12 @@ class PatchNotes(commands.Cog):
                 logger.exception("Could not restore the review buttons")
 
     async def begin_week_postpone(self, interaction: discord.Interaction, week: str) -> None:
+        async with self._week_lock:
+            await self._begin_week_postpone(interaction, week)
+
+    async def _begin_week_postpone(self, interaction: discord.Interaction, week: str) -> None:
+        if await self._keep_undo_cancel(interaction, week):
+            return
         try:
             state = await self.fetch_week_status(week)
         except Exception as exc:
@@ -1818,12 +1984,21 @@ class PatchNotes(commands.Cog):
         )
 
     async def cancel_week_postpone(self, interaction: discord.Interaction, week: str) -> None:
-        await self._forget_week_flag("week_postpone_confirm", week)
-        view = WeekReviewView(self, week)
-        self.bot.add_view(view)
-        await interaction.response.edit_message(view=view)
+        async with self._week_lock:
+            await self._forget_week_flag("week_postpone_confirm", week)
+            if await self._keep_undo_cancel(interaction, week):
+                return
+            await self._set_review_view(interaction, WeekReviewView(self, week))
+            await interaction.followup.send("Not postponed.", ephemeral=True)
 
     async def confirm_week_postpone(self, interaction: discord.Interaction, week: str) -> None:
+        async with self._week_lock:
+            await self._confirm_week_postpone(interaction, week)
+
+    async def _confirm_week_postpone(self, interaction: discord.Interaction, week: str) -> None:
+        if await self._keep_undo_cancel(interaction, week):
+            await self._forget_week_flag("week_postpone_confirm", week)
+            return
         status, text, data = await self.api_request(
             "POST", f"/patchnotes/staff/weeks/{week}/postpone"
         )
@@ -1868,6 +2043,13 @@ class PatchNotes(commands.Cog):
         )
 
     async def undo_week_postpone(self, interaction: discord.Interaction, week: str) -> None:
+        async with self._week_lock:
+            await self._undo_week_postpone(interaction, week)
+
+    async def _undo_week_postpone(self, interaction: discord.Interaction, week: str) -> None:
+        if await self._keep_undo_cancel(interaction, week):
+            await self._forget_week_flag("week_postpone_undo", week)
+            return
         status, text, data = await self.api_request(
             "POST", f"/patchnotes/staff/weeks/{week}/undo-postpone"
         )
@@ -1908,6 +2090,263 @@ class PatchNotes(commands.Cog):
             ephemeral=True,
         )
 
+    # Cancel: this week gets no post in #updates at all. Unlike Postpone, nothing is
+    # announced and the notes are not moved to next week; they stay on the website.
+
+    async def is_cancelled(self, week: str) -> bool:
+        return week in {str(item) for item in await self.config.cancelled_weeks()}
+
+    async def _keep_undo_cancel(self, interaction: discord.Interaction, week: str) -> bool:
+        """A stale Back or Undo postpone on a week someone else cancelled shows Undo cancel again."""
+        if not await self.is_cancelled(week):
+            return False
+        await self._set_review_view(interaction, WeekUndoCancelView(self, week))
+        await interaction.followup.send(_CANCELLED_REPLY, ephemeral=True)
+        return True
+
+    async def _forget_line_undo(self, week: str) -> None:
+        """Forget the older per-line Undo postpone and pending postpone confirms of a week."""
+        held = dict(await self.config.postpone_undo())
+        if held.pop(week, None) is not None:
+            await self.config.postpone_undo.set(held)
+        confirms = dict(await self.config.postpone_confirm())
+        kept = {bullet: held_week for bullet, held_week in confirms.items() if str(held_week) != week}
+        if len(kept) != len(confirms):
+            await self.config.postpone_confirm.set(kept)
+
+    async def _review_view(self, week: str) -> discord.ui.View:
+        """Buttons for a new review message: a cancelled week only offers Undo cancel."""
+        if await self.is_cancelled(week):
+            return WeekUndoCancelView(self, week)
+        return WeekReviewView(self, week)
+
+    async def _set_review_view(self, interaction: discord.Interaction, view: discord.ui.View) -> None:
+        self.bot.add_view(view)
+        if interaction.message is not None:
+            try:
+                await interaction.message.edit(view=view)
+            except discord.HTTPException:
+                logger.exception("Could not change the review buttons")
+
+    async def begin_week_cancel(self, interaction: discord.Interaction, week: str) -> None:
+        async with self._week_lock:
+            await self._begin_week_cancel(interaction, week)
+
+    async def _begin_week_cancel(self, interaction: discord.Interaction, week: str) -> None:
+        if await self._keep_undo_cancel(interaction, week):
+            return
+        try:
+            state = await self.fetch_week_status(week)
+        except Exception as exc:
+            await interaction.followup.send(str(exc)[:300], ephemeral=True)
+            return
+        if state.get("deferred_to"):
+            await interaction.followup.send(
+                f"This week's notes were already moved to {week_label(str(state['deferred_to']))}. "
+                "Cancel that week's post instead.",
+                ephemeral=True,
+            )
+            return
+        await self._remember_week_flag("week_cancel_confirm", week)
+        await self._set_review_view(interaction, WeekCancelConfirmView(self, week))
+        await interaction.followup.send(
+            "Confirm cancel to post nothing in #updates for this week. Nothing is announced, "
+            "and the notes are not moved to next week. They stay on the website.",
+            ephemeral=True,
+        )
+
+    async def back_from_week_cancel(self, interaction: discord.Interaction, week: str) -> None:
+        async with self._week_lock:
+            await self._back_from_week_cancel(interaction, week)
+
+    async def _back_from_week_cancel(self, interaction: discord.Interaction, week: str) -> None:
+        if await self._keep_undo_cancel(interaction, week):
+            await self._forget_week_flag("week_cancel_confirm", week)
+            return
+        try:
+            postponed = bool((await self.fetch_week_status(week)).get("postponed"))
+        except Exception as exc:
+            # Without the status the right buttons are unknown, so the confirm stays up.
+            await interaction.followup.send(str(exc)[:300], ephemeral=True)
+            return
+        await self._forget_week_flag("week_cancel_confirm", week)
+        if postponed:
+            await self._set_review_view(interaction, WeekUndoPostponeView(self, week))
+        else:
+            await self._set_review_view(interaction, WeekReviewView(self, week))
+        await interaction.followup.send("Not cancelled.", ephemeral=True)
+
+    async def confirm_week_cancel(self, interaction: discord.Interaction, week: str) -> None:
+        async with self._week_lock:
+            await self._confirm_week_cancel(interaction, week)
+
+    async def _confirm_week_cancel(self, interaction: discord.Interaction, week: str) -> None:
+        if await self._keep_undo_cancel(interaction, week):
+            await self._forget_week_flag("week_cancel_confirm", week)
+            return
+        try:
+            state = await self.fetch_week_status(week)
+        except Exception as exc:
+            await interaction.followup.send(str(exc)[:300], ephemeral=True)
+            return
+        if state.get("deferred_to"):
+            await interaction.followup.send(
+                f"This week's notes were already moved to {week_label(str(state['deferred_to']))}. "
+                "Cancel that week's post instead.",
+                ephemeral=True,
+            )
+            return
+        # Flag first, so a publish path that runs meanwhile already refuses the week.
+        await self._remember_week_flag("cancelled_weeks", week)
+        if state.get("postponed"):
+            # A hold would announce itself at 18:00 and move the notes; cancel replaces it.
+            try:
+                status, text, data = await self.api_request(
+                    "POST", f"/patchnotes/staff/weeks/{week}/undo-postpone"
+                )
+                detail = _api_detail(data, text)
+            except Exception as exc:
+                logger.exception("Could not take back the hold on %s", week)
+                status, detail = 0, str(exc)[:200]
+            if status != 200:
+                await self._forget_week_flag("cancelled_weeks", week)
+                await interaction.followup.send(
+                    f"Could not take back the postponement: {detail}",
+                    ephemeral=True,
+                )
+                return
+            await self._forget_week_flag("week_postpone_undo", week)
+        await self._forget_line_undo(week)
+        await self._forget_week_flag("week_cancel_confirm", week)
+        await self._forget_week_flag("week_postpone_confirm", week)
+        await self._set_review_view(interaction, WeekUndoCancelView(self, week))
+        removed = await self._remove_week_post(week)
+        try:
+            due = publish_due(week, datetime.now(timezone.utc), self.zone)
+        except ValueError:
+            due = False
+        if due:
+            try:
+                await self._release_cancelled_week(week)
+            except Exception:
+                # Left unmarked, so the poller approves it on its next pass.
+                logger.exception("Cancelled %s but its notes were not approved yet", week)
+            else:
+                await self._mark_published(week)
+        lines = ["Cancelled. Nothing more goes to #updates for this week."]
+        if removed:
+            lines.append("The post already in #updates was removed.")
+        if await self._post_left(week):
+            lines.append(
+                "Some of its messages could not be removed from #updates. Delete them by hand."
+            )
+        lines.append("The notes stay on the website. Use Undo cancel if this was a misclick.")
+        await interaction.followup.send(" ".join(lines), ephemeral=True)
+
+    async def _remove_week_post(self, week: str) -> bool:
+        """Delete this week's messages from #updates. True when any were removed."""
+        posts = dict(await self.config.week_post_messages())
+        legacy = dict(await self.config.week_messages())
+        ids = [int(item) for item in posts.pop(week, None) or []]
+        first = legacy.pop(week, None)
+        if first and int(first) not in ids:
+            ids.append(int(first))
+        if not ids:
+            return False
+        channel = await self._channel(self.updates_channel_id)
+        if channel is None:
+            logger.warning("Updates channel is not available; %s messages were left", week)
+            return False
+        removed = False
+        kept: list[int] = []
+        for message_id in ids:
+            try:
+                await (await channel.fetch_message(message_id)).delete()
+                removed = True
+            except discord.NotFound:
+                continue
+            except discord.HTTPException:
+                logger.warning("Could not remove a %s update message", week)
+                kept.append(message_id)
+        if kept:
+            # Remembered, so a later cancel (after Undo cancel) still reaches them.
+            posts[week] = kept
+            legacy[week] = kept[0]
+        await self.config.week_post_messages.set(posts)
+        await self.config.week_messages.set(legacy)
+        notices = dict(await self.config.postponement_messages())
+        if notices.pop(week, None) is not None:
+            await self.config.postponement_messages.set(notices)
+        return removed
+
+    async def _post_left(self, week: str) -> bool:
+        """True while #updates may still hold messages of this week that the bot knows of."""
+        return week in dict(await self.config.week_post_messages()) or week in dict(
+            await self.config.week_messages()
+        )
+
+    async def undo_week_cancel(self, interaction: discord.Interaction, week: str) -> None:
+        async with self._week_lock:
+            await self._undo_week_cancel(interaction, week)
+
+    async def _undo_week_cancel(self, interaction: discord.Interaction, week: str) -> None:
+        if not await self.is_cancelled(week):
+            try:
+                postponed = bool((await self.fetch_week_status(week)).get("postponed"))
+            except Exception:
+                logger.exception("Could not load the week status for %s", week)
+                postponed = False
+            view = WeekUndoPostponeView(self, week) if postponed else WeekReviewView(self, week)
+            await self._set_review_view(interaction, view)
+            await interaction.followup.send("This week's post is not cancelled.", ephemeral=True)
+            return
+        await self._forget_week_flag("cancelled_weeks", week)
+        await self._set_review_view(interaction, WeekReviewView(self, week))
+        try:
+            due = publish_due(week, datetime.now(timezone.utc), self.zone)
+        except ValueError:
+            due = False
+        if not due:
+            await interaction.followup.send(
+                "Cancel undone. The post goes out at 18:00.", ephemeral=True
+            )
+            return
+        try:
+            await self.auto_approve_week(week)
+            await self.approve_post(week)
+            await self.publish_week(week)
+        except Exception:
+            logger.exception("Undid the cancel for %s but the post was not sent", week)
+            # A cancel after 18:00 marked the week done; reopen it so the poller retries.
+            await self._forget_week_flag("published_weeks", week)
+            await interaction.followup.send(
+                "Cancel undone, but the post could not be sent yet. It is retried automatically.",
+                ephemeral=True,
+            )
+            return
+        await self._mark_published(week)
+        await interaction.followup.send("Cancel undone. The post is in #updates.", ephemeral=True)
+
+    async def _release_cancelled_week(self, week: str) -> None:
+        """Approve a cancelled week's notes for the website, taking back any hold set since."""
+        state = await self.fetch_week_status(week)
+        if state.get("deferred_to"):
+            logger.warning("Cancelled %s was moved to %s; nothing to approve", week, state["deferred_to"])
+            return
+        if state.get("postponed"):
+            status, text, data = await self.api_request(
+                "POST", f"/patchnotes/staff/weeks/{week}/undo-postpone"
+            )
+            if status != 200:
+                raise RuntimeError(f"Could not take back the hold on {week}: {_api_detail(data, text)}")
+            await self._forget_week_flag("week_postpone_undo", week)
+            await self._forget_line_undo(week)
+        status, text, data = await self.api_request(
+            "POST", f"/patchnotes/staff/weeks/{week}/auto-approve"
+        )
+        if status != 200:
+            raise RuntimeError(f"Could not approve the notes of {week}: {_api_detail(data, text)}")
+
     async def _mark_published(self, week: str) -> None:
         published = [str(item) for item in await self.config.published_weeks()]
         if week not in published:
@@ -1915,8 +2354,13 @@ class PatchNotes(commands.Cog):
             await self.config.published_weeks.set(published)
 
     async def _publish_due_weeks(self, now: datetime, pending: list[dict]) -> None:
+        async with self._week_lock:
+            await self._publish_due_weeks_locked(now, pending)
+
+    async def _publish_due_weeks_locked(self, now: datetime, pending: list[dict]) -> None:
         reviewed = [str(item) for item in await self.config.review_posted_weeks()]
         published = {str(item) for item in await self.config.published_weeks()}
+        cancelled = {str(item) for item in await self.config.cancelled_weeks()}
         pending_weeks = {
             str(bullet.get("week") or "").strip()
             for bullet in pending
@@ -1931,6 +2375,15 @@ class PatchNotes(commands.Cog):
                 logger.warning("Skipping publish for week %r", week)
                 continue
             if not ready:
+                continue
+            if week in cancelled:
+                # No post and no notice; the notes still go on the website.
+                try:
+                    await self._release_cancelled_week(week)
+                except Exception:
+                    logger.exception("Could not approve the notes of cancelled %s", week)
+                    continue
+                await self._mark_published(week)
                 continue
             try:
                 state = await self.fetch_week_status(week)
@@ -1990,6 +2443,8 @@ class PatchNotes(commands.Cog):
             logger.exception("Could not update the review message")
 
     async def publish_week(self, week: str, *, ping: bool = True) -> None:
+        if await self.is_cancelled(week):
+            raise RuntimeError(f"The post for {week_label(week)} is cancelled. Use Undo cancel to take it back.")
         # An API error raises here and is retried, so a glitch never posts the old format instead.
         post = await self.fetch_post(week)
         if self.post_ready(post):
@@ -2032,6 +2487,9 @@ class PatchNotes(commands.Cog):
         if week not in announced:
             announced.append(week)
             await self.config.announced_weeks.set(announced)
+        if await self.is_cancelled(week):
+            # Cancelled while this was sending: the cancel found no id yet, so remove it here.
+            await self._remove_week_post(week)
 
     async def apply_decision(
         self,
@@ -2068,16 +2526,23 @@ class PatchNotes(commands.Cog):
                 ephemeral=True,
             )
             return
-        try:
-            await self.publish_week(week)
-        except Exception:
-            logger.exception("Approved %s but the weekly message was not updated", bullet_id)
-            await interaction.followup.send(
-                "Approved, but the weekly message could not be updated. "
-                "Use `/patchnotes refresh` once the channel is reachable.",
-                ephemeral=True,
-            )
-            return
+        async with self._week_lock:
+            if await self.is_cancelled(week):
+                await interaction.followup.send(
+                    "Approved. This week's post is cancelled, so #updates was not changed.",
+                    ephemeral=True,
+                )
+                return
+            try:
+                await self.publish_week(week)
+            except Exception:
+                logger.exception("Approved %s but the weekly message was not updated", bullet_id)
+                await interaction.followup.send(
+                    "Approved, but the weekly message could not be updated. "
+                    "Use `/patchnotes refresh` once the channel is reachable.",
+                    ephemeral=True,
+                )
+                return
         await interaction.followup.send("Approved and added to this week's update.", ephemeral=True)
 
     async def cog_app_command_error(
@@ -2310,11 +2775,18 @@ class PatchNotes(commands.Cog):
     async def refresh_cmd(self, interaction: discord.Interaction, week: str):
         await interaction.response.defer(ephemeral=True)
         week = week.strip()
-        try:
-            await self.publish_week(week, ping=False)
-        except Exception as exc:
-            await interaction.followup.send(str(exc)[:300], ephemeral=True)
-            return
+        async with self._week_lock:
+            if await self.is_cancelled(week):
+                await interaction.followup.send(
+                    f"The post for {week_label(week)} is cancelled. Use Undo cancel to take it back.",
+                    ephemeral=True,
+                )
+                return
+            try:
+                await self.publish_week(week, ping=False)
+            except Exception as exc:
+                await interaction.followup.send(str(exc)[:300], ephemeral=True)
+                return
         await interaction.followup.send(f"Updated the message for {week_label(week)}.", ephemeral=True)
 
     async def _command_week(self, week: Optional[str]) -> str:

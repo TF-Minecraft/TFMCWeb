@@ -252,6 +252,17 @@ class WeeklyPostTest(unittest.TestCase):
         self.assertIn("plain list from the server changes", notice)
         self.assertLessEqual(len(notice), DISCORD_LIMIT)
 
+    def test_review_explains_cancel_apart_from_postpone(self) -> None:
+        notice = notes_format.post_review_notice("2026-W41", self.POST)
+        self.assertIn("Postpone holds the whole week until next week", notice)
+        self.assertIn("Cancel post sends nothing to #updates this week", notice)
+        self.assertIn("not moved to next week", notice)
+        self.assertLessEqual(len(notice), DISCORD_LIMIT)
+        self.assertIn("Cancel post", notes_format.post_review_controls(self.POST))
+        line_review = review_notice("2026-W41", page_url="https://www.tfminecraft.net/updates")
+        self.assertIn(notes_format.CANCEL_LINE, line_review)
+        self.assertLessEqual(len(line_review), DISCORD_LIMIT)
+
     def test_test_copy_says_nothing_was_posted(self) -> None:
         notice = notes_format.post_test_notice("2026-W41", self.POST)
         self.assertTrue(notice.startswith("# Test: Update 5.3"))

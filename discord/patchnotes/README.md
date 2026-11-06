@@ -9,12 +9,24 @@ this cog shows it to staff and posts it to #updates.
    week's first and last TFMCMain backups and the API writes the update post
    from that (`backend/src/patchnotes/weekly.py`, `compose.py`).
 2. The cog posts a staff notice in the review channel, then the post exactly
-   as players will see it, then Approve / Deny / Postpone. It waits up to an
-   hour for the post; without one it falls back to the old line review.
+   as players will see it, then Approve / Deny / Postpone / Cancel post. It
+   waits up to an hour for the post; without one it falls back to the old line
+   review.
 3. Deny asks what should change and rewrites the whole post.
-4. Friday 18:00 posts it to #updates as several messages. Only the first
+4. Postpone and Cancel post both ask for confirmation and have an undo button.
+   - **Postpone** holds the week: #updates says so at 18:00 and the notes move
+     to next week.
+   - **Cancel post** sends nothing to #updates for this week and announces
+     nothing. The notes stay on the website (approved at 18:00) and are not
+     moved. It takes back a postponement whose notes have not moved yet, and
+     deletes the week's messages from #updates (a posted update or a
+     postponement notice). A week whose notes already moved can't be
+     cancelled. Undoing a cancel after 18:00 posts the update straight away.
+   - Buttons left on older messages check the current state, so a stale click
+     on a cancelled week shows Undo cancel again instead of changing it.
+5. Friday 18:00 posts it to #updates as several messages. Only the first
    message pings the update role (`update_ping_role_id`, the TFer role).
-5. The website keeps the full line list, including technical changes.
+6. The website keeps the full line list, including technical changes.
 
 ## Commands
 
@@ -34,4 +46,7 @@ staff key and stays as it is. Then reload the cog in Discord with
 `[p]reload patchnotes`, or restart the bot instance.
 
 Tests: run `python -m unittest test_format test_safety test_schedule` from
-this folder. They need no Discord install.
+this folder. They need no Discord install. The Cancel post flow is covered by
+`test_cancel.py`, which needs `discord/requirements-test.txt` and runs from the
+repository root with `python -m pytest -q discord/patchnotes/test_cancel.py`
+(CI runs it in the `discord` job).
