@@ -553,6 +553,7 @@ class WeekUndoPostponeView(discord.ui.View):
 
 
 _CANCELLED_REPLY = "This week's post is cancelled. Use Undo cancel on its review first."
+_API_TIMEOUT = aiohttp.ClientTimeout(total=60)
 
 
 class WeekCancelConfirmView(discord.ui.View):
@@ -1138,6 +1139,9 @@ class PatchNotes(commands.Cog):
         if week not in announced:
             announced.append(week)
             await self.config.announced_weeks.set(announced)
+        if await self.is_cancelled(week):
+            # Cancelled while this was sending: the cancel found no ids yet, so remove them here.
+            await self._remove_week_post(week)
 
     async def send_test_post(self, channel: discord.abc.Messageable, week: str, post: dict) -> None:
         """A copy of the post for staff to read. No buttons, and nobody is pinged."""
@@ -1155,7 +1159,7 @@ class PatchNotes(commands.Cog):
         headers = self.staff_headers()
         if payload is not None:
             headers["Content-Type"] = "application/json"
-        async with aiohttp.ClientSession() as session:
+        async with aiohttp.ClientSession(timeout=_API_TIMEOUT) as session:
             async with session.request(
                 method, f"{self.api_base_url}{path}", headers=headers, json=payload
             ) as resp:
@@ -1300,6 +1304,12 @@ class PatchNotes(commands.Cog):
     async def confirm_postpone(
         self, interaction: discord.Interaction, week: str, bullet_id: str
     ) -> None:
+        async with self._week_lock:
+            await self._confirm_postpone(interaction, week, bullet_id)
+
+    async def _confirm_postpone(
+        self, interaction: discord.Interaction, week: str, bullet_id: str
+    ) -> None:
         if await self.is_cancelled(week):
             await interaction.followup.send(_CANCELLED_REPLY, ephemeral=True)
             return
@@ -1439,6 +1449,9 @@ class PatchNotes(commands.Cog):
             await self.config.week_messages.set(updates)
         notices[week] = message.id
         await self.config.postponement_messages.set(notices)
+        if await self.is_cancelled(week):
+            await self._remove_week_post(week)
+            return
         # A posted multi-message update keeps only its first message, now the notice.
         posts = dict(await self.config.week_post_messages())
         for extra in (posts.pop(week, None) or [])[1:]:
@@ -1954,6 +1967,10 @@ class PatchNotes(commands.Cog):
         await interaction.response.edit_message(view=view)
 
     async def confirm_week_postpone(self, interaction: discord.Interaction, week: str) -> None:
+        async with self._week_lock:
+            await self._confirm_week_postpone(interaction, week)
+
+    async def _confirm_week_postpone(self, interaction: discord.Interaction, week: str) -> None:
         if await self.is_cancelled(week):
             await interaction.followup.send(_CANCELLED_REPLY, ephemeral=True)
             return
@@ -2129,13 +2146,18 @@ class PatchNotes(commands.Cog):
         await self._remember_week_flag("cancelled_weeks", week)
         if state.get("postponed"):
             # A hold would announce itself at 18:00 and move the notes; cancel replaces it.
-            status, text, data = await self.api_request(
-                "POST", f"/patchnotes/staff/weeks/{week}/undo-postpone"
-            )
+            try:
+                status, text, data = await self.api_request(
+                    "POST", f"/patchnotes/staff/weeks/{week}/undo-postpone"
+                )
+                detail = _api_detail(data, text)
+            except Exception as exc:
+                logger.exception("Could not take back the hold on %s", week)
+                status, detail = 0, str(exc)[:200]
             if status != 200:
                 await self._forget_week_flag("cancelled_weeks", week)
                 await interaction.followup.send(
-                    f"Could not take back the postponement: {_api_detail(data, text)}",
+                    f"Could not take back the postponement: {detail}",
                     ephemeral=True,
                 )
                 return
@@ -2246,7 +2268,11 @@ class PatchNotes(commands.Cog):
             if status != 200:
                 raise RuntimeError(f"Could not take back the hold on {week}: {_api_detail(data, text)}")
             await self._forget_week_flag("week_postpone_undo", week)
-        await self.auto_approve_week(week)
+        status, text, data = await self.api_request(
+            "POST", f"/patchnotes/staff/weeks/{week}/auto-approve"
+        )
+        if status != 200:
+            raise RuntimeError(f"Could not approve the notes of {week}: {_api_detail(data, text)}")
 
     async def _mark_published(self, week: str) -> None:
         published = [str(item) for item in await self.config.published_weeks()]

@@ -62,11 +62,16 @@ class _Channel:
         self.deleted: list[int] = []
         self.sent: list[str] = []
         self.undeletable = set(undeletable)
+        self.gate: asyncio.Event | None = None
+        self.sending = asyncio.Event()
 
     async def fetch_message(self, message_id):
         return _Message(message_id, self)
 
     async def send(self, content, **_):
+        self.sending.set()
+        if self.gate is not None:
+            await self.gate.wait()
         self.sent.append(content)
         return _Message(1000 + len(self.sent), self)
 
@@ -101,7 +106,9 @@ def _cog(status: dict, *, posts: dict | None = None, undeletable=(), status_erro
     cog.updates_channel_id = 5
     cog.channel = _Channel(undeletable)
     cog.calls = []
+    cog.approve_answers = []
     cog._week_lock = asyncio.Lock()
+    cog.update_ping_role_id = 0
 
     async def channel(_channel_id):
         return cog.channel
@@ -117,8 +124,11 @@ def _cog(status: dict, *, posts: dict | None = None, undeletable=(), status_erro
             status["postponed"] = False
         elif path.endswith("/postpone"):
             status["postponed"] = True
-        elif path.endswith("/auto-approve") and status.get("postponed"):
-            return 409, '{"detail": "Week is postponed"}', {"detail": "Week is postponed"}
+        elif path.endswith("/auto-approve"):
+            answer = 409 if status.get("postponed") else 200
+            cog.approve_answers.append(answer)
+            if answer == 409:
+                return 409, '{"detail": "Week is postponed"}', {"detail": "Week is postponed"}
         return 200, "{}", {}
 
     async def fetch_post(_week):
@@ -150,10 +160,9 @@ def _at(moment: datetime):
     return mock.patch.object(pn, "datetime", Fixed)
 
 
-def _approved(cog, status: dict) -> bool:
-    """auto-approve was called while the week was not postponed (the real API refuses then)."""
-    called = ("POST", f"/patchnotes/staff/weeks/{WEEK}/auto-approve") in cog.calls
-    return called and not status.get("postponed")
+def _approved(cog) -> bool:
+    """The fake API accepted an auto-approve, which it refuses (409) while the week is postponed."""
+    return 200 in cog.approve_answers
 
 
 class CancelPostTest(unittest.IsolatedAsyncioTestCase):
@@ -177,7 +186,7 @@ class CancelPostTest(unittest.IsolatedAsyncioTestCase):
         self.assertNotIn(("PUBLISH", WEEK), cog.calls)
         self.assertFalse(any(path.endswith("/defer") for _, path in cog.calls))
         self.assertEqual(cog.channel.sent, [])
-        self.assertTrue(_approved(cog, status))
+        self.assertTrue(_approved(cog))
         self.assertEqual(await cog.config.published_weeks(), [WEEK])
 
     async def test_undo_after_18_reopens_and_posts(self) -> None:
@@ -264,7 +273,7 @@ class CancelPostTest(unittest.IsolatedAsyncioTestCase):
         cog.config.cancelled_weeks.value = [WEEK]
         await cog._publish_due_weeks(AFTER, [])
         self.assertIn(("POST", f"/patchnotes/staff/weeks/{WEEK}/undo-postpone"), cog.calls)
-        self.assertTrue(_approved(cog, status))
+        self.assertTrue(_approved(cog))
         self.assertEqual(await cog.config.published_weeks(), [WEEK])
         self.assertEqual(cog.channel.sent, [])
 
@@ -325,12 +334,82 @@ class CancelPostTest(unittest.IsolatedAsyncioTestCase):
         cog = _cog({"postponed": False, "deferred_to": None})
         cog.config.cancelled_weeks.value = [WEEK]
         cog.config.published_weeks.value = [WEEK]
+        gate = asyncio.Event()
+        started = asyncio.Event()
+
+        async def slow_publish(week, post, *, ping=True):
+            started.set()
+            await gate.wait()
+            cog.calls.append(("PUBLISH", week))
+
+        cog.publish_post = slow_publish
         with _at(AFTER):
             first = _Interaction()
             second = _Interaction()
-            await asyncio.gather(cog.undo_week_cancel(first, WEEK), cog.undo_week_cancel(second, WEEK))
+            one = asyncio.create_task(cog.undo_week_cancel(first, WEEK))
+            await started.wait()
+            two = asyncio.create_task(cog.undo_week_cancel(second, WEEK))
+            await asyncio.sleep(0)
+            gate.set()
+            await asyncio.gather(one, two)
         self.assertEqual(cog.calls.count(("PUBLISH", WEEK)), 1)
         self.assertIn("not cancelled", second.said[-1])
+
+    async def test_a_staff_publish_racing_a_cancel_is_removed(self) -> None:
+        cog = _cog({"postponed": False, "deferred_to": None})
+        cog.publish_post = pn.PatchNotes.publish_post.__get__(cog)
+        cog.channel.gate = asyncio.Event()
+        with _at(AFTER):
+            approve = asyncio.create_task(cog.publish_post(WEEK, {"messages": ["# Update 5.7"]}, ping=False))
+            await cog.channel.sending.wait()
+            await cog.confirm_week_cancel(_Interaction(), WEEK)
+            cog.channel.gate.set()
+            await approve
+        self.assertEqual(cog.channel.sent, ["# Update 5.7"])
+        self.assertEqual(cog.channel.deleted, [1001])
+        self.assertEqual(await cog.config.week_post_messages(), {})
+
+    async def test_a_postpone_waits_for_a_cancel_and_then_refuses(self) -> None:
+        status = {"postponed": False, "deferred_to": None}
+        cog = _cog(status)
+        interaction = _Interaction()
+        async with cog._week_lock:
+            postpone = asyncio.create_task(cog.confirm_week_postpone(interaction, WEEK))
+            await asyncio.sleep(0)
+            cog.config.cancelled_weeks.value = [WEEK]
+        await postpone
+        self.assertEqual(interaction.said, [pn._CANCELLED_REPLY])
+        self.assertFalse(status["postponed"])
+        self.assertNotIn(("POST", f"/patchnotes/staff/weeks/{WEEK}/postpone"), cog.calls)
+
+    async def test_a_refused_approval_leaves_the_week_for_the_poller(self) -> None:
+        status = {"postponed": True, "deferred_to": None}
+        cog = _cog(status)
+        cog.config.cancelled_weeks.value = [WEEK]
+        real = cog.api_request
+
+        async def sticky_hold(method, path, payload=None):
+            if path.endswith("/undo-postpone"):
+                cog.calls.append((method, path))
+                return 200, "{}", {}
+            return await real(method, path, payload)
+
+        cog.api_request = sticky_hold
+        await cog._publish_due_weeks(AFTER, [])
+        self.assertEqual(cog.approve_answers, [409])
+        self.assertEqual(await cog.config.published_weeks(), [])
+
+    async def test_cancel_is_rolled_back_when_the_api_is_unreachable(self) -> None:
+        cog = _cog({"postponed": True, "deferred_to": None})
+
+        async def unreachable(method, path, payload=None):
+            raise OSError("connection refused")
+
+        cog.api_request = unreachable
+        interaction = _Interaction()
+        await cog.confirm_week_cancel(interaction, WEEK)
+        self.assertFalse(await cog.is_cancelled(WEEK))
+        self.assertIn("connection refused", interaction.said[-1])
 
     async def test_cog_load_reattaches_the_cancel_buttons(self) -> None:
         cog = _cog({"postponed": False, "deferred_to": None})
