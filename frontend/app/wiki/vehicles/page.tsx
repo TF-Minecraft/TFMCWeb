@@ -145,8 +145,8 @@ export default function VehiclesPage() {
       </p>
       <p className="mt-3 text-sm text-[var(--tfmc-mist)]">
         Use <code className="text-[var(--tfmc-accent)]">/vf findvehicles</code> to locate your vehicles. Vehicles more
-        than 160 blocks from players unload into storage; they are not destroyed. A train driving a recorded route keeps
-        running instead (see{" "}
+        than 160 blocks from players unload into storage; they are not destroyed. A train driving a recorded route with
+        fuel and nobody aboard keeps running instead (see{" "}
         <Link href="#routes" className={linkClass}>
           Teach a train a route
         </Link>
@@ -292,16 +292,20 @@ export default function VehiclesPage() {
       <WikiSectionHeading id="routes">Teach a train a route</WikiSectionHeading>
       <p className="text-sm text-[var(--tfmc-mist)]">
         The Locomotive&apos;s owner can teach it a route on any track: one lap of a loop, or a run out along a line and
-        back. Stop the train where the route should start, right-click the Locomotive with a Train Track Recorder and
-        drive. Stop for at least 2 seconds wherever the train should stop. On a loop, the recording ends after one lap.
-        On a line, drive to the far end, stop, reverse back to where you started, then set off again the way you first
-        went: the recording ends there. Right-click again to cancel a recording.
+        back. Stop the train where the route should start and right-click the Locomotive with a{" "}
+        <WikiItemLink name="Train Track Recorder" /> to start recording. Switch to another item before you board:
+        right-clicking the Locomotive with the Recorder again cancels the recording. Drive the route and stop for at
+        least 2 seconds wherever the train should stop. On a loop, the recording ends after one lap. On a line, drive to
+        the far end, stop, reverse back to where you started, then set off again the way you first went: the recording
+        ends there.
       </p>
       <p className="mt-3 text-sm text-[var(--tfmc-mist)]">
-        Sneak-right-click the Locomotive with the recorded Recorder to load the tape, then leave the driver&apos;s seat.
-        It drives the route by itself, stops where you stopped and sets the switches the way you went. Anyone who takes
-        the driver&apos;s seat drives it by hand until they leave. A tape only fits the track it was recorded on, so
-        record again if the track is rebuilt. Sneak-right-click with an empty hand to take the tape back out.
+        When the recording ends, the tape goes onto the Recorder if you are holding it, or straight into the Locomotive
+        if you are not. To load a tape from a Recorder, sneak-right-click the Locomotive with it. Then leave the
+        driver&apos;s seat: the train drives the route by itself, stops where you stopped and sets the switches the way
+        you went. Anyone who takes the driver&apos;s seat drives it by hand until they leave. Only the owner can load a
+        tape or take it out; sneak-right-click with an empty hand to take it out. A tape only fits the track it was
+        recorded on, so record again if the track is rebuilt.
       </p>
       <p className="mt-3 text-sm text-[var(--tfmc-mist)]">
         A train on its route keeps running when nobody is near, as long as it has fuel and nobody is aboard, and uses
@@ -312,14 +316,15 @@ export default function VehiclesPage() {
       </p>
       <WikiSectionHeading id="cargo-docks">Cargo docks</WikiSectionHeading>
       <p className="text-sm text-[var(--tfmc-mist)]">
-        Craft a <WikiItemLink name="Train Track Dock" /> at the <StationLink name="Engineer Station" /> and right-click
-        a chest, barrel, shulker box, hopper, dispenser or dropper that you can open. The first click makes it a load
-        dock, the second an unload dock and the third removes it. Breaking the block also removes the dock.
+        Craft a <WikiItemLink name="Train Track Dock" /> at the <StationLink name="Engineer Station" /> and, without
+        sneaking, right-click a chest, barrel, shulker box, hopper, dispenser or dropper that you can open. The first
+        click makes it a load dock, the second an unload dock and the third removes it. Breaking the block also removes
+        the dock.
       </p>
       <p className="mt-3 text-sm text-[var(--tfmc-mist)]">
         When your train stops at a recorded stop next to one of your docks, each car with storage moves items: it takes
         items from a load dock and leaves its cargo in an unload dock, up to a limit at each stop. A car only takes the
-        items it accepts, and Coal Cars are left alone. Docks only trade with trains owned by the same character that
+        items it accepts, and Coal Cars are left alone. Docks only trade with cars owned by the same character that
         marked them, and keep working while the train runs with nobody near.
       </p>
       <p className="mt-3 text-sm text-[var(--tfmc-mist)]">
@@ -329,7 +334,8 @@ export default function VehiclesPage() {
         </Link>{" "}
         is an open car that players ride standing on its deck, with a 54-slot hold that takes any item. Right-click the
         car and click the chest in its menu to open it. Its owner can always open it, and so can the faction of a
-        faction-owned car. Players on the car&apos;s whitelist can open it while the owner has whitelisting on.
+        faction-owned car. While the owner has whitelisting on, players on the car&apos;s whitelist and members of the
+        groups allowed in Ownership Settings can open it too. A ticket does not open it.
       </p>
       <WikiSectionHeading id="horses">Hitch horses to a cart</WikiSectionHeading>
       <p className="text-sm text-[var(--tfmc-mist)]">

@@ -22,7 +22,7 @@ export default async function MaterialDetailPage({ params }: { params: Promise<{
 
   return (
     <WikiPage
-      lastModified="2026-10-24"
+      lastModified="2026-11-06"
       title={material.name}
       beforeTitle={
         <Link href="/wiki/materials" className="text-xs text-[var(--tfmc-mist)] hover:text-[var(--tfmc-cream)]">

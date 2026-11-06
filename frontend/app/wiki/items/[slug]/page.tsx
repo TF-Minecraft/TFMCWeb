@@ -21,7 +21,7 @@ export default async function ItemDetailPage({ params }: { params: Promise<{ slu
     : { href: "/wiki/stations", label: "Crafting Stations" };
   return (
     <WikiPage
-      lastModified="2026-10-23"
+      lastModified="2026-11-06"
       title={item.name}
       beforeTitle={
         <Link href={back.href} className="text-xs text-[var(--tfmc-mist)] hover:text-[var(--tfmc-cream)]">

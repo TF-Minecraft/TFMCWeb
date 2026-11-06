@@ -11,7 +11,7 @@ import {
   resolveTextureUrls,
   type WikiBlockModel,
 } from "../../components/wiki/modelGeometry";
-import { vehicles, vehicleRecipes, getVehicleBySlug } from "../data/vehicles";
+import { vehicles, vehicleRecipes, getSeatCounts, getVehicleBySlug } from "../data/vehicles";
 import VehicleDetail, { generateStaticParams } from "./[slug]/page";
 import VehiclesPage from "./page";
 
@@ -114,6 +114,31 @@ describe("vehicle page rendering", () => {
       expect(html).toContain(`>${vehicle.name}</button>`);
     }
     for (const skin of vehicles[0].skins) expect(html).toContain(skin.name);
+  });
+
+  it("words seat, captain and mechanic instructions from each vehicle's seats", async () => {
+    expect(getSeatCounts({ seats: "1/2/13" })).toEqual({ captain: 1, mechanic: 2, passenger: 13, total: 16 });
+    expect(getSeatCounts({ seats: "0/0/0" }).total).toBe(0);
+    const detail = async (slug: string) =>
+      renderToStaticMarkup(await VehicleDetail({ params: Promise.resolve({ slug }) })).replace(/<!-- -->/g, "");
+
+    const flatCar = await detail("flat-car");
+    expect(flatCar).toContain("riders stand on its deck");
+    expect(flatCar).toContain('href="/wiki/vehicles#cargo-docks"');
+    expect(flatCar).toContain("who can open the hold");
+    expect(flatCar).not.toContain("select a seat");
+    expect(flatCar).not.toContain("mechanic seat");
+    expect(flatCar).not.toContain("Only the captain steers");
+
+    const coalCar = await detail("coal-car");
+    expect(coalCar).toContain("then right-click to select a seat");
+    expect(coalCar).not.toContain("Only the captain steers");
+    expect(coalCar).not.toContain("mechanic seat");
+
+    const ironclad = await detail("ironclad");
+    expect(ironclad).toContain("Only the captain steers");
+    expect(ironclad).toContain("or from a mechanic seat");
+    expect(ironclad).toContain("passenger access and tickets");
   });
 });
 

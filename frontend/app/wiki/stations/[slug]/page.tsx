@@ -65,7 +65,7 @@ export default async function StationDetailPage({ params }: { params: Promise<{ 
 
   return (
     <WikiPage
-      lastModified="2026-11-04"
+      lastModified="2026-11-06"
       title={station.name}
       beforeTitle={
         <Link href="/wiki/stations" className="text-xs text-[var(--tfmc-mist)] hover:text-[var(--tfmc-cream)]">

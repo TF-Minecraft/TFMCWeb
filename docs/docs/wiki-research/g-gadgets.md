@@ -62,7 +62,7 @@ ModelEngine also emits a generated resource pack at
 with textures at `...\assets\modelengine\textures\entity\models\<vehicle>.png`.
 **These are not usable.** It is **one JSON per bone** (57 separate files for `small_car`), each in its own local space with **no bone offset baked in** — e.g. `chassis.json` starts at `from [4.67, 8.0, 12.33]` and `front_axle.json` at `from [-10.0, 7.0, 7.0]`, both centred on their own origin. Loading any one renders a disconnected fragment; loading all 57 at the origin produces a pile.
 
-### All 21 vehicle models
+### All 22 vehicle models
 
 | Vehicle ID | Display name | `.bbmodel` path (under `plugins\ModelEngine\blueprints\`) | Elements | bbmodel `resolution` | Textures | Embedded PNG size(s) | Rotated el. | Multi-axis rot. | Anims | Model size (blocks X×Y×Z) |
 |---|---|---|---|---|---|---|---|---|---|---|
@@ -76,6 +76,7 @@ with textures at `...\assets\modelengine\textures\entity\models\<vehicle>.png`.
 | `cruiser` | Cruiser | `cruiser.bbmodel` | 352 | 256×256 | **3** | 128×128, 32×32, 64×64 | 62 | **2** | 11 | 12.9 × 20.5 × 24.7 |
 | `field_artillery` | Field Artillery | `field_artillery.bbmodel` | 40 | 64×64 | 1 | 32×32 | 0 | 0 | 3 | 1.9 × 1.9 × 5.2 |
 | `fixed_artillery` | Fixed Artillery | `fixed_artillery.bbmodel` | 27 | 64×64 | 1 | 128×128 | 0 | 0 | 1 | 4.8 × 2.8 × 3.9 |
+| `flat_car` | Flat Car | `vehicles/trains/flat_car.bbmodel` | 160 | 96×96 | **3** | 48×48, 32×32, 16×16 | 0 | 0 | 2 | 4.0 × 1.5 × 10.7 |
 | `gunboat` | Gunboat | `gunboat.bbmodel` | 170 | 128×128 | **2** | 64×64, 16×16 | 2 | 0 | 7 | 10.5 × 6.1 × 7.6 |
 | `gyrobomber` | Gyrobomber | `gyrobomber.bbmodel` | 371 | 192×192 | **2** | 96×96, 16×16 | 29 | 0 | 5 | 13.0 × 17.8 × 15.6 |
 | `horse_cart` | Horse Cart | `vehicles/land/horse_cart.bbmodel` | 99 | 96×96 | **2** | 48×48, 16×16 | 0 | 0 | 4 | 6.2 × 2.8 × 8.4 |
@@ -598,12 +599,12 @@ Limits that will bite a builder: **max turn 35°**, **minimum lay distance 8 blo
 
 ## 3.6a Train routes, running unloaded, cargo docks, Flat Car hold (VehicleFramework 2.18.0)
 
-Checked 2026-11-06 against VehicleFramework 2.18.0 (TF-Minecraft/VehicleFramework #91, #89) and Main's live configs (`trains.yml`, `vehicles/flat_car.yml`, `MMOItems/item/utils.yml`, `MMOItems/crafting-stations/engineer-station.yml`, `SimpleFactions/vehicles.yml`). Staged on Main 2026-11-06, loads at the 2026-11-07 restart. Main's train tools are MMOItems (`item-recorder: m.utils.train_track_recorder` etc.); the `v.clock` row in 3.6 is the plugin default, not Main.
+Checked 2026-11-06 against VehicleFramework 2.18.0 (TF-Minecraft/VehicleFramework #90, #89, #91) and Main's live configs (`trains.yml`, `vehicles/flat_car.yml`, `MMOItems/item/utils.yml`, `MMOItems/crafting-stations/engineer-station.yml`, `SimpleFactions/vehicles.yml`). Staged on Main 2026-11-06, loads at the 2026-11-07 restart. Main's train tools are MMOItems (`item-recorder: m.utils.train_track_recorder` etc.); the `v.clock` row in 3.6 is the plugin default, not Main.
 
-- **Recording (Train Track Recorder).** Owner or admin only; the Locomotive must be on a track. Right-click starts ("Recording started. Drive one lap of a circuit, or out and back to this spot, heading the way you set off. Stop for 2 seconds or more where it should stop."); right-click again cancels. Ends by itself after one lap of a loop, or on a line when the Locomotive is back at the start heading the way it first moved, under power, after a minimum distance. Stops held 2 s or more are recorded stops. Tape works only on the track it was recorded on.
-- **Playback.** Sneak-right-click with the recorded Recorder loads the tape ("Tape loaded"); sneak-right-click with an empty hand takes it out ("Tape removed"). Follows the tape in order (stops, reversals), sets facing switches the way the recording went, waits short of a switch another train holds, brakes into recorded stops. A seated captain drives by hand. No fuel: stops.
-- **Running with nobody near ("on paper").** A tape train with fuel, nobody aboard and no seat storage open keeps moving along its timetable when its chunks unload or it reaches the loaded edge, using `routes.paper-fuel` (0.5) of its loaded fuel burn and drawing from the fuel car. Appears where it has got to when a player comes within spawn range. Keeps `routes.paper-gap` (4) blocks behind another train running unloaded and stops short of loaded or parked trains, waiting without fuel use. Two trains head-on on one line wait for each other. Survives restarts. Do not publish the numbers.
-- **Cargo docks (Train Track Dock, MMOItem `UTILS.TRAIN_TRACK_DOCK`, Engineer Station: 1 Iron Ingot, 5 s).** Right-click a chest, barrel, shulker box, hopper, dispenser or dropper the player can open (locks/claims that refuse opening refuse the dock); cycles load, unload, off ("Cargo dock: load. Your tape-driven trains that stop here take items from it." / "...unload..." / "Cargo dock removed"). Sneaking refuses. Needs a character. Breaking/burning/replacing the block removes it. At a recorded stop of 2 s or more, each car with storage within reach of a dock of the same character trades: load dock into car, car into unload dock, as much as fits (car `allow-items` respected, up to a per-stop item limit). Fuel cars (types on the Locomotive's `fuel-cars`, the Coal Car) are skipped. Works while running unloaded. Do not publish reach or item limits.
+- **Recording (Train Track Recorder).** Owner or admin only; the Locomotive must be on a track. Right-click (main hand) starts ("Recording started. Drive one lap of a circuit, or out and back to this spot, heading the way you set off. Stop for 2 seconds or more where it should stop."); right-click again with a Recorder cancels, so the driver switches item before boarding (a cancel still writes the partial tape onto the Recorder in hand). Ends by itself after one lap of a loop, or on a line when the Locomotive is back at the start heading the way it first moved, under power, after a minimum distance. Stops held 2 s or more are recorded stops. Tape works only on the track it was recorded on. On finishing, the tape is written onto the Recorder if the recording player holds one in the main hand; otherwise (or if that player is offline) it goes straight into the Locomotive (`TrainHandler.finishRecordingCappedOrUnbound`).
+- **Playback.** Sneak-right-click with the recorded Recorder loads the tape ("Tape loaded"); sneak-right-click with an empty hand takes it out ("Tape removed"). Loading and removing are owner (or admin) only. Follows the tape in order (stops, reversals), sets facing switches the way the recording went, waits short of a switch another train holds, brakes into recorded stops. A seated captain drives by hand. No fuel: stops.
+- **Running with nobody near ("on paper").** A tape train with fuel, nobody aboard and no seat storage open keeps moving along its timetable when its chunks unload or it reaches the loaded edge, using `routes.paper-fuel` (0.5, the code default: Main's `trains.yml` has no `routes:` or `docks:` section) of its loaded fuel burn and drawing from the fuel car. Appears where it has got to when a player comes within spawn range. Keeps `routes.paper-gap` (4, code default) blocks behind another train running unloaded and stops short of loaded or parked trains, waiting without fuel use. Two trains head-on on one line wait for each other. Survives restarts. Do not publish the numbers.
+- **Cargo docks (Train Track Dock, MMOItem `UTILS.TRAIN_TRACK_DOCK`, Engineer Station: 1 Iron Ingot, 5 s).** Right-click a chest, barrel, shulker box, hopper, dispenser or dropper the player can open (locks/claims that refuse opening refuse the dock); cycles load, unload, off ("Cargo dock: load. Your tape-driven trains that stop here take items from it." / "...unload..." / "Cargo dock removed"). Sneaking refuses. Needs a character. Breaking/burning/replacing the block removes it. At a recorded stop of 2 s or more, each car with storage within reach of a dock trades if that car's owner is the character that marked the dock (checked per car, not per train): load dock into car, car into unload dock, as much as fits (car `allow-items` respected, up to a per-stop item limit). Fuel cars (types on the Locomotive's `fuel-cars`, the Coal Car) are skipped. Works while running unloaded. Do not publish reach or item limits.
 - **Flat Car hold.** `vehicles/flat_car.yml` `containers.hold` (`seat: outside`, 54 slots, any item). Opened from a chest button in the car's Select Seat menu by the owner, by groups the vehicle always admits (its faction), and by the whitelist and its groups while whitelisting is on. Tickets do not open it. Personal limit 3, upkeep 1 (`SimpleFactions/vehicles.yml`), trains do not count toward the 3-vehicle total.
 
 ## 3.7 Features configured but INERT or broken
@@ -689,19 +690,19 @@ If you do not left-click within **30 seconds** the placement is cancelled: `§cV
 
 **Note:** the categories themselves carry no permission, so **every category is visible to everyone**. What is hidden is the individual blueprints inside. A player with no Engineer rank sees eight empty categories.
 
-### All 21 blueprints (`plugins\VFBuilders\blueprints\*.yml`)
+### All 22 blueprints (`plugins\VFBuilders\blueprints\*.yml`)
 
 | Blueprint | Category | Requires | Build time | Inputs |
 |---|---|---|---|---|
 | Wooden Cart | carts | Engineer I | **6 min** | 64 Oak Log, 16 Iron Ingot, 16 Stick |
 | Small Car | cars | Engineer I | **12 min** | 32 Oak Log, 32 Iron Ingot, 2 Lantern, 2 Arcane Crystal |
-| Coal Car | train | Engineer I | **12 min** | 16 Oak Log, 16 Iron Ingot, 8 Stick |
-| Passenger Car | train | Engineer I | **12 min** | 16 Oak Log, 16 Iron Ingot, 8 Stick, 16 Cyan Wool |
-| Flat Car | train | Engineer I | **6 h** (Main `VFBuilders/blueprints/train.yml`, 2026-11-06) | 16 Oak Log, 16 Iron Ingot, 8 Stick |
+| Coal Car | train | Engineer I | **6 h** (Main, 2026-11-06) | 16 Oak Log, 16 Iron Ingot, 8 Stick |
+| Passenger Car | train | Engineer I | **6 h** (Main, 2026-11-06) | 16 Oak Log, 16 Iron Ingot, 8 Stick, 16 Cyan Wool |
+| Flat Car | train | Engineer I | **6 h** (Main, 2026-11-06) | 16 Oak Log, 16 Iron Ingot, 8 Stick |
 | Cloudskimmer | airships | Engineer III | **12 min** | 32 Oak Log, 32 White Wool, 32 Iron Ingot, 2 Arcane Crystal |
 | Horse Cart | carts | Engineer I | **24 min** | 64 Oak Log, 16 Iron Ingot, 16 Stick, 8 Steel Ingot |
 | Anti-Air Turret | fixed | Engineer I | **24 min** | 16 Iron Ingot, 8 Oak Log, 8 Steel Ingot |
-| Simple Locomotive | train | Engineer I | **24 min** | 32 Oak Log, 32 Iron Ingot, 8 Furnace, 16 Stick |
+| Simple Locomotive | train | Engineer I | **1 day** (Main, 2026-11-06) | 32 Oak Log, 32 Iron Ingot, 8 Furnace, 16 Stick |
 | Gunboat | wooden_ships | Engineer II | **24 min** | 64 Oak Log, 64 White Wool, 4 Steel Ingot |
 | Monoplane | planes | Engineer III | **24 min** | 16 Oak Log, 16 White Wool, 16 Iron Ingot, 8 Steel Ingot, 8 Arcane Crystal |
 | Field Artillery | fixed | Engineer I | **48 min** | 32 Iron Ingot, 16 Oak Log, 16 Steel Ingot |
@@ -742,7 +743,7 @@ If you do not left-click within **30 seconds** the placement is cancelled: `§cV
 
 1. **Categories have no permission gate.** `BlueprintCategory` supports `permission:` (`InventoryManager:41`) but none of the eight categories sets one, so a brand-new player sees all eight and finds every one of them empty. Worth explaining in the wiki so it does not read as a bug.
 2. **The Train category lore says "Must be spawned on rails"** — but nothing in `StationManager.onPlayerLeftClick` validates the spawn location at all. The only check is the 12-block distance. Placing a locomotive off-track is not prevented by the plugin; **unverified whether VehicleFramework rejects it downstream.**
-3. **`blueprints/*.yml` supports a `disabled:` flag** (documented in `parts.yml` for GunsAndGadgets and honoured for blueprints via `hasDisabledPart`); no blueprint uses it. All 21 are live.
+3. **`blueprints/*.yml` supports a `disabled:` flag** (documented in `parts.yml` for GunsAndGadgets and honoured for blueprints via `hasDisabledPart`); no blueprint uses it. All 22 are live.
 4. **Live station data is empty.** `plugins\VFBuilders\data\stations.json` records no active constructions at snapshot time.
 
 ## 4.7 Cross-links

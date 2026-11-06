@@ -190,7 +190,7 @@ export const vehicles: VehicleInfo[] = [
     speed: "n/a",
     turn: "N/A",
     weapons: "N/A",
-    cargo: "Flat Car Hold, 54 slots, opened from the button in the car's menu; riders stand on the deck",
+    cargo: "Flat Car Hold, 54 slots, opened from the chest in the car's menu",
     slug: "flat-car",
     category: "train",
     requirement: "Engineer I",
@@ -750,6 +750,11 @@ for (const vehicle of vehicles) {
   }
 }
 
+/** Seat counts from the "captain/mechanic/passenger" seats field. */
+export function getSeatCounts(vehicle: Pick<VehicleInfo, "seats">) {
+  const [captain = 0, mechanic = 0, passenger = 0] = vehicle.seats.split("/").map((count) => Number(count) || 0);
+  return { captain, mechanic, passenger, total: captain + mechanic + passenger };
+}
 export function getVehicleBySlug(slug: string): VehicleInfo | undefined {
   return vehicles.find((vehicle) => vehicle.slug === slug);
 }
@@ -821,7 +826,7 @@ export const vehiclesSection: WikiSection = {
     href: "/wiki/vehicles",
     label: "Vehicles & Construction",
     category: "vehicles",
-    blurb: "Build, crew, fuel and repair all 22 vehicles, with 3D previews and complete blueprints.",
+    blurb: `Build, crew, fuel and repair all ${vehicles.length} vehicles, with 3D previews and complete blueprints.`,
   },
   commands: vehicleCommands,
   recipes: [...vehicleRecipes, ...constructionStations],
@@ -904,6 +909,6 @@ export const vehicleTrackItems: string[][] = [
   [
     "Train Track Dock",
     "m.utils.train_track_dock",
-    "Right-click a chest, barrel, shulker box, hopper, dispenser or dropper to make it a load dock, again for an unload dock, again to remove it.",
+    "Without sneaking, right-click a chest, barrel, shulker box, hopper, dispenser or dropper to make it a load dock, again for an unload dock, again to remove it.",
   ],
 ];

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Callout, DataTable, StationLink, WikiItemLink, WikiPage, WikiSectionHeading } from "@/app/components/wiki";
-import { getVehicleBySlug, vehicles } from "../../data/vehicles";
+import { getSeatCounts, getVehicleBySlug, vehicles } from "../../data/vehicles";
 import VehiclePreview from "../VehiclePreview";
 
 export function generateStaticParams() {
@@ -12,8 +12,10 @@ export default async function VehicleDetail({ params }: { params: Promise<{ slug
   const { slug } = await params;
   const vehicle = getVehicleBySlug(slug);
   if (!vehicle) notFound();
+  const seats = getSeatCounts(vehicle);
+  const seatless = seats.total === 0;
   return (
-    <WikiPage lastModified={vehicle.id === "flat_car" ? "2026-11-06" : "2026-10-24"} title={vehicle.name}>
+    <WikiPage lastModified="2026-11-06" title={vehicle.name}>
       <Link href="/wiki/vehicles" className="text-sm text-[var(--tfmc-accent)] underline">
         All vehicles and operating guide
       </Link>
@@ -26,7 +28,11 @@ export default async function VehicleDetail({ params }: { params: Promise<{ slug
       {vehicle.id === "flat_car" ? (
         <p className="mt-3 text-sm text-[var(--tfmc-mist)]">
           The Flat Car has no seats: riders stand on its deck. Right-click the car and click the chest in its menu to
-          open its hold.
+          open its hold. A train on a recorded route can load and unload it at{" "}
+          <Link href="/wiki/vehicles#cargo-docks" className="underline">
+            cargo docks
+          </Link>
+          .
         </p>
       ) : null}
       <WikiSectionHeading id="blueprint">Build blueprint</WikiSectionHeading>
@@ -53,8 +59,8 @@ export default async function VehicleDetail({ params }: { params: Promise<{ slug
       <p className="mt-4 text-sm text-[var(--tfmc-mist)]">
         Select this blueprint at the station, stand at the building spot within 12 blocks and left-click before the
         30-second selection timer expires. Inputs are consumed at placement. Stay within 96 blocks when construction
-        finishes{vehicle.id === "flat_car" ? "" : ", then right-click to select a seat"}. Breaking the station during
-        construction cancels the build and drops the inputs at the station.
+        finishes{seatless ? "" : ", then right-click to select a seat"}. Breaking the station during construction
+        cancels the build and drops the inputs at the station.
       </p>
       <WikiSectionHeading id="specifications">Specifications</WikiSectionHeading>
       <DataTable
@@ -126,13 +132,17 @@ export default async function VehicleDetail({ params }: { params: Promise<{ slug
       ) : null}
       <WikiSectionHeading id="operating">Operate and maintain</WikiSectionHeading>
       <p className="text-sm text-[var(--tfmc-mist)]">
-        {vehicle.id === "flat_car" ? (
+        {seatless ? (
           <>Riders stand on the deck, and the car follows the train it is coupled to. </>
         ) : (
           <>
-            Right-click to select a seat. Only the captain steers; run{" "}
-            <code className="text-[var(--tfmc-accent)]">/vf keybinds</code> while seated for this vehicle’s current
-            controls.{" "}
+            Right-click to select a seat.{" "}
+            {seats.captain > 0 ? (
+              <>
+                Only the captain steers; run <code className="text-[var(--tfmc-accent)]">/vf keybinds</code> while
+                seated for this vehicle’s current controls.{" "}
+              </>
+            ) : null}
             {vehicle.category === "airships"
               ? "Use Shift + left-click for seat selection; in flight, Shift alone descends."
               : vehicle.category === "planes"
@@ -144,13 +154,14 @@ export default async function VehicleDetail({ params }: { params: Promise<{ slug
         <Link href="/wiki/vehicles#repair" className="underline">
           Vehicle Repair
         </Link>{" "}
-        from outside while stationary and grounded{vehicle.id === "flat_car" ? "" : ", or from a mechanic seat"}.
+        from outside while stationary and grounded{seats.mechanic > 0 ? ", or from a mechanic seat" : ""}.
       </p>
       <p className="mt-3 text-sm text-[var(--tfmc-mist)]">
         Your finished build starts with whitelisting on. Claiming an unowned vehicle, receiving a handover or receiving
-        a faction vehicle starts with whitelisting off. Turn it on in Ownership Settings to control passenger access and
-        tickets. Unloading beyond 160 blocks is storage, not destruction; use{" "}
-        <code className="text-[var(--tfmc-accent)]">/vf findvehicles</code> to locate your vehicles.
+        a faction vehicle starts with whitelisting off. Turn it on in Ownership Settings to control{" "}
+        {seatless ? "who can open the hold" : "passenger access and tickets"}. Unloading beyond 160 blocks is storage,
+        not destruction; use <code className="text-[var(--tfmc-accent)]">/vf findvehicles</code> to locate your
+        vehicles.
       </p>
       <Link href="/wiki/vehicles#operation" className="mt-4 inline-block text-[var(--tfmc-accent)] underline">
         Full driving, weapons, repair, storage and ownership instructions

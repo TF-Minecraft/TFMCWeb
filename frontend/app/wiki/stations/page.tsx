@@ -7,7 +7,7 @@ const body = "mt-3 text-sm text-[var(--tfmc-mist)]";
 export default function StationsPage() {
   return (
     <WikiPage
-      lastModified="2026-10-23"
+      lastModified="2026-11-06"
       title="Crafting Stations"
       intro="Most custom items are made at a station rather than a crafting table. Open a station's page for its recipes."
       width="lg"
