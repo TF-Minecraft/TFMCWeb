@@ -158,10 +158,12 @@ export default async function VehicleDetail({ params }: { params: Promise<{ slug
       </p>
       <p className="mt-3 text-sm text-[var(--tfmc-mist)]">
         Your finished build starts with whitelisting on. Claiming an unowned vehicle, receiving a handover or receiving
-        a faction vehicle starts with whitelisting off. Turn it on in Ownership Settings to control{" "}
-        {seatless ? "who can open the hold" : "passenger access and tickets"}. Unloading beyond 160 blocks is storage,
-        not destruction; use <code className="text-[var(--tfmc-accent)]">/vf findvehicles</code> to locate your
-        vehicles.
+        a faction vehicle starts with whitelisting off.{" "}
+        {seatless
+          ? "Only the owner (and the faction, for a faction car) can open the hold. Turn whitelisting on in Ownership Settings to let whitelisted players and allowed groups open it too."
+          : "Turn it on in Ownership Settings to control passenger access and tickets."}{" "}
+        Unloading beyond 160 blocks is storage, not destruction; use{" "}
+        <code className="text-[var(--tfmc-accent)]">/vf findvehicles</code> to locate your vehicles.
       </p>
       <Link href="/wiki/vehicles#operation" className="mt-4 inline-block text-[var(--tfmc-accent)] underline">
         Full driving, weapons, repair, storage and ownership instructions

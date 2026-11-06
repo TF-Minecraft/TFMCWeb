@@ -755,6 +755,7 @@ export function getSeatCounts(vehicle: Pick<VehicleInfo, "seats">) {
   const [captain = 0, mechanic = 0, passenger = 0] = vehicle.seats.split("/").map((count) => Number(count) || 0);
   return { captain, mechanic, passenger, total: captain + mechanic + passenger };
 }
+
 export function getVehicleBySlug(slug: string): VehicleInfo | undefined {
   return vehicles.find((vehicle) => vehicle.slug === slug);
 }

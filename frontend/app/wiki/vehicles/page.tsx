@@ -301,18 +301,19 @@ export default function VehiclesPage() {
       </p>
       <p className="mt-3 text-sm text-[var(--tfmc-mist)]">
         When the recording ends, the tape goes onto the Recorder if you are holding it, or straight into the Locomotive
-        if you are not. To load a tape from a Recorder, sneak-right-click the Locomotive with it. Then leave the
-        driver&apos;s seat: the train drives the route by itself, stops where you stopped and sets the switches the way
-        you went. Anyone who takes the driver&apos;s seat drives it by hand until they leave. Only the owner can load a
-        tape or take it out; sneak-right-click with an empty hand to take it out. A tape only fits the track it was
-        recorded on, so record again if the track is rebuilt.
+        if you are not. Starting a recording erases any tape already on that Recorder, and a new tape that goes into the
+        Locomotive replaces the one loaded there. To load a tape from a Recorder, sneak-right-click the Locomotive with
+        it. Then leave the driver&apos;s seat: the train drives the route by itself, stops where you stopped and sets
+        the switches the way you went. Whoever takes the driver&apos;s seat drives it by hand until they leave. Only the
+        owner can load a tape or take it out; sneak-right-click with an empty hand to take it out. A tape only fits the
+        track it was recorded on, so record again if the track is rebuilt.
       </p>
       <p className="mt-3 text-sm text-[var(--tfmc-mist)]">
         A train on its route keeps running when nobody is near, as long as it has fuel and nobody is aboard, and uses
         less fuel while it does. It appears where it has got to when a player comes close. While nobody is near, it
-        keeps its distance from other trains and waits behind them; two trains meeting head-on on one line wait for each
-        other until someone moves one. With players close by, trains on the same track can still collide. Give each line
-        one train, or run several trains the same way round a loop with room between them.
+        keeps its distance from other trains and waits behind them; two trains meeting head-on on one line both stop and
+        wait. With players close by, trains on the same track can still collide. Give each line one train, or run
+        several trains the same way round a loop with room between them.
       </p>
       <WikiSectionHeading id="cargo-docks">Cargo docks</WikiSectionHeading>
       <p className="text-sm text-[var(--tfmc-mist)]">

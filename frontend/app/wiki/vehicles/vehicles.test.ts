@@ -125,7 +125,8 @@ describe("vehicle page rendering", () => {
     const flatCar = await detail("flat-car");
     expect(flatCar).toContain("riders stand on its deck");
     expect(flatCar).toContain('href="/wiki/vehicles#cargo-docks"');
-    expect(flatCar).toContain("who can open the hold");
+    expect(flatCar).toContain("Turn whitelisting on in Ownership Settings to let whitelisted players");
+    expect(flatCar).not.toContain("passenger access and tickets");
     expect(flatCar).not.toContain("select a seat");
     expect(flatCar).not.toContain("mechanic seat");
     expect(flatCar).not.toContain("Only the captain steers");
