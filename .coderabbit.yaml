@@ -1,0 +1,8 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+# Merge with the organisation's CodeRabbit settings instead of replacing them.
+inheritance: true
+reviews:
+  path_filters:
+    # Generated at build time (frontend/scripts/build-wiki-search-index.mjs). It is one ~750 KB line that GitHub
+    # gives no diff for, so CodeRabbit marks the review incomplete and holds back its approval.
+    - "!frontend/public/wiki/search-index.json"
