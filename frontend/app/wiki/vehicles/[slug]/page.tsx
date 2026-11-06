@@ -53,8 +53,8 @@ export default async function VehicleDetail({ params }: { params: Promise<{ slug
       <p className="mt-4 text-sm text-[var(--tfmc-mist)]">
         Select this blueprint at the station, stand at the building spot within 12 blocks and left-click before the
         30-second selection timer expires. Inputs are consumed at placement. Stay within 96 blocks when construction
-        finishes, then right-click to select a seat. Breaking the station during construction cancels the build and
-        drops the inputs at the station.
+        finishes{vehicle.id === "flat_car" ? "" : ", then right-click to select a seat"}. Breaking the station during
+        construction cancels the build and drops the inputs at the station.
       </p>
       <WikiSectionHeading id="specifications">Specifications</WikiSectionHeading>
       <DataTable
@@ -144,7 +144,7 @@ export default async function VehicleDetail({ params }: { params: Promise<{ slug
         <Link href="/wiki/vehicles#repair" className="underline">
           Vehicle Repair
         </Link>{" "}
-        from outside while stationary and grounded, or from a mechanic seat.
+        from outside while stationary and grounded{vehicle.id === "flat_car" ? "" : ", or from a mechanic seat"}.
       </p>
       <p className="mt-3 text-sm text-[var(--tfmc-mist)]">
         Your finished build starts with whitelisting on. Claiming an unowned vehicle, receiving a handover or receiving
