@@ -142,6 +142,12 @@ def updates_message(
     return text[: DISCORD_LIMIT - 1] + "…"
 
 
+CANCEL_LINE = (
+    "Cancel post sends nothing to #updates this week and announces nothing. "
+    "The notes stay on the website and are not moved to next week."
+)
+
+
 def postponement_message(week: str) -> str:
     """The public line when staff hold a week past 18:00."""
     return f"The patch notes for {week_label(week)} have been postponed until next week."
@@ -197,6 +203,7 @@ def review_notice(
         lines.append(
             "Postpone holds the whole week. Confirm it, and undo it if that was a misclick."
         )
+        lines.append(CANCEL_LINE)
         lines.append("Anything new after noon waits for next week.")
         lines.append("Lore items are hidden knowledge. Deny feedback that would reveal one.")
     text = "\n".join(lines)
@@ -363,13 +370,14 @@ def post_review_notice(
         "Deny once with everything that should change. That text rewrites the whole post. "
         "It is not the new wording."
     )
-    lines.append("Postpone holds the whole week. Nothing is posted if you postpone.")
+    lines.append("Postpone holds the whole week until next week and says so in #updates at 18:00.")
+    lines.append(CANCEL_LINE)
     lines.append("If nobody acts, the post goes out at 18:00.")
     return "\n".join(lines)[:DISCORD_LIMIT]
 
 
 def post_review_controls(post: dict) -> str:
-    return f"End of **{post_title(post)}**. Approve, Deny with feedback, or Postpone."
+    return f"End of **{post_title(post)}**. Approve, Deny with feedback, Postpone, or Cancel post."
 
 
 def post_test_notice(week: str, post: dict) -> str:
