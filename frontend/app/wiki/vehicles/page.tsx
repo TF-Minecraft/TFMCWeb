@@ -79,8 +79,8 @@ export default function VehiclesPage() {
           seconds of selecting the blueprint. The materials are consumed when you choose the spot.
         </li>
         <li>
-          Wait for the build to finish. Stay within 96 blocks so the completed vehicle can appear, then right-click it
-          to select a seat.
+          Wait for the build to finish. Stay within 96 blocks so the completed vehicle can appear. If it has seats,
+          right-click it to select one.
         </li>
       </ol>
       <div className="mt-5 grid gap-4 lg:grid-cols-2">
