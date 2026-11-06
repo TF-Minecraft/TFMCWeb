@@ -47,7 +47,7 @@ It is **raw three.js** (`three@^0.185.1`, `OrbitControls`) — no react-three-fi
 - GLTF / OBJ / `.bbmodel`.
 - Multi-axis rotation (one `rotateOnAxis` per element only).
 
-Assets live at `frontend\public\wiki\models\*.json` (4 files today: alchemy/animal/engineer/magic station) and `frontend\public\wiki\textures\**` (141 PNGs). Each mounted viewer creates its **own WebGLRenderer + rAF loop**; browsers cap WebGL contexts at roughly 8–16, so a grid of 21 vehicle previews on one page is a genuine risk. Cleanup disposes renderer and controls but **not** geometries, material, or texture (GPU leak on repeated mount/unmount).
+Assets live at `frontend\public\wiki\models\*.json` (4 files today: alchemy/animal/engineer/magic station) and `frontend\public\wiki\textures\**` (141 PNGs). Each mounted viewer creates its **own WebGLRenderer + rAF loop**; browsers cap WebGL contexts at roughly 8–16, so a grid of 22 vehicle previews on one page is a genuine risk. Cleanup disposes renderer and controls but **not** geometries, material, or texture (GPU leak on repeated mount/unmount).
 
 A separate, simpler `cubeFaces?: {up,down,north,south,east,west: string}` field exists at data.ts:855 for plain 6-face cube blocks.
 
@@ -62,7 +62,7 @@ ModelEngine also emits a generated resource pack at
 with textures at `...\assets\modelengine\textures\entity\models\<vehicle>.png`.
 **These are not usable.** It is **one JSON per bone** (57 separate files for `small_car`), each in its own local space with **no bone offset baked in** — e.g. `chassis.json` starts at `from [4.67, 8.0, 12.33]` and `front_axle.json` at `from [-10.0, 7.0, 7.0]`, both centred on their own origin. Loading any one renders a disconnected fragment; loading all 57 at the origin produces a pile.
 
-### All 21 vehicle models
+### All 22 vehicle models
 
 | Vehicle ID | Display name | `.bbmodel` path (under `plugins\ModelEngine\blueprints\`) | Elements | bbmodel `resolution` | Textures | Embedded PNG size(s) | Rotated el. | Multi-axis rot. | Anims | Model size (blocks X×Y×Z) |
 |---|---|---|---|---|---|---|---|---|---|---|
@@ -76,6 +76,7 @@ with textures at `...\assets\modelengine\textures\entity\models\<vehicle>.png`.
 | `cruiser` | Cruiser | `cruiser.bbmodel` | 352 | 256×256 | **3** | 128×128, 32×32, 64×64 | 62 | **2** | 11 | 12.9 × 20.5 × 24.7 |
 | `field_artillery` | Field Artillery | `field_artillery.bbmodel` | 40 | 64×64 | 1 | 32×32 | 0 | 0 | 3 | 1.9 × 1.9 × 5.2 |
 | `fixed_artillery` | Fixed Artillery | `fixed_artillery.bbmodel` | 27 | 64×64 | 1 | 128×128 | 0 | 0 | 1 | 4.8 × 2.8 × 3.9 |
+| `flat_car` | Flat Car | `vehicles/trains/flat_car.bbmodel` | 160 | 96×96 | **3** | 48×48, 32×32, 16×16 | 0 | 0 | 2 | 4.0 × 1.5 × 10.7 |
 | `gunboat` | Gunboat | `gunboat.bbmodel` | 170 | 128×128 | **2** | 64×64, 16×16 | 2 | 0 | 7 | 10.5 × 6.1 × 7.6 |
 | `gyrobomber` | Gyrobomber | `gyrobomber.bbmodel` | 371 | 192×192 | **2** | 96×96, 16×16 | 29 | 0 | 5 | 13.0 × 17.8 × 15.6 |
 | `horse_cart` | Horse Cart | `vehicles/land/horse_cart.bbmodel` | 99 | 96×96 | **2** | 48×48, 16×16 | 0 | 0 | 4 | 6.2 × 2.8 × 8.4 |
@@ -113,7 +114,7 @@ What has to happen, per vehicle:
 2. **Emit `elements` straight from the bbmodel's flat `elements[]` array.** In the `free` model format the element `from`/`to` are already in one shared model space (e.g. `small_car` element 0 is `from [-18, 9.75, -25]`, `origin [16, 9.75, -24]`), so the rest pose renders correctly while **ignoring the `outliner` groups entirely**. This is exactly why the bbmodel is the right source and the per-bone ModelEngine JSONs are not.
 3. **Rescale the UVs.** bbmodel face UVs are in the project's `resolution` pixel space (e.g. `small_car` north face `uv:[16, 0, 52, 2]` at resolution 128). The viewer assumes the 0–16 grid. Conversion: `uv_out = uv_in * 16 / resolution.width`.
    **Verified:** `16 × 16/128 = 2.0` and `52 × 16/128 = 6.5`, which exactly matches ModelEngine's own generated `front_axle.json` face `uv:[2.0, 0.0, 6.5, 0.25]`. Note `resolution` is often **2× the actual PNG dimensions** (small_car: resolution 128×128, embedded PNG 64×64) — use `resolution`, not the PNG size.
-4. **Resolve `faces[].texture`** (an integer index into `textures[]`) into a texture variable — and for the **13 multi-texture vehicles**, merge the 2–5 PNGs into one atlas and re-offset the UVs, because the viewer supports only one texture.
+4. **Resolve `faces[].texture`** (an integer index into `textures[]`) into a texture variable — and for the **15 multi-texture vehicles**, merge the 2–5 PNGs into one atlas and re-offset the UVs, because the viewer supports only one texture.
 5. **Handle multi-axis rotation.** Six vehicles have elements rotated on two axes: `aa_turret` (1 element), `behemoth` (4), `cloudskimmer` (1), `cruiser` (2), `ironclad` (1), `small_car` (2). The viewer applies one axis. Either nest pivot objects or accept 1–4 mis-oriented cubes per model.
 6. **Discard animations.** 1–17 clips per model are irrelevant to a static preview. (If an animated preview is ever wanted, that is a completely different renderer — the bone hierarchy in `outliner` would then become mandatory.)
 
@@ -122,7 +123,7 @@ What has to happen, per vehicle:
 | Group | Blocker | Work needed |
 |---|---|---|
 | `anti_air`, `bomber`, `field_artillery`, `fixed_artillery`, `monoplane`, `small_car`\*, `torpedoboat` (7) | none beyond UV rescale | Write a `.bbmodel → wiki JSON` converter script. Straightforward, one-off. (\*`small_car` has 2 multi-axis elements.) |
-| `aa_turret`, `behemoth`, `biplane`, `cloudskimmer`, `coal_car`, `cruiser`, `gunboat`, `gyrobomber`, `horse_cart`, `ironclad`, `passenger_car`, `simple_locomotive`, `sloop`, `wooden_cart` (14) | **multi-texture** (2–5 PNGs) | Additionally needs PNG atlas packing + UV re-offset, **or** extending `StationModelViewer` to resolve the `textures` map into a `THREE.Mesh` material array. |
+| `aa_turret`, `behemoth`, `biplane`, `cloudskimmer`, `coal_car`, `cruiser`, `flat_car`, `gunboat`, `gyrobomber`, `horse_cart`, `ironclad`, `passenger_car`, `simple_locomotive`, `sloop`, `wooden_cart` (15) | **multi-texture** (2–5 PNGs) | Additionally needs PNG atlas packing + UV re-offset, **or** extending `StationModelViewer` to resolve the `textures` map into a `THREE.Mesh` material array. |
 | `behemoth` (499 el.), `passenger_car` (380), `gyrobomber` (371), `sloop` (362), `cruiser` (352), `bomber` (347) | **draw-call count** | The viewer creates one mesh per element. 350–500 meshes × several simultaneous canvases will hurt. Merge element geometries into a single `BufferGeometry` before shipping a gallery page. |
 
 **Recommendation to state plainly:** extending the existing viewer to (a) resolve the `textures` map into a material array and (b) merge element geometries is likely less work and more robust than an offline atlas packer. Either way, **vehicle previews are a new piece of engineering, not a copy-paste of the station pattern.** The converter script itself is the smaller half of the job.
@@ -371,7 +372,7 @@ Note: the shipped jar's `plugin.yml` declares **no top-level permission on the `
 
 # 3. VehicleFramework
 
-**Deployed:** `vehicleframework-1.1.11.jar`. The source checkout also reports `1.1.11` but is **demonstrably older than the jar** — the live `config.yml` has `ticket-item`, `weapon-degraded-reload-multiplier`, `terrain-follow-debug` and `ground-engine-logging`, none of which the source's `ConfigLoader` reads, and the jar contains classes (`Vehicles/Handlers/VehicleTicketInteract`, `Managers/OwnershipGUIManager`) that the source lacks or has in older form. Claims below are marked where they came from bytecode strings rather than source.
+**Deployed:** `vehicleframework-1.1.11.jar`. The source checkout also reports `1.1.11` but is **demonstrably older than the jar** — the live `config.yml` has `ticket-item`, `weapon-degraded-reload-multiplier`, `terrain-follow-debug` and `ground-engine-logging`, none of which the source's `ConfigLoader` reads, and the jar contains classes (`Vehicles/Handlers/VehicleTicketInteract`, `Managers/OwnershipGUIManager`) that the source lacks or has in older form. Claims below are marked where they came from bytecode strings rather than source. Section 3.6a reflects VehicleFramework 2.18.0 (staged on Main 2026-11-06).
 
 ## 3.1 What it is
 
@@ -396,7 +397,7 @@ Once a vehicle exists in the world:
 5. **Shoot.** Sit in the seat a weapon is bound to. `RIGHT_CLICK` = reload (loads whatever ammo item is in your hand), `SPACE` = fire, `W/A/S/D` = traverse the gun. The Mounted Rifle (`gun_turret`) instead aims at your **cursor** up to 120 blocks.
 6. **Repair.** Hold the repair item and right-click. You must either be **outside** the vehicle (and it must not be flying or moving faster than 0.2) or be sitting in a **mechanic** seat. A Repair Vehicle GUI opens with a **Repair Tool** and a **Water Bucket** (to put out fires). Walking away or closing the window cancels the repair.
 7. **Re-skin.** Hold the skin item and right-click to open **Select Skin**.
-8. **Store cargo.** Right-click a vehicle with containers to open its inventory (Behemoth, Cloudskimmer, Coal Car, Wooden Cart).
+8. **Store cargo.** Right-click a vehicle with containers to open its inventory (Behemoth, Cloudskimmer, Coal Car, Gyrobomber, Wooden Cart). The Flat Car's hold has no seat (`seat: outside`): its chest button sits in slot 23 of the car's Select Seat menu (VehicleFramework 2.18.0, see 3.6a).
 9. **Tow.** Sneak + right-click a towable vehicle to select it, then sneak + right-click the tower to attach. Sneak + right-click the tower again to detach. Selection is dropped if you move more than 8 blocks away.
 10. **Destroy it.** Hold a **Blaze Rod** and right-click → the vehicle is removed instantly with the message `§cRemoved`. **There is no confirmation and no ownership check in the source's interact chain.** See 3.7.
 
@@ -412,7 +413,7 @@ Once a vehicle exists in the world:
 - **Tickets:** with tickets enabled, the owner holds the ticket item (**Paper**, `ticket-item: v.paper`) and right-clicks the vehicle to mint tickets stamped with that vehicle's id; passengers need one to take a passenger seat. Message on failure: `§cTickets are not enabled on this vehicle`. *(Read from `VehicleTicketInteract.class` / `VehicleTicketItems.class` strings — the ticket system is not in the source checkout.)*
 - The owner can **eject** a player by clicking their occupied (yellow) seat in the Seat Selection GUI. The ejected player gets `§cYou have been removed from the vehicle by the owner and cannot re-enter for 60 seconds.`
 
-## 3.3 Content it adds — all 21 vehicles
+## 3.3 Content it adds — all 22 vehicles (Flat Car added 2026-11-06, see 3.6a)
 
 Display names carry a `§l§e` prefix in config; the player-visible text is the plain part. Seats are written `captain / mechanic / passenger`.
 
@@ -424,6 +425,7 @@ Display names carry a `§l§e` prefix in config; the player-visible text is the 
 | `simple_locomotive` | Simple Locomotive | Train (`tracked`) | 1/0/0 | engine 200, hull 30 | Coal Blocks | 0.60 ≈ 12 b/s | 0.20 | — | — |
 | `coal_car` | Coal Car | Train car (`tracked`) | 0/0/1 | hull 30 | — | n/a | — | — | Coal Bunker, 27 slots, **only accepts Coal Blocks** |
 | `passenger_car` | Passenger Car | Train car (`tracked`) | 0/0/8 | hull 30 | — | n/a | — | — | — |
+| `flat_car` | Flat Car | Train car (`tracked`, walkable deck) | 0/0/0 | hull 30 | — | n/a | — | — | Flat Car Hold, 54 slots, any item, opened from the car's menu (VehicleFramework 2.18.0) |
 | `gunboat` | Gunboat | Sailing ship | 1/1/3 | sails 140, hull 290 (sinkable) | **none — wind** | 0.37 ≈ 7.4 b/s | 0.24 | Front Cannon | — |
 | `sloop` | Sloop | Sailing ship | 1/1/10 | sails 200, hull 400 (sinkable), pump 80 | **none — wind** | 0.30 ≈ 6 b/s | 0.20 | 4 × Naval Cannon (2 per broadside) | — |
 | `torpedoboat` | Torpedoboat | Steamship | 1/1/1 | engine 200, hull 400, pump 80 | Coal Blocks | 0.40 ≈ 8 b/s | 0.35 | Torpedo Launcher (fixed) | — |
@@ -568,7 +570,7 @@ Vehicle Repair and Vehicle Paint are crafted at the **Engineer Station** (`plugi
 
 ### Other
 
-- **Despawn distance: 160 blocks.** Walk further than that and the vehicle unloads (it is not destroyed — `/vf findvehicles` still reports it).
+- **Despawn distance: 160 blocks.** Walk further than that and the vehicle unloads (it is not destroyed — `/vf findvehicles` still reports it). Exception: tape-driven trains keep running unloaded (3.6a).
 - **Eject cooldown: 60 seconds.**
 - **Explosions break blocks** — `block-damage: true` on this server. Cannon and bomb hits will crater terrain. Blocks in `convert-explosion` degrade rather than vanish: Grass Block → Dirt, Stone Bricks → Cracked Stone Bricks, Stone → Cobblestone.
 - **Captain-seat entry logging is OFF** (`enable-logging: false`).
@@ -595,6 +597,16 @@ Trains run on a spline-track system, not vanilla rails. Track-laying items:
 
 Limits that will bite a builder: **max turn 35°**, **minimum lay distance 8 blocks**, **snap distance 3**, **join distance 1.5**, **minimum junction spacing 16**, **maximum junction length 32**, **desired grade 6°, maximum grade 10°**. In survival/adventure mode the track grows **one sample every 4 ticks** (creative rebakes the whole stroke at once). Switch throw speed is **90°/second**.
 
+## 3.6a Train routes, running unloaded, cargo docks, Flat Car hold (VehicleFramework 2.18.0)
+
+Checked 2026-11-06 against VehicleFramework 2.18.0 (TF-Minecraft/VehicleFramework #90, #89, #91) and Main's live configs (`trains.yml`, `vehicles/flat_car.yml`, `MMOItems/item/utils.yml`, `MMOItems/crafting-stations/engineer-station.yml`, `SimpleFactions/vehicles.yml`). Staged on Main 2026-11-06, loads at the 2026-11-07 restart. Main's train tools are MMOItems (`item-recorder: m.utils.train_track_recorder` etc.); the `v.clock` row in 3.6 is the plugin default, not Main.
+
+- **Recording (Train Track Recorder).** Owner or admin only; the Locomotive must be on a track. Right-click (main hand) starts ("Recording started. Drive one lap of a circuit, or out and back to this spot, heading the way you set off. Stop for 2 seconds or more where it should stop."); right-click again with a Recorder cancels, so the driver switches item before boarding (a cancel still writes the partial tape onto the Recorder in hand). Ends by itself after one lap of a loop, or on a line when the Locomotive is back at the start heading the way it first moved, under power, after a minimum distance. Stops held 2 s or more are recorded stops. Tape works only on the track it was recorded on (matched by the track's ID, `ThrottleTape.matchesSpline`), so a rebuilt track needs a new recording. Starting a recording erases the tape on the Recorder in hand (`TrainTapeInteract.toggleRecord`). On finishing, the tape is written onto the Recorder if the recording player holds one in the main hand; otherwise (or if that player is offline) it goes straight into the Locomotive, replacing any tape loaded there (`TrainHandler.finishRecordingCappedOrUnbound`).
+- **Playback.** Sneak-right-click with the recorded Recorder loads the tape ("Tape loaded"); sneak-right-click with an empty hand takes it out ("Tape removed"). Loading refuses while a tape is loaded ("Remove the current tape first") and consumes the Recorder (`TrainTapeInteract.install`/`consumeOne`); removing gives a new Recorder carrying the tape (`eject`). Tape handling runs before coupling in `VehicleManager`, so an empty-hand sneak-right-click on a Locomotive with a tape takes the tape out instead of coupling. Fuel, the Recorder, the ticket item (Paper), Vehicle Repair and the staff Vehicle Remover are all handled before coupling in that chain, so only an ordinary item reaches it. Loading and removing are owner (or admin) only. Follows the tape in order (stops, reversals), sets facing switches the way the recording went, waits short of a switch another train holds, brakes into recorded stops. Whoever sits in the captain (driver's) seat drives by hand; seat access follows the usual whitelist and ticket rules. No fuel: stops.
+- **Running with nobody near ("on paper").** A tape train with fuel, nobody aboard and no seat storage open keeps moving along its timetable when its chunks unload or it reaches the loaded edge, using `routes.paper-fuel` (0.5, the code default: Main's `trains.yml` has no `routes:` or `docks:` section) of its loaded fuel burn and drawing from the fuel car. Appears where it has got to when a player comes within spawn range. Keeps `routes.paper-gap` (4, code default) blocks behind another train running unloaded and stops short of loaded or parked trains, waiting without fuel use. Two trains head-on on one line both stop and wait (`PaperSpacing`: a step that brings a car closer to another train is taken back), so neither gets through while unloaded. Survives restarts. Loaded trains are not spaced: trains on the same track bump and stop, or explode if they close fast (`TrainCollision`, `collision.explode-speed`; Main's `trains.yml` has no `collision:` section, so the code default applies). Do not publish the numbers or the explode speed.
+- **Cargo docks (Train Track Dock, MMOItem `UTILS.TRAIN_TRACK_DOCK`, Engineer Station: 1 Iron Ingot, 5 s).** Right-click a chest, barrel, shulker box, hopper, dispenser or dropper the player can open (locks/claims that refuse opening refuse the dock); cycles load, unload, off ("Cargo dock: load. Your tape-driven trains that stop here take items from it." / "...unload..." / "Cargo dock removed"). Sneaking refuses. Needs a character. Breaking/burning/replacing the block removes it. At a recorded stop of 2 s or more, each car with storage within reach of a dock trades if that car's owner is the character that marked the dock (checked per car, not per train): load dock into car, car into unload dock, as much as fits (car `allow-items` respected, up to a per-stop item limit). Fuel cars (types on the Locomotive's `fuel-cars`, the Coal Car) are skipped. Works while running unloaded. Do not publish reach or item limits.
+- **Flat Car hold.** `vehicles/flat_car.yml` `containers.hold` (`seat: outside`, 54 slots, any item). Opened from a chest button in the car's Select Seat menu by the owner, by groups the vehicle always admits (its faction), and by the whitelist and its groups while whitelisting is on. Tickets do not open it. Personal limit 3, upkeep 1 (`SimpleFactions/vehicles.yml`), trains do not count toward the 3-vehicle total.
+
 ## 3.7 Features configured but INERT or broken
 
 1. **11 skin entries have no model file.** `biplane_prism`, `biplane_norain`, `biplane_zerratoris`, `biplane_oseni`, `monoplane_prism`, `monoplane_norain`, `monoplane_zerratoris`, `monoplane_oseni`, `cloudskimmer_prism`, `cloudskimmer_norain`, `gyrobomber_prism` are listed under `skins:` but have no `.bbmodel` under `plugins\ModelEngine\blueprints`. Verified by `find`. Selecting one will at best show nothing. **Do not list these as available skins.**
@@ -613,7 +625,7 @@ Limits that will bite a builder: **max turn 35°**, **minimum lay distance 8 blo
 - **ModelEngine** — every vehicle is a ModelEngine rig (`depend`). See section 0.2.
 - **MMOItems** — all ammunition, Arcane Fuel, Vehicle Repair and Vehicle Paint are MMOItems `UTILS` items crafted at the **Engineer Station**. See 3.5 and section 4.
 - **RPCharacters professions** — `professions.vehicle_mechanic` (Crafter tree, cost 2) gates the repair and paint tools.
-- **ItemsAdder** (`ia_tfmc`) — the Engineering Table, Dockyard and all train-track items.
+- **ItemsAdder** (`ia_tfmc`) — the Engineering Table, Dockyard and the track blocks; Main's train tools (Layer, Remover, Recorder, Junction, Dock) are MMOItems (3.6a).
 - **TLibs** — every item path (`v.`, `m.`, `ia.`) and `NBTAPI`/`ProtocolLib` for packet-level vehicle control.
 - **GunsAndGadgets** imports VehicleFramework classes directly (`LightEffect`, `ActiveVehicle`) — the two plugins share the muzzle-light effect.
 - **Simple Factions / WorldGuard** — not referenced anywhere in VehicleFramework. Whether vehicle weapons respect claims or PvP flags is **unverified**.
@@ -678,18 +690,19 @@ If you do not left-click within **30 seconds** the placement is cancelled: `§cV
 
 **Note:** the categories themselves carry no permission, so **every category is visible to everyone**. What is hidden is the individual blueprints inside. A player with no Engineer rank sees eight empty categories.
 
-### All 21 blueprints (`plugins\VFBuilders\blueprints\*.yml`)
+### All 22 blueprints (`plugins\VFBuilders\blueprints\*.yml`)
 
 | Blueprint | Category | Requires | Build time | Inputs |
 |---|---|---|---|---|
 | Wooden Cart | carts | Engineer I | **6 min** | 64 Oak Log, 16 Iron Ingot, 16 Stick |
 | Small Car | cars | Engineer I | **12 min** | 32 Oak Log, 32 Iron Ingot, 2 Lantern, 2 Arcane Crystal |
-| Coal Car | train | Engineer I | **12 min** | 16 Oak Log, 16 Iron Ingot, 8 Stick |
-| Passenger Car | train | Engineer I | **12 min** | 16 Oak Log, 16 Iron Ingot, 8 Stick, 16 Cyan Wool |
+| Coal Car | train | Engineer I | **6 h** (Main, 2026-11-06) | 16 Oak Log, 16 Iron Ingot, 8 Stick |
+| Passenger Car | train | Engineer I | **6 h** (Main, 2026-11-06) | 16 Oak Log, 16 Iron Ingot, 8 Stick, 16 Cyan Wool |
+| Flat Car | train | Engineer I | **6 h** (Main, 2026-11-06) | 16 Oak Log, 16 Iron Ingot, 8 Stick |
 | Cloudskimmer | airships | Engineer III | **12 min** | 32 Oak Log, 32 White Wool, 32 Iron Ingot, 2 Arcane Crystal |
 | Horse Cart | carts | Engineer I | **24 min** | 64 Oak Log, 16 Iron Ingot, 16 Stick, 8 Steel Ingot |
 | Anti-Air Turret | fixed | Engineer I | **24 min** | 16 Iron Ingot, 8 Oak Log, 8 Steel Ingot |
-| Simple Locomotive | train | Engineer I | **24 min** | 32 Oak Log, 32 Iron Ingot, 8 Furnace, 16 Stick |
+| Simple Locomotive | train | Engineer I | **1 day** (Main, 2026-11-06) | 32 Oak Log, 32 Iron Ingot, 8 Furnace, 16 Stick |
 | Gunboat | wooden_ships | Engineer II | **24 min** | 64 Oak Log, 64 White Wool, 4 Steel Ingot |
 | Monoplane | planes | Engineer III | **24 min** | 16 Oak Log, 16 White Wool, 16 Iron Ingot, 8 Steel Ingot, 8 Arcane Crystal |
 | Field Artillery | fixed | Engineer I | **48 min** | 32 Iron Ingot, 16 Oak Log, 16 Steel Ingot |
@@ -705,6 +718,8 @@ If you do not left-click within **30 seconds** the placement is cancelled: `§cV
 | Behemoth | airships | Engineer III | **1 h 36 min** | 128 Oak Log, 128 White Wool, 128 Iron Ingot, 32 Steel Ingot, 32 Arcane Crystal |
 
 `time:` is in **seconds** (`StationManager.tickCycle` ticks once per 20 server ticks). 720 = 12 min, 5760 = 1 h 36 min.
+
+Rows marked (Main, 2026-11-06) are from Main's live blueprints, which use duration strings (`6h`, `1d`). The other rows are from the original snapshot; `frontend/app/wiki/data/vehicles.ts` holds Main's times.
 
 `m.materials.steel_ingot` and `m.materials.arcane_crystal` are MMOItems materials; everything else is vanilla.
 
@@ -730,7 +745,7 @@ If you do not left-click within **30 seconds** the placement is cancelled: `§cV
 
 1. **Categories have no permission gate.** `BlueprintCategory` supports `permission:` (`InventoryManager:41`) but none of the eight categories sets one, so a brand-new player sees all eight and finds every one of them empty. Worth explaining in the wiki so it does not read as a bug.
 2. **The Train category lore says "Must be spawned on rails"** — but nothing in `StationManager.onPlayerLeftClick` validates the spawn location at all. The only check is the 12-block distance. Placing a locomotive off-track is not prevented by the plugin; **unverified whether VehicleFramework rejects it downstream.**
-3. **`blueprints/*.yml` supports a `disabled:` flag** (documented in `parts.yml` for GunsAndGadgets and honoured for blueprints via `hasDisabledPart`); no blueprint uses it. All 21 are live.
+3. **`blueprints/*.yml` supports a `disabled:` flag** (documented in `parts.yml` for GunsAndGadgets and honoured for blueprints via `hasDisabledPart`); no blueprint uses it. All 22 are live.
 4. **Live station data is empty.** `plugins\VFBuilders\data\stations.json` records no active constructions at snapshot time.
 
 ## 4.7 Cross-links

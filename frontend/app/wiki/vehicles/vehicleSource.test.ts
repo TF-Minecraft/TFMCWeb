@@ -110,8 +110,8 @@ function checkCube(
 }
 
 describe("source-backed vehicle rest poses", () => {
-  it("matches native Blockbench pivots/ZYX and UV grids in committed samples from all 21 families", () => {
-    expect(fixtures).toHaveLength(21);
+  it("matches native Blockbench pivots/ZYX and UV grids in committed samples from all 22 families", () => {
+    expect(fixtures).toHaveLength(22);
     for (const fixture of fixtures) {
       checkCube(
         fixture.id,

@@ -7731,6 +7731,22 @@ export const generatedStationRecipes: Recipe[] = [
     },
   },
   {
+    key: "gen-engineer-station-train-track-dock",
+    title: "Train Track Dock",
+    station: "Engineer Station",
+    time: 5,
+    category: "Utilities",
+    ingredients: [
+      { name: "Iron Ingot", qty: 1, sourceId: "vanilla:iron_ingot", texture: "/wiki/textures/vanilla/iron_ingot.png" },
+    ],
+    output: {
+      name: "Train Track Dock",
+      qty: 1,
+      sourceId: "mmoitem:UTILS:TRAIN_TRACK_DOCK",
+      texture: "/wiki/textures/mmoitems/train_track_dock.png",
+    },
+  },
+  {
     key: "gen-engineer-station-bullet-box",
     title: "Box of Bullets",
     station: "Engineer Station",

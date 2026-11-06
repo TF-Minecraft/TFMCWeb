@@ -2298,6 +2298,14 @@
     "sourceModel": "tfmc_pack/resourcepack/assets/minecraft/models/item/gems/tourmaline.json",
     "sourceTexture": "tfmc_pack/resourcepack/assets/minecraft/textures/item/gems/tourmaline.png"
   },
+  "TRAIN_TRACK_DOCK": {
+    "name": "Train Track Dock",
+    "material": "IRON_NUGGET",
+    "customModelData": 13,
+    "texture": "mmoitems/train_track_dock.png",
+    "sourceModel": "tfmc_pack/resourcepack/assets/minecraft/models/item/miscellaneous/trains_icon_cargo_dock.json",
+    "sourceTexture": "tfmc_pack/resourcepack/assets/minecraft/textures/item/miscellaneous/trains_icon_cargo_dock.png"
+  },
   "TRAIN_TRACK_JUNCTION": {
     "name": "Train Track Junction",
     "material": "IRON_NUGGET",

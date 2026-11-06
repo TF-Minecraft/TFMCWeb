@@ -834,6 +834,113 @@
     ]
   },
   {
+    "id": "flat_car",
+    "path": "vehicles/trains/flat_car",
+    "resolution": {
+      "width": 96,
+      "height": 96
+    },
+    "textures": [
+      {
+        "id": "0",
+        "uv_width": 96,
+        "uv_height": 96
+      },
+      {
+        "id": "1",
+        "uv_width": 64,
+        "uv_height": 64
+      },
+      {
+        "id": "2",
+        "uv_width": 32,
+        "uv_height": 32
+      }
+    ],
+    "cube": {
+      "uuid": "d70cde49-88f5-d2cf-3b8e-4a706144cfdf",
+      "from": [-17, -0.25, 61],
+      "to": [-15, 1.75, 67],
+      "origin": [-16, -0.25, 62],
+      "faces": {
+        "north": {
+          "uv": [0, 30, 2, 32],
+          "texture": 1
+        },
+        "east": {
+          "uv": [0, 42, 6, 44],
+          "texture": 1
+        },
+        "south": {
+          "uv": [0, 30, 2, 32],
+          "texture": 1
+        },
+        "west": {
+          "uv": [0, 42, 6, 44],
+          "texture": 1
+        },
+        "up": {
+          "uv": [0, 34, 2, 40],
+          "texture": 1
+        },
+        "down": {
+          "uv": [0, 34, 2, 40],
+          "texture": 1
+        }
+      }
+    },
+    "parents": [
+      {
+        "origin": [0, 0, 0],
+        "rotation": [0, 0, 0]
+      },
+      {
+        "origin": [0, 6, 34.0],
+        "rotation": [0, 0, 0]
+      },
+      {
+        "origin": [-16, -0.25, 44],
+        "rotation": [0, 0, 0]
+      },
+      {
+        "origin": [-16, 8, 22],
+        "rotation": [0, 0, 0]
+      },
+      {
+        "origin": [-16, 0.75, 19],
+        "rotation": [0, 0, 0]
+      },
+      {
+        "origin": [-16, 0.75, 25],
+        "rotation": [-45, 0, 0]
+      },
+      {
+        "origin": [-16, 0.75, 31],
+        "rotation": [-45, 0, 0]
+      },
+      {
+        "origin": [-16, 0.75, 37],
+        "rotation": [-45, 0, 0]
+      },
+      {
+        "origin": [-16, 0.75, 43],
+        "rotation": [-45, 0, 0]
+      },
+      {
+        "origin": [-16, 0.75, 49],
+        "rotation": [-45, 0, 0]
+      },
+      {
+        "origin": [-16, 0.75, 55],
+        "rotation": [-45, 0, 0]
+      },
+      {
+        "origin": [-16, 0.75, 61],
+        "rotation": [-45, 0, 0]
+      }
+    ]
+  },
+  {
     "id": "gunboat",
     "path": "gunboat",
     "resolution": {

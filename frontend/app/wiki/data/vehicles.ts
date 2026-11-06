@@ -179,6 +179,32 @@ export const vehicles: VehicleInfo[] = [
     ],
   },
   {
+    id: "flat_car",
+    upkeep: 1,
+    personalLimit: 3,
+    name: "Flat Car",
+    kind: "Train car (tracked)",
+    seats: "0/0/0",
+    components: "hull 30",
+    fuel: "N/A",
+    speed: "n/a",
+    turn: "N/A",
+    weapons: "N/A",
+    cargo: "Flat Car Hold, 54 slots, opened from the chest in the car's menu",
+    slug: "flat-car",
+    category: "train",
+    requirement: "Engineer I",
+    buildTime: "6 h",
+    inputs: "16 Oak Log, 16 Iron Ingot, 8 Stick",
+    station: "Engineering Table",
+    skins: [
+      {
+        id: "flat_car",
+        name: "Flat Car",
+      },
+    ],
+  },
+  {
     id: "passenger_car",
     upkeep: 1,
     personalLimit: 3,
@@ -724,6 +750,12 @@ for (const vehicle of vehicles) {
   }
 }
 
+/** Seat counts from the "captain/mechanic/passenger" seats field. */
+export function getSeatCounts(vehicle: Pick<VehicleInfo, "seats">) {
+  const [captain = 0, mechanic = 0, passenger = 0] = vehicle.seats.split("/").map((count) => Number(count) || 0);
+  return { captain, mechanic, passenger, total: captain + mechanic + passenger };
+}
+
 export function getVehicleBySlug(slug: string): VehicleInfo | undefined {
   return vehicles.find((vehicle) => vehicle.slug === slug);
 }
@@ -795,7 +827,7 @@ export const vehiclesSection: WikiSection = {
     href: "/wiki/vehicles",
     label: "Vehicles & Construction",
     category: "vehicles",
-    blurb: "Build, crew, fuel and repair all 21 vehicles, with 3D previews and complete blueprints.",
+    blurb: `Build, crew, fuel and repair all ${vehicles.length} vehicles, with 3D previews and complete blueprints.`,
   },
   commands: vehicleCommands,
   recipes: [...vehicleRecipes, ...constructionStations],
@@ -868,11 +900,16 @@ export const vehicleTrackItems: string[][] = [
   [
     "Train Track Recorder",
     "m.utils.train_track_recorder",
-    "Records one lap of a looping track so the Locomotive can drive it by itself.",
+    "Records a route, one lap of a loop or a run out along a line and back, so the Locomotive can drive it by itself.",
   ],
   [
     "Train Track Junction",
     "m.utils.train_track_junction",
     "Right-click existing track, then right-click the branch end with the Train Track Layer.",
+  ],
+  [
+    "Train Track Dock",
+    "m.utils.train_track_dock",
+    "Without sneaking, right-click a chest, barrel, shulker box, hopper, dispenser or dropper to make it a load dock, again for an unload dock, again to remove it.",
   ],
 ];

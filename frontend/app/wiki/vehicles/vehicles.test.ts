@@ -11,18 +11,19 @@ import {
   resolveTextureUrls,
   type WikiBlockModel,
 } from "../../components/wiki/modelGeometry";
-import { vehicles, vehicleRecipes, getVehicleBySlug } from "../data/vehicles";
+import { vehicles, vehicleRecipes, getSeatCounts, getVehicleBySlug } from "../data/vehicles";
 import VehicleDetail, { generateStaticParams } from "./[slug]/page";
 import VehiclesPage from "./page";
 
 describe("vehicle catalogue and actual assets", () => {
   it("covers every base blueprint and lists only skins with a model", () => {
-    expect(vehicles).toHaveLength(21);
-    expect(new Set(vehicles.map((v) => v.slug)).size).toBe(21);
+    expect(vehicles).toHaveLength(22);
+    expect(new Set(vehicles.map((v) => v.slug)).size).toBe(22);
     const skins = vehicles.flatMap((v) => v.skins);
-    expect(skins.filter((s) => s.modelUrl)).toHaveLength(37);
+    expect(skins.filter((s) => s.modelUrl)).toHaveLength(38);
     expect(skins.filter((s) => !s.modelUrl)).toHaveLength(0);
     for (const vehicle of vehicles) {
+      expect(vehicle.seats, vehicle.slug).toMatch(/^\d+\/\d+\/\d+$/);
       expect(getVehicleBySlug(vehicle.slug)).toBe(vehicle);
       expect(vehicle.skins[0].modelUrl).toBeTruthy();
       expect(vehicleRecipes.find((r) => r.output.name === vehicle.name)?.ingredients.length).toBeGreaterThan(0);
@@ -114,6 +115,44 @@ describe("vehicle page rendering", () => {
       expect(html).toContain(`>${vehicle.name}</button>`);
     }
     for (const skin of vehicles[0].skins) expect(html).toContain(skin.name);
+    expect(html).toContain('id="routes"');
+    expect(html).toContain('id="cargo-docks"');
+  });
+
+  it("words seat, captain and mechanic instructions from each vehicle's seats", async () => {
+    expect(getSeatCounts({ seats: "1/2/13" })).toEqual({ captain: 1, mechanic: 2, passenger: 13, total: 16 });
+    expect(getSeatCounts({ seats: "0/0/0" }).total).toBe(0);
+    const detail = async (slug: string) =>
+      renderToStaticMarkup(await VehicleDetail({ params: Promise.resolve({ slug }) })).replace(/<!-- -->/g, "");
+
+    const flatCar = await detail("flat-car");
+    expect(flatCar).toContain("riders stand on its deck");
+    expect(flatCar).toContain('href="/wiki/vehicles#cargo-docks"');
+    expect(flatCar).toContain("While whitelisting is on, whitelisted players and allowed groups can open it too");
+    expect(flatCar).toContain('href="/wiki/vehicles#routes"');
+    expect(flatCar).not.toContain("passenger access and tickets");
+    expect(flatCar).not.toContain("select a seat");
+    expect(flatCar).not.toContain("mechanic seat");
+    expect(flatCar).not.toContain("Only the captain steers");
+
+    const coalCar = await detail("coal-car");
+    expect(coalCar).toContain("then right-click to select a seat");
+    expect(coalCar).not.toContain("Only the captain steers");
+    expect(coalCar).not.toContain("mechanic seat");
+
+    expect(await detail("simple-locomotive")).toContain('href="/wiki/vehicles#routes"');
+
+    const ironclad = await detail("ironclad");
+    expect(ironclad).toContain("Only the captain steers");
+    expect(ironclad).toContain("or from a mechanic seat");
+    expect(ironclad).toContain("passenger access and tickets");
+    expect(ironclad).not.toContain('href="/wiki/vehicles#routes"');
+
+    // Seatless wording assumes a coupled train car with a hold opened from its menu.
+    for (const vehicle of vehicles.filter((v) => getSeatCounts(v).total === 0)) {
+      expect(vehicle.category, vehicle.slug).toBe("train");
+      expect(vehicle.cargo, vehicle.slug).not.toBe("N/A");
+    }
   });
 });
 
