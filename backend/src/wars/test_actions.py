@@ -576,6 +576,19 @@ def test_the_leader_sees_open_calls_until_they_close(client):
     assert _me(client)["calls_to_arms"] == []
 
 
+def test_only_the_called_leader_can_answer_from_the_website(client):
+    _declare(client)
+    _link(ATTACKER)
+    _sign_in(client, DISCORD[ATTACKER])
+    # A call to the Sprockets, whose leader is someone else.
+    _post_events(client, [_call_sent()])
+    reply = client.post(f"/main/wars/{WAR}/call-to-arms", json={"target_faction_id": "sprockets", "accept": True},
+                        headers=ORIGIN)
+    # The same answer as for no call at all, so the route reveals nothing about who was called.
+    assert reply.status_code == 409 and reply.json()["detail"] == actions.NO_CALL_REASON
+    assert _actions() == []
+
+
 def test_a_war_end_closes_every_call(client):
     _declare(client)
     _link(LEADER)

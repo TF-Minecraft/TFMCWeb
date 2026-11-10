@@ -423,7 +423,10 @@ def queue_call_answer(realm: str, war_key: str, account: str, payload: Any, *, s
             raise WarActionError(404, "War not found")
         if require_open_call:
             call = open_calls(conn, realm, war_key).get(answer["target_faction_id"].lower())
-            if war["status"] != "active" or call is None:
+            # Only the called faction's leader may answer, and anyone else gets the same reply as for
+            # no call, so the route does not reveal which factions have been called.
+            if (war["status"] != "active" or call is None or call["leader_account"] is None
+                    or _bare(call["leader_account"]) != _bare(account)):
                 raise WarActionError(409, NO_CALL_REASON)
             answer["target_faction_id"] = call["target"]["id"]
         conn.execute("SELECT pg_advisory_xact_lock(hashtextextended(%s, 0))", (f"war_actions:{account}",))

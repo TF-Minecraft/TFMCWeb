@@ -100,9 +100,20 @@ def _war_key(value: Any, *, required: bool) -> str | None:
     return value
 
 
+def _reject_nul(item: dict, what: str) -> None:
+    """Postgres refuses NUL in text and jsonb; one would fail the whole batch, so the item is refused alone."""
+    try:
+        text = json.dumps(item)
+    except (TypeError, ValueError):
+        return  # left to the checks that follow, which give a clearer reason
+    if "\\u0000" in text:
+        raise _Rejected(f"{what} contains a NUL character")
+
+
 def _event_row(item: Any) -> dict:
     if not isinstance(item, dict):
         raise _Rejected("event must be an object")
+    _reject_nul(item, "event")
     if _item_id(item) is None:
         raise _Rejected("id must be 1-160 letters, digits or _ . : -")
     event_type = item.get("type")
@@ -157,6 +168,7 @@ def _epoch_ms(value: Any, label: str, *, required: bool) -> datetime | None:
 def _battle_row(item: Any) -> dict:
     if not isinstance(item, dict):
         raise _Rejected("record must be an object")
+    _reject_nul(item, "record")
     if _item_id(item) is None:
         raise _Rejected("id must be 1-160 letters, digits or _ . : -")
     fighters = item.get("fighters", [])
