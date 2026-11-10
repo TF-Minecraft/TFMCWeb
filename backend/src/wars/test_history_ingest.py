@@ -137,7 +137,7 @@ def test_malformed_items_are_acked_and_listed(client):
         {"id": "e-no-type", "war_key": ACTIVE_WAR, "at": "2026-11-10T09:50:00Z"},
         {"id": "e-bad-type", "war_key": ACTIVE_WAR, "type": "war_won", "at": "2026-11-10T09:50:00Z"},
         {"id": "e-bad-at", "war_key": ACTIVE_WAR, "type": "war_declared", "at": "yesterday"},
-        {"id": "e-future", "war_key": ACTIVE_WAR, "type": "war_declared", "at": "2099-01-01T00:00:00Z"},
+        {"id": "e-future", "war_key": ACTIVE_WAR, "type": "war_declared", "at": "2100-01-01T00:00:00Z"},
         {"id": "e-bad-key", "war_key": "../etc", "type": "war_declared", "at": "2026-11-10T09:50:00Z"},
         {"id": "e-bad-state", "war_key": ACTIVE_WAR, "type": "war_declared", "at": "2026-11-10T09:50:00Z",
          "state": [1]},
@@ -165,6 +165,28 @@ def test_malformed_items_are_acked_and_listed(client):
     assert reply["acked"] == [record["id"], "r-no-end", "r-fighters", "r-raid", "bad id with spaces"]
     assert [r["id"] for r in reply["rejected"]] == ["r-no-end", "r-fighters", "r-raid", "bad id with spaces"]
     assert _count("war_battles") == 1
+
+
+def test_dev_campaign_clock_ahead_of_real_time_is_kept(client):
+    # Staff on Dev can move the campaign clock forward; SF stamps events with it.
+    event = {**sample_batches()[0]["events"][0], "id": "e-ahead", "at": "2027-06-01T20:00:00.123Z"}
+    reply = client.post("/wars/plugin/events", json={"realm_id": "dev", "events": [event]}, headers=PLUGIN).json()
+    assert reply == {"acked": ["e-ahead"]}
+
+
+def test_records_with_omitted_nulls_are_read_as_null(client):
+    # SF's Gson skips nulls, so unknown fields are absent rather than null.
+    record = copy.deepcopy(sample_batches()[1]["records"][0])
+    for key in ("winner", "battleId", "provinceId"):
+        record.pop(key, None)
+    for fighter in record["fighters"]:
+        for key in ("factionId", "factionFoundedAt", "hirerFactionId", "className", "faction"):
+            fighter.pop(key, None)
+    reply = client.post("/wars/plugin/battles", json={"records": [record]}, headers=PLUGIN).json()
+    assert reply == {"acked": [record["id"]]}
+    page = client.get(f"/main/wars/{record['warKey']}").json()
+    assert page["battles"][0]["winner"] is None and page["battles"][0]["province_id"] is None
+    assert [p["faction"]["name"] for p in page["participants"]] == ["No faction", "No faction"]
 
 
 def test_non_finite_numbers_are_rejected(client):

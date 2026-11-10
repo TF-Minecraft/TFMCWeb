@@ -790,7 +790,13 @@ def _deaths_sentence(deaths: dict) -> str:
     return f" {a} {'attacker' if a == 1 else 'attackers'} and {d} {'defender' if d == 1 else 'defenders'} fell."
 
 
-_KIND_WORDS = {"field": "field battle", "siege": "siege", "naval": "naval battle", "raid": "raid"}
+_KIND_WORDS = {
+    "field": "field battle",
+    "siege": "siege",
+    "naval": "naval battle",
+    "naval_invasion": "naval invasion",
+    "raid": "raid",
+}
 
 
 def _kind_words(kind: str | None) -> str:

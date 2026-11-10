@@ -31,11 +31,12 @@ acked, so:
   200 items, or a body over 8 MiB.
 
 An event is refused if its `type` is unknown, `war_key` is not 1-64 letters, digits, `_`
-or `-`, `at` is not an ISO-8601 instant between 2020 and two days past the server's
-clock, or `state`/`payload` is not an object. A record is refused if it has no
+or `-`, `at` is not an ISO-8601 instant from 2020 to before 2100, or `state`/`payload` is
+not an object. `at` may be ahead of real time: events carry SimpleFactions' campaign
+clock, which staff on Dev can move forward. A record is refused if it has no
 `endedAt` (epoch milliseconds), its fighters or sides are not lists of objects, or it
-holds a non-finite number. Records outside a war (`warKey` null) are stored but never
-shown.
+holds a non-finite number. A field SimpleFactions leaves out (its Gson skips nulls) reads
+as null. Records outside a war (`warKey` null) are stored but never shown.
 
 Code: [`backend/src/wars/history_ingest.py`](../../../backend/src/wars/history_ingest.py),
 routes in [`wars_routes.py`](../../../backend/src/api/wars_routes.py).

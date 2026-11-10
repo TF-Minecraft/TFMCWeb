@@ -15,7 +15,7 @@ from __future__ import annotations
 import json
 import logging
 import re
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from typing import Any
 
 from src import database
@@ -39,9 +39,11 @@ MAX_EVENT_BYTES = 256 * 1024
 MAX_RECORD_FIGHTERS = 1000
 MAX_RECORD_SIDES = 16
 _ID_RE = re.compile(r"^[A-Za-z0-9_.:-]{1,160}$")
-# Instants before SimpleFactions existed, or far past this server's clock, are broken clocks.
+# Instants before SimpleFactions existed, or past 2100, are broken clocks. There is no
+# "not after now" bound: events carry SF's campaign clock, which staff on Dev can move
+# forward (/war admin time), and `at` only orders a war's own events.
 _MIN_AT = datetime(2020, 1, 1, tzinfo=timezone.utc)
-_MAX_SKEW = timedelta(days=2)
+_MAX_AT = datetime(2100, 1, 1, tzinfo=timezone.utc)
 
 
 class WarHistoryRequestError(ValueError):
@@ -77,11 +79,11 @@ def _item_id(item: Any) -> str | None:
     return raw if isinstance(raw, str) and _ID_RE.match(raw) else None
 
 
-def _sane_instant(value: Any, label: str, now: datetime) -> datetime:
+def _sane_instant(value: Any, label: str) -> datetime:
     moment = parse_instant(value) if isinstance(value, str) else None
     if moment is None:
         raise _Rejected(f"{label} must be an ISO-8601 instant")
-    if moment < _MIN_AT or moment > now + _MAX_SKEW:
+    if moment < _MIN_AT or moment >= _MAX_AT:
         raise _Rejected(f"{label} is out of range")
     return moment
 
@@ -94,7 +96,7 @@ def _war_key(value: Any, *, required: bool) -> str | None:
     return value
 
 
-def _event_row(item: Any, now: datetime) -> dict:
+def _event_row(item: Any) -> dict:
     if not isinstance(item, dict):
         raise _Rejected("event must be an object")
     if _item_id(item) is None:
@@ -120,7 +122,7 @@ def _event_row(item: Any, now: datetime) -> dict:
         "id": item["id"],
         "war_key": _war_key(item.get("war_key"), required=True),
         "type": event_type,
-        "at": _sane_instant(item.get("at"), "at", now),
+        "at": _sane_instant(item.get("at"), "at"),
         "state": state,
         "payload": payload,
     }
@@ -135,7 +137,7 @@ def _epoch_ms(value: Any, label: str, *, required: bool) -> datetime | None:
     return moment
 
 
-def _battle_row(item: Any, now: datetime) -> dict:
+def _battle_row(item: Any) -> dict:
     if not isinstance(item, dict):
         raise _Rejected("record must be an object")
     if _item_id(item) is None:
@@ -151,7 +153,7 @@ def _battle_row(item: Any, now: datetime) -> dict:
     ended_at = _epoch_ms(item.get("endedAt"), "endedAt", required=True)
     started_at = _epoch_ms(item.get("startedAt"), "startedAt", required=False)
     for moment in (ended_at, started_at):
-        if moment is not None and (moment < _MIN_AT or moment > now + _MAX_SKEW):
+        if moment is not None and (moment < _MIN_AT or moment >= _MAX_AT):
             raise _Rejected("startedAt/endedAt is out of range")
     raid = item.get("raid", False)
     if not isinstance(raid, bool):
@@ -182,17 +184,16 @@ def _reject(rejected: list[dict], acked: list[str], item: Any, reason: str, kind
     rejected.append({"id": item_id, "reason": reason})
 
 
-def ingest_events(body: Any, *, now: datetime | None = None) -> dict:
+def ingest_events(body: Any) -> dict:
     """Store `{"realm_id", "events": [...]}`; returns `{"acked", "rejected"?}`."""
     realm, items = _items(body, "events")
-    now = now or datetime.now(timezone.utc)
     acked: list[str] = []
     rejected: list[dict] = []
     rows: list[dict] = []
     seen: set[str] = set()
     for item in items:
         try:
-            row = _event_row(item, now)
+            row = _event_row(item)
         except _Rejected as e:
             _reject(rejected, acked, item, str(e), "event", realm)
             continue
@@ -219,17 +220,16 @@ def ingest_events(body: Any, *, now: datetime | None = None) -> dict:
     return _reply(acked, rejected)
 
 
-def ingest_battles(body: Any, *, now: datetime | None = None) -> dict:
+def ingest_battles(body: Any) -> dict:
     """Store `{"realm_id", "records": [...]}`; returns `{"acked", "rejected"?}`."""
     realm, items = _items(body, "records")
-    now = now or datetime.now(timezone.utc)
     acked: list[str] = []
     rejected: list[dict] = []
     rows: list[dict] = []
     seen: set[str] = set()
     for item in items:
         try:
-            row = _battle_row(item, now)
+            row = _battle_row(item)
         except _Rejected as e:
             _reject(rejected, acked, item, str(e), "battle record", realm)
             continue
