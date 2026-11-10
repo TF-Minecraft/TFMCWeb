@@ -18,6 +18,7 @@ TFMCWeb is the Minecraft plugin; TFMCWeb stores the verified account links.
 | Moderation | `/minecraftwarn`, `/minecraftban` resolve selected Discord users to Minecraft accounts; `/minecraftwho` shows the link. Ban/warn DMs and **Banned** role add/clear |
 | Precedent | `/case-log [user]` (staff) logs a case against a Discord account, with its Minecraft identity when linked; `/precedent <info>` (staff+helper) searches precedent — see [precedent.md](precedent.md) |
 | Patreon | `patreon` cog - supporter link/status/unlink, role outbox, DMs, staff lookup and sync tools — see [patreon.md](patreon.md) |
+| Geopolitics | `geopolitics` cog - posts wars and their battles in the geopolitics channel, one thread per war, and DMs the defenders — see [war-history.md](../map/war-history.md#discord-notifications) |
 
 The bot does **not** execute in-game bans (Essentials owns MC bans).
 
@@ -29,6 +30,7 @@ Bot calls TFMCWeb with `X-Staff-Key`. Full route list:
 - Drinks: [cosmetics/drinks.md](../cosmetics/drinks.md) (staff pending, approve/deny)
 - Identity: [identity/tfmcweb.md](../identity/tfmcweb.md) (link complete, guild events)
 - Precedent: [precedent.md](precedent.md) (log case, search precedent)
+- Wars: [map/war-history.md](../map/war-history.md#discord-notifications) (war notification outbox and ack)
 
 Player-facing mint and link **start** run in-game via TFMCWeb, not the bot.
 

@@ -48,10 +48,16 @@ routes in [`wars_routes.py`](../../../backend/src/api/wars_routes.py).
 | `war_events` | `id` | Every event as sent: `realm_id`, `war_key`, `type`, `at`, `state`, `payload` |
 | `war_battles` | `(realm_id, record_id)` | Every battle record as sent, with `war_key`, `battle_id`, `started_at`, `ended_at`, `raid` |
 | `wars` | `(realm_id, war_key)` | Derived: the latest state, `status`, dates, `result` and the war list row (`summary`) |
+| `war_notifications` | `id` | The Discord bot's outbox; see [Discord notifications](#discord-notifications) |
 
 `war_events` and `war_battles` are append-only. `wars` is recomputed from both whenever
 one of its events or records arrives, under a row lock, so events and records may
 arrive in any order and the row can always be rebuilt. Migration: `0006_war_history.sql`.
+
+`war_events.notify` (migration `0007_war_notifications.sql`) keeps the private `notify`
+object of a `war_declared` event: `{"defender_accounts": [account uuid, ...]}`, the
+accounts that play a member of a defending faction. No read returns it; it only turns
+into Discord DMs. An event whose `notify` is not an object is rejected.
 
 ## Public reads
 
@@ -101,6 +107,63 @@ character across battles and never appear in a reply.
 Backend env, default on. Set it to `false` (or `0`, `no`, `off`) to omit `top_fighters`
 from the war page and `fighters` from battle reports. The per-faction totals stay. The
 replies carry `fighter_stats_public` so the pages can say why the tables are missing.
+
+## Discord notifications
+
+The tfmc_bot `geopolitics` cog posts each war in the geopolitics channel, keeps one
+thread per war for its updates and DMs the defenders. The ingest writes the rows it
+polls, in the same transaction as the event and only for a newly stored event, so a
+resent event never posts twice. Code:
+[`notifications.py`](../../../backend/src/wars/notifications.py).
+
+| Kind | From event | Payload (besides `war_key`, `war_name`, `at`, `url`, `summary`) |
+| --- | --- | --- |
+| `war_declared` | `war_declared` | `goal`, `goal_label`, `war_type`, `civil_war`, `attacker`/`defender` (`name`, `rgb` of the side leader), `sides` (`name`, `role`, `role_label`, `rgb` per member), `buildup`, `day_vote_closes_at` |
+| `ally_joined` | `participant_joined` | `faction`, `faction_rgb`, `side`, `side_name`, `role`, `role_label` |
+| `battle_day_set` | `day_vote_closed` | `battle_day`, `quorum` |
+| `battle_scheduled` | `battle_scheduled` | `scheduled_at`, `province_id`, `province_name`, `kind`, `kind_label` |
+| `battle_postponed` | `battle_postponed` | `battle_day` |
+| `battle_result` | `battle_resolved` | `battle_number`, `province_id`, `province_name`, `kind`, `kind_label`, `resolution`, `resolution_label`, `winner`, `winner_name`, `winner_rgb`, `loser_name`, `attacker`, `defender`, `deaths`, `regiments_lost` (per side), `lives`, `top_fighters`, `record_id`, `report_url` |
+| `war_ended` | `war_ended` | `reason`, `reason_label`, `winner`, `winner_name`, `winner_rgb`, `truce_until` |
+| `defender_dm` | `war_declared` | One row per Discord user: `discord_user_id`, `war_key`, `war_name`, `attacker_name`, `defender_name`, `goal_label`, `day_vote_closes_at`, `url` |
+
+- `next_battle_day` gives no notification.
+- **DMs** go to the Discord users linked (`discord_links`) to the event's
+  `notify.defender_accounts`. Accounts with no link, and links whose user left the
+  guild (`left_guild_at` set), are skipped.
+- **Top fighters** are the battle record's three fighters with the most kills
+  (`name`, `side`, `faction`, `kills`, `deaths`). They are `null` when
+  `WAR_FIGHTER_STATS_PUBLIC` is off or the record has not arrived yet; the row is not held
+  back for it.
+- **Links**: `url` is the war page and `report_url` the battle report (null with no
+  record). The site is `PUBLIC_SITE_URL`, else `SITE_PUBLIC_URL`, else
+  `https://www.tfminecraft.net`. `?map=<map>` is added when the realm's map is not the
+  site's default map, so Dev wars link to `?map=dev` on www.
+- Instants are ISO-8601 UTC; the bot renders them as Discord timestamps.
+- A failure while building a realm's notifications is logged and skipped (a savepoint),
+  never losing the event.
+
+### Settings
+
+| Env | Default | Meaning |
+| --- | --- | --- |
+| `WAR_NOTIFY_REALMS` | `main,dev` | Realms that get rows, comma separated. Set it empty to write none. |
+| `PUBLIC_SITE_URL` | `SITE_PUBLIC_URL` | Base of the links in the posts |
+
+### Routes
+
+Both need the staff key (`X-Staff-Key`).
+
+| Route | Body | Reply |
+| --- | --- | --- |
+| `GET /wars/staff/notifications?limit=50&realm=main` | | `{"notifications": [{"id", "realm_id", "war_key", "event_id", "kind", "created_at", "payload"}]}` |
+| `POST /wars/staff/notifications/ack` | `{"ids": [1, 2]}` | `{"acked": [ids that exist]}` |
+
+The poll returns undelivered rows oldest first (`limit` 1-200, default 50) and stamps
+`dispatched_at`. A row handed out but not acked within 10 minutes is offered again. The
+optional, repeatable `realm` keeps the poll to those realms. The bot acks a row once
+Discord accepted the post, or after a permanent failure, so one bad row cannot block the
+queue.
 
 ## Pages
 
