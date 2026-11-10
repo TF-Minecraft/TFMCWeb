@@ -4,7 +4,7 @@ Turn the live political map from flat colour blobs into a **fantasy cartography 
 
 **Repos:** TFMCWeb (FE + BE mapgen) · SimpleFactions (export + upload) · TFMCWeb (staff map gate)
 
-**Technical refs:** [generation.md](generation.md) · [viewer.md](viewer.md) · [title-editor.md](title-editor.md) · [wars-on-map.md](wars-on-map.md)
+**Technical refs:** [generation.md](generation.md) · [viewer.md](viewer.md) · [title-editor.md](title-editor.md) · [wars-on-map.md](wars-on-map.md) · [war-history.md](war-history.md)
 
 ## Goals
 

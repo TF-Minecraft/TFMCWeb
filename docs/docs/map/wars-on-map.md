@@ -13,9 +13,13 @@ Website-side war visualization only. War **gameplay**, FSM, and export live in S
 
 Data arrives via SimpleFactions nation/war upload. The website **does not infer** frontlines from territory diffs alone.
 
+## War history
+
+SF posts war events (declaration, calls to arms, battle days, battles resolved, the end) and battle records to the war history routes. The website keeps every war and shows it as a report at `/wars`: [war-history.md](war-history.md).
+
 ## Chronicle
 
-Daily map snapshots and economy ledger ship ([ledger.md](ledger.md)). SF does not emit war events (`war_declared`, battle, occupy, end) yet, so the `chronicle` upload's `events[]` is always empty.
+Daily map snapshots and economy ledger ship ([ledger.md](ledger.md)). War events go to the war history routes, not the ledger, so the `chronicle` upload's `events[]` is always empty.
 
 ## Data contract (summary)
 
@@ -40,5 +44,6 @@ War layers follow the same map access rules as the parent `mapId`. Staff-only ma
 
 ## See also
 
+- [war-history.md](war-history.md) - war pages, war events and battle records
 - [map/overview.md](overview.md) - full layer model
 - [integrations/simplefactions.md](../integrations/simplefactions.md) - upload and regen contract
