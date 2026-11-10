@@ -119,22 +119,26 @@ export default function WarCasualtyChart({ battles, names }: { battles: WarBattl
             y2={geometry.barBottom}
             stroke="color-mix(in srgb, var(--tfmc-cream) 18%, transparent)"
           />
-          <text x={BOX.left} y={geometry.barTop - 2} className="fill-[var(--tfmc-mist)] text-[11px]">
-            Regiments lost
-          </text>
-          {geometry.barTicks
-            .filter((tick) => tick.value > 0)
-            .map((tick) => (
-              <text
-                key={`b${tick.value}`}
-                x={BOX.left - 6}
-                y={tick.y + 4}
-                textAnchor="end"
-                className="fill-[var(--tfmc-mist)] text-[11px]"
-              >
-                {tick.value}
+          {geometry.hasRegiments ? (
+            <>
+              <text x={BOX.left} y={geometry.barTop - 2} className="fill-[var(--tfmc-mist)] text-[11px]">
+                Regiments lost
               </text>
-            ))}
+              {geometry.barTicks
+                .filter((tick) => tick.value > 0)
+                .map((tick) => (
+                  <text
+                    key={`b${tick.value}`}
+                    x={BOX.left - 6}
+                    y={tick.y + 4}
+                    textAnchor="end"
+                    className="fill-[var(--tfmc-mist)] text-[11px]"
+                  >
+                    {tick.value}
+                  </text>
+                ))}
+            </>
+          ) : null}
           {geometry.bars.map((bar) => (
             <rect
               key={`${bar.side}${bar.x}`}

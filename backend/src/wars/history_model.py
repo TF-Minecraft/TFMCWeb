@@ -906,6 +906,15 @@ def _war_started_at(war_key: str, events: list[dict], records: list[dict]) -> da
     return min(starts) if starts else None
 
 
+def _record_sides_state(rows: list[dict]) -> dict:
+    sides: dict[str, list[dict]] = {}
+    for side in SIDES:
+        own = [r for r in rows if r["side"] == side and not r["mercenary"] and r["fighters"]]
+        own.sort(key=lambda r: -r["fighters"])
+        sides[side] = [{**own[0]["faction"], "role": "leader"}] if own else []
+    return {"sides": sides}
+
+
 def build_war_model(
     war_key: str,
     events: list[dict],
@@ -956,6 +965,15 @@ def build_war_model(
         })
 
     has_resolved = any(b["battle_number"] is not None or b["record_id"] for b in battles)
+    participants = _Participants(state)
+    for ref, side, role, at in joined:
+        participants.joined(ref, side, role, at)
+    all_fighters = [f for r in records for f in fighters_by_record[id(r)]]
+    for fighter in all_fighters:
+        participants.add_fighter(fighter)
+    participants.add_regiments(regiment_rows)
+    # A war with no state names its sides after the faction with the most fighters.
+    names_state = state or _record_sides_state(participants.result())
     record_only = []
     for record in records:
         if record.get("id") in matched:
@@ -965,7 +983,7 @@ def build_war_model(
         timeline.append({
             "at": battle["at"],
             "type": BATTLE_RECORDED,
-            "summary": summarize(BATTLE_RECORDED, {}, state, battle, province_name),
+            "summary": summarize(BATTLE_RECORDED, {}, names_state, battle, province_name),
             "payload": {"record_id": battle["record_id"], "raid": battle["raid"]},
         })
     if not has_resolved:
@@ -979,13 +997,6 @@ def build_war_model(
     battles.sort(key=lambda b: (_sort_key_at(b), b["battle_number"] or 0))
     timeline.sort(key=_sort_key_at)
 
-    participants = _Participants(state)
-    for ref, side, role, at in joined:
-        participants.joined(ref, side, role, at)
-    all_fighters = [f for r in records for f in fighters_by_record[id(r)]]
-    for fighter in all_fighters:
-        participants.add_fighter(fighter)
-    participants.add_regiments(regiment_rows)
 
     score = {
         "battles_won": _zero_pair(),

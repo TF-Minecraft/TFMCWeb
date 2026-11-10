@@ -120,6 +120,14 @@ describe("casualties", () => {
     expect(geometry.yTicks[0]).toEqual({ value: 0, y: geometry.barTop - 14 });
   });
 
+  it("gives a war without regiment numbers no regiments panel", () => {
+    const box = { width: 600, height: 240, top: 10, right: 10, bottom: 24, left: 36 };
+    const geometry = casualtyChartGeometry(casualtySeries(sampleBackfilledWar.battles), box);
+    expect(geometry.hasRegiments).toBe(false);
+    expect(geometry.bars).toEqual([]);
+    expect(geometry.yTicks[0]).toEqual({ value: 0, y: box.height - box.bottom });
+  });
+
   it("draws nothing for a war with no battles", () => {
     const empty = casualtySeries([]);
     const geometry = casualtyChartGeometry(empty, { width: 300, height: 160, top: 8, right: 8, bottom: 16, left: 30 });

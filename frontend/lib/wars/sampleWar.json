@@ -1503,7 +1503,7 @@
       {
         "at": "2025-08-14T19:50:00Z",
         "type": "battle_recorded",
-        "summary": "Battle of the Salt Road: victory for the attackers. 13 attackers and 11 defenders fell.",
+        "summary": "Battle of the Salt Road: victory for Brume. 13 attackers and 11 defenders fell.",
         "payload": {
           "record_id": "w2-field-1-1755201000000",
           "raid": false
@@ -1512,7 +1512,7 @@
       {
         "at": "2025-08-17T20:10:00Z",
         "type": "battle_recorded",
-        "summary": "Battle of Reedmere: victory for the defenders. 13 attackers and 6 defenders fell.",
+        "summary": "Battle of Reedmere: victory for Vellmoor. 13 attackers and 6 defenders fell.",
         "payload": {
           "record_id": "w2-field-2-1755461400000",
           "raid": false

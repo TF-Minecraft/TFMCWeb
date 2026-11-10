@@ -222,6 +222,7 @@ def test_war_known_only_from_backfilled_records():
     rows = [(p["side"], p["faction"]["name"], p["faction"]["id"], p["role"]) for p in model["participants"]]
     assert rows == [("attacker", "Brume", None, None), ("defender", "Vellmoor", None, None)]
     assert [e["type"] for e in model["timeline"]] == ["battle_recorded", "battle_recorded"]
+    assert model["timeline"][0]["summary"].startswith("Battle of the Salt Road: victory for Brume.")
     summary = build_war_summary(model)
     assert summary["known_from_records_only"] is True
     assert summary["sides"]["attacker"] == {"leaders": [model["participants"][0]["faction"]], "count": 1}

@@ -133,6 +133,8 @@ export type CasualtyChartGeometry = {
   barTicks: Array<{ value: number; y: number }>;
   barTop: number;
   barBottom: number;
+  /** False when no battle has regiment numbers: draw no regiments panel. */
+  hasRegiments: boolean;
 };
 
 /**
@@ -144,8 +146,10 @@ export function casualtyChartGeometry(series: CasualtySeries, box: ChartBox, bar
   const count = series.labels.length;
   const innerWidth = box.width - box.left - box.right;
   const innerHeight = box.height - box.top - box.bottom;
-  const gap = 14;
-  const barHeight = Math.max(20, innerHeight * barShare);
+  const hasRegiments = [...series.regiments.attacker, ...series.regiments.defender].some((v) => v != null);
+  // A war with no regiment numbers (backfilled records only) gives the lines the whole box.
+  const gap = hasRegiments ? 14 : 0;
+  const barHeight = hasRegiments ? Math.max(20, innerHeight * barShare) : 0;
   const lineHeight = innerHeight - barHeight - gap;
   const slot = count > 0 ? innerWidth / count : innerWidth;
   const x = (index: number) => box.left + slot * (index + 0.5);
@@ -171,7 +175,7 @@ export function casualtyChartGeometry(series: CasualtySeries, box: ChartBox, bar
   const maxRegiments = Math.max(1, ...regimentValues);
   const barTicksRaw = niceTicks(0, maxRegiments, 2);
   const barMax = Math.max(maxRegiments, barTicksRaw[barTicksRaw.length - 1] ?? maxRegiments);
-  const barY = (value: number) => barBottom - (value / barMax) * barHeight;
+  const barY = (value: number) => barBottom - (value / barMax) * (barHeight || 1);
   const barWidth = Math.max(2, Math.min(14, slot * 0.28));
   const bars: CasualtyChartGeometry["bars"] = [];
   series.labels.forEach((_, index) => {
@@ -202,6 +206,7 @@ export function casualtyChartGeometry(series: CasualtySeries, box: ChartBox, bar
     barTicks: barTicksRaw.filter((v) => v <= barMax).map((value) => ({ value, y: barY(value) })),
     barTop,
     barBottom,
+    hasRegiments,
   };
 }
 
