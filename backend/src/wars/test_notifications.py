@@ -5,6 +5,7 @@ from __future__ import annotations
 import copy
 import json
 import os
+import uuid
 from datetime import datetime, timezone
 
 import pytest
@@ -320,7 +321,7 @@ def test_poll_hands_rows_out_oldest_first_once_until_they_are_offered_again(clie
 
     rest = client.get("/wars/staff/notifications", params={"limit": 200}, headers=STAFF).json()["notifications"]
     assert len(rest) == total - 5 and rest[0]["id"] > first[-1]["id"]
-    assert client.get("/wars/staff/notifications", headers=STAFF).json() == {"notifications": []}
+    assert client.get("/wars/staff/notifications", headers=STAFF).json()["notifications"] == []
 
     acked = client.post("/wars/staff/notifications/ack", json={"ids": [first[0]["id"], first[1]["id"], 999999]},
                         headers=STAFF).json()
@@ -349,3 +350,19 @@ def test_poll_can_ask_for_some_realms_and_bounds_the_limit(client):
     assert client.get("/wars/staff/notifications", params={"limit": 0}, headers=STAFF).status_code == 422
     assert client.get("/wars/staff/notifications", params={"limit": 201}, headers=STAFF).status_code == 422
     assert json.dumps(notifications.pending(None, [" "])) == "[]"
+
+
+def test_poll_names_its_outbox_and_a_new_database_gets_a_new_one(client):
+    first = client.get("/wars/staff/notifications", headers=STAFF).json()
+    assert set(first) == {"outbox_id", "notifications"}
+    assert str(uuid.UUID(first["outbox_id"])) == first["outbox_id"]
+    _post(client, "/wars/plugin/events", _events())
+    assert client.get("/wars/staff/notifications", headers=STAFF).json()["outbox_id"] == first["outbox_id"]
+    assert notifications.outbox_id() == first["outbox_id"], "The same database keeps its outbox"
+    with database.connect() as conn:
+        conn.execute("DELETE FROM war_notification_outbox")
+    again = client.get("/wars/staff/notifications", headers=STAFF).json()["outbox_id"]
+    assert again != first["outbox_id"], "A wiped outbox is a new one, so the bot starts a fresh delivered list"
+    assert notifications.outbox_id() == again
+    with database.connect() as conn:
+        assert conn.execute("SELECT count(*) AS n FROM war_notification_outbox").fetchone()["n"] == 1

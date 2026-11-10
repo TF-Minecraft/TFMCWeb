@@ -501,6 +501,23 @@ def _row(row: dict) -> dict:
     }
 
 
+def outbox_id() -> str:
+    """This database's outbox identity (a UUID made by the migration).
+
+    The bot keys what it delivered by it, so a reset database, whose row ids start at 1
+    again, is a new outbox and its rows are not taken for ones already posted. Made again
+    if the row was deleted.
+    """
+    with database.connect() as conn:
+        row = conn.execute("SELECT outbox_id FROM war_notification_outbox WHERE id = 1").fetchone()
+        if row is None:
+            row = conn.execute(
+                "INSERT INTO war_notification_outbox (id) VALUES (1) ON CONFLICT (id) DO UPDATE SET id = 1 "
+                "RETURNING outbox_id"
+            ).fetchone()
+    return str(row["outbox_id"])
+
+
 def pending(limit: int | None = None, realms: list[str] | None = None) -> list[dict]:
     """Undelivered rows, oldest first, stamped as dispatched. Handed-out rows return after ten minutes."""
     limit = max(1, min(MAX_LIMIT, DEFAULT_LIMIT if limit is None else int(limit)))

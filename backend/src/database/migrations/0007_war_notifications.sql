@@ -27,6 +27,15 @@ CREATE UNIQUE INDEX war_notifications_event_kind_idx
 -- The bot's poll: undelivered rows, oldest first.
 CREATE INDEX war_notifications_pending_idx ON war_notifications (id) WHERE acked_at IS NULL;
 
+-- The outbox's identity: a random id made once per database. The bot remembers delivered
+-- row ids per outbox, so a reset or rebuilt database (ids from 1 again) is a new outbox to it.
+-- gen_random_uuid() is core Postgres since 13.
+CREATE TABLE war_notification_outbox (
+    id integer PRIMARY KEY CHECK (id = 1),
+    outbox_id uuid NOT NULL DEFAULT gen_random_uuid()
+);
+INSERT INTO war_notification_outbox (id) VALUES (1);
+
 -- Private: who to tell on Discord (SimpleFactions' `notify`). Never published.
 ALTER TABLE war_events ADD COLUMN notify jsonb;
 

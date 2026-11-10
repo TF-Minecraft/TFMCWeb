@@ -46,7 +46,9 @@ the `ps-preview-router` Caddy container (`127.0.0.1:8090`, behind the `*.tfminec
 - **Clone:** the trusted live Dev helper
   ([`backend/src/database/preview.py`](../backend/src/database/preview.py))
   creates the site schema using reviewed migrations under the preview owner. It lists Dev's public tables,
-  leaving out Precedent (`precedent_*`), patch notes (`patchnote_*`) and `schema_migrations`, and a data-only
+  leaving out Precedent (`precedent_*`), patch notes (`patchnote_*`), `schema_migrations` and
+  `war_notification_outbox` (each preview keeps the outbox id its migration made, so the Discord bot
+  never takes a preview's notifications for Dev's), and a data-only
   custom dump/restore copies those tables' rows and identity counters. No ownership or ACLs are copied. Schema
   creation and privileged restore use trusted Dev tooling; branch code takes no part. The schema follows Dev's
   migrations, so once Dev has a new migration, a preview of a branch cut before it fails its migration check

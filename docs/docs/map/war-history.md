@@ -49,6 +49,7 @@ routes in [`wars_routes.py`](../../../backend/src/api/wars_routes.py).
 | `war_battles` | `(realm_id, record_id)` | Every battle record as sent, with `war_key`, `battle_id`, `started_at`, `ended_at`, `raid` |
 | `wars` | `(realm_id, war_key)` | Derived: the latest state, `status`, dates, `result` and the war list row (`summary`) |
 | `war_notifications` | `id` | The Discord bot's outbox; see [Discord notifications](#discord-notifications) |
+| `war_notification_outbox` | `id` (always 1) | `outbox_id`, a random UUID naming this database's outbox |
 | `war_actions` | `id` | Votes and call to arms answers waiting for SimpleFactions; see [War actions](#war-actions) |
 
 `war_events` and `war_battles` are append-only. `wars` is recomputed from both whenever
@@ -169,7 +170,7 @@ Both need the staff key (`X-Staff-Key`).
 
 | Route | Body | Reply |
 | --- | --- | --- |
-| `GET /wars/staff/notifications?limit=50&realm=main` | | `{"notifications": [{"id", "realm_id", "war_key", "event_id", "kind", "created_at", "payload"}]}` |
+| `GET /wars/staff/notifications?limit=50&realm=main` | | `{"outbox_id": "<uuid>", "notifications": [{"id", "realm_id", "war_key", "event_id", "kind", "created_at", "payload"}]}` |
 | `POST /wars/staff/notifications/ack` | `{"ids": [1, 2]}` | `{"acked": [ids that exist]}` |
 
 The poll returns undelivered rows oldest first (`limit` 1-200, default 50) and stamps
@@ -177,6 +178,12 @@ The poll returns undelivered rows oldest first (`limit` 1-200, default 50) and s
 optional, repeatable `realm` keeps the poll to those realms. The bot acks a row once
 Discord accepted the post, or after a permanent failure, so one bad row cannot block the
 queue.
+
+`outbox_id` is a random UUID made once per database (`war_notification_outbox`,
+migration `0007_war_notifications.sql`). Row ids start at 1 again in a reset or rebuilt
+database, so the bot keeps the ids it delivered per `outbox_id`: a new `outbox_id` starts
+a fresh list, and the new rows are posted rather than taken for ones already posted. A
+restored database keeps the `outbox_id` of its backup.
 
 ## War actions
 

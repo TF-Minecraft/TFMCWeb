@@ -134,11 +134,11 @@ def test_partial_creation_cleanup_and_identity_refusal(isolated_cluster):
         preview.drop(url, slug)
 
 
-def test_site_tables_are_dev_tables_without_precedent_patch_notes_or_history(scratch_database):
+def test_site_tables_are_dev_tables_without_precedent_patch_notes_history_or_outbox_identity(scratch_database):
     migrate(scratch_database)
     with psycopg.connect(scratch_database) as conn:
         everything = {row[0] for row in conn.execute("SELECT tablename FROM pg_tables WHERE schemaname='public'")}
     tables = preview.site_tables(scratch_database)
     assert tables == sorted(tables) and {"login_codes", "users", "admin_audit"} <= set(tables)
-    assert set(everything) - set(tables) == {"schema_migrations"} | {
+    assert set(everything) - set(tables) == {"schema_migrations", "war_notification_outbox"} | {
         name for name in everything if name.startswith(("precedent_", "patchnote_"))}

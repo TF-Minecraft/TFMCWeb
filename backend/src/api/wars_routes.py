@@ -247,9 +247,12 @@ def get_war_notifications(
     realm: list[str] | None = Query(default=None),
     x_staff_key: str | None = Header(default=None, alias=HEADER_STAFF_KEY),
 ):
-    """Undelivered notifications, oldest first; each is offered again 10 minutes after it was handed out."""
+    """Undelivered notifications, oldest first; each is offered again 10 minutes after it was handed out.
+
+    `outbox_id` names this database's outbox, so the bot can tell a reset database from this one.
+    """
     _require_staff(x_staff_key)
-    return {"notifications": war_notifications.pending(limit, realm)}
+    return {"outbox_id": war_notifications.outbox_id(), "notifications": war_notifications.pending(limit, realm)}
 
 
 @wars_router.post("/staff/notifications/ack")
