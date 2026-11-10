@@ -173,3 +173,29 @@ Written by the ProvinceSystem side (branch `feat/war-history`). The ingest repli
 defender-side participant at declaration, each once. PS stores it, never publishes it,
 and turns it into Discord DMs (see [war-history.md](war-history.md#discord-notifications)).
 Other event types carry no `notify`.
+
+## v1.3 addendum: acting from Discord and the website
+
+Every event may carry a private top-level `private` object, stored and never published:
+
+```json
+"private": {
+  "voting": {
+    "kind": "day" | "hour" | null,
+    "options": ["2026-11-17", ...] | [21, 22, ...],
+    "option_labels": ["Tue 17/11", ...] | ["21:00 CET", ...],
+    "closes_at": "...",
+    "eligible": {"<account uuid>": "attacker" | "defender", ...},
+    "votes": {"<account uuid>": [<option>, ...], ...},
+    "tally": [{"option": ..., "attacker": n, "defender": n}, ...]
+  }
+}
+```
+
+New silent event types (no timeline entry, no channel post): `votes_changed` (payload
+`{}`), `call_to_arms_sent` (`{"caller": FactionRef, "target": FactionRef, "side", "coalition"}`
+with `private.notify = {"leader_account", "leader_character_id"}`) and
+`call_to_arms_closed` (`{"target": FactionRef, "result": "accepted" | "declined"}`).
+
+SimpleFactions polls the website's action queue and applies votes and call to arms
+answers; the routes and shapes are in [war-history.md](war-history.md#war-actions).

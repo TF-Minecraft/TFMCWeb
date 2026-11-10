@@ -33,6 +33,7 @@ from .history_model import (
     record_fighters,
     side_leaders,
     side_name,
+    side_of,
     summarize,
 )
 
@@ -55,6 +56,8 @@ KINDS = (
     "battle_result",
     "war_ended",
     "defender_dm",
+    # Contract v1.3: a call to arms, sent to the called faction's leader with Accept and Decline.
+    "call_to_arms_dm",
 )
 
 # Event type -> the channel notification it gives (war_declared also gives defender_dm rows).
@@ -363,6 +366,41 @@ def defender_accounts(notify: Any) -> list[str]:
     return list(dict.fromkeys(out))
 
 
+def call_to_arms_leader(private: Any) -> str | None:
+    """The leader account of a `call_to_arms_sent` event's private `notify`, lower case."""
+    notify = private.get("notify") if isinstance(private, dict) else None
+    raw = notify.get("leader_account") if isinstance(notify, dict) else None
+    if isinstance(raw, str) and 0 < len(raw.strip()) <= 64:
+        return raw.strip().lower()
+    return None
+
+
+def call_to_arms_payload(realm: str, event: dict, discord_user_id: str) -> dict | None:
+    """The `call_to_arms_dm` payload for one `call_to_arms_sent` event, or None when it names no target."""
+    p = event.get("payload") if isinstance(event.get("payload"), dict) else {}
+    caller = faction_ref(p.get("caller"))
+    target = faction_ref(p.get("target"))
+    if target is None or not target.get("id"):
+        return None
+    state = public_state(event.get("state"))
+    war_key = event["war_key"]
+    side = side_of(p.get("side"))
+    return {
+        "discord_user_id": discord_user_id,
+        "war_key": war_key,
+        "war_name": _war_name(state, war_key),
+        "at": iso(parse_instant(event.get("at"))),
+        "caller_name": (caller or {}).get("name"),
+        "caller_rgb": (caller or {}).get("rgb"),
+        "target_faction_id": target["id"],
+        "target_name": target.get("name"),
+        "side": side,
+        "enemy_name": side_name(state, other_side(side)) if side else None,
+        "coalition": p.get("coalition") is True,
+        "url": war_url(realm, war_key),
+    }
+
+
 def _linked_discord_users(conn, accounts: list[str]) -> list[str]:
     """Discord user ids linked to these accounts and still in the guild."""
     if not accounts:
@@ -390,7 +428,11 @@ def write_for_event(conn, realm: str, event: dict, notify: Any = None) -> int:
     Runs in a savepoint, so a failure here is logged and leaves the event stored:
     a war page matters more than its Discord post.
     """
-    if realm not in notify_realms() or event.get("type") not in _KIND_OF_EVENT:
+    if realm not in notify_realms():
+        return 0
+    if event.get("type") == "call_to_arms_sent":
+        return _write_call_to_arms(conn, realm, event)
+    if event.get("type") not in _KIND_OF_EVENT:
         return 0
     from .history_reads import fighter_stats_public, province_names
 
@@ -422,6 +464,25 @@ def write_for_event(conn, realm: str, event: dict, notify: Any = None) -> int:
             return written
     except Exception:  # noqa: BLE001 - never lose the event over its notification
         logger.exception("Could not queue war notifications for event %s in realm %s", event.get("id"), realm)
+        return 0
+
+
+def _write_call_to_arms(conn, realm: str, event: dict) -> int:
+    """One `call_to_arms_dm` for the called faction's leader, when linked; only in DM realms."""
+    if realm not in dm_realms():
+        return 0
+    try:
+        with conn.transaction():
+            leader = call_to_arms_leader(event.get("private"))
+            users = _linked_discord_users(conn, [leader]) if leader else []
+            if not users:
+                return 0
+            payload = call_to_arms_payload(realm, event, users[0])
+            if payload is None:
+                return 0
+            return 1 if _insert(conn, realm, event, "call_to_arms_dm", payload) else 0
+    except Exception:  # noqa: BLE001 - never lose the event over its notification
+        logger.exception("Could not queue the call to arms DM for event %s in realm %s", event.get("id"), realm)
         return 0
 
 

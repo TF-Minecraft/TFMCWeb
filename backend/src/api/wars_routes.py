@@ -26,7 +26,11 @@ from src.wars.declare_codes import (
     revoke,
     validate,
 )
+from src.skins.codes import CodeError, normalize_realm_id
+from src.skins.discord_link import get_link_for_discord_id
+from src.wars import actions as war_actions
 from src.wars import notifications as war_notifications
+from src.wars.history_model import WAR_KEY_RE
 from src.wars.history_ingest import (
     MAX_BODY_BYTES as WAR_HISTORY_MAX_BODY_BYTES,
     WarHistoryRequestError,
@@ -71,6 +75,20 @@ class RedeemCodeBody(BaseModel):
 
 class NotificationAckBody(BaseModel):
     ids: list[int] = Field(default_factory=list, max_length=1000)
+
+
+class ActionResultsBody(BaseModel):
+    results: list = Field(default_factory=list)
+    # Optional: SimpleFactions' realm, so a result can only touch that realm's rows.
+    realm_id: str | None = None
+
+
+class StaffActionBody(BaseModel):
+    realm: str | None = None
+    discord_user_id: str = Field(..., min_length=1, max_length=32)
+    war_key: str = Field(..., min_length=1, max_length=64)
+    kind: str
+    payload: dict = Field(default_factory=dict)
 
 
 class RevokeCodeBody(BaseModel):
@@ -242,3 +260,85 @@ def post_war_notifications_ack(
     """`{"ids": [...]}` -> `{"acked": [ids that exist]}`."""
     _require_staff(x_staff_key)
     return {"acked": war_notifications.ack(body.ids)}
+
+
+# --- War actions (votes and call to arms answers from the website and Discord) ---------
+# Contract v1.3: docs/docs/map/war-history.md#war-actions.
+
+
+def _action_realm(value: str | None) -> str:
+    try:
+        return normalize_realm_id(value)
+    except CodeError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+
+
+def _action_error(e: war_actions.WarActionError) -> HTTPException:
+    return HTTPException(status_code=e.status, detail=str(e))
+
+
+@wars_router.get("/plugin/actions/pending")
+def get_pending_war_actions(
+    realm: str | None = Query(default=None),
+    limit: int = Query(default=war_actions.DEFAULT_LIMIT, ge=1, le=war_actions.MAX_LIMIT),
+    x_plugin_key: str | None = Header(default=None, alias=HEADER_PLUGIN_KEY),
+):
+    """Pending actions of the realm, oldest first, stamped as delivered: `{"actions": [...]}`."""
+    _require_plugin(x_plugin_key)
+    return {"actions": war_actions.pending(_action_realm(realm), limit)}
+
+
+@wars_router.post("/plugin/actions/applied")
+def post_war_actions_applied(
+    body: ActionResultsBody,
+    x_plugin_key: str | None = Header(default=None, alias=HEADER_PLUGIN_KEY),
+):
+    """`{"results": [{"id", "status": "applied"|"rejected", "reason"}]}` -> `{"acked": [ids]}`."""
+    _require_plugin(x_plugin_key)
+    realm = _action_realm(body.realm_id) if body.realm_id is not None else None
+    try:
+        return war_actions.record_results(realm, body.results)
+    except war_actions.WarActionError as e:
+        raise _action_error(e) from e
+
+
+@wars_router.post("/staff/actions")
+def post_staff_war_action(
+    body: StaffActionBody,
+    x_staff_key: str | None = Header(default=None, alias=HEADER_STAFF_KEY),
+):
+    """The bot queues a Discord user's call to arms answer: `{"id", "status": "pending"}`.
+
+    409 `discord_not_linked` when the Discord user has no linked Minecraft account.
+    """
+    _require_staff(x_staff_key)
+    realm = _action_realm(body.realm)
+    if body.kind != "call_to_arms_answer":
+        raise HTTPException(status_code=400, detail="kind must be call_to_arms_answer")
+    if not WAR_KEY_RE.match(body.war_key):
+        raise HTTPException(status_code=404, detail="War not found")
+    link = get_link_for_discord_id(body.discord_user_id)
+    account = war_actions.account_key(link["player_uuid"]) if link else None
+    if account is None:
+        raise HTTPException(status_code=409, detail="discord_not_linked")
+    try:
+        action = war_actions.queue_call_answer(
+            realm, body.war_key, account, body.payload, source="discord",
+            discord_user_id=body.discord_user_id.strip(), require_open_call=False,
+        )
+    except war_actions.WarActionError as e:
+        raise _action_error(e) from e
+    return {"id": action["id"], "status": action["status"]}
+
+
+@wars_router.get("/staff/actions/{action_id}")
+def get_staff_war_action(
+    action_id: int,
+    x_staff_key: str | None = Header(default=None, alias=HEADER_STAFF_KEY),
+):
+    """One action's `status` (`pending`, `applied`, `rejected`, `expired`) and `reason`."""
+    _require_staff(x_staff_key)
+    found = war_actions.status(action_id)
+    if found is None:
+        raise HTTPException(status_code=404, detail="Action not found")
+    return found

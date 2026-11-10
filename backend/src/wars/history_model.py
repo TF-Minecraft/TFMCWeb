@@ -39,9 +39,13 @@ EVENT_TYPES = (
     "war_ended",
     # Contract v1.1: only refreshes the latest state's battle day; it has no timeline entry.
     "next_battle_day",
+    # Contract v1.3 (Phase 4): carry the private vote and call to arms state; no timeline entry.
+    "votes_changed",
+    "call_to_arms_sent",
+    "call_to_arms_closed",
 )
 
-SILENT_EVENT_TYPES = ("next_battle_day",)
+SILENT_EVENT_TYPES = ("next_battle_day", "votes_changed", "call_to_arms_sent", "call_to_arms_closed")
 
 RESOLUTIONS = ("fought", "autoresolve", "forfeit", "naval_default", "staff")
 

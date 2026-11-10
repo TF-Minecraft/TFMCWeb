@@ -28,6 +28,7 @@ from .history_model import (
     build_war_model,
     build_war_summary,
     from_epoch_ms,
+    iso,
     parse_instant,
 )
 
@@ -37,6 +38,8 @@ logger = logging.getLogger("wars.history")
 MAX_ITEMS = 200
 MAX_BODY_BYTES = 8 * 1024 * 1024
 MAX_EVENT_BYTES = 256 * 1024
+# The private block (v1.3) holds up to 2000 eligible accounts and their votes.
+MAX_PRIVATE_BYTES = 512 * 1024
 MAX_RECORD_FIGHTERS = 1000
 MAX_RECORD_SIDES = 16
 _ID_RE = re.compile(r"^[A-Za-z0-9_.:-]{1,160}$")
@@ -117,12 +120,19 @@ def _event_row(item: Any) -> dict:
     notify = item.get("notify")
     if notify is not None and not isinstance(notify, dict):
         raise _Rejected("notify must be an object")
+    # Private (contract v1.3): the open vote and who to notify. Stored, never published.
+    private = item.get("private")
+    if private is not None and not isinstance(private, dict):
+        raise _Rejected("private must be an object")
     try:
         size = len(json.dumps([state, payload, notify], allow_nan=False))
+        private_size = len(json.dumps(private, allow_nan=False))
     except ValueError as e:
         raise _Rejected("event has a non-finite number") from e
     if size > MAX_EVENT_BYTES:
         raise _Rejected("event is too large")
+    if private_size > MAX_PRIVATE_BYTES:
+        raise _Rejected("private is too large")
     return {
         "id": item["id"],
         "war_key": _war_key(item.get("war_key"), required=True),
@@ -131,6 +141,7 @@ def _event_row(item: Any) -> dict:
         "state": state,
         "payload": payload,
         "notify": notify,
+        "private": private,
     }
 
 
@@ -213,12 +224,13 @@ def ingest_events(body: Any) -> dict:
         with database.connect() as conn:
             for row in rows:
                 inserted = conn.execute(
-                    "INSERT INTO war_events (id, realm_id, war_key, type, at, state, payload, notify) "
-                    "VALUES (%s, %s, %s, %s, %s, %s, %s, %s) ON CONFLICT (id) DO NOTHING RETURNING id",
+                    "INSERT INTO war_events (id, realm_id, war_key, type, at, state, payload, notify, private) "
+                    "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) ON CONFLICT (id) DO NOTHING RETURNING id",
                     (row["id"], realm, row["war_key"], row["type"], row["at"],
                      None if row["state"] is None else database.Jsonb(row["state"]),
                      database.Jsonb(row["payload"]),
-                     None if row["notify"] is None else database.Jsonb(row["notify"])),
+                     None if row["notify"] is None else database.Jsonb(row["notify"]),
+                     None if row["private"] is None else database.Jsonb(row["private"])),
                 ).fetchone()
                 if inserted is not None:
                     touched.add(row["war_key"])
@@ -273,11 +285,30 @@ def _reply(acked: list[str], rejected: list[dict]) -> dict:
 
 
 def load_events(conn, realm: str, war_key: str) -> list[dict]:
+    """A war's events in order, for the page model. Of the many `votes_changed` events
+    (silent, one per vote change) only the newest is read, for its state."""
     return conn.execute(
         "SELECT id, type, at, state, payload FROM war_events WHERE realm_id = %s AND war_key = %s "
+        "AND (type <> 'votes_changed' OR id = ("
+        " SELECT v.id FROM war_events v WHERE v.realm_id = %s AND v.war_key = %s AND v.type = 'votes_changed'"
+        " ORDER BY v.at DESC, v.received_at DESC, v.id DESC LIMIT 1)) "
         "ORDER BY at, received_at, id",
-        (realm, war_key),
+        (realm, war_key, realm, war_key),
     ).fetchall()
+
+
+def latest_private_voting(conn, realm: str, war_key: str) -> dict | None:
+    """`{"voting", "at", "received_at"}` from the newest event that carries `private.voting`, or None."""
+    row = conn.execute(
+        "SELECT private -> 'voting' AS voting, at, received_at FROM war_events "
+        "WHERE realm_id = %s AND war_key = %s AND jsonb_typeof(private) = 'object' AND private ? 'voting' "
+        "ORDER BY at DESC, received_at DESC, id DESC LIMIT 1",
+        (realm, war_key),
+    ).fetchone()
+    if row is None:
+        return None
+    voting = row["voting"] if isinstance(row["voting"], dict) else None
+    return {"voting": voting, "at": iso(row["at"]), "received_at": row["received_at"].isoformat()}
 
 
 def load_records(conn, realm: str, war_key: str) -> list[dict]:
@@ -302,9 +333,10 @@ def refresh_war(conn, realm: str, war_key: str) -> None:
     conn.execute("SELECT 1 FROM wars WHERE realm_id = %s AND war_key = %s FOR UPDATE", (realm, war_key))
     model = build_war_model(war_key, load_events(conn, realm, war_key), load_records(conn, realm, war_key))
     summary = build_war_summary(model)
+    private = latest_private_voting(conn, realm, war_key)
     conn.execute(
         "UPDATE wars SET name = %s, state = %s, status = %s, started_at = %s, ended_at = %s, result = %s, "
-        "summary = %s, updated_at = now() WHERE realm_id = %s AND war_key = %s",
+        "summary = %s, private = %s, updated_at = now() WHERE realm_id = %s AND war_key = %s",
         (
             model["name"],
             None if model["state"] is None else database.Jsonb(model["state"]),
@@ -313,6 +345,7 @@ def refresh_war(conn, realm: str, war_key: str) -> None:
             parse_instant(model["ended_at"]),
             None if model["result"] is None else database.Jsonb(model["result"]),
             database.Jsonb(summary),
+            None if private is None else database.Jsonb(private),
             realm,
             war_key,
         ),
