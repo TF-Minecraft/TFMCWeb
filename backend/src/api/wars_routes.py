@@ -4,8 +4,11 @@ from __future__ import annotations
 
 import logging
 
-from fastapi import APIRouter, Header, HTTPException
+from fastapi import APIRouter, Header, HTTPException, Request
+from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel, Field
+
+from src.api.request_body import read_json_body
 
 from src.skins.auth import (
     AuthError,
@@ -22,6 +25,12 @@ from src.wars.declare_codes import (
     redeem,
     revoke,
     validate,
+)
+from src.wars.history_ingest import (
+    MAX_BODY_BYTES as WAR_HISTORY_MAX_BODY_BYTES,
+    WarHistoryRequestError,
+    ingest_battles,
+    ingest_events,
 )
 
 logger = logging.getLogger("wars.routes")
@@ -172,3 +181,34 @@ def post_revoke_declare_code(
         return revoke(body.id, realm_id=body.realm_id)
     except (WarDeclareCodeError, ValueError) as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
+
+
+# --- War history (SimpleFactions outbox) ----------------------------------------
+# Contract: docs/docs/map/war-history.md. Idempotent: a stored id is acked again.
+
+
+async def _ingest(request: Request, x_plugin_key: str | None, ingest) -> dict:
+    _require_plugin(x_plugin_key)
+    body = await read_json_body(request, WAR_HISTORY_MAX_BODY_BYTES)
+    try:
+        return await run_in_threadpool(ingest, body)
+    except WarHistoryRequestError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+
+
+@wars_router.post("/plugin/events")
+async def post_war_events(
+    request: Request,
+    x_plugin_key: str | None = Header(default=None, alias=HEADER_PLUGIN_KEY),
+):
+    """`{"realm_id", "events": [...]}` -> `{"acked": [ids], "rejected"?: [{id, reason}]}`."""
+    return await _ingest(request, x_plugin_key, ingest_events)
+
+
+@wars_router.post("/plugin/battles")
+async def post_war_battles(
+    request: Request,
+    x_plugin_key: str | None = Header(default=None, alias=HEADER_PLUGIN_KEY),
+):
+    """`{"realm_id", "records": [...]}` -> `{"acked": [ids], "rejected"?: [{id, reason}]}`."""
+    return await _ingest(request, x_plugin_key, ingest_battles)
