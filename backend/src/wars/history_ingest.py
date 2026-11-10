@@ -21,6 +21,7 @@ from typing import Any
 from src import database
 from src.skins.codes import CodeError, normalize_realm_id
 
+from . import notifications
 from .history_model import (
     EVENT_TYPES,
     WAR_KEY_RE,
@@ -112,8 +113,12 @@ def _event_row(item: Any) -> dict:
         payload = {}
     if not isinstance(payload, dict):
         raise _Rejected("payload must be an object")
+    # Private (contract v1.2): who to tell on Discord. Stored, never published.
+    notify = item.get("notify")
+    if notify is not None and not isinstance(notify, dict):
+        raise _Rejected("notify must be an object")
     try:
-        size = len(json.dumps([state, payload], allow_nan=False))
+        size = len(json.dumps([state, payload, notify], allow_nan=False))
     except ValueError as e:
         raise _Rejected("event has a non-finite number") from e
     if size > MAX_EVENT_BYTES:
@@ -125,6 +130,7 @@ def _event_row(item: Any) -> dict:
         "at": _sane_instant(item.get("at"), "at"),
         "state": state,
         "payload": payload,
+        "notify": notify,
     }
 
 
@@ -207,14 +213,17 @@ def ingest_events(body: Any) -> dict:
         with database.connect() as conn:
             for row in rows:
                 inserted = conn.execute(
-                    "INSERT INTO war_events (id, realm_id, war_key, type, at, state, payload) "
-                    "VALUES (%s, %s, %s, %s, %s, %s, %s) ON CONFLICT (id) DO NOTHING RETURNING id",
+                    "INSERT INTO war_events (id, realm_id, war_key, type, at, state, payload, notify) "
+                    "VALUES (%s, %s, %s, %s, %s, %s, %s, %s) ON CONFLICT (id) DO NOTHING RETURNING id",
                     (row["id"], realm, row["war_key"], row["type"], row["at"],
                      None if row["state"] is None else database.Jsonb(row["state"]),
-                     database.Jsonb(row["payload"])),
+                     database.Jsonb(row["payload"]),
+                     None if row["notify"] is None else database.Jsonb(row["notify"])),
                 ).fetchone()
                 if inserted is not None:
                     touched.add(row["war_key"])
+                    # Only a newly stored event notifies, so a resend never posts twice.
+                    notifications.write_for_event(conn, realm, row, row["notify"])
             for war_key in sorted(touched):
                 refresh_war(conn, realm, war_key)
     return _reply(acked, rejected)

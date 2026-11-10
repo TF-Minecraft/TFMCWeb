@@ -159,3 +159,17 @@ Written by the ProvinceSystem side (branch `feat/war-history`). The ingest repli
 8. **`WAR_FIGHTER_STATS_PUBLIC=false`** removes the `top_fighters` and `fighters` keys (it does not set them to null). Per-faction totals stay.
 9. **Ingest limits**: at most 200 items per request and 8 MiB per body; past either the request is refused (400 / 413). An event `at`, or a record `startedAt`/`endedAt`, outside 2020-01-01 to 2100-01-01 is rejected. Later times are accepted for Dev's campaign clock. An item with no usable id string is listed in `rejected` with `"id": null` and cannot be acked. A malformed id that is still a string (up to 1024 chars) is acked as sent.
 10. **Event ids are unique across realms.** `war_events.id` is the primary key, so an event id resent under another realm is ignored as already stored. Battle records are keyed by `(realm_id, record id)`.
+
+## v1.2 addendum: Discord notifications
+
+`war_declared` events carry a private top-level `notify` object, outside `payload` and
+`state`:
+
+```json
+{"id": "uuid", "type": "war_declared", "state": WarState, "payload": {}, "notify": {"defender_accounts": ["<minecraft account uuid>", ...]}}
+```
+
+`defender_accounts` is the owning account of every member character of every
+defender-side participant at declaration, each once. PS stores it, never publishes it,
+and turns it into Discord DMs (see [war-history.md](war-history.md#discord-notifications)).
+Other event types carry no `notify`.

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 
-from fastapi import APIRouter, Header, HTTPException, Request
+from fastapi import APIRouter, Header, HTTPException, Query, Request
 from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel, Field
 
@@ -26,6 +26,7 @@ from src.wars.declare_codes import (
     revoke,
     validate,
 )
+from src.wars import notifications as war_notifications
 from src.wars.history_ingest import (
     MAX_BODY_BYTES as WAR_HISTORY_MAX_BODY_BYTES,
     WarHistoryRequestError,
@@ -66,6 +67,10 @@ class RedeemCodeBody(BaseModel):
     realm_id: str | None = None
     war_id: str | None = None
     kind: str | None = None
+
+
+class NotificationAckBody(BaseModel):
+    ids: list[int] = Field(default_factory=list, max_length=1000)
 
 
 class RevokeCodeBody(BaseModel):
@@ -212,3 +217,28 @@ async def post_war_battles(
 ):
     """`{"realm_id", "records": [...]}` -> `{"acked": [ids], "rejected"?: [{id, reason}]}`."""
     return await _ingest(request, x_plugin_key, ingest_battles)
+
+
+# --- War notifications (the Discord bot's outbox) -------------------------------
+# Contract v1.2: docs/docs/map/war-history.md#discord-notifications.
+
+
+@wars_router.get("/staff/notifications")
+def get_war_notifications(
+    limit: int = Query(default=war_notifications.DEFAULT_LIMIT, ge=1, le=war_notifications.MAX_LIMIT),
+    realm: list[str] | None = Query(default=None),
+    x_staff_key: str | None = Header(default=None, alias=HEADER_STAFF_KEY),
+):
+    """Undelivered notifications, oldest first; each is offered again 10 minutes after it was handed out."""
+    _require_staff(x_staff_key)
+    return {"notifications": war_notifications.pending(limit, realm)}
+
+
+@wars_router.post("/staff/notifications/ack")
+def post_war_notifications_ack(
+    body: NotificationAckBody,
+    x_staff_key: str | None = Header(default=None, alias=HEADER_STAFF_KEY),
+):
+    """`{"ids": [...]}` -> `{"acked": [ids that exist]}`."""
+    _require_staff(x_staff_key)
+    return {"acked": war_notifications.ack(body.ids)}
