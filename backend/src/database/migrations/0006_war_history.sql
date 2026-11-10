@@ -17,7 +17,7 @@ CREATE TABLE war_events (
     received_at timestamptz NOT NULL DEFAULT now(),
     CONSTRAINT war_events_type_check CHECK (type IN (
         'war_declared', 'participant_joined', 'day_vote_closed', 'battle_scheduled',
-        'battle_postponed', 'battle_resolved', 'war_ended'))
+        'battle_postponed', 'battle_resolved', 'war_ended', 'next_battle_day'))
 );
 
 -- The war page reads one war's events in order.

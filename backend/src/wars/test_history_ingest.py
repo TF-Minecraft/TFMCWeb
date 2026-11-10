@@ -131,6 +131,16 @@ def test_every_event_type_is_stored(client):
     assert timeline[-1]["type"] == "war_ended"
 
 
+def test_next_battle_day_is_stored(client):
+    good = sample_batches()[0]["events"][0]
+    event = {**good, "id": "e-next-day", "type": "next_battle_day", "payload": {"battle_day": "2026-11-19"}}
+    reply = client.post("/wars/plugin/events", json={"realm_id": "main", "events": [event]},
+                        headers=PLUGIN).json()
+    assert reply["acked"] == ["e-next-day"]
+    assert not reply.get("rejected")
+    assert _count("war_events") == 1
+
+
 def test_malformed_items_are_acked_and_listed(client):
     good = sample_batches()[0]["events"][0]
     bad = [
