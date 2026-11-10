@@ -104,6 +104,8 @@ Each code has a `kind`:
 | `GET /wars/declare-codes` | Staff (bot) | Outstanding codes with `kind` and `goal`; ids and metadata, never a code |
 | `POST /wars/declare-codes/revoke` | Staff (bot) | Revoke by id |
 | `GET /wars/declare-codes/goals` | Staff (bot) | The eight declarable goals. Kept for older bots; the bot no longer pins a goal |
+| `POST /wars/plugin/events` | Plugin | War history events from the SF outbox; returns `{acked, rejected?}`. See [map/war-history.md](../map/war-history.md) |
+| `POST /wars/plugin/battles` | Plugin | Battle records from the SF outbox; returns `{acked, rejected?}` |
 
 Rules:
 
