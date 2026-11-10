@@ -27,6 +27,7 @@ from .history_model import (
     iso,
     other_side,
     parse_instant,
+    place_from_battle_name,
     public_payload,
     public_state,
     record_fighters,
@@ -212,16 +213,21 @@ def _war_name(state: dict | None, war_key: str) -> str:
     return (state or {}).get("name") or war_key
 
 
-def _top_fighters(conn, realm: str, record_id: str | None) -> list[dict] | None:
-    """The record's three best fighters by kills, or None when the record is not in yet."""
+def _record(conn, realm: str, record_id: str | None) -> dict | None:
+    """The stored battle record, or None when there is none or it is not in yet."""
     if not record_id:
         return None
     row = conn.execute(
         "SELECT record FROM war_battles WHERE realm_id = %s AND record_id = %s", (realm, record_id)
     ).fetchone()
-    if row is None or not isinstance(row["record"], dict):
+    return row["record"] if row is not None and isinstance(row["record"], dict) else None
+
+
+def _top_fighters(record: dict | None) -> list[dict] | None:
+    """The record's three best fighters by kills, or None when the record is not in yet."""
+    if record is None:
         return None
-    fighters = [f for f in record_fighters(row["record"]) if f["kills"] > 0]
+    fighters = [f for f in record_fighters(record) if f["kills"] > 0]
     fighters.sort(key=lambda f: (-f["kills"], f["deaths"], f["name"]))
     return [
         {"name": f["name"], "side": f["side"], "faction": f["faction_name"] or None,
@@ -301,10 +307,13 @@ def build_payload(
         return {**base, "summary": summary, "battle_day": payload["battle_day"]}
     if event_type == "battle_resolved":
         province_id = payload["province_id"]
+        record = _record(conn, realm, payload["record_id"])
         name = province_name(province_id) if province_id is not None else None
+        # Provinces with no settlement or installation have no map name; the battle record still names the place.
+        name = name or place_from_battle_name(record.get("name") if record else None)
         battle = {**payload, "province_name": name}
         winner = payload["winner"]
-        top = _top_fighters(conn, realm, payload["record_id"]) if fighter_stats_public else None
+        top = _top_fighters(record) if fighter_stats_public else None
         return {
             **base,
             "summary": summarize(event_type, payload, state, battle, province_name),
