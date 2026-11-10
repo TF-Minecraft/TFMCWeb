@@ -30,8 +30,3 @@ CREATE INDEX war_notifications_pending_idx ON war_notifications (id) WHERE acked
 -- Private: who to tell on Discord (SimpleFactions' `notify`). Never published.
 ALTER TABLE war_events ADD COLUMN notify jsonb;
 
--- Contract v1.1 added next_battle_day; 0006's check predates it and refused the insert.
-ALTER TABLE war_events DROP CONSTRAINT war_events_type_check;
-ALTER TABLE war_events ADD CONSTRAINT war_events_type_check CHECK (type IN (
-    'war_declared', 'participant_joined', 'day_vote_closed', 'battle_scheduled',
-    'battle_postponed', 'battle_resolved', 'war_ended', 'next_battle_day'));

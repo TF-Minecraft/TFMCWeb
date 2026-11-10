@@ -254,6 +254,21 @@ def test_declared_war_dms_linked_defenders_and_keeps_their_accounts_private(clie
     assert len(_rows("defender_dm")) == 1
 
 
+def test_dev_wars_send_no_dms_unless_asked(client, monkeypatch):
+    _link(DEFENDER_ACCOUNT, "111")
+    event = copy.deepcopy(_declared(_events("dev")))
+    event["id"] = "dev-dm-" + event["id"]
+    event["notify"] = {"defender_accounts": [DEFENDER_ACCOUNT]}
+    _post(client, "/wars/plugin/events", {"realm_id": "dev", "events": [event]})
+    assert _rows("defender_dm") == [], "Test wars on Dev never message real players by default"
+    assert _rows("war_declared"), "Dev still posts in its channel"
+
+    monkeypatch.setenv("WAR_NOTIFY_DM_REALMS", "main, dev")
+    assert notifications.dm_realms() == {"main", "dev"}
+    monkeypatch.setenv("WAR_NOTIFY_DM_REALMS", "")
+    assert notifications.dm_realms() == set()
+
+
 def test_a_malformed_notify_is_rejected_like_any_bad_field(client):
     event = copy.deepcopy(_declared(_events()))
     event["notify"] = ["not", "an", "object"]

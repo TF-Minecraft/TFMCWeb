@@ -148,6 +148,7 @@ resent event never posts twice. Code:
 | Env | Default | Meaning |
 | --- | --- | --- |
 | `WAR_NOTIFY_REALMS` | `main,dev` | Realms that get rows, comma separated. Set it empty to write none. |
+| `WAR_NOTIFY_DM_REALMS` | `main` | Realms whose defenders get a `defender_dm`. Dev is left out, so test wars never message real players. |
 | `PUBLIC_SITE_URL` | `SITE_PUBLIC_URL` | Base of the links in the posts |
 
 ### Routes

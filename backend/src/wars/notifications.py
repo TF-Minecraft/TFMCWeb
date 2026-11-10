@@ -145,6 +145,15 @@ def notify_realms() -> set[str]:
     return {part.strip().lower() for part in raw.split(",") if part.strip()}
 
 
+def dm_realms() -> set[str]:
+    """`WAR_NOTIFY_DM_REALMS`: realms whose defenders get a DM. Unset means main only, so test wars on Dev
+    never message real players; empty means none."""
+    raw = os.environ.get("WAR_NOTIFY_DM_REALMS")
+    if raw is None:
+        return {"main"}
+    return {part.strip().lower() for part in raw.split(",") if part.strip()}
+
+
 def site_url() -> str:
     for name in ("PUBLIC_SITE_URL", "SITE_PUBLIC_URL"):
         value = (os.environ.get(name) or "").strip().rstrip("/")
@@ -387,7 +396,7 @@ def write_for_event(conn, realm: str, event: dict, notify: Any = None) -> int:
             written = 0
             if _insert(conn, realm, event, _KIND_OF_EVENT[event["type"]], payload):
                 written += 1
-            if event["type"] == "war_declared":
+            if event["type"] == "war_declared" and realm in dm_realms():
                 for user_id in _linked_discord_users(conn, defender_accounts(notify)):
                     dm = {
                         "discord_user_id": user_id,
