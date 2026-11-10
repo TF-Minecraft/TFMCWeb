@@ -7,7 +7,7 @@ import { mapBannerFrameClass } from "@/app/components/map/ui";
 import { chroniclePanelClass } from "@/app/components/chronicle/ChroniclePanels";
 import FormattedMcRuns from "@/app/components/shared/FormattedMcRuns";
 import { parseNameRuns } from "@/lib/characters/lorePreview";
-import { bannerPath, formatCount, SIDE_LABEL } from "@/lib/wars/format";
+import { bannerPath, formatCount, legibleRgb, SIDE_LABEL } from "@/lib/wars/format";
 import type { FactionRef, SidePair, WarSide } from "@/lib/wars/types";
 
 export const pageClass = "mx-auto min-h-[calc(100dvh-var(--tfmc-header-h))] w-full max-w-6xl px-4 py-10 sm:px-6";
@@ -57,13 +57,25 @@ export function Section({
   );
 }
 
+function legibleHex(color: string): string {
+  const match = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(color);
+  if (!match) return color;
+  const rgb = legibleRgb([1, 2, 3].map((i) => Number.parseInt(match[i]!, 16)) as [number, number, number], 4.5);
+  return `#${rgb.map((c) => c.toString(16).padStart(2, "0")).join("")}`;
+}
+
 /** A faction name in its in-game colours, readable on the dark page. */
 export function FactionName({ faction, className = "" }: { faction: FactionRef | null; className?: string }) {
   if (!faction) return null;
-  const runs = parseNameRuns(faction.name_raw || faction.name);
+  const parsed = parseNameRuns(faction.name_raw || faction.name);
+  // In-game colours, lifted where a dark one would not read on the page.
+  const runs = (parsed.length ? parsed : parseNameRuns(faction.name)).map((run) => ({
+    ...run,
+    color: legibleHex(run.color),
+  }));
   return (
     <span className={className}>
-      <FormattedMcRuns runs={runs.length ? runs : parseNameRuns(faction.name)} />
+      <FormattedMcRuns runs={runs} />
     </span>
   );
 }

@@ -275,10 +275,10 @@ function contrast(a: [number, number, number], b: [number, number, number]): num
   return (hi + 0.05) / (lo + 0.05);
 }
 
-/** A faction colour lifted toward white until it reads 3:1 on the dark page. */
-export function legibleRgb(rgb: [number, number, number]): [number, number, number] {
+/** A faction colour lifted toward white until it reads `min`:1 on the dark page (3 for marks, 4.5 for text). */
+export function legibleRgb(rgb: [number, number, number], min = 3): [number, number, number] {
   let out = rgb;
-  for (let step = 1; step <= 10 && contrast(out, SURFACE) < 3; step++) {
+  for (let step = 1; step <= 10 && contrast(out, SURFACE) < min; step++) {
     const t = step / 10;
     out = rgb.map((c) => Math.round(c + (255 - c) * t)) as [number, number, number];
   }

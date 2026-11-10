@@ -5,7 +5,9 @@ import type { WarParticipant, WarSide } from "@/lib/wars/types";
 
 import { FactionName, Swatch, sideVar } from "./WarUi";
 
-const th = "px-2 py-2 text-right text-xs font-medium uppercase tracking-wider text-[var(--tfmc-mist)]";
+const thBase = "px-2 py-2 text-xs font-medium uppercase tracking-wider text-[var(--tfmc-mist)]";
+const th = `${thBase} text-right`;
+const thLeft = `${thBase} text-left`;
 const td = "px-2 py-2 text-right tabular-nums text-[var(--tfmc-cream)]";
 
 function participantColor(row: WarParticipant): string {
@@ -35,11 +37,11 @@ export default function ParticipantsTable({
         <table className="w-full min-w-[46rem] border-collapse text-sm">
           <thead>
             <tr className="border-b border-[color-mix(in_srgb,var(--tfmc-cream)_12%,transparent)]">
-              <th scope="col" className={`${th} text-left`}>
+              <th scope="col" className={thLeft}>
                 Faction
               </th>
               {showJoined ? (
-                <th scope="col" className={`${th} text-left`}>
+                <th scope="col" className={thLeft}>
                   Joined
                 </th>
               ) : null}

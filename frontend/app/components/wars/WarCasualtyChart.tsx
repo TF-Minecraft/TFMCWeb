@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { formatCount, SIDE_LABEL } from "@/lib/wars/format";
 import { casualtyChartGeometry, casualtySeries } from "@/lib/wars/math";
@@ -8,7 +8,23 @@ import type { WarBattle, WarSide } from "@/lib/wars/types";
 
 import { Swatch, sideVar } from "./WarUi";
 
-const BOX = { width: 640, height: 260, top: 12, right: 12, bottom: 22, left: 40 };
+const MARGIN = { top: 12, right: 12, bottom: 22, left: 40 };
+
+/** Drawn at the container's own pixel width, so labels stay 11px on a phone and a wide screen alike. */
+function useWidth(fallback: number) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [width, setWidth] = useState(fallback);
+  useEffect(() => {
+    const node = ref.current;
+    if (!node || typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(([entry]) => {
+      if (entry) setWidth(Math.max(280, Math.round(entry.contentRect.width)));
+    });
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+  return { ref, width };
+}
 const SIDES: WarSide[] = ["attacker", "defender"];
 
 /**
@@ -18,7 +34,12 @@ const SIDES: WarSide[] = ["attacker", "defender"];
  */
 export default function WarCasualtyChart({ battles, names }: { battles: WarBattle[]; names: Record<WarSide, string> }) {
   const series = useMemo(() => casualtySeries(battles), [battles]);
-  const geometry = useMemo(() => casualtyChartGeometry(series, BOX), [series]);
+  const { ref, width } = useWidth(640);
+  const BOX = useMemo(
+    () => ({ ...MARGIN, width, height: Math.round(Math.min(300, Math.max(220, width * 0.4))) }),
+    [width],
+  );
+  const geometry = useMemo(() => casualtyChartGeometry(series, BOX), [series, BOX]);
   const [hover, setHover] = useState<number | null>(null);
   if (!series.labels.length) return null;
   const slot = (BOX.width - BOX.left - BOX.right) / series.labels.length;
@@ -34,7 +55,7 @@ export default function WarCasualtyChart({ battles, names }: { battles: WarBattl
           </span>
         ))}
       </div>
-      <div className="relative mt-3">
+      <div ref={ref} className="relative mt-3">
         <svg
           viewBox={`0 0 ${BOX.width} ${BOX.height}`}
           className="h-auto w-full overflow-visible"

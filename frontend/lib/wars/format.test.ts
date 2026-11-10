@@ -132,6 +132,7 @@ describe("sides", () => {
     const defender = sideLeader(sampleActiveWar.state, "defender");
     expect(sideColor(defender, "defender")).not.toBe("#8a2030");
     expect(legibleRgb([201, 162, 39])).toEqual([201, 162, 39]);
+    expect(legibleRgb([138, 32, 48], 4.5)).not.toEqual(legibleRgb([138, 32, 48]));
     expect(sideColor(null, "defender")).toBe("#5a93dc");
     expect(sideName(null, "attacker")).toBe("the attackers");
     expect(sideName(null, "defender", true)).toBe("The defenders");

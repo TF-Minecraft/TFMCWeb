@@ -243,7 +243,9 @@ export default function BattleReportView({ report }: { report: BattleReport }) {
                   <p className={`mt-1 text-sm ${mutedClass}`}>
                     {lives ? `${lives.left} of ${lives.max} lives left` : "Lives were not recorded"}
                     {deaths ? ` · ${deaths[side]} fell` : ""}
-                    {battle?.regiments_lost ? ` · ${battle.regiments_lost[side]} regiments lost` : ""}
+                    {battle?.regiments_lost
+                      ? ` · ${battle.regiments_lost[side]} ${battle.regiments_lost[side] === 1 ? "regiment" : "regiments"} lost`
+                      : ""}
                   </p>
                 </div>
               );
