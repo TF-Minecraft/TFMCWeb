@@ -1,0 +1,2716 @@
+{
+  "list": {
+    "map_id": "main",
+    "wars": [
+      {
+        "war_key": "w3-1793642400",
+        "name": "War of the Aureate Succession",
+        "name_raw": "#c9a227War of the Aureate Succession",
+        "goal": "de_jure_annex",
+        "war_type": "conquest",
+        "civil_war": false,
+        "status": "active",
+        "known_from_records_only": false,
+        "sides": {
+          "attacker": {
+            "leaders": [
+              {
+                "id": "aureate",
+                "founded_at": 1730000000,
+                "name": "The Aureate Coterie",
+                "name_raw": "#c9a227The Aureate Coterie",
+                "rgb": "201,162,39"
+              }
+            ],
+            "count": 3
+          },
+          "defender": {
+            "leaders": [
+              {
+                "id": "malestroit",
+                "founded_at": 1729000000,
+                "name": "House Malestroit",
+                "name_raw": "#8a2030House Malestroit",
+                "rgb": "138,32,48"
+              }
+            ],
+            "count": 2
+          }
+        },
+        "started_at": "2026-11-02T18:00:00Z",
+        "ended_at": null,
+        "result": null,
+        "battles_won": {
+          "attacker": 2,
+          "defender": 1
+        },
+        "deaths": {
+          "attacker": 78,
+          "defender": 68
+        },
+        "score": {
+          "battles_won": {
+            "attacker": 2,
+            "defender": 1
+          },
+          "occupation": {
+            "attacker": 3,
+            "defender": 0,
+            "route_length": 9
+          },
+          "deaths": {
+            "attacker": 78,
+            "defender": 68
+          },
+          "regiments_lost": {
+            "attacker": 8,
+            "defender": 8
+          }
+        },
+        "battle_count": 3,
+        "phase": {
+          "schedule_phase": "scheduled",
+          "campaign_phase": "invasion",
+          "buildup": false,
+          "day_vote_closes_at": "2026-11-04T18:00:00Z",
+          "battle_day": null,
+          "scheduled_at": "2026-11-12T20:00:00Z"
+        }
+      },
+      {
+        "war_key": "w1-1760000000",
+        "name": "The Brume Border War",
+        "name_raw": "§9The Brume Border War",
+        "goal": "tributary",
+        "war_type": "conquest",
+        "civil_war": false,
+        "status": "ended",
+        "known_from_records_only": false,
+        "sides": {
+          "attacker": {
+            "leaders": [
+              {
+                "id": "brume",
+                "founded_at": 1734000000,
+                "name": "Brume",
+                "name_raw": "§9Brume",
+                "rgb": "95,50,217"
+              }
+            ],
+            "count": 1
+          },
+          "defender": {
+            "leaders": [
+              {
+                "id": "kestrel",
+                "founded_at": 1734500000,
+                "name": "Kestrel Reach",
+                "name_raw": "§6Kestrel Reach",
+                "rgb": "200,110,40"
+              }
+            ],
+            "count": 1
+          }
+        },
+        "started_at": "2025-10-09T08:53:20Z",
+        "ended_at": "2025-10-13T10:00:00Z",
+        "result": {
+          "reason": "attacker_victory",
+          "winner": "attacker",
+          "truce_until": "2025-11-13T10:00:00Z"
+        },
+        "battles_won": {
+          "attacker": 1,
+          "defender": 0
+        },
+        "deaths": {
+          "attacker": 11,
+          "defender": 17
+        },
+        "score": {
+          "battles_won": {
+            "attacker": 1,
+            "defender": 0
+          },
+          "occupation": {
+            "attacker": 4,
+            "defender": 0,
+            "route_length": 4
+          },
+          "deaths": {
+            "attacker": 11,
+            "defender": 17
+          },
+          "regiments_lost": {
+            "attacker": 0,
+            "defender": 2
+          }
+        },
+        "battle_count": 1,
+        "phase": {
+          "schedule_phase": "resolved",
+          "campaign_phase": "invasion",
+          "buildup": false,
+          "day_vote_closes_at": "2026-11-04T18:00:00Z",
+          "battle_day": null,
+          "scheduled_at": null
+        }
+      },
+      {
+        "war_key": "w2-1754992800",
+        "name": "War of the Salt Marshes",
+        "name_raw": "War of the Salt Marshes",
+        "goal": null,
+        "war_type": null,
+        "civil_war": false,
+        "status": "ended",
+        "known_from_records_only": true,
+        "sides": {
+          "attacker": {
+            "leaders": [
+              {
+                "id": null,
+                "founded_at": null,
+                "name": "Brume",
+                "name_raw": "Brume",
+                "rgb": null
+              }
+            ],
+            "count": 1
+          },
+          "defender": {
+            "leaders": [
+              {
+                "id": null,
+                "founded_at": null,
+                "name": "Vellmoor",
+                "name_raw": "Vellmoor",
+                "rgb": null
+              }
+            ],
+            "count": 1
+          }
+        },
+        "started_at": "2025-08-12T10:00:00Z",
+        "ended_at": "2025-08-17T20:10:00Z",
+        "result": null,
+        "battles_won": {
+          "attacker": 1,
+          "defender": 1
+        },
+        "deaths": {
+          "attacker": 26,
+          "defender": 17
+        },
+        "score": {
+          "battles_won": {
+            "attacker": 1,
+            "defender": 1
+          },
+          "occupation": {
+            "attacker": 0,
+            "defender": 0,
+            "route_length": null
+          },
+          "deaths": {
+            "attacker": 26,
+            "defender": 17
+          },
+          "regiments_lost": {
+            "attacker": 0,
+            "defender": 0
+          }
+        },
+        "battle_count": 2,
+        "phase": {
+          "schedule_phase": null,
+          "campaign_phase": null,
+          "buildup": null,
+          "day_vote_closes_at": null,
+          "battle_day": null,
+          "scheduled_at": null
+        }
+      }
+    ]
+  },
+  "active": {
+    "map_id": "main",
+    "war_key": "w3-1793642400",
+    "name": "War of the Aureate Succession",
+    "name_raw": "#c9a227War of the Aureate Succession",
+    "state": {
+      "name": "War of the Aureate Succession",
+      "name_raw": "#c9a227War of the Aureate Succession",
+      "goal": "de_jure_annex",
+      "war_type": "conquest",
+      "civil_war": false,
+      "status": "active",
+      "schedule_phase": "scheduled",
+      "campaign_phase": "invasion",
+      "buildup": false,
+      "day_vote_closes_at": "2026-11-04T18:00:00Z",
+      "battle_day": null,
+      "scheduled_at": "2026-11-12T20:00:00Z",
+      "route_length": 9,
+      "objective_province_id": 80,
+      "objective_held_by": "defender",
+      "occupied_by_attacker": 3,
+      "occupied_by_defender": 0,
+      "battles_fought": 3,
+      "initiative": {
+        "attacker": 6,
+        "defender": 4,
+        "holder": "attacker"
+      },
+      "sides": {
+        "attacker": [
+          {
+            "id": "aureate",
+            "founded_at": 1730000000,
+            "name": "The Aureate Coterie",
+            "name_raw": "#c9a227The Aureate Coterie",
+            "rgb": "201,162,39",
+            "role": "leader",
+            "joined_at": null
+          },
+          {
+            "id": "sprockets",
+            "founded_at": 1731000000,
+            "name": "The Jolly Sprockets",
+            "name_raw": "§bThe Jolly Sprockets",
+            "rgb": "70,130,180",
+            "role": "ally",
+            "joined_at": "2026-11-03T12:00:00Z"
+          },
+          {
+            "id": "ash",
+            "founded_at": 1732000000,
+            "name": "Order of the Ash",
+            "name_raw": "§7Order of the Ash",
+            "rgb": "150,150,140",
+            "role": "backer",
+            "joined_at": "2026-11-06T09:00:00Z"
+          }
+        ],
+        "defender": [
+          {
+            "id": "malestroit",
+            "founded_at": 1729000000,
+            "name": "House Malestroit",
+            "name_raw": "#8a2030House Malestroit",
+            "rgb": "138,32,48",
+            "role": "leader",
+            "joined_at": null
+          },
+          {
+            "id": "vellmoor",
+            "founded_at": 1733000000,
+            "name": "Vellmoor",
+            "name_raw": "§2Vellmoor",
+            "rgb": "90,120,60",
+            "role": "subject",
+            "joined_at": null
+          }
+        ]
+      }
+    },
+    "status": "active",
+    "started_at": "2026-11-02T18:00:00Z",
+    "ended_at": null,
+    "result": null,
+    "objective_province_name": "Malestroit Keep",
+    "score": {
+      "battles_won": {
+        "attacker": 2,
+        "defender": 1
+      },
+      "occupation": {
+        "attacker": 3,
+        "defender": 0,
+        "route_length": 9
+      },
+      "deaths": {
+        "attacker": 78,
+        "defender": 68
+      },
+      "regiments_lost": {
+        "attacker": 8,
+        "defender": 8
+      }
+    },
+    "timeline": [
+      {
+        "at": "2026-11-02T18:00:00Z",
+        "type": "war_declared",
+        "summary": "The Aureate Coterie declared war on House Malestroit.",
+        "payload": {}
+      },
+      {
+        "at": "2026-11-03T12:00:00Z",
+        "type": "participant_joined",
+        "summary": "The Jolly Sprockets answered the call to arms and joined The Aureate Coterie.",
+        "payload": {
+          "faction": {
+            "id": "sprockets",
+            "founded_at": 1731000000,
+            "name": "The Jolly Sprockets",
+            "name_raw": "§bThe Jolly Sprockets",
+            "rgb": "70,130,180"
+          },
+          "side": "attacker",
+          "role": "ally"
+        }
+      },
+      {
+        "at": "2026-11-04T18:00:00Z",
+        "type": "day_vote_closed",
+        "summary": "The first battle was set for 05/11/2026.",
+        "payload": {
+          "battle_day": "2026-11-05",
+          "quorum": true
+        }
+      },
+      {
+        "at": "2026-11-04T18:05:00Z",
+        "type": "battle_scheduled",
+        "summary": "A field battle was set at Ashford for 05/11/2026 21:00 CET.",
+        "payload": {
+          "scheduled_at": "2026-11-05T20:00:00Z",
+          "province_id": 77,
+          "kind": "field"
+        }
+      },
+      {
+        "at": "2026-11-05T21:05:00Z",
+        "type": "battle_resolved",
+        "summary": "Battle of Ashford: victory for The Aureate Coterie. 23 attackers and 31 defenders fell.",
+        "payload": {
+          "battle_number": 1,
+          "province_id": 77,
+          "kind": "field",
+          "leg": "invasion",
+          "winner": "attacker",
+          "resolution": "fought",
+          "battle_id": "w3-field-77",
+          "record_id": "w3-field-77-1793912640000",
+          "deaths": {
+            "attacker": 23,
+            "defender": 31
+          },
+          "lives": {
+            "attacker": {
+              "left": 12,
+              "max": 40
+            },
+            "defender": {
+              "left": 0,
+              "max": 45
+            }
+          },
+          "regiments_lost": [
+            {
+              "faction": {
+                "id": "aureate",
+                "founded_at": 1730000000,
+                "name": "The Aureate Coterie",
+                "name_raw": "#c9a227The Aureate Coterie",
+                "rgb": "201,162,39"
+              },
+              "side": "attacker",
+              "regiment": "men_at_arms",
+              "regiment_name": "Men-at-Arms",
+              "count": 2
+            },
+            {
+              "faction": {
+                "id": "sprockets",
+                "founded_at": 1731000000,
+                "name": "The Jolly Sprockets",
+                "name_raw": "§bThe Jolly Sprockets",
+                "rgb": "70,130,180"
+              },
+              "side": "attacker",
+              "regiment": "crossbowmen",
+              "regiment_name": "Crossbowmen",
+              "count": 1
+            },
+            {
+              "faction": {
+                "id": "malestroit",
+                "founded_at": 1729000000,
+                "name": "House Malestroit",
+                "name_raw": "#8a2030House Malestroit",
+                "rgb": "138,32,48"
+              },
+              "side": "defender",
+              "regiment": "pikemen",
+              "regiment_name": "Pikemen",
+              "count": 3
+            },
+            {
+              "faction": {
+                "id": "vellmoor",
+                "founded_at": 1733000000,
+                "name": "Vellmoor",
+                "name_raw": "§2Vellmoor",
+                "rgb": "90,120,60"
+              },
+              "side": "defender",
+              "regiment": "levy",
+              "regiment_name": "Levy Spearmen",
+              "count": 2
+            }
+          ]
+        }
+      },
+      {
+        "at": "2026-11-06T09:00:00Z",
+        "type": "participant_joined",
+        "summary": "Order of the Ash backed The Aureate Coterie.",
+        "payload": {
+          "faction": {
+            "id": "ash",
+            "founded_at": 1732000000,
+            "name": "Order of the Ash",
+            "name_raw": "§7Order of the Ash",
+            "rgb": "150,150,140"
+          },
+          "side": "attacker",
+          "role": "backer"
+        }
+      },
+      {
+        "at": "2026-11-06T09:30:00Z",
+        "type": "battle_scheduled",
+        "summary": "A siege was set at Greywater for 07/11/2026 21:00 CET.",
+        "payload": {
+          "scheduled_at": "2026-11-07T20:00:00Z",
+          "province_id": 78,
+          "kind": "siege"
+        }
+      },
+      {
+        "at": "2026-11-07T12:00:00Z",
+        "type": "battle_postponed",
+        "summary": "The battle was postponed to 08/11/2026.",
+        "payload": {
+          "battle_day": "2026-11-08"
+        }
+      },
+      {
+        "at": "2026-11-08T21:13:00Z",
+        "type": "battle_resolved",
+        "summary": "Battle of Greywater: victory for House Malestroit. 38 attackers and 19 defenders fell.",
+        "payload": {
+          "battle_number": 2,
+          "province_id": 78,
+          "kind": "siege",
+          "leg": "invasion",
+          "winner": "defender",
+          "resolution": "fought",
+          "battle_id": "w3-siege-78",
+          "record_id": "w3-siege-78-1794172320000",
+          "deaths": {
+            "attacker": 38,
+            "defender": 19
+          },
+          "lives": {
+            "attacker": {
+              "left": 0,
+              "max": 40
+            },
+            "defender": {
+              "left": 9,
+              "max": 30
+            }
+          },
+          "regiments_lost": [
+            {
+              "faction": {
+                "id": "aureate",
+                "founded_at": 1730000000,
+                "name": "The Aureate Coterie",
+                "name_raw": "#c9a227The Aureate Coterie",
+                "rgb": "201,162,39"
+              },
+              "side": "attacker",
+              "regiment": "men_at_arms",
+              "regiment_name": "Men-at-Arms",
+              "count": 3
+            },
+            {
+              "faction": {
+                "id": "sprockets",
+                "founded_at": 1731000000,
+                "name": "The Jolly Sprockets",
+                "name_raw": "§bThe Jolly Sprockets",
+                "rgb": "70,130,180"
+              },
+              "side": "attacker",
+              "regiment": "crossbowmen",
+              "regiment_name": "Crossbowmen",
+              "count": 2
+            },
+            {
+              "faction": {
+                "id": "malestroit",
+                "founded_at": 1729000000,
+                "name": "House Malestroit",
+                "name_raw": "#8a2030House Malestroit",
+                "rgb": "138,32,48"
+              },
+              "side": "defender",
+              "regiment": "pikemen",
+              "regiment_name": "Pikemen",
+              "count": 1
+            }
+          ]
+        }
+      },
+      {
+        "at": "2026-11-09T20:30:00Z",
+        "type": "battle_resolved",
+        "summary": "Battle of Highmoor was decided without a fight: victory for The Aureate Coterie. 9 attackers and 14 defenders fell.",
+        "payload": {
+          "battle_number": 3,
+          "province_id": 79,
+          "kind": "field",
+          "leg": "invasion",
+          "winner": "attacker",
+          "resolution": "autoresolve",
+          "battle_id": null,
+          "record_id": null,
+          "deaths": {
+            "attacker": 9,
+            "defender": 14
+          },
+          "lives": null,
+          "regiments_lost": [
+            {
+              "faction": {
+                "id": "vellmoor",
+                "founded_at": 1733000000,
+                "name": "Vellmoor",
+                "name_raw": "§2Vellmoor",
+                "rgb": "90,120,60"
+              },
+              "side": "defender",
+              "regiment": "levy",
+              "regiment_name": "Levy Spearmen",
+              "count": 2
+            }
+          ]
+        }
+      },
+      {
+        "at": "2026-11-09T22:40:00Z",
+        "type": "battle_recorded",
+        "summary": "Raid on Fenwick: victory for House Malestroit. 8 attackers and 4 defenders fell.",
+        "payload": {
+          "record_id": "w3-raid-81-1794264000000",
+          "raid": true
+        }
+      },
+      {
+        "at": "2026-11-10T09:00:00Z",
+        "type": "battle_scheduled",
+        "summary": "A siege was set at Malestroit Keep for 12/11/2026 21:00 CET.",
+        "payload": {
+          "scheduled_at": "2026-11-12T20:00:00Z",
+          "province_id": 80,
+          "kind": "siege"
+        }
+      }
+    ],
+    "battles": [
+      {
+        "battle_number": 1,
+        "at": "2026-11-05T21:05:00Z",
+        "province_id": 77,
+        "province_name": "Ashford",
+        "kind": "field",
+        "leg": "invasion",
+        "raid": false,
+        "name": "Battle of Ashford",
+        "winner": "attacker",
+        "resolution": "fought",
+        "battle_id": "w3-field-77",
+        "record_id": "w3-field-77-1793912640000",
+        "started_at": "2026-11-05T20:02:00Z",
+        "ended_at": "2026-11-05T21:04:00Z",
+        "deaths": {
+          "attacker": 23,
+          "defender": 31
+        },
+        "lives": {
+          "attacker": {
+            "left": 12,
+            "max": 40
+          },
+          "defender": {
+            "left": 0,
+            "max": 45
+          }
+        },
+        "regiments_lost": {
+          "attacker": 3,
+          "defender": 5
+        },
+        "fighters": {
+          "attacker": 18,
+          "defender": 21
+        }
+      },
+      {
+        "battle_number": 2,
+        "at": "2026-11-08T21:13:00Z",
+        "province_id": 78,
+        "province_name": "Greywater",
+        "kind": "siege",
+        "leg": "invasion",
+        "raid": false,
+        "name": "Siege of Greywater",
+        "winner": "defender",
+        "resolution": "fought",
+        "battle_id": "w3-siege-78",
+        "record_id": "w3-siege-78-1794172320000",
+        "started_at": "2026-11-08T20:01:00Z",
+        "ended_at": "2026-11-08T21:12:00Z",
+        "deaths": {
+          "attacker": 38,
+          "defender": 19
+        },
+        "lives": {
+          "attacker": {
+            "left": 0,
+            "max": 40
+          },
+          "defender": {
+            "left": 9,
+            "max": 30
+          }
+        },
+        "regiments_lost": {
+          "attacker": 5,
+          "defender": 1
+        },
+        "fighters": {
+          "attacker": 21,
+          "defender": 20
+        }
+      },
+      {
+        "battle_number": 3,
+        "at": "2026-11-09T20:30:00Z",
+        "province_id": 79,
+        "province_name": "Highmoor",
+        "kind": "field",
+        "leg": "invasion",
+        "raid": false,
+        "name": null,
+        "winner": "attacker",
+        "resolution": "autoresolve",
+        "battle_id": null,
+        "record_id": null,
+        "started_at": null,
+        "ended_at": null,
+        "deaths": {
+          "attacker": 9,
+          "defender": 14
+        },
+        "lives": null,
+        "regiments_lost": {
+          "attacker": 0,
+          "defender": 2
+        },
+        "fighters": null
+      },
+      {
+        "battle_number": null,
+        "at": "2026-11-09T22:40:00Z",
+        "province_id": 81,
+        "province_name": "Fenwick",
+        "kind": "raid",
+        "leg": null,
+        "raid": true,
+        "name": "Raid on Fenwick",
+        "winner": "defender",
+        "resolution": "fought",
+        "battle_id": "w3-raid-81",
+        "record_id": "w3-raid-81-1794264000000",
+        "started_at": "2026-11-09T22:20:00Z",
+        "ended_at": "2026-11-09T22:40:00Z",
+        "deaths": {
+          "attacker": 8,
+          "defender": 4
+        },
+        "lives": {
+          "attacker": {
+            "left": 0,
+            "max": 10
+          },
+          "defender": {
+            "left": 4,
+            "max": 10
+          }
+        },
+        "regiments_lost": null,
+        "fighters": {
+          "attacker": 4,
+          "defender": 5
+        }
+      }
+    ],
+    "participants": [
+      {
+        "faction": {
+          "id": "aureate",
+          "founded_at": 1730000000,
+          "name": "The Aureate Coterie",
+          "name_raw": "#c9a227The Aureate Coterie",
+          "rgb": "201,162,39"
+        },
+        "side": "attacker",
+        "role": "leader",
+        "mercenary": false,
+        "joined_at": null,
+        "fighters": 14,
+        "kills": 75,
+        "deaths": 39,
+        "damage": 6320.3,
+        "healing": 1517.1,
+        "regiments_lost": 5,
+        "share_of_side_kills": 0.6356
+      },
+      {
+        "faction": {
+          "id": "sprockets",
+          "founded_at": 1731000000,
+          "name": "The Jolly Sprockets",
+          "name_raw": "§bThe Jolly Sprockets",
+          "rgb": "70,130,180"
+        },
+        "side": "attacker",
+        "role": "ally",
+        "mercenary": false,
+        "joined_at": "2026-11-03T12:00:00Z",
+        "fighters": 6,
+        "kills": 39,
+        "deaths": 25,
+        "damage": 3243.7,
+        "healing": 276.8,
+        "regiments_lost": 3,
+        "share_of_side_kills": 0.3305
+      },
+      {
+        "faction": {
+          "id": "ash",
+          "founded_at": 1732000000,
+          "name": "Order of the Ash",
+          "name_raw": "§7Order of the Ash",
+          "rgb": "150,150,140"
+        },
+        "side": "attacker",
+        "role": "backer",
+        "mercenary": false,
+        "joined_at": "2026-11-06T09:00:00Z",
+        "fighters": 2,
+        "kills": 4,
+        "deaths": 5,
+        "damage": 409.9,
+        "healing": 333.6,
+        "regiments_lost": 0,
+        "share_of_side_kills": 0.0339
+      },
+      {
+        "faction": {
+          "id": "malestroit",
+          "founded_at": 1729000000,
+          "name": "House Malestroit",
+          "name_raw": "#8a2030House Malestroit",
+          "rgb": "138,32,48"
+        },
+        "side": "defender",
+        "role": "leader",
+        "mercenary": false,
+        "joined_at": null,
+        "fighters": 13,
+        "kills": 64,
+        "deaths": 40,
+        "damage": 6257.7,
+        "healing": 478.3,
+        "regiments_lost": 4,
+        "share_of_side_kills": 0.5517
+      },
+      {
+        "faction": {
+          "id": "vellmoor",
+          "founded_at": 1733000000,
+          "name": "Vellmoor",
+          "name_raw": "§2Vellmoor",
+          "rgb": "90,120,60"
+        },
+        "side": "defender",
+        "role": "subject",
+        "mercenary": false,
+        "joined_at": null,
+        "fighters": 5,
+        "kills": 38,
+        "deaths": 24,
+        "damage": 2269.3,
+        "healing": 852.5,
+        "regiments_lost": 4,
+        "share_of_side_kills": 0.3276
+      },
+      {
+        "faction": {
+          "id": "malestroit",
+          "founded_at": 1729000000,
+          "name": "House Malestroit",
+          "name_raw": "#8a2030House Malestroit",
+          "rgb": "138,32,48"
+        },
+        "side": "defender",
+        "role": "mercenary",
+        "mercenary": true,
+        "joined_at": null,
+        "fighters": 4,
+        "kills": 14,
+        "deaths": 13,
+        "damage": 1785.3,
+        "healing": 208.5,
+        "regiments_lost": 0,
+        "share_of_side_kills": 0.1207
+      }
+    ],
+    "fighter_stats_public": true,
+    "top_fighters": [
+      {
+        "name": "Gwenna N.",
+        "faction": "The Jolly Sprockets",
+        "hired_by": null,
+        "side": "attacker",
+        "battles": 3,
+        "kills": 13,
+        "deaths": 3,
+        "damage": 600.2,
+        "healing": 0.0
+      },
+      {
+        "name": "Hale B.",
+        "faction": "Vellmoor",
+        "hired_by": null,
+        "side": "defender",
+        "battles": 3,
+        "kills": 12,
+        "deaths": 5,
+        "damage": 571.2,
+        "healing": 417.3
+      },
+      {
+        "name": "Perrin B.",
+        "faction": "Vellmoor",
+        "hired_by": null,
+        "side": "defender",
+        "battles": 3,
+        "kills": 11,
+        "deaths": 2,
+        "damage": 630.0,
+        "healing": 103.0
+      },
+      {
+        "name": "Aldric S.",
+        "faction": "The Jolly Sprockets",
+        "hired_by": null,
+        "side": "attacker",
+        "battles": 3,
+        "kills": 10,
+        "deaths": 8,
+        "damage": 833.9,
+        "healing": 241.8
+      },
+      {
+        "name": "Wystan W.",
+        "faction": "House Malestroit",
+        "hired_by": null,
+        "side": "defender",
+        "battles": 2,
+        "kills": 9,
+        "deaths": 3,
+        "damage": 767.4,
+        "healing": 146.4
+      },
+      {
+        "name": "Wystan B.",
+        "faction": "The Aureate Coterie",
+        "hired_by": null,
+        "side": "attacker",
+        "battles": 2,
+        "kills": 9,
+        "deaths": 3,
+        "damage": 544.3,
+        "healing": 0.0
+      },
+      {
+        "name": "Kestra E.",
+        "faction": "House Malestroit",
+        "hired_by": null,
+        "side": "defender",
+        "battles": 2,
+        "kills": 8,
+        "deaths": 3,
+        "damage": 542.0,
+        "healing": 0.0
+      },
+      {
+        "name": "Wystan U.",
+        "faction": null,
+        "hired_by": "House Malestroit",
+        "side": "defender",
+        "battles": 2,
+        "kills": 8,
+        "deaths": 3,
+        "damage": 507.2,
+        "healing": 0.0
+      },
+      {
+        "name": "Emeric A.",
+        "faction": "The Aureate Coterie",
+        "hired_by": null,
+        "side": "attacker",
+        "battles": 2,
+        "kills": 7,
+        "deaths": 3,
+        "damage": 687.2,
+        "healing": 137.3
+      },
+      {
+        "name": "Corwin G.",
+        "faction": "House Malestroit",
+        "hired_by": null,
+        "side": "defender",
+        "battles": 2,
+        "kills": 7,
+        "deaths": 1,
+        "damage": 485.5,
+        "healing": 0.0
+      },
+      {
+        "name": "Hollis C.",
+        "faction": "House Malestroit",
+        "hired_by": null,
+        "side": "defender",
+        "battles": 2,
+        "kills": 6,
+        "deaths": 2,
+        "damage": 771.5,
+        "healing": 0.0
+      },
+      {
+        "name": "Jessamy Y.",
+        "faction": "The Aureate Coterie",
+        "hired_by": null,
+        "side": "attacker",
+        "battles": 2,
+        "kills": 6,
+        "deaths": 3,
+        "damage": 307.6,
+        "healing": 236.9
+      },
+      {
+        "name": "Brannoc G.",
+        "faction": "The Aureate Coterie",
+        "hired_by": null,
+        "side": "attacker",
+        "battles": 2,
+        "kills": 5,
+        "deaths": 4,
+        "damage": 727.5,
+        "healing": 91.8
+      },
+      {
+        "name": "Delphine W.",
+        "faction": "The Jolly Sprockets",
+        "hired_by": null,
+        "side": "attacker",
+        "battles": 2,
+        "kills": 4,
+        "deaths": 1,
+        "damage": 695.3,
+        "healing": 0.0
+      },
+      {
+        "name": "Hale H.",
+        "faction": "Vellmoor",
+        "hired_by": null,
+        "side": "defender",
+        "battles": 3,
+        "kills": 4,
+        "deaths": 6,
+        "damage": 458.7,
+        "healing": 332.2
+      },
+      {
+        "name": "Niamh J.",
+        "faction": "The Aureate Coterie",
+        "hired_by": null,
+        "side": "attacker",
+        "battles": 2,
+        "kills": 3,
+        "deaths": 3,
+        "damage": 521.0,
+        "healing": 249.3
+      }
+    ]
+  },
+  "ended": {
+    "map_id": "main",
+    "war_key": "w1-1760000000",
+    "name": "The Brume Border War",
+    "name_raw": "§9The Brume Border War",
+    "state": {
+      "name": "The Brume Border War",
+      "name_raw": "§9The Brume Border War",
+      "goal": "tributary",
+      "war_type": "conquest",
+      "civil_war": false,
+      "status": "ended",
+      "schedule_phase": "resolved",
+      "campaign_phase": "invasion",
+      "buildup": false,
+      "day_vote_closes_at": "2026-11-04T18:00:00Z",
+      "battle_day": null,
+      "scheduled_at": null,
+      "route_length": 4,
+      "objective_province_id": 81,
+      "objective_held_by": "defender",
+      "occupied_by_attacker": 4,
+      "occupied_by_defender": 0,
+      "battles_fought": 1,
+      "initiative": {
+        "attacker": 6,
+        "defender": 4,
+        "holder": "attacker"
+      },
+      "sides": {
+        "attacker": [
+          {
+            "id": "brume",
+            "founded_at": 1734000000,
+            "name": "Brume",
+            "name_raw": "§9Brume",
+            "rgb": "95,50,217",
+            "role": "leader",
+            "joined_at": null
+          }
+        ],
+        "defender": [
+          {
+            "id": "kestrel",
+            "founded_at": 1734500000,
+            "name": "Kestrel Reach",
+            "name_raw": "§6Kestrel Reach",
+            "rgb": "200,110,40",
+            "role": "leader",
+            "joined_at": null
+          }
+        ]
+      }
+    },
+    "status": "ended",
+    "started_at": "2025-10-09T08:53:20Z",
+    "ended_at": "2025-10-13T10:00:00Z",
+    "result": {
+      "reason": "attacker_victory",
+      "winner": "attacker",
+      "truce_until": "2025-11-13T10:00:00Z"
+    },
+    "objective_province_name": "Fenwick",
+    "score": {
+      "battles_won": {
+        "attacker": 1,
+        "defender": 0
+      },
+      "occupation": {
+        "attacker": 4,
+        "defender": 0,
+        "route_length": 4
+      },
+      "deaths": {
+        "attacker": 11,
+        "defender": 17
+      },
+      "regiments_lost": {
+        "attacker": 0,
+        "defender": 2
+      }
+    },
+    "timeline": [
+      {
+        "at": "2025-10-09T08:53:20Z",
+        "type": "war_declared",
+        "summary": "Brume declared war on Kestrel Reach.",
+        "payload": {}
+      },
+      {
+        "at": "2025-10-12T21:01:00Z",
+        "type": "battle_resolved",
+        "summary": "Battle of Fenwick: victory for Brume. 11 attackers and 17 defenders fell.",
+        "payload": {
+          "battle_number": 1,
+          "province_id": 81,
+          "kind": "field",
+          "leg": "invasion",
+          "winner": "attacker",
+          "resolution": "fought",
+          "battle_id": "w1-field-81",
+          "record_id": "w1-field-81-1760302800000",
+          "deaths": {
+            "attacker": 11,
+            "defender": 17
+          },
+          "lives": {
+            "attacker": {
+              "left": 7,
+              "max": 25
+            },
+            "defender": {
+              "left": 0,
+              "max": 25
+            }
+          },
+          "regiments_lost": [
+            {
+              "faction": {
+                "id": "kestrel",
+                "founded_at": 1734500000,
+                "name": "Kestrel Reach",
+                "name_raw": "§6Kestrel Reach",
+                "rgb": "200,110,40"
+              },
+              "side": "defender",
+              "regiment": "archers",
+              "regiment_name": "Archers",
+              "count": 2
+            }
+          ]
+        }
+      },
+      {
+        "at": "2025-10-13T10:00:00Z",
+        "type": "war_ended",
+        "summary": "The war ended in victory for Brume. A truce holds until 13/11/2025.",
+        "payload": {
+          "reason": "attacker_victory",
+          "winner": "attacker",
+          "truce_until": "2025-11-13T10:00:00Z"
+        }
+      }
+    ],
+    "battles": [
+      {
+        "battle_number": 1,
+        "at": "2025-10-12T21:01:00Z",
+        "province_id": 81,
+        "province_name": "Fenwick",
+        "kind": "field",
+        "leg": "invasion",
+        "raid": false,
+        "name": "Battle of Fenwick",
+        "winner": "attacker",
+        "resolution": "fought",
+        "battle_id": "w1-field-81",
+        "record_id": "w1-field-81-1760302800000",
+        "started_at": "2025-10-12T20:05:00Z",
+        "ended_at": "2025-10-12T21:00:00Z",
+        "deaths": {
+          "attacker": 11,
+          "defender": 17
+        },
+        "lives": {
+          "attacker": {
+            "left": 7,
+            "max": 25
+          },
+          "defender": {
+            "left": 0,
+            "max": 25
+          }
+        },
+        "regiments_lost": {
+          "attacker": 0,
+          "defender": 2
+        },
+        "fighters": {
+          "attacker": 9,
+          "defender": 10
+        }
+      }
+    ],
+    "participants": [
+      {
+        "faction": {
+          "id": "brume",
+          "founded_at": 1734000000,
+          "name": "Brume",
+          "name_raw": "§9Brume",
+          "rgb": "95,50,217"
+        },
+        "side": "attacker",
+        "role": "leader",
+        "mercenary": false,
+        "joined_at": null,
+        "fighters": 9,
+        "kills": 24,
+        "deaths": 14,
+        "damage": 2043.9,
+        "healing": 669.9,
+        "regiments_lost": 0,
+        "share_of_side_kills": 1.0
+      },
+      {
+        "faction": {
+          "id": "kestrel",
+          "founded_at": 1734500000,
+          "name": "Kestrel Reach",
+          "name_raw": "§6Kestrel Reach",
+          "rgb": "200,110,40"
+        },
+        "side": "defender",
+        "role": "leader",
+        "mercenary": false,
+        "joined_at": null,
+        "fighters": 10,
+        "kills": 35,
+        "deaths": 13,
+        "damage": 2248.4,
+        "healing": 314.8,
+        "regiments_lost": 2,
+        "share_of_side_kills": 1.0
+      }
+    ],
+    "fighter_stats_public": true,
+    "top_fighters": [
+      {
+        "name": "Niamh H.",
+        "faction": "Kestrel Reach",
+        "hired_by": null,
+        "side": "defender",
+        "battles": 1,
+        "kills": 5,
+        "deaths": 1,
+        "damage": 306.6,
+        "healing": 0.0
+      },
+      {
+        "name": "Aldric J.",
+        "faction": "Brume",
+        "hired_by": null,
+        "side": "attacker",
+        "battles": 1,
+        "kills": 5,
+        "deaths": 1,
+        "damage": 270.7,
+        "healing": 241.1
+      },
+      {
+        "name": "Faolan N.",
+        "faction": "Kestrel Reach",
+        "hired_by": null,
+        "side": "defender",
+        "battles": 1,
+        "kills": 5,
+        "deaths": 3,
+        "damage": 231.0,
+        "healing": 0.0
+      },
+      {
+        "name": "Jessamy H.",
+        "faction": "Kestrel Reach",
+        "hired_by": null,
+        "side": "defender",
+        "battles": 1,
+        "kills": 5,
+        "deaths": 0,
+        "damage": 198.7,
+        "healing": 0.0
+      },
+      {
+        "name": "Wystan V.",
+        "faction": "Kestrel Reach",
+        "hired_by": null,
+        "side": "defender",
+        "battles": 1,
+        "kills": 5,
+        "deaths": 1,
+        "damage": 162.7,
+        "healing": 0.0
+      },
+      {
+        "name": "Jessamy N.",
+        "faction": "Brume",
+        "hired_by": null,
+        "side": "attacker",
+        "battles": 1,
+        "kills": 4,
+        "deaths": 2,
+        "damage": 294.7,
+        "healing": 125.5
+      },
+      {
+        "name": "Caelin N.",
+        "faction": "Brume",
+        "hired_by": null,
+        "side": "attacker",
+        "battles": 1,
+        "kills": 4,
+        "deaths": 0,
+        "damage": 243.0,
+        "healing": 0.0
+      },
+      {
+        "name": "Kestra W.",
+        "faction": "Kestrel Reach",
+        "hired_by": null,
+        "side": "defender",
+        "battles": 1,
+        "kills": 4,
+        "deaths": 0,
+        "damage": 230.9,
+        "healing": 0.0
+      },
+      {
+        "name": "Niamh Z.",
+        "faction": "Brume",
+        "hired_by": null,
+        "side": "attacker",
+        "battles": 1,
+        "kills": 3,
+        "deaths": 3,
+        "damage": 316.4,
+        "healing": 0.0
+      },
+      {
+        "name": "Isolde P.",
+        "faction": "Brume",
+        "hired_by": null,
+        "side": "attacker",
+        "battles": 1,
+        "kills": 3,
+        "deaths": 0,
+        "damage": 291.3,
+        "healing": 0.0
+      },
+      {
+        "name": "Isolde U.",
+        "faction": "Kestrel Reach",
+        "hired_by": null,
+        "side": "defender",
+        "battles": 1,
+        "kills": 3,
+        "deaths": 3,
+        "damage": 217.3,
+        "healing": 114.9
+      },
+      {
+        "name": "Caelin H.",
+        "faction": "Kestrel Reach",
+        "hired_by": null,
+        "side": "defender",
+        "battles": 1,
+        "kills": 3,
+        "deaths": 0,
+        "damage": 144.4,
+        "healing": 0.0
+      },
+      {
+        "name": "Nessa R.",
+        "faction": "Kestrel Reach",
+        "hired_by": null,
+        "side": "defender",
+        "battles": 1,
+        "kills": 2,
+        "deaths": 2,
+        "damage": 398.0,
+        "healing": 0.0
+      },
+      {
+        "name": "Hale A.",
+        "faction": "Kestrel Reach",
+        "hired_by": null,
+        "side": "defender",
+        "battles": 1,
+        "kills": 2,
+        "deaths": 0,
+        "damage": 209.9,
+        "healing": 199.9
+      },
+      {
+        "name": "Hollis U.",
+        "faction": "Brume",
+        "hired_by": null,
+        "side": "attacker",
+        "battles": 1,
+        "kills": 1,
+        "deaths": 3,
+        "damage": 310.5,
+        "healing": 0.0
+      },
+      {
+        "name": "Dorran E.",
+        "faction": "Brume",
+        "hired_by": null,
+        "side": "attacker",
+        "battles": 1,
+        "kills": 0,
+        "deaths": 2,
+        "damage": 186.6,
+        "healing": 204.0
+      }
+    ]
+  },
+  "backfill": {
+    "map_id": "main",
+    "war_key": "w2-1754992800",
+    "name": "War of the Salt Marshes",
+    "name_raw": "War of the Salt Marshes",
+    "state": null,
+    "status": "ended",
+    "started_at": "2025-08-12T10:00:00Z",
+    "ended_at": "2025-08-17T20:10:00Z",
+    "result": null,
+    "objective_province_name": null,
+    "score": {
+      "battles_won": {
+        "attacker": 1,
+        "defender": 1
+      },
+      "occupation": {
+        "attacker": 0,
+        "defender": 0,
+        "route_length": null
+      },
+      "deaths": {
+        "attacker": 26,
+        "defender": 17
+      },
+      "regiments_lost": {
+        "attacker": 0,
+        "defender": 0
+      }
+    },
+    "timeline": [
+      {
+        "at": "2025-08-14T19:50:00Z",
+        "type": "battle_recorded",
+        "summary": "Battle of the Salt Road: victory for the attackers. 13 attackers and 11 defenders fell.",
+        "payload": {
+          "record_id": "w2-field-1-1755201000000",
+          "raid": false
+        }
+      },
+      {
+        "at": "2025-08-17T20:10:00Z",
+        "type": "battle_recorded",
+        "summary": "Battle of Reedmere: victory for the defenders. 13 attackers and 6 defenders fell.",
+        "payload": {
+          "record_id": "w2-field-2-1755461400000",
+          "raid": false
+        }
+      }
+    ],
+    "battles": [
+      {
+        "battle_number": 1,
+        "at": "2025-08-14T19:50:00Z",
+        "province_id": null,
+        "province_name": null,
+        "kind": "field",
+        "leg": null,
+        "raid": false,
+        "name": "Battle of the Salt Road",
+        "winner": "attacker",
+        "resolution": "fought",
+        "battle_id": "w2-field-1",
+        "record_id": "w2-field-1-1755201000000",
+        "started_at": "2025-08-14T19:00:00Z",
+        "ended_at": "2025-08-14T19:50:00Z",
+        "deaths": {
+          "attacker": 13,
+          "defender": 11
+        },
+        "lives": {
+          "attacker": {
+            "left": 12,
+            "max": 40
+          },
+          "defender": {
+            "left": 0,
+            "max": 45
+          }
+        },
+        "regiments_lost": null,
+        "fighters": {
+          "attacker": 8,
+          "defender": 7
+        }
+      },
+      {
+        "battle_number": 2,
+        "at": "2025-08-17T20:10:00Z",
+        "province_id": null,
+        "province_name": null,
+        "kind": "field",
+        "leg": null,
+        "raid": false,
+        "name": "Battle of Reedmere",
+        "winner": "defender",
+        "resolution": "fought",
+        "battle_id": "w2-field-2",
+        "record_id": "w2-field-2-1755461400000",
+        "started_at": "2025-08-17T19:00:00Z",
+        "ended_at": "2025-08-17T20:10:00Z",
+        "deaths": {
+          "attacker": 13,
+          "defender": 6
+        },
+        "lives": {
+          "attacker": {
+            "left": 12,
+            "max": 40
+          },
+          "defender": {
+            "left": 0,
+            "max": 45
+          }
+        },
+        "regiments_lost": null,
+        "fighters": {
+          "attacker": 8,
+          "defender": 7
+        }
+      }
+    ],
+    "participants": [
+      {
+        "faction": {
+          "id": null,
+          "founded_at": null,
+          "name": "Brume",
+          "name_raw": "Brume",
+          "rgb": null
+        },
+        "side": "attacker",
+        "role": null,
+        "mercenary": false,
+        "joined_at": null,
+        "fighters": 9,
+        "kills": 45,
+        "deaths": 26,
+        "damage": 3965.2,
+        "healing": 809.2,
+        "regiments_lost": 0,
+        "share_of_side_kills": 1.0
+      },
+      {
+        "faction": {
+          "id": null,
+          "founded_at": null,
+          "name": "Vellmoor",
+          "name_raw": "Vellmoor",
+          "rgb": null
+        },
+        "side": "defender",
+        "role": null,
+        "mercenary": false,
+        "joined_at": null,
+        "fighters": 7,
+        "kills": 37,
+        "deaths": 17,
+        "damage": 3108.9,
+        "healing": 534.0,
+        "regiments_lost": 0,
+        "share_of_side_kills": 1.0
+      }
+    ],
+    "fighter_stats_public": true,
+    "top_fighters": [
+      {
+        "name": "Hale H.",
+        "faction": "Vellmoor",
+        "hired_by": null,
+        "side": "defender",
+        "battles": 2,
+        "kills": 9,
+        "deaths": 1,
+        "damage": 688.3,
+        "healing": 0.0
+      },
+      {
+        "name": "Osric D.",
+        "faction": "Vellmoor",
+        "hired_by": null,
+        "side": "defender",
+        "battles": 2,
+        "kills": 9,
+        "deaths": 0,
+        "damage": 403.2,
+        "healing": 226.4
+      },
+      {
+        "name": "Lorcan L.",
+        "faction": "Brume",
+        "hired_by": null,
+        "side": "attacker",
+        "battles": 2,
+        "kills": 7,
+        "deaths": 5,
+        "damage": 252.5,
+        "healing": 0.0
+      },
+      {
+        "name": "Caelin P.",
+        "faction": "Vellmoor",
+        "hired_by": null,
+        "side": "defender",
+        "battles": 2,
+        "kills": 7,
+        "deaths": 3,
+        "damage": 159.8,
+        "healing": 172.5
+      },
+      {
+        "name": "Aldric J.",
+        "faction": "Brume",
+        "hired_by": null,
+        "side": "attacker",
+        "battles": 2,
+        "kills": 6,
+        "deaths": 2,
+        "damage": 766.0,
+        "healing": 213.7
+      },
+      {
+        "name": "Anselm A.",
+        "faction": "Brume",
+        "hired_by": null,
+        "side": "attacker",
+        "battles": 2,
+        "kills": 6,
+        "deaths": 0,
+        "damage": 598.7,
+        "healing": 394.6
+      },
+      {
+        "name": "Jessamy N.",
+        "faction": "Brume",
+        "hired_by": null,
+        "side": "attacker",
+        "battles": 2,
+        "kills": 6,
+        "deaths": 5,
+        "damage": 418.6,
+        "healing": 0.0
+      },
+      {
+        "name": "Dorran E.",
+        "faction": "Brume",
+        "hired_by": null,
+        "side": "attacker",
+        "battles": 2,
+        "kills": 6,
+        "deaths": 6,
+        "damage": 287.9,
+        "healing": 200.9
+      },
+      {
+        "name": "Niamh Z.",
+        "faction": "Brume",
+        "hired_by": null,
+        "side": "attacker",
+        "battles": 2,
+        "kills": 5,
+        "deaths": 3,
+        "damage": 702.8,
+        "healing": 0.0
+      },
+      {
+        "name": "Perrin B.",
+        "faction": "Vellmoor",
+        "hired_by": null,
+        "side": "defender",
+        "battles": 2,
+        "kills": 5,
+        "deaths": 2,
+        "damage": 273.7,
+        "healing": 119.4
+      },
+      {
+        "name": "Caelin N.",
+        "faction": "Brume",
+        "hired_by": null,
+        "side": "attacker",
+        "battles": 2,
+        "kills": 3,
+        "deaths": 1,
+        "damage": 757.6,
+        "healing": 0.0
+      },
+      {
+        "name": "Emeric H.",
+        "faction": "Vellmoor",
+        "hired_by": null,
+        "side": "defender",
+        "battles": 2,
+        "kills": 0,
+        "deaths": 5,
+        "damage": 602.4,
+        "healing": 15.7
+      }
+    ]
+  },
+  "battle": {
+    "map_id": "main",
+    "war_key": "w3-1793642400",
+    "war_name": "War of the Aureate Succession",
+    "war_name_raw": "#c9a227War of the Aureate Succession",
+    "war_status": "active",
+    "record_id": "w3-siege-78-1794172320000",
+    "name": "Siege of Greywater",
+    "type": "siege",
+    "naval": false,
+    "raid": false,
+    "started_at": "2026-11-08T20:01:00Z",
+    "ended_at": "2026-11-08T21:12:00Z",
+    "duration_seconds": 4260,
+    "winner": "defender",
+    "end_reason": "lives",
+    "battle": {
+      "battle_number": 2,
+      "at": "2026-11-08T21:13:00Z",
+      "province_id": 78,
+      "province_name": "Greywater",
+      "kind": "siege",
+      "leg": "invasion",
+      "raid": false,
+      "name": "Siege of Greywater",
+      "winner": "defender",
+      "resolution": "fought",
+      "battle_id": "w3-siege-78",
+      "record_id": "w3-siege-78-1794172320000",
+      "started_at": "2026-11-08T20:01:00Z",
+      "ended_at": "2026-11-08T21:12:00Z",
+      "deaths": {
+        "attacker": 38,
+        "defender": 19
+      },
+      "lives": {
+        "attacker": {
+          "left": 0,
+          "max": 40
+        },
+        "defender": {
+          "left": 9,
+          "max": 30
+        }
+      },
+      "regiments_lost": {
+        "attacker": 5,
+        "defender": 1
+      },
+      "fighters": {
+        "attacker": 21,
+        "defender": 20
+      }
+    },
+    "leaders": {
+      "attacker": {
+        "id": "aureate",
+        "founded_at": 1730000000,
+        "name": "The Aureate Coterie",
+        "name_raw": "#c9a227The Aureate Coterie",
+        "rgb": "201,162,39"
+      },
+      "defender": {
+        "id": "malestroit",
+        "founded_at": 1729000000,
+        "name": "House Malestroit",
+        "name_raw": "#8a2030House Malestroit",
+        "rgb": "138,32,48"
+      }
+    },
+    "sides": {
+      "attacker": {
+        "left": 0,
+        "max": 40
+      },
+      "defender": {
+        "left": 9,
+        "max": 30
+      }
+    },
+    "participants": [
+      {
+        "faction": {
+          "id": "aureate",
+          "founded_at": 1730000000,
+          "name": "The Aureate Coterie",
+          "name_raw": "#c9a227The Aureate Coterie",
+          "rgb": "201,162,39"
+        },
+        "side": "attacker",
+        "role": "leader",
+        "mercenary": false,
+        "joined_at": null,
+        "fighters": 14,
+        "kills": 32,
+        "deaths": 19,
+        "damage": 3398.7,
+        "healing": 897.5,
+        "regiments_lost": 3,
+        "share_of_side_kills": 0.64
+      },
+      {
+        "faction": {
+          "id": "sprockets",
+          "founded_at": 1731000000,
+          "name": "The Jolly Sprockets",
+          "name_raw": "§bThe Jolly Sprockets",
+          "rgb": "70,130,180"
+        },
+        "side": "attacker",
+        "role": "ally",
+        "mercenary": false,
+        "joined_at": "2026-11-03T12:00:00Z",
+        "fighters": 5,
+        "kills": 14,
+        "deaths": 10,
+        "damage": 1085.9,
+        "healing": 35.0,
+        "regiments_lost": 2,
+        "share_of_side_kills": 0.28
+      },
+      {
+        "faction": {
+          "id": "ash",
+          "founded_at": 1732000000,
+          "name": "Order of the Ash",
+          "name_raw": "§7Order of the Ash",
+          "rgb": "150,150,140"
+        },
+        "side": "attacker",
+        "role": "backer",
+        "mercenary": false,
+        "joined_at": "2026-11-06T09:00:00Z",
+        "fighters": 2,
+        "kills": 4,
+        "deaths": 5,
+        "damage": 409.9,
+        "healing": 333.6,
+        "regiments_lost": 0,
+        "share_of_side_kills": 0.08
+      },
+      {
+        "faction": {
+          "id": "malestroit",
+          "founded_at": 1729000000,
+          "name": "House Malestroit",
+          "name_raw": "#8a2030House Malestroit",
+          "rgb": "138,32,48"
+        },
+        "side": "defender",
+        "role": "leader",
+        "mercenary": false,
+        "joined_at": null,
+        "fighters": 12,
+        "kills": 30,
+        "deaths": 21,
+        "damage": 3258.3,
+        "healing": 297.6,
+        "regiments_lost": 1,
+        "share_of_side_kills": 0.6122
+      },
+      {
+        "faction": {
+          "id": "vellmoor",
+          "founded_at": 1733000000,
+          "name": "Vellmoor",
+          "name_raw": "§2Vellmoor",
+          "rgb": "90,120,60"
+        },
+        "side": "defender",
+        "role": "subject",
+        "mercenary": false,
+        "joined_at": null,
+        "fighters": 4,
+        "kills": 10,
+        "deaths": 10,
+        "damage": 593.7,
+        "healing": 545.2,
+        "regiments_lost": 0,
+        "share_of_side_kills": 0.2041
+      },
+      {
+        "faction": {
+          "id": "malestroit",
+          "founded_at": 1729000000,
+          "name": "House Malestroit",
+          "name_raw": "#8a2030House Malestroit",
+          "rgb": "138,32,48"
+        },
+        "side": "defender",
+        "role": "mercenary",
+        "mercenary": true,
+        "joined_at": null,
+        "fighters": 4,
+        "kills": 9,
+        "deaths": 7,
+        "damage": 1162.5,
+        "healing": 208.5,
+        "regiments_lost": 0,
+        "share_of_side_kills": 0.1837
+      }
+    ],
+    "fighter_stats_public": true,
+    "fighters": [
+      {
+        "name": "Aldric S.",
+        "faction": "The Jolly Sprockets",
+        "faction_id": "sprockets",
+        "hired_by": null,
+        "side": "attacker",
+        "class_name": "Berserker",
+        "kills": 5,
+        "deaths": 2,
+        "assists": 2,
+        "team_kills": 0,
+        "damage": 306.3,
+        "friendly_damage": 8.7,
+        "damage_taken": 171.8,
+        "healing": 0.0,
+        "cc": 0.6,
+        "friendly_cc": 0.0
+      },
+      {
+        "name": "Maelis C.",
+        "faction": "The Aureate Coterie",
+        "faction_id": "aureate",
+        "hired_by": null,
+        "side": "attacker",
+        "class_name": "Ranger",
+        "kills": 5,
+        "deaths": 1,
+        "assists": 0,
+        "team_kills": 0,
+        "damage": 280.5,
+        "friendly_damage": 2.7,
+        "damage_taken": 336.1,
+        "healing": 117.1,
+        "cc": 17.1,
+        "friendly_cc": 0.0
+      },
+      {
+        "name": "Isolde L.",
+        "faction": "The Aureate Coterie",
+        "faction_id": "aureate",
+        "hired_by": null,
+        "side": "attacker",
+        "class_name": "Cleric",
+        "kills": 5,
+        "deaths": 3,
+        "assists": 3,
+        "team_kills": 0,
+        "damage": 251.2,
+        "friendly_damage": 3.2,
+        "damage_taken": 184.3,
+        "healing": 143.8,
+        "cc": 15.6,
+        "friendly_cc": 0.0
+      },
+      {
+        "name": "Ulric Q.",
+        "faction": "The Aureate Coterie",
+        "faction_id": "aureate",
+        "hired_by": null,
+        "side": "attacker",
+        "class_name": "Warden",
+        "kills": 4,
+        "deaths": 1,
+        "assists": 4,
+        "team_kills": 0,
+        "damage": 244.6,
+        "friendly_damage": 7.3,
+        "damage_taken": 377.4,
+        "healing": 0.0,
+        "cc": 9.6,
+        "friendly_cc": 0.0
+      },
+      {
+        "name": "Wystan B.",
+        "faction": "The Aureate Coterie",
+        "faction_id": "aureate",
+        "hired_by": null,
+        "side": "attacker",
+        "class_name": "Cleric",
+        "kills": 4,
+        "deaths": 2,
+        "assists": 2,
+        "team_kills": 0,
+        "damage": 137.4,
+        "friendly_damage": 9.6,
+        "damage_taken": 131.9,
+        "healing": 0.0,
+        "cc": 7.2,
+        "friendly_cc": 0.0
+      },
+      {
+        "name": "Perrin G.",
+        "faction": "The Aureate Coterie",
+        "faction_id": "aureate",
+        "hired_by": null,
+        "side": "attacker",
+        "class_name": "Warden",
+        "kills": 4,
+        "deaths": 0,
+        "assists": 1,
+        "team_kills": 0,
+        "damage": 63.9,
+        "friendly_damage": 9.6,
+        "damage_taken": 298.8,
+        "healing": 186.1,
+        "cc": 4.5,
+        "friendly_cc": 0.0
+      },
+      {
+        "name": "Delphine W.",
+        "faction": "The Jolly Sprockets",
+        "faction_id": "sprockets",
+        "hired_by": null,
+        "side": "attacker",
+        "class_name": "Cleric",
+        "kills": 3,
+        "deaths": 1,
+        "assists": 3,
+        "team_kills": 0,
+        "damage": 352.0,
+        "friendly_damage": 11.9,
+        "damage_taken": 307.4,
+        "healing": 0.0,
+        "cc": 2.2,
+        "friendly_cc": 0.0
+      },
+      {
+        "name": "Kestra M.",
+        "faction": "Order of the Ash",
+        "faction_id": "ash",
+        "hired_by": null,
+        "side": "attacker",
+        "class_name": "Knight",
+        "kills": 3,
+        "deaths": 3,
+        "assists": 1,
+        "team_kills": 0,
+        "damage": 272.3,
+        "friendly_damage": 6.9,
+        "damage_taken": 168.5,
+        "healing": 120.0,
+        "cc": 2.8,
+        "friendly_cc": 0.0
+      },
+      {
+        "name": "Gwenna N.",
+        "faction": "The Jolly Sprockets",
+        "faction_id": "sprockets",
+        "hired_by": null,
+        "side": "attacker",
+        "class_name": "Cleric",
+        "kills": 3,
+        "deaths": 3,
+        "assists": 2,
+        "team_kills": 0,
+        "damage": 125.6,
+        "friendly_damage": 2.4,
+        "damage_taken": 301.7,
+        "healing": 0.0,
+        "cc": 1.9,
+        "friendly_cc": 0.0
+      },
+      {
+        "name": "Jessamy J.",
+        "faction": "The Jolly Sprockets",
+        "faction_id": "sprockets",
+        "hired_by": null,
+        "side": "attacker",
+        "class_name": "Berserker",
+        "kills": 3,
+        "deaths": 3,
+        "assists": 4,
+        "team_kills": 0,
+        "damage": 56.3,
+        "friendly_damage": 6.8,
+        "damage_taken": 300.4,
+        "healing": 35.0,
+        "cc": 5.2,
+        "friendly_cc": 0.0
+      },
+      {
+        "name": "Perrin Z.",
+        "faction": "The Aureate Coterie",
+        "faction_id": "aureate",
+        "hired_by": null,
+        "side": "attacker",
+        "class_name": "Cleric",
+        "kills": 2,
+        "deaths": 1,
+        "assists": 1,
+        "team_kills": 0,
+        "damage": 417.0,
+        "friendly_damage": 3.9,
+        "damage_taken": 379.2,
+        "healing": 0.0,
+        "cc": 4.0,
+        "friendly_cc": 0.0
+      },
+      {
+        "name": "Brannoc G.",
+        "faction": "The Aureate Coterie",
+        "faction_id": "aureate",
+        "hired_by": null,
+        "side": "attacker",
+        "class_name": "Arbalist",
+        "kills": 2,
+        "deaths": 2,
+        "assists": 1,
+        "team_kills": 0,
+        "damage": 381.8,
+        "friendly_damage": 7.9,
+        "damage_taken": 131.5,
+        "healing": 0.0,
+        "cc": 1.1,
+        "friendly_cc": 0.0
+      },
+      {
+        "name": "Emeric A.",
+        "faction": "The Aureate Coterie",
+        "faction_id": "aureate",
+        "hired_by": null,
+        "side": "attacker",
+        "class_name": "Ranger",
+        "kills": 2,
+        "deaths": 1,
+        "assists": 0,
+        "team_kills": 0,
+        "damage": 371.9,
+        "friendly_damage": 6.0,
+        "damage_taken": 262.2,
+        "healing": 95.7,
+        "cc": 3.9,
+        "friendly_cc": 0.0
+      },
+      {
+        "name": "Jessamy Y.",
+        "faction": "The Aureate Coterie",
+        "faction_id": "aureate",
+        "hired_by": null,
+        "side": "attacker",
+        "class_name": "Berserker",
+        "kills": 2,
+        "deaths": 0,
+        "assists": 3,
+        "team_kills": 0,
+        "damage": 53.2,
+        "friendly_damage": 3.8,
+        "damage_taken": 314.8,
+        "healing": 0.0,
+        "cc": 8.3,
+        "friendly_cc": 0.0
+      },
+      {
+        "name": "Jorund J.",
+        "faction": "The Aureate Coterie",
+        "faction_id": "aureate",
+        "hired_by": null,
+        "side": "attacker",
+        "class_name": "Ranger",
+        "kills": 1,
+        "deaths": 1,
+        "assists": 2,
+        "team_kills": 0,
+        "damage": 334.3,
+        "friendly_damage": 0.6,
+        "damage_taken": 271.9,
+        "healing": 114.1,
+        "cc": 1.4,
+        "friendly_cc": 0.0
+      },
+      {
+        "name": "Niamh J.",
+        "faction": "The Aureate Coterie",
+        "faction_id": "aureate",
+        "hired_by": null,
+        "side": "attacker",
+        "class_name": "Berserker",
+        "kills": 1,
+        "deaths": 3,
+        "assists": 2,
+        "team_kills": 0,
+        "damage": 282.1,
+        "friendly_damage": 8.0,
+        "damage_taken": 327.1,
+        "healing": 0.0,
+        "cc": 8.1,
+        "friendly_cc": 0.0
+      },
+      {
+        "name": "Nessa D.",
+        "faction": "Order of the Ash",
+        "faction_id": "ash",
+        "hired_by": null,
+        "side": "attacker",
+        "class_name": "Arbalist",
+        "kills": 1,
+        "deaths": 2,
+        "assists": 4,
+        "team_kills": 0,
+        "damage": 137.6,
+        "friendly_damage": 6.8,
+        "damage_taken": 216.0,
+        "healing": 213.6,
+        "cc": 3.6,
+        "friendly_cc": 0.0
+      },
+      {
+        "name": "Faolan U.",
+        "faction": "The Aureate Coterie",
+        "faction_id": "aureate",
+        "hired_by": null,
+        "side": "attacker",
+        "class_name": "Knight",
+        "kills": 0,
+        "deaths": 3,
+        "assists": 0,
+        "team_kills": 0,
+        "damage": 325.6,
+        "friendly_damage": 8.4,
+        "damage_taken": 62.4,
+        "healing": 0.0,
+        "cc": 11.7,
+        "friendly_cc": 0.0
+      },
+      {
+        "name": "Isolde E.",
+        "faction": "The Jolly Sprockets",
+        "faction_id": "sprockets",
+        "hired_by": null,
+        "side": "attacker",
+        "class_name": "Knight",
+        "kills": 0,
+        "deaths": 1,
+        "assists": 1,
+        "team_kills": 0,
+        "damage": 245.7,
+        "friendly_damage": 7.5,
+        "damage_taken": 271.0,
+        "healing": 0.0,
+        "cc": 8.8,
+        "friendly_cc": 0.0
+      },
+      {
+        "name": "Sigrun U.",
+        "faction": "The Aureate Coterie",
+        "faction_id": "aureate",
+        "hired_by": null,
+        "side": "attacker",
+        "class_name": "Warden",
+        "kills": 0,
+        "deaths": 0,
+        "assists": 4,
+        "team_kills": 0,
+        "damage": 184.7,
+        "friendly_damage": 8.8,
+        "damage_taken": 131.1,
+        "healing": 41.6,
+        "cc": 10.9,
+        "friendly_cc": 0.0
+      },
+      {
+        "name": "Isolde S.",
+        "faction": "The Aureate Coterie",
+        "faction_id": "aureate",
+        "hired_by": null,
+        "side": "attacker",
+        "class_name": "Arbalist",
+        "kills": 0,
+        "deaths": 1,
+        "assists": 2,
+        "team_kills": 0,
+        "damage": 70.5,
+        "friendly_damage": 0.9,
+        "damage_taken": 173.2,
+        "healing": 199.1,
+        "cc": 10.6,
+        "friendly_cc": 0.0
+      },
+      {
+        "name": "Wystan W.",
+        "faction": "House Malestroit",
+        "faction_id": "malestroit",
+        "hired_by": null,
+        "side": "defender",
+        "class_name": "Knight",
+        "kills": 5,
+        "deaths": 0,
+        "assists": 1,
+        "team_kills": 1,
+        "damage": 372.1,
+        "friendly_damage": 5.3,
+        "damage_taken": 262.8,
+        "healing": 146.4,
+        "cc": 0.4,
+        "friendly_cc": 0.0
+      },
+      {
+        "name": "Wystan U.",
+        "faction": null,
+        "faction_id": null,
+        "hired_by": "House Malestroit",
+        "side": "defender",
+        "class_name": "Arbalist",
+        "kills": 5,
+        "deaths": 1,
+        "assists": 2,
+        "team_kills": 0,
+        "damage": 370.3,
+        "friendly_damage": 0.4,
+        "damage_taken": 97.2,
+        "healing": 0.0,
+        "cc": 0.0,
+        "friendly_cc": 0.0
+      },
+      {
+        "name": "Perrin B.",
+        "faction": "Vellmoor",
+        "faction_id": "vellmoor",
+        "hired_by": null,
+        "side": "defender",
+        "class_name": "Warden",
+        "kills": 5,
+        "deaths": 1,
+        "assists": 0,
+        "team_kills": 0,
+        "damage": 135.2,
+        "friendly_damage": 8.1,
+        "damage_taken": 213.2,
+        "healing": 103.0,
+        "cc": 7.1,
+        "friendly_cc": 0.0
+      },
+      {
+        "name": "Kestra E.",
+        "faction": "House Malestroit",
+        "faction_id": "malestroit",
+        "hired_by": null,
+        "side": "defender",
+        "class_name": "Cleric",
+        "kills": 4,
+        "deaths": 3,
+        "assists": 2,
+        "team_kills": 0,
+        "damage": 389.1,
+        "friendly_damage": 8.5,
+        "damage_taken": 121.8,
+        "healing": 0.0,
+        "cc": 11.5,
+        "friendly_cc": 0.0
+      },
+      {
+        "name": "Kestra A.",
+        "faction": "House Malestroit",
+        "faction_id": "malestroit",
+        "hired_by": null,
+        "side": "defender",
+        "class_name": "Ranger",
+        "kills": 4,
+        "deaths": 1,
+        "assists": 1,
+        "team_kills": 0,
+        "damage": 250.6,
+        "friendly_damage": 11.9,
+        "damage_taken": 350.9,
+        "healing": 0.0,
+        "cc": 15.5,
+        "friendly_cc": 0.0
+      },
+      {
+        "name": "Hale B.",
+        "faction": "Vellmoor",
+        "faction_id": "vellmoor",
+        "hired_by": null,
+        "side": "defender",
+        "class_name": "Cleric",
+        "kills": 4,
+        "deaths": 3,
+        "assists": 3,
+        "team_kills": 0,
+        "damage": 150.8,
+        "friendly_damage": 5.6,
+        "damage_taken": 319.6,
+        "healing": 184.5,
+        "cc": 14.3,
+        "friendly_cc": 0.0
+      },
+      {
+        "name": "Corwin G.",
+        "faction": "House Malestroit",
+        "faction_id": "malestroit",
+        "hired_by": null,
+        "side": "defender",
+        "class_name": "Cleric",
+        "kills": 3,
+        "deaths": 0,
+        "assists": 0,
+        "team_kills": 0,
+        "damage": 378.2,
+        "friendly_damage": 11.4,
+        "damage_taken": 375.7,
+        "healing": 0.0,
+        "cc": 12.0,
+        "friendly_cc": 0.0
+      },
+      {
+        "name": "Anselm Z.",
+        "faction": "House Malestroit",
+        "faction_id": "malestroit",
+        "hired_by": null,
+        "side": "defender",
+        "class_name": "Cleric",
+        "kills": 3,
+        "deaths": 2,
+        "assists": 2,
+        "team_kills": 0,
+        "damage": 320.8,
+        "friendly_damage": 9.6,
+        "damage_taken": 218.5,
+        "healing": 0.0,
+        "cc": 17.7,
+        "friendly_cc": 0.0
+      },
+      {
+        "name": "Gwenna U.",
+        "faction": "House Malestroit",
+        "faction_id": "malestroit",
+        "hired_by": null,
+        "side": "defender",
+        "class_name": "Ranger",
+        "kills": 3,
+        "deaths": 3,
+        "assists": 2,
+        "team_kills": 0,
+        "damage": 114.0,
+        "friendly_damage": 0.6,
+        "damage_taken": 121.2,
+        "healing": 0.0,
+        "cc": 5.2,
+        "friendly_cc": 0.0
+      },
+      {
+        "name": "Fenna C.",
+        "faction": "House Malestroit",
+        "faction_id": "malestroit",
+        "hired_by": null,
+        "side": "defender",
+        "class_name": "Arbalist",
+        "kills": 3,
+        "deaths": 3,
+        "assists": 1,
+        "team_kills": 0,
+        "damage": 88.5,
+        "friendly_damage": 0.7,
+        "damage_taken": 299.5,
+        "healing": 70.4,
+        "cc": 17.9,
+        "friendly_cc": 0.0
+      },
+      {
+        "name": "Hollis C.",
+        "faction": "House Malestroit",
+        "faction_id": "malestroit",
+        "hired_by": null,
+        "side": "defender",
+        "class_name": "Cleric",
+        "kills": 2,
+        "deaths": 1,
+        "assists": 3,
+        "team_kills": 0,
+        "damage": 383.7,
+        "friendly_damage": 11.8,
+        "damage_taken": 329.9,
+        "healing": 0.0,
+        "cc": 4.1,
+        "friendly_cc": 0.0
+      },
+      {
+        "name": "Vesna Q.",
+        "faction": null,
+        "faction_id": null,
+        "hired_by": "House Malestroit",
+        "side": "defender",
+        "class_name": "Arbalist",
+        "kills": 2,
+        "deaths": 1,
+        "assists": 2,
+        "team_kills": 0,
+        "damage": 355.9,
+        "friendly_damage": 5.8,
+        "damage_taken": 188.1,
+        "healing": 55.0,
+        "cc": 11.6,
+        "friendly_cc": 0.0
+      },
+      {
+        "name": "Jessamy E.",
+        "faction": null,
+        "faction_id": null,
+        "hired_by": "House Malestroit",
+        "side": "defender",
+        "class_name": "Berserker",
+        "kills": 2,
+        "deaths": 3,
+        "assists": 3,
+        "team_kills": 0,
+        "damage": 273.8,
+        "friendly_damage": 2.9,
+        "damage_taken": 226.2,
+        "healing": 0.0,
+        "cc": 15.2,
+        "friendly_cc": 0.0
+      },
+      {
+        "name": "Gwenna X.",
+        "faction": "House Malestroit",
+        "faction_id": "malestroit",
+        "hired_by": null,
+        "side": "defender",
+        "class_name": "Arbalist",
+        "kills": 2,
+        "deaths": 1,
+        "assists": 0,
+        "team_kills": 0,
+        "damage": 157.1,
+        "friendly_damage": 4.5,
+        "damage_taken": 72.6,
+        "healing": 0.0,
+        "cc": 0.2,
+        "friendly_cc": 0.0
+      },
+      {
+        "name": "Vesna C.",
+        "faction": "House Malestroit",
+        "faction_id": "malestroit",
+        "hired_by": null,
+        "side": "defender",
+        "class_name": "Arbalist",
+        "kills": 1,
+        "deaths": 3,
+        "assists": 0,
+        "team_kills": 0,
+        "damage": 283.7,
+        "friendly_damage": 4.4,
+        "damage_taken": 136.6,
+        "healing": 0.0,
+        "cc": 4.5,
+        "friendly_cc": 0.0
+      },
+      {
+        "name": "Caelin P.",
+        "faction": "Vellmoor",
+        "faction_id": "vellmoor",
+        "hired_by": null,
+        "side": "defender",
+        "class_name": "Cleric",
+        "kills": 1,
+        "deaths": 3,
+        "assists": 0,
+        "team_kills": 0,
+        "damage": 81.3,
+        "friendly_damage": 7.1,
+        "damage_taken": 206.2,
+        "healing": 0.0,
+        "cc": 13.2,
+        "friendly_cc": 0.0
+      },
+      {
+        "name": "Edda P.",
+        "faction": "House Malestroit",
+        "faction_id": "malestroit",
+        "hired_by": null,
+        "side": "defender",
+        "class_name": "Cleric",
+        "kills": 0,
+        "deaths": 3,
+        "assists": 1,
+        "team_kills": 0,
+        "damage": 408.3,
+        "friendly_damage": 10.2,
+        "damage_taken": 189.6,
+        "healing": 80.8,
+        "cc": 2.4,
+        "friendly_cc": 0.0
+      },
+      {
+        "name": "Hale H.",
+        "faction": "Vellmoor",
+        "faction_id": "vellmoor",
+        "hired_by": null,
+        "side": "defender",
+        "class_name": "Ranger",
+        "kills": 0,
+        "deaths": 3,
+        "assists": 1,
+        "team_kills": 0,
+        "damage": 226.4,
+        "friendly_damage": 10.9,
+        "damage_taken": 66.6,
+        "healing": 257.7,
+        "cc": 5.1,
+        "friendly_cc": 0.0
+      },
+      {
+        "name": "Emeric J.",
+        "faction": null,
+        "faction_id": null,
+        "hired_by": "House Malestroit",
+        "side": "defender",
+        "class_name": "Cleric",
+        "kills": 0,
+        "deaths": 2,
+        "assists": 4,
+        "team_kills": 0,
+        "damage": 162.5,
+        "friendly_damage": 8.2,
+        "damage_taken": 184.8,
+        "healing": 153.5,
+        "cc": 0.0,
+        "friendly_cc": 0.0
+      },
+      {
+        "name": "Kael P.",
+        "faction": "House Malestroit",
+        "faction_id": "malestroit",
+        "hired_by": null,
+        "side": "defender",
+        "class_name": "Ranger",
+        "kills": 0,
+        "deaths": 1,
+        "assists": 2,
+        "team_kills": 0,
+        "damage": 112.2,
+        "friendly_damage": 6.1,
+        "damage_taken": 216.7,
+        "healing": 0.0,
+        "cc": 5.9,
+        "friendly_cc": 0.0
+      }
+    ]
+  }
+}
