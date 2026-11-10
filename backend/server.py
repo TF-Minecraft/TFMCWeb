@@ -175,6 +175,7 @@ from src.api.drinks_routes import drinks_router
 from src.api.precedent_routes import precedent_router
 from src.api.patchnotes_routes import patchnotes_router
 from src.api.wars_routes import wars_router
+from src.api.war_history_routes import war_history_router
 from src.api.patreon_routes import patreon_router
 from src.api.auth_routes import auth_router
 from src.api.diagnostic_routes import diagnostic_router
@@ -204,6 +205,7 @@ if not os.environ.get("SIGN_IN_SITE", "").strip():
     app.include_router(precedent_router)
     app.include_router(patchnotes_router)
 app.include_router(wars_router)
+app.include_router(war_history_router)
 app.include_router(patreon_router)
 app.include_router(auth_router)
 app.include_router(diagnostic_router)
