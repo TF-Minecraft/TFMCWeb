@@ -448,6 +448,24 @@ def test_the_plugin_polls_applies_and_the_page_shows_the_result(client):
     assert _me(client)["picks"] == ["2026-11-21"]
 
 
+def test_a_redelivered_result_keeps_the_first_apply_time(client):
+    _declare(client)
+    _link(ATTACKER)
+    _sign_in(client, DISCORD[ATTACKER])
+    queued = _vote(client, ["2026-11-20"]).json()["action"]
+    _pending(client)
+    _applied(client, [{"id": queued["id"], "status": "applied", "reason": None}])
+    first = _actions()[0]["applied_at"]
+    # The player changes the vote in game; the plugin's state arrives after the web apply.
+    _post_events(client, [_event("votes_changed", "2026-11-10T11:00:00Z",
+                                 private={"voting": _voting(votes={ATTACKER: ["2026-11-21"]})})])
+    # A lost /applied made the plugin answer the same action again, from its ledger.
+    _sql("UPDATE war_actions SET status = 'pending'")
+    _applied(client, [{"id": queued["id"], "status": "applied", "reason": None}])
+    assert _actions()[0]["applied_at"] == first
+    assert _me(client)["picks"] == ["2026-11-21"], "The in-game change since the first apply still shows"
+
+
 def test_a_rejected_action_shows_its_reason(client):
     _declare(client)
     _link(ATTACKER)

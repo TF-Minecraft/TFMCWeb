@@ -517,7 +517,9 @@ def record_results(realm: str | None, results: Any) -> dict:
             # The plugin says whether a refusal can pass later; an applied action never needs a retry.
             retry = result == "rejected" and item.get("retry") is True
             found = conn.execute(
-                "UPDATE war_actions SET status = %s, reason = %s, retry = %s, applied_at = now() "
+                # A repeated answer (a lost /applied re-delivered) keeps the first apply time, so a vote
+                # changed in game since then still wins on /me.
+                "UPDATE war_actions SET status = %s, reason = %s, retry = %s, applied_at = COALESCE(applied_at, now()) "
                 "WHERE id = %s AND (%s::text IS NULL OR realm_id = %s) AND status IN ('pending', 'expired') "
                 "RETURNING id",
                 (result, reason, retry, item_id, realm, realm),
