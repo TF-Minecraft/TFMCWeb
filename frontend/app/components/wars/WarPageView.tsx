@@ -35,6 +35,7 @@ import {
 import type { FactionRef, TopFighter, WarBattle, WarPageModel, WarSide } from "@/lib/wars/types";
 
 import ParticipantsTable from "./ParticipantsTable";
+import WarActions from "./WarActions";
 import WarCasualtyChart from "./WarCasualtyChart";
 import {
   FactionBanner,
@@ -618,6 +619,9 @@ export default function WarPageView({ model, sessionToken }: { model: WarPageMod
       <div className="flex flex-col gap-6">
         <WarHeader model={model} leaders={leaders} sessionToken={sessionToken} />
         <ScoreSection model={model} names={names} />
+        {model.status === "active" && model.state ? (
+          <WarActions mapId={model.map_id} warKey={model.war_key} names={names} sessionToken={sessionToken} />
+        ) : null}
         <FrontSection model={model} names={names} />
         <LedgerSection model={model} names={names} />
         {model.battles.length ? (

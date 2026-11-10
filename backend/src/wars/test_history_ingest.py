@@ -141,6 +141,24 @@ def test_next_battle_day_is_stored(client):
     assert _count("war_events") == 1
 
 
+def test_a_nul_character_refuses_only_its_own_item(client):
+    events = sample_batches()[0]["events"]
+    good, bad = events[0], {**events[1], "payload": {"battle_day": "2026-11-19\u0000"}}
+    reply = client.post("/wars/plugin/events", json={"realm_id": "main", "events": [good, bad]},
+                        headers=PLUGIN)
+    assert reply.status_code == 200, reply.text
+    body = reply.json()
+    assert set(body["acked"]) == {good["id"], bad["id"]}
+    assert [r["id"] for r in body["rejected"]] == [bad["id"]]
+    assert "NUL" in body["rejected"][0]["reason"]
+    assert _count("war_events") == 1
+
+    record = {**sample_batches()[1]["records"][0], "id": "r-nul", "name": "Battle of \u0000"}
+    reply = client.post("/wars/plugin/battles", json={"realm_id": "main", "records": [record]}, headers=PLUGIN)
+    assert reply.status_code == 200, reply.text
+    assert [r["id"] for r in reply.json()["rejected"]] == ["r-nul"]
+
+
 def test_malformed_items_are_acked_and_listed(client):
     good = sample_batches()[0]["events"][0]
     bad = [

@@ -39,9 +39,13 @@ EVENT_TYPES = (
     "war_ended",
     # Contract v1.1: only refreshes the latest state's battle day; it has no timeline entry.
     "next_battle_day",
+    # Contract v1.3 (Phase 4): carry the private vote and call to arms state; no timeline entry.
+    "votes_changed",
+    "call_to_arms_sent",
+    "call_to_arms_closed",
 )
 
-SILENT_EVENT_TYPES = ("next_battle_day",)
+SILENT_EVENT_TYPES = ("next_battle_day", "votes_changed", "call_to_arms_sent", "call_to_arms_closed")
 
 RESOLUTIONS = ("fought", "autoresolve", "forfeit", "naval_default", "staff")
 
@@ -587,6 +591,8 @@ def _battle_from_record(record: dict, fighters: list[dict], names: ProvinceNames
 
 def _attach_record(battle: dict, record: dict, fighters: list[dict]) -> None:
     battle["name"] = strip_codes(record.get("name")) or None
+    if not battle.get("province_name"):
+        battle["province_name"] = place_from_battle_name(battle["name"])
     battle["started_at"] = iso(from_epoch_ms(record.get("startedAt")))
     battle["ended_at"] = iso(from_epoch_ms(record.get("endedAt")))
     battle["fighters"] = _record_fighter_counts(fighters)
@@ -781,9 +787,24 @@ def _top_fighters(all_fighters: Iterable[dict], hirer_name: Callable[[str | None
     return out
 
 
+_BATTLE_NAME_PREFIXES = ("Battle of ", "Siege of ", "Raid on ", "Naval Battle of ", "Battle at ")
+
+
+def place_from_battle_name(name: Any) -> str | None:
+    """`Gildrec` from SimpleFactions' `Battle of Gildrec`, for provinces the map has no name for."""
+    text = strip_codes(name)
+    for prefix in _BATTLE_NAME_PREFIXES:
+        if text.startswith(prefix) and len(text) > len(prefix):
+            return text[len(prefix):].strip()
+    return None
+
+
 def _place(battle: dict) -> str:
     if battle.get("province_name"):
         return battle["province_name"]
+    from_record = place_from_battle_name(battle.get("name"))
+    if from_record:
+        return from_record
     if battle.get("province_id") is not None:
         return f"Province {battle['province_id']}"
     return "an unnamed field"
