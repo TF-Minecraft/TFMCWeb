@@ -37,7 +37,11 @@ EVENT_TYPES = (
     "battle_postponed",
     "battle_resolved",
     "war_ended",
+    # Contract v1.1: only refreshes the latest state's battle day; it has no timeline entry.
+    "next_battle_day",
 )
+
+SILENT_EVENT_TYPES = ("next_battle_day",)
 
 RESOLUTIONS = ("fought", "autoresolve", "forfeit", "naval_default", "staff")
 
@@ -208,8 +212,10 @@ def faction_ref(raw: Any) -> dict | None:
     if not isinstance(raw, dict):
         return None
     faction_id = _str(raw.get("id"), 64)
-    name_raw = _str(raw.get("name_raw"), 200) or _str(raw.get("name"), 200)
-    name = strip_codes(raw.get("name")) or strip_codes(name_raw) or (faction_id or "")
+    # Gradient names carry a colour code per letter, so a short name can run past a thousand characters.
+    name_raw = _str(raw.get("name_raw"), 1024) or _str(raw.get("name"), 1024)
+    # Prefer stripping the raw name here: an older plugin build left a section sign per letter in "name".
+    name = strip_codes(name_raw) or strip_codes(raw.get("name")) or (faction_id or "")
     if not faction_id and not name:
         return None
     rgb = _str(raw.get("rgb"), 11)
@@ -374,7 +380,7 @@ def public_payload(event_type: str, payload: Any) -> dict:
             "province_id": _int(p.get("province_id"), None),
             "kind": _lower(p.get("kind")),
         }
-    if event_type == "battle_postponed":
+    if event_type in ("battle_postponed", "next_battle_day"):
         return {"battle_day": _str(p.get("battle_day"), 32)}
     if event_type == "battle_resolved":
         resolution = _lower(p.get("resolution"))
@@ -957,6 +963,8 @@ def build_war_model(
             joined.append((payload["faction"], payload["side"], payload["role"], iso(event["at"])))
         elif event_type == "war_ended":
             ended, ended_at = payload, event["at"]
+        if event_type in SILENT_EVENT_TYPES:
+            continue
         timeline.append({
             "at": iso(event["at"]),
             "type": event_type,

@@ -315,7 +315,8 @@ def test_province_names_come_from_map_markers(tmp_path, monkeypatch):
 
     (tmp_path / "main").mkdir()
     path = tmp_path / "main" / "map_markers.json"
-    path.write_text(json.dumps({"settlements": [{"province_id": 77, "name": "Ashford"}],
+    path.write_text(json.dumps({"settlements": [{"province_id": 77, "name": "Ashford"},
+                                                {"province_id": 80, "name": "§x§a§3§a§1§8§4Standfast"}],
                                 "installations": [{"id": "i1", "province_id": 78, "name": "Greywater Mine"}]}))
     lookup = lambda map_id, name: str(tmp_path / map_id / name)  # noqa: E731
     monkeypatch.setattr(history_reads, "input_file", lookup)
@@ -323,4 +324,6 @@ def test_province_names_come_from_map_markers(tmp_path, monkeypatch):
     history_reads.clear_province_names_cache()
     names = history_reads.province_names("main")
     assert (names(77), names(78), names(79)) == ("Ashford", "Greywater Mine", None)
+    # Coloured settlement names lose their codes.
+    assert names(80) == "Standfast"
     assert history_reads.province_names("dev")(77) is None

@@ -73,6 +73,7 @@ Enum values are the lower-case `toJson()` forms SF already uses (`BattleSchedule
 | `battle_scheduled` | `BattleScheduleService.scheduleBattleAtProvince` / `markScheduledAtProvince` | `{"scheduled_at": "...", "province_id": 77, "kind": "field"}` |
 | `battle_postponed` | `BattleScheduleService.postpone` and `skipBattleDay` | `{"battle_day": "2026-11-20"}` |
 | `battle_resolved` | `CampaignBattleOutcomeService.applyCampaignBattleOutcome` after casualties are applied | see below |
+| `next_battle_day` | `BattleScheduleService.openVote` (the hour vote opens on a battle day) and `catchUpStaleBattleDay` | `{"battle_day": "2026-11-19"}`. Added in v1.1: keeps the latest state's battle day current between battles. No timeline entry. |
 | `war_ended` | `WarManager.endWar`, before the war file is deleted | `{"reason": "attacker_victory", "winner": "attacker", "truce_until": "..."}` (winner null for white peace/admin end) |
 
 `battle_resolved` payload:

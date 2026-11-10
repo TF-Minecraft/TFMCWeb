@@ -15,7 +15,7 @@ from src.scripts.loader.markers import build_province_name_index, load_raw_marke
 from src.scripts.util.dirs import input_file
 
 from .history_ingest import load_events, load_records
-from .history_model import ProvinceNames, build_battle_report, build_war_model
+from .history_model import ProvinceNames, build_battle_report, build_war_model, strip_codes
 
 _LIST_LIMIT = 500
 _FALSE = {"0", "false", "no", "off"}
@@ -48,7 +48,7 @@ def province_names(map_id: str) -> ProvinceNames:
         with _names_lock:
             _names_cache[map_id] = cached
     index = cached[2]
-    return lambda province_id: index.get(province_id)
+    return lambda province_id: strip_codes(index.get(province_id) or "") or None
 
 
 def clear_province_names_cache() -> None:

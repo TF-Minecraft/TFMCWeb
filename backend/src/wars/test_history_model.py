@@ -263,3 +263,32 @@ def test_scalars():
     assert strip_codes("§§x§3§9§a§2§2§7Gilded") == "Gilded"
     assert parse_instant("2026-11-10T09:50:00.123456789Z").isoformat() == "2026-11-10T09:50:00.123456+00:00"
     assert format_instant("2026-07-01T19:00:00Z") == "01/07/2026 21:00 CEST"
+
+
+def test_next_battle_day_refreshes_the_state_without_a_timeline_entry():
+    events, records = _war(ACTIVE_WAR)
+    last = events[-1]
+    state = dict(last["state"], battle_day="2026-11-19")
+    later = parse_instant("2100-01-01T00:00:00Z")
+    events.append(dict(last, id="next-day", type="next_battle_day", at=later, state=state,
+                       payload={"battle_day": "2026-11-19"}))
+    model = build_war_model(ACTIVE_WAR, events, records, province_name=sample_province_name)
+    assert model["state"]["battle_day"] == "2026-11-19"
+    assert all(entry["type"] != "next_battle_day" for entry in model["timeline"])
+
+
+def test_gradient_names_are_read_from_the_raw_name():
+    events, records = _war(ACTIVE_WAR)
+    gradient = "".join(f"§§x§B§C§1§2§3§{i % 10}{letter}" for i, letter in enumerate("The Jolly Sprockets"))
+    assert len(gradient) > 200
+    for event in events:
+        for side in event["state"]["sides"].values():
+            for participant in side:
+                if participant["id"] == event["state"]["sides"]["attacker"][0]["id"]:
+                    # An older plugin build sent a half-stripped clean name.
+                    participant["name"] = "§T§h§e §J§o§l§l§y"
+                    participant["name_raw"] = gradient
+    model = build_war_model(ACTIVE_WAR, events, records, province_name=sample_province_name)
+    leader = model["state"]["sides"]["attacker"][0]
+    assert leader["name"] == "The Jolly Sprockets"
+    assert leader["name_raw"] == gradient
