@@ -292,3 +292,18 @@ def test_gradient_names_are_read_from_the_raw_name():
     leader = model["state"]["sides"]["attacker"][0]
     assert leader["name"] == "The Jolly Sprockets"
     assert leader["name_raw"] == gradient
+
+
+def test_a_province_without_a_map_name_takes_its_name_from_the_battle_record():
+    from src.wars.history_model import place_from_battle_name
+
+    assert place_from_battle_name("§aBattle of Gildrec") == "Gildrec"
+    assert place_from_battle_name("Siege of Greywater") == "Greywater"
+    assert place_from_battle_name("Battle of ") is None
+    assert place_from_battle_name(None) is None
+    events, records = _war(ACTIVE_WAR)
+    model = build_war_model(ACTIVE_WAR, events, records, province_name=lambda _pid: None)
+    named = [b for b in model["battles"] if b.get("name") and b["name"].startswith("Battle of ")]
+    assert named, "the sample has named battles"
+    for battle in named:
+        assert battle["province_name"] == battle["name"][len("Battle of "):]
