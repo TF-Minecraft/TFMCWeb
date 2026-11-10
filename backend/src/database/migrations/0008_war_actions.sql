@@ -16,6 +16,8 @@ CREATE TABLE war_actions (
     status text COLLATE "C" NOT NULL DEFAULT 'pending',
     -- A plain player-facing sentence for a refusal or an expiry.
     reason text COLLATE "C",
+    -- Whether the same action may work on a later try (a battle being fought, a server failure, an expiry).
+    retry boolean NOT NULL DEFAULT false,
     created_at timestamptz NOT NULL DEFAULT now(),
     -- Last time the plugin's poll handed the row out.
     delivered_at timestamptz,

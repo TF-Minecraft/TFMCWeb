@@ -195,6 +195,7 @@ queue, applies each action with exactly the in-game rules, and reports `applied`
 - **Statuses:** `pending`, then `applied` or `rejected` (with `reason`) from the plugin, or
   `expired` when still pending 10 minutes after creation. A new vote of the same account,
   war and kind expires its still-pending one (`reason` "Replaced by a newer vote.").
+- **`retry`:** the plugin says whether a refusal can pass later without the player changing anything (a battle being fought, a server failure); expired actions are `retry: true`. `/me` and the bot's status route return it, so the bot keeps or disables its buttons without reading the sentence.
 - **Up-front refusals.** The website refuses what PS's latest private state already shows:
   a closed vote (`kind` null, `closes_at` passed, or the war ended), an account not in
   `eligible`, a pick that is not an option, or no open call to that faction. The plugin
@@ -249,7 +250,7 @@ Plugin key (`X-Plugin-Key`).
 | Route | Body | Reply |
 | --- | --- | --- |
 | `GET /wars/plugin/actions/pending?realm=main&limit=50` | | `{"actions": [{"id", "war_key", "kind", "account_uuid", "source", "payload", "created_at"}]}` |
-| `POST /wars/plugin/actions/applied` | `{"results": [{"id", "status": "applied" \| "rejected", "reason"}], "realm_id"?}` | `{"acked": [ids], "rejected"?: [{"id", "reason"}]}` |
+| `POST /wars/plugin/actions/applied` | `{"results": [{"id", "status": "applied" \| "rejected", "reason", "retry"?}], "realm_id"?}` | `{"acked": [ids], "rejected"?: [{"id", "reason"}]}` |
 
 The poll returns pending rows oldest first (`limit` 1-200) and stamps `delivered_at`. A
 row handed out is offered again 30 seconds later until a result arrives or it expires,

@@ -27,6 +27,8 @@ export type WarAction = {
   kind: WarActionKind;
   status: WarActionStatus;
   reason: string | null;
+  /** The same action may work on a later try (a battle being fought, a server failure, an expiry). */
+  retry?: boolean;
   source: "web" | "discord";
   payload: { picks?: VoteOption[]; target_faction_id?: string; accept?: boolean };
   created_at: string | null;

@@ -221,6 +221,7 @@ def _action(row: dict | None) -> dict | None:
         "kind": row["kind"],
         "status": row["status"],
         "reason": row["reason"],
+        "retry": bool(row.get("retry")),
         "source": row["source"],
         "payload": row["payload"],
         "created_at": iso(row["created_at"]),
@@ -230,7 +231,7 @@ def _action(row: dict | None) -> dict | None:
 
 def _expire_stale(conn) -> None:
     conn.execute(
-        "UPDATE war_actions SET status = 'expired', reason = %s "
+        "UPDATE war_actions SET status = 'expired', reason = %s, retry = true "
         "WHERE status = 'pending' AND created_at <= now() - %s",
         (EXPIRED_REASON, EXPIRE_AFTER),
     )
@@ -448,6 +449,7 @@ def status(action_id: int) -> dict | None:
         "kind": row["kind"],
         "status": row["status"],
         "reason": row["reason"],
+        "retry": bool(row.get("retry")),
         "created_at": iso(row["created_at"]),
         "applied_at": iso(row["applied_at"]),
     }
@@ -512,11 +514,13 @@ def record_results(realm: str | None, results: Any) -> dict:
                 continue
             reason = item.get("reason")
             reason = reason.strip()[:MAX_REASON] or None if isinstance(reason, str) else None
+            # The plugin says whether a refusal can pass later; an applied action never needs a retry.
+            retry = result == "rejected" and item.get("retry") is True
             found = conn.execute(
-                "UPDATE war_actions SET status = %s, reason = %s, applied_at = now() "
+                "UPDATE war_actions SET status = %s, reason = %s, retry = %s, applied_at = now() "
                 "WHERE id = %s AND (%s::text IS NULL OR realm_id = %s) AND status IN ('pending', 'expired') "
                 "RETURNING id",
-                (result, reason, item_id, realm, realm),
+                (result, reason, retry, item_id, realm, realm),
             ).fetchone()
             if found is None:
                 exists = conn.execute(

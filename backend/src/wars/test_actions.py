@@ -456,6 +456,7 @@ def test_a_rejected_action_shows_its_reason(client):
     _applied(client, [{"id": queued["id"], "status": "rejected", "reason": "  The day vote has closed.  "}])
     action = _me(client)["actions"]["day_vote"]
     assert action["status"] == "rejected" and action["reason"] == "The day vote has closed."
+    assert action["retry"] is False, "No retry flag from the plugin means no retry"
     assert _me(client)["picks"] == ["2026-11-18"]
 
 
@@ -484,6 +485,7 @@ def test_actions_expire_ten_minutes_after_creation(client):
     assert _pending(client) == []
     action = _me(client)["actions"]["day_vote"]
     assert action["status"] == "expired" and action["reason"] == actions.EXPIRED_REASON
+    assert action["retry"] is True, "An action the server never answered can be tried again"
     # A result that arrives after all is still recorded.
     _applied(client, [{"id": queued["id"], "status": "applied"}])
     assert _actions()[0]["status"] == "applied"
@@ -592,10 +594,11 @@ def test_the_bot_queues_an_answer_and_reads_its_status(client):
     assert status.status_code == 200
     assert status.json()["status"] == "pending" and status.json()["reason"] is None
     _pending(client)
-    _applied(client, [{"id": queued["id"], "status": "rejected",
+    _applied(client, [{"id": queued["id"], "status": "rejected", "retry": True,
                        "reason": "A battle of this war is being fought. Answer the call once it ends."}])
     status = client.get(f"/wars/staff/actions/{queued['id']}", headers=STAFF).json()
     assert status["status"] == "rejected" and status["reason"].startswith("A battle of this war")
+    assert status["retry"] is True, "The plugin said this refusal can pass later"
     assert client.get("/wars/staff/actions/999999", headers=STAFF).status_code == 404
     assert client.get(f"/wars/staff/actions/{queued['id']}").status_code == 401
 
