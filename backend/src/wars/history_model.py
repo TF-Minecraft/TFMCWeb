@@ -149,7 +149,10 @@ def from_epoch_ms(value: Any) -> datetime | None:
 def _finite(value: Any) -> float | None:
     if isinstance(value, bool) or not isinstance(value, (int, float)):
         return None
-    number = float(value)
+    try:
+        number = float(value)
+    except OverflowError:  # an int too large for a float
+        return None
     return number if math.isfinite(number) else None
 
 

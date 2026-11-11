@@ -10,9 +10,11 @@ import {
   dayLabel,
   hourLabel,
   localHour,
+  localHours,
   lockDateTime,
   markBanner,
   nextBattleText,
+  reconcileDraft,
   ruleText,
   serverInstant,
   startingMarks,
@@ -105,6 +107,14 @@ describe("server time", () => {
     expect(localHour("2026-11-20", 22, "Europe/Berlin")).toBe("");
   });
 
+  it("gives each date its own local time when the dates span a clock change", () => {
+    // Paris leaves summer time on 25/10/2026, New York only on 1/11/2026.
+    const dates = [date({ date: "2026-10-24" }), date({ date: "2026-10-25" }), date({ date: "2026-10-26" })];
+    expect(localHours(dates, 21, "America/New_York")).toEqual(["15:00", "16:00"]);
+    expect(localHours(dates, 21, "Europe/London")).toEqual(["20:00"]);
+    expect(localHours(dates, 21, "Europe/Paris")).toEqual([""]);
+  });
+
   it("labels days, hours and locks", () => {
     expect(dayLabel("2026-11-20")).toBe("Fri 20 Nov");
     expect(hourLabel(vote(), 24)).toBe("00:00 CET");
@@ -142,6 +152,21 @@ describe("marks", () => {
     expect(startingMarks(me({ availability_actions: none }))).toEqual({});
     expect(answeredNone(me({ availability_actions: none }), {})).toBe(true);
     expect(answeredNone(me({ none: true }), { "2026-11-21": [21] })).toBe(false);
+    // "None" cannot clear marks on a decided date; they don't undo the answer.
+    const locked = vote({ dates: [date({ date: "2026-11-20", state: "battle", hour: 22, editable: false }), date()] });
+    expect(answeredNone(me({ none: true, vote: locked }), { "2026-11-20": [22] })).toBe(true);
+    expect(markBanner(locked, { "2026-11-20": [22] }, true).tone).toBe("grey");
+  });
+
+  it("drops the draft of a date that locked during a save, keeping the other changes", () => {
+    const locked = vote({
+      dates: [date({ date: "2026-11-20", state: "battle", editable: false }), date(), date({ date: "2026-11-22" })],
+    });
+    const reloaded = me({ vote: locked, marks: { "2026-11-20": [21, 22] } });
+    const draft = { "2026-11-20": [25], "2026-11-21": [23] };
+    expect(reconcileDraft(draft, reloaded)).toEqual({ "2026-11-20": [21, 22], "2026-11-21": [23] });
+    expect(reconcileDraft({ "2026-11-20": [25] }, reloaded)).toBeNull();
+    expect(reconcileDraft({ "2026-11-20": [21, 22] }, me())).toBeNull();
   });
 
   it("reads one cell of the tally", () => {
@@ -158,7 +183,18 @@ describe("marks", () => {
 describe("words", () => {
   it("badges each date by its state", () => {
     expect(dateBadge(date({ state: "battle" }))).toEqual({ tone: "gold", text: "Battle day — time locks Fri 21:00" });
-    expect(dateBadge(date({ state: "battle", hour: 24 }))).toEqual({ tone: "gold", text: "Battle at 00:00 CET" });
+    // The start's own calendar day: hour 24 of Sat 21 Nov is Sun 22 Nov, 00:00.
+    expect(dateBadge(date({ state: "battle", hour: 24 }))).toEqual({
+      tone: "gold",
+      text: "⚔ Battle Sun 22 Nov, 00:00 CET",
+    });
+    expect(dateBadge(date({ date: "2026-11-20", state: "battle", hour: 22, editable: false }))).toEqual({
+      tone: "gold",
+      text: "⚔ Battle Fri 20 Nov, 22:00 CET",
+    });
+    expect(dateBadge(date({ date: "2026-07-10", state: "battle", hour: 22 })).text).toBe(
+      "⚔ Battle Fri 10 Jul, 22:00 CEST",
+    );
     expect(dateBadge(date({ state: "no_battle" }))).toEqual({ tone: "grey", text: "No battle" });
     expect(dateBadge(date())).toEqual({ tone: "open", text: "Open — decided Thu 21:00" });
   });
@@ -177,6 +213,38 @@ describe("words", () => {
     expect(nextBattleText(set, now, "Europe/London")).toBe("⚔ Next battle: Fri 20 Nov, 22:00 CET (21:00 your time)");
     expect(nextBattleText(set, now, "Europe/Paris")).toBe("⚔ Next battle: Fri 20 Nov, 22:00 CET");
     expect(nextBattleText(set, new Date("2026-11-21T10:00:00Z"))).toBeNull();
+    const late = vote({
+      dates: [
+        date({
+          date: "2026-11-20",
+          state: "battle",
+          hour: 25,
+          editable: false,
+        }),
+      ],
+    });
+    expect(nextBattleText(late, now, "Europe/Paris")).toBe("⚔ Next battle: Sat 21 Nov, 01:00 CET");
+  });
+
+  it("falls back to the war's battle days when no grid date has a time", () => {
+    const now = new Date("2026-11-17T10:00:00Z");
+    const days = [
+      { date: "2026-11-19", hour: null },
+      { date: "2026-11-20", hour: 24 },
+    ];
+    expect(nextBattleText(vote(), now, "Europe/Paris", days)).toBe("⚔ Next battle: Sat 21 Nov, 00:00 CET");
+    expect(nextBattleText(vote(), now, "Europe/Paris", [{ date: "2026-11-19", hour: null }])).toBeNull();
+    const set = vote({
+      dates: [
+        date({
+          date: "2026-11-19",
+          state: "battle",
+          hour: 21,
+          editable: false,
+        }),
+      ],
+    });
+    expect(nextBattleText(set, now, "Europe/Paris", days)).toBe("⚔ Next battle: Thu 19 Nov, 21:00 CET");
   });
 
   it("tells the user whether they marked anything", () => {
@@ -202,6 +270,9 @@ describe("statuses", () => {
       tone: "refused",
       text: "Sat 21/11: That day is already decided.",
     });
+    // A later change of the same date replaces its refusal.
+    const replaced = action({ id: 3, status: "applied", applied_at: "2026-11-17T10:00:08Z" });
+    expect(availabilityStatus([applied, refused, replaced], vote(), now)).toEqual({ tone: "done", text: "Saved" });
     const old = action({ status: "applied", applied_at: "2026-11-15T10:00:00Z" });
     expect(availabilityStatus([old], vote(), now)).toBeNull();
   });

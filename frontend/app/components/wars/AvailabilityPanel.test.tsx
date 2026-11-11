@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import AvailabilityPanel from "@/app/components/wars/AvailabilityPanel";
 import WarActions from "@/app/components/wars/WarActions";
 import type { WarAction, WarMe } from "@/lib/wars/actions";
-import type { AvailabilityDate } from "@/lib/wars/availability";
+import type { AvailabilityDate, AvailabilityVote } from "@/lib/wars/availability";
 
 afterEach(() => {
   cleanup();
@@ -60,6 +60,11 @@ function me(overrides: Partial<WarMe> = {}): WarMe {
     calls_to_arms: [],
     ...overrides,
   };
+}
+
+/** `me()` with these dates in its grid. */
+function meWithDates(dates: AvailabilityDate[]): WarMe {
+  return me({ vote: { ...(me().vote as AvailabilityVote), dates } });
 }
 
 function action(overrides: Partial<WarAction> = {}): WarAction {
@@ -158,6 +163,49 @@ describe("AvailabilityPanel", () => {
     );
   });
 
+  it("shows locked battle days with their time, and the war's next battle when the grid has none", () => {
+    const locked = meWithDates([
+      date({ date: "2026-11-20", label: "Fri 20/11", state: "battle", hour: 24, editable: false }),
+      date(),
+    ]);
+    render(<AvailabilityPanel me={locked} names={names} marks={{}} now={now} timeZone="Europe/Paris" />);
+    expect(screen.getByText("⚔ Battle Sat 21 Nov, 00:00 CET")).toBeTruthy();
+    expect(screen.getByText("⚔ Next battle: Sat 21 Nov, 00:00 CET")).toBeTruthy();
+    const fri = within(screen.getByRole("group", { name: "Fri 20/11" }));
+    expect(fri.getAllByRole("button").every((b) => b.hasAttribute("disabled"))).toBe(true);
+    cleanup();
+
+    const open = meWithDates([date()]);
+    render(
+      <AvailabilityPanel
+        me={open}
+        names={names}
+        marks={{}}
+        now={now}
+        timeZone="Europe/Paris"
+        battleDays={[{ date: "2026-11-19", hour: 22 }]}
+      />,
+    );
+    expect(screen.getByText("⚔ Next battle: Thu 19 Nov, 22:00 CET")).toBeTruthy();
+  });
+
+  it("gives each date its own local time across a clock change", () => {
+    const dst = meWithDates([
+      date({ date: "2026-10-24", label: "Sat 24/10" }),
+      date({ date: "2026-10-25", label: "Sun 25/10" }),
+    ]);
+    render(<AvailabilityPanel me={dst} names={names} marks={{}} now={now} timeZone="America/New_York" />);
+    expect(screen.getAllByText("Varies by day")).toHaveLength(HOURS.length);
+    const sat = within(screen.getByRole("group", { name: "Sat 24/10" }));
+    expect(sat.getByRole("button", { name: /^Sat 24\/10, 21:00 CET \(15:00 your time\)/ }).textContent).toContain(
+      "15:00 yours",
+    );
+    const sun = within(screen.getByRole("group", { name: "Sun 25/10" }));
+    expect(sun.getByRole("button", { name: /^Sun 25\/10, 21:00 CET \(16:00 your time\)/ }).textContent).toContain(
+      "16:00 yours",
+    );
+  });
+
   it("keeps the sign-in and link messages for everyone else", () => {
     const vote = { kind: "availability" as const, closes_at: "2026-11-18T20:00:00Z" };
     render(
@@ -172,7 +220,7 @@ describe("AvailabilityPanel", () => {
     expect(screen.queryByRole("button")).toBeNull();
     cleanup();
     render(<AvailabilityPanel me={me({ eligible: false, side: null, vote })} names={names} marks={{}} />);
-    expect(screen.getByText("Only members of the warring factions vote.")).toBeTruthy();
+    expect(screen.getByText("Only members of the warring factions and their hired mercenaries vote.")).toBeTruthy();
   });
 });
 
@@ -242,6 +290,37 @@ describe("WarActions with the availability grid", () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it("drops the change of a day that locked during the save and keeps the others", async () => {
+    const dates = (me().vote as AvailabilityVote).dates ?? [];
+    const locked = meWithDates(dates.map((d) => (d.date === "2026-11-20" ? { ...d, editable: false } : d)));
+    const replies: WarMe[] = [me(), locked];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (_url: string, init?: RequestInit) => {
+        if (init?.method === "POST") {
+          const detail = "That day is already decided. You can't change it now.";
+          return new Response(JSON.stringify({ detail }), { status: 409 });
+        }
+        return new Response(JSON.stringify(replies.shift() ?? locked), { status: 200 });
+      }),
+    );
+    render(<WarActions mapId="main" warKey="w3-1793642400" names={names} />);
+    const fri = within(await screen.findByRole("group", { name: "Fri 20/11" }));
+    fireEvent.click(fri.getByRole("button", { name: /^Fri 20\/11, 21:00 CET/ }));
+    const sat = within(screen.getByRole("group", { name: "Sat 21/11" }));
+    fireEvent.click(sat.getByRole("button", { name: /^Sat 21\/11, 23:00 CET/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Save my times" }));
+    expect((await screen.findByRole("alert")).textContent).toBe(
+      "That day is already decided. You can't change it now.",
+    );
+    await waitFor(() =>
+      expect(fri.getByRole("button", { name: /^Fri 20\/11, 21:00 CET/ }).getAttribute("aria-pressed")).toBe("false"),
+    );
+    expect(sat.getByRole("button", { name: /^Sat 21\/11, 23:00 CET/ }).getAttribute("aria-pressed")).toBe("true");
+    expect(screen.getByText("You have unsaved changes.")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Save my times" }).hasAttribute("disabled")).toBe(false);
   });
 
   it("sends none of these days on its own", async () => {

@@ -303,27 +303,35 @@ that still send the v1.3 `day`/`hour` votes keep the old panel; `voting.kind` de
   marks on that date; `[]` clears them) or `{"none": true}`. A newer change of the same
   date (or a newer "none") expires the pending one. The website refuses up front: no grid
   (409 "This vote is closed."), an account not in `eligible` (403), a date not shown (409
-  "That day is not open for marking."), a date that is not editable or whose
-  `time_locks_at` passed (409 "That day is already decided. You can't change it now."), an
+  "That day is not open for marking."), a date that is not editable, whose
+  `time_locks_at` passed, or that is still `open` with its `day_locks_at` passed (409
+  "That day is already decided. You can't change it now."), an
   hour not offered (400 "Pick from the start times shown."). Same rate limit as votes.
 - **`/me`** adds `marks` (`{"2026-11-20": [21, 22]}`), `none`, `availability_actions` (the
   latest change per shown date and the latest "none", oldest first) and
   `actions.availability`. Eligible users get `vote` = `{"kind": "availability", "hours",
   "hour_labels", "dates", "closes_at", "need"}` and the grid `tally`; everyone else gets
-  `{"kind", "closes_at"}`. `editable` there is false once a date's time lock passed.
-  Applied changes newer than the latest private state show at once, as for votes; a
-  "none" answer then clears the marks on the dates still editable.
+  `{"kind", "closes_at"}`. `editable` there is false once a date's time lock passed (or
+  its day lock, while it is still `open`). Applied changes newer than the latest private
+  state show at once, as for votes, even while a newer change of that date waits or after
+  it was refused; a "none" answer then clears the marks on the dates still editable.
 - **The panel** (`#vote` on the war page): dates as columns and start hours as rows on
   wide screens, one date per row with hour chips on narrow ones. Each cell toggles a
   start time; a date's header toggles the whole date. Cells show the tally ("A 4 · D 3").
   Times read in CET and in the viewer's own time zone. Changes are sent with "Save my
   times", one action per changed date. "None of these days work for me" is sent at once.
+  Locked battle days the plugin still lists (`battle`, `editable: false`, `hour` set)
+  show "⚔ Battle Fri 20 Nov, 22:00 CET" and feed the gold "Next battle" banner, which
+  falls back to the WarState's `battle_days` when no date in the grid has a time. Times
+  name the calendar day they start (hour 24 of Fri 20 Nov is Sat 21 Nov, 00:00) and CET
+  or CEST by date.
 - **Timeline and posts.** `battle_day_locked` adds "Battle day set: Fri 20 Nov." to the
   timeline and a `battle_day_locked` thread post. `vote_reminder` is silent and gives
   `vote_reminder_dm` rows (see [Discord notifications](#discord-notifications)).
 - **Mutes.** The bot's "Mute this war" button calls `POST /wars/staff/mutes`; the
   website then sends that Discord user no more reminder DMs for that war
-  (`war_dm_mutes`, migration `0009_war_availability.sql`).
+  (`war_dm_mutes`, migration `0009_war_availability.sql`), and acknowledges the ones
+  still queued for them, so the bot never delivers those.
 
 ## Pages
 

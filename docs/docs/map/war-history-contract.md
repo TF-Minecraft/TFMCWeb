@@ -258,7 +258,8 @@ PS notes:
    `notify.accounts` when `private` has none.
 2. `battle_days` rows with a malformed date are dropped; at most 14 are kept. Both new
    fields are public and are also in the war list's `phase`.
-3. The website reads a date as not editable once its `time_locks_at` has passed, even if
-   the latest private state still says `editable`.
+3. The website reads a date as not editable once its `time_locks_at` has passed, or, for a
+   date still `open`, once its `day_locks_at` has passed, even if the latest private state
+   still says `editable`.
 4. A website "none" answer is shown as clearing the account's marks on the dates it can
    still change, until the plugin's next `votes_changed` arrives.

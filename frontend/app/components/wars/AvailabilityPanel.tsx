@@ -11,6 +11,7 @@ import {
   dateBadge,
   hourLabel,
   localHour,
+  localHours,
   markBanner,
   nextBattleText,
   ruleText,
@@ -23,7 +24,7 @@ import {
   type Marks,
 } from "@/lib/wars/availability";
 import { SIDE_LABEL } from "@/lib/wars/format";
-import type { WarSide } from "@/lib/wars/types";
+import type { BattleDay, WarSide } from "@/lib/wars/types";
 
 import { STATUS_TONE, StatusLine } from "./ActionStatus";
 import { Section, linkClass, mutedClass } from "./WarUi";
@@ -59,6 +60,8 @@ export type AvailabilityPanelProps = {
   now?: Date;
   /** The viewer's time zone; the browser's by default. */
   timeZone?: string;
+  /** The war's locked battle days (WarState), for "Next battle" when the grid shows none with a time. */
+  battleDays?: BattleDay[] | null;
 };
 
 /** "When can you fight?": a grid of dates and start times, each cell a toggle. */
@@ -75,6 +78,7 @@ export default function AvailabilityPanel({
   signInHref = null,
   now,
   timeZone,
+  battleDays = null,
 }: AvailabilityPanelProps) {
   const mode = votePanelMode(me);
   if (mode === "hidden") return null;
@@ -113,7 +117,7 @@ export default function AvailabilityPanel({
               to vote.
             </>
           ) : (
-            "Only members of the warring factions vote."
+            "Only members of the warring factions and their hired mercenaries vote."
           )}
         </p>
       </Section>
@@ -125,10 +129,11 @@ export default function AvailabilityPanel({
   const tally = me.tally as AvailabilityTallyRow[] | null;
   const none = answeredNone(me, marks);
   const banner = markBanner(vote, marks, none);
-  const battle = nextBattleText(vote, now, timeZone);
+  const battle = nextBattleText(vote, now, timeZone, battleDays);
   const status = availabilityStatus(me.availability_actions, vote, now);
   const side = me.side;
-  const firstDate = dates[0]?.date ?? "";
+  // Each hour's local time across the dates: two when they span a daylight-saving change.
+  const rowLocals = new Map(hours.map((hour) => [hour, localHours(dates, hour, timeZone)]));
 
   return (
     <Section id="availability" eyebrow="Battle days" title={title}>
@@ -158,11 +163,12 @@ export default function AvailabilityPanel({
         <div className="hidden sm:contents" aria-hidden>
           <div />
           {hours.map((hour) => {
-            const local = localHour(firstDate, hour, timeZone);
+            const locals = rowLocals.get(hour) ?? [];
+            const local = locals.length > 1 ? "Varies by day" : locals[0] ? `${locals[0]} your time` : "";
             return (
               <div key={hour} className="flex flex-col justify-center pr-2 text-xs tabular-nums">
                 <span className="font-semibold text-[var(--tfmc-cream)]">{hourLabel(vote, hour)}</span>
-                {local ? <span className="text-[var(--tfmc-mist)]">{local} your time</span> : null}
+                {local ? <span className="text-[var(--tfmc-mist)]">{local}</span> : null}
               </div>
             );
           })}
@@ -199,6 +205,8 @@ export default function AvailabilityPanel({
                 const count = tallyCell(tally, date.date, hour);
                 const label = hourLabel(vote, hour);
                 const local = localHour(date.date, hour, timeZone);
+                // The row's header can't give one local time across a daylight-saving change: each cell does.
+                const ownLocal = (rowLocals.get(hour)?.length ?? 0) > 1 ? local : "";
                 return (
                   <button
                     key={hour}
@@ -222,6 +230,11 @@ export default function AvailabilityPanel({
                     <span aria-hidden className="hidden font-semibold sm:inline">
                       {on ? "✓" : " "}
                     </span>
+                    {ownLocal ? (
+                      <span aria-hidden className="whitespace-nowrap text-[10px]">
+                        {ownLocal} yours
+                      </span>
+                    ) : null}
                     {count ? (
                       <span aria-hidden className="whitespace-nowrap">
                         A {count.attacker} · D {count.defender}

@@ -595,13 +595,24 @@ def _write_vote_reminders(conn, realm: str, event: dict) -> int:
 
 
 def mute(realm: str, war_key: str, discord_user_id: str) -> bool:
-    """Stop availability reminder DMs of one war for one Discord user; True when newly muted."""
-    with database.connect() as conn:
+    """Stop availability reminder DMs of one war for one Discord user; True when newly muted.
+
+    Reminders already queued for that user and war are acknowledged, so the bot never gets
+    them. Takes the reminder writer's lock, so no batch can queue one after the mute.
+    """
+    with database.transaction() as conn:
+        conn.execute("SELECT pg_advisory_xact_lock(hashtextextended(%s, 0))",
+                     (f"war_reminders:{realm}:{war_key}",))
         row = conn.execute(
             "INSERT INTO war_dm_mutes (realm_id, war_key, discord_user_id) VALUES (%s, %s, %s) "
             "ON CONFLICT DO NOTHING RETURNING created_at",
             (realm, war_key, discord_user_id),
         ).fetchone()
+        conn.execute(
+            "UPDATE war_notifications SET acked_at = now() WHERE realm_id = %s AND war_key = %s "
+            "AND kind = 'vote_reminder_dm' AND acked_at IS NULL AND payload ->> 'discord_user_id' = %s",
+            (realm, war_key, discord_user_id),
+        )
     return row is not None
 
 

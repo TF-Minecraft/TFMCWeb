@@ -65,17 +65,51 @@ export function formatShortDay(value: string | null | undefined): string {
   return date ? shortDayFormat.format(date) : "";
 }
 
+/** Paris time's short name at an instant: `CET`, or `CEST` in summer. */
+export function serverZoneName(at: Date): string {
+  const name =
+    new Intl.DateTimeFormat("en-GB", { timeZone: SERVER_TIME_ZONE, timeZoneName: "short" })
+      .formatToParts(at)
+      .find((part) => part.type === "timeZoneName")?.value ?? "CET";
+  // Intl names Paris time "CET"/"CEST" in en-GB, or "GMT+1" in older ICU builds.
+  return name.replace(/^GMT\+1$/, "CET").replace(/^GMT\+2$/, "CEST");
+}
+
+function zoneOffsetMs(at: number, timeZone: string): number {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone,
+    hourCycle: "h23",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  }).formatToParts(new Date(at));
+  const get = (type: string) => Number(parts.find((part) => part.type === type)?.value ?? 0);
+  return Date.UTC(get("year"), get("month") - 1, get("day"), get("hour"), get("minute"), get("second")) - at;
+}
+
+/**
+ * The instant a battle-day hour starts: `2026-11-20` hour 25 is 01:00 Paris time on the 21st
+ * (battle-day hours run past midnight).
+ */
+export function serverInstant(date: string, hour: number): Date | null {
+  const match = DAY_PATTERN.exec(date);
+  if (!match) return null;
+  const wall = Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3]), hour);
+  let at = wall - zoneOffsetMs(wall, SERVER_TIME_ZONE);
+  at = wall - zoneOffsetMs(at, SERVER_TIME_ZONE);
+  return new Date(at);
+}
+
 /** `21:00 CET`. */
 export function formatTime(value: string | null | undefined): string {
   const date = toDate(value);
   if (!date) return "";
   const parts = timeFormat.formatToParts(date);
   const get = (type: string) => parts.find((part) => part.type === type)?.value ?? "";
-  // Intl names Paris time "CET"/"CEST" in en-GB, or "GMT+1" in older ICU builds.
-  const zone = get("timeZoneName")
-    .replace(/^GMT\+1$/, "CET")
-    .replace(/^GMT\+2$/, "CEST");
-  return `${get("hour")}:${get("minute")} ${zone}`.trim();
+  return `${get("hour")}:${get("minute")} ${serverZoneName(date)}`.trim();
 }
 
 /** `19/11/2026 21:00 CET`. */
@@ -198,9 +232,17 @@ type StatusInput = {
     | null;
 };
 
-/** `21:00 CET` for a battle-day hour (24 is 00:00, 25 is 01:00 the next day). */
-function battleHour(hour: number): string {
-  return `${String(hour % 24).padStart(2, "0")}:00 CET`;
+/**
+ * The start of a battle day's battle: `22:00 CEST`. Hours 24 and 25 start the next calendar
+ * day, so they say so: `00:00 CET on 21/11` (`21/11/2026` with `fullDay`).
+ */
+function battleHour(date: string, hour: number, fullDay = false): string {
+  const at = serverInstant(date, hour);
+  if (!at) return `${String(hour % 24).padStart(2, "0")}:00`;
+  const time = formatTime(at.toISOString());
+  if (hour < 24) return time;
+  const day = at.toISOString();
+  return `${time} on ${fullDay ? formatDay(day) : formatShortDay(day)}`;
 }
 
 /** The war list's status chip. */
@@ -215,7 +257,9 @@ export function statusChip({ status, result, phase }: StatusInput, now: Date = n
     return `Buildup: day vote closes ${formatShortDay(phase.day_vote_closes_at)}`;
   }
   const next = phase.battle_days?.[0];
-  if (next) return `Battle day ${formatShortDay(next.date)}${next.hour != null ? ` ${battleHour(next.hour)}` : ""}`;
+  if (next) {
+    return `Battle day ${formatShortDay(next.date)}${next.hour != null ? ` ${battleHour(next.date, next.hour)}` : ""}`;
+  }
   if (phase.battle_day) return `Battle day ${formatShortDay(phase.battle_day)}`;
   if (phase.buildup) return "Buildup";
   return "In progress";
@@ -262,7 +306,7 @@ export function statusLine(
   }
   const next = state.battle_days?.[0];
   if (next) {
-    return `Next battle day ${formatDay(next.date)}${next.hour != null ? `, starting ${battleHour(next.hour)}` : ""}.`;
+    return `Next battle day ${formatDay(next.date)}${next.hour != null ? `, starting ${battleHour(next.date, next.hour, true)}` : ""}.`;
   }
   if (state.battle_day) return `Next battle day ${formatDay(state.battle_day)}.`;
   if (state.buildup) return "Buildup: the sides are gathering.";

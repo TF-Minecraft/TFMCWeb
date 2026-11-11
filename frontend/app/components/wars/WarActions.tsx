@@ -32,9 +32,9 @@ import {
   type VoteOption,
   type WarMe,
 } from "@/lib/wars/actions";
-import { availabilityVote, changedDates, startingMarks, type Marks } from "@/lib/wars/availability";
+import { availabilityVote, changedDates, reconcileDraft, startingMarks, type Marks } from "@/lib/wars/availability";
 import { SIDE_LABEL, warHref } from "@/lib/wars/format";
-import type { WarSide } from "@/lib/wars/types";
+import type { BattleDay, WarSide } from "@/lib/wars/types";
 
 import { closesText, STATUS_TONE, StatusLine } from "./ActionStatus";
 import AvailabilityPanel from "./AvailabilityPanel";
@@ -115,7 +115,7 @@ export function VotePanel({
               to vote.
             </>
           ) : (
-            "Only members of the warring factions vote."
+            "Only members of the warring factions and their hired mercenaries vote."
           )}{" "}
           {closes}
         </p>
@@ -299,11 +299,14 @@ export default function WarActions({
   warKey,
   names,
   sessionToken,
+  battleDays = null,
 }: {
   mapId: string;
   warKey: string;
   names: Names;
   sessionToken?: string | null;
+  /** The war's locked battle days (WarState), for the grid's "Next battle". */
+  battleDays?: BattleDay[] | null;
 }) {
   const [me, setMe] = useState<WarMe | null>(null);
   const [draft, setDraft] = useState<VoteOption[] | null>(null);
@@ -386,13 +389,17 @@ export default function WarActions({
     if (!changes.length) return;
     setSaving(true);
     setVoteError(null);
+    let failed = false;
     try {
       for (const change of changes) await saveAvailability(mapId, warKey, change, sessionToken);
       setMarksDraft(null);
     } catch (err) {
+      failed = true;
       setVoteError(message(err));
     } finally {
-      await load();
+      const next = await load();
+      // A date that locked meanwhile shows what was saved; other unsent changes stay to retry.
+      if (failed && next) setMarksDraft((draft) => (draft ? reconcileDraft(draft, next) : draft));
       setSaving(false);
     }
   };
@@ -437,6 +444,7 @@ export default function WarActions({
             saving={saving}
             error={voteError}
             signInHref={signInHref}
+            battleDays={battleDays}
             onChange={(next) => {
               setVoteError(null);
               setMarksDraft(next);

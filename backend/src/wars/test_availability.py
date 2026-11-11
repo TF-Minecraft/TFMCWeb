@@ -43,8 +43,9 @@ PAST = "2026-01-01T00:00:00Z"
 OPEN_DAY, BATTLE_DAY, LOCKED_DAY, NO_BATTLE_DAY = "2026-11-21", "2026-11-20", "2026-11-19", "2026-11-22"
 
 
-def _date(day: str, state: str = "open", *, hour=None, editable=True, time_locks_at=FUTURE, forced=False) -> dict:
-    return {"date": day, "label": day, "state": state, "day_locks_at": time_locks_at,
+def _date(day: str, state: str = "open", *, hour=None, editable=True, time_locks_at=FUTURE, forced=False,
+          day_locks_at=None) -> dict:
+    return {"date": day, "label": day, "state": state, "day_locks_at": day_locks_at or time_locks_at,
             "time_locks_at": time_locks_at, "hour": hour, "editable": editable, "forced": forced}
 
 
@@ -202,6 +203,8 @@ def test_marks_are_queued_per_date_and_replace_the_pending_change_of_that_date(c
         ("attacker", {"date": OPEN_DAY}, 400, "Send a date and its start times, or none."),
         ("attacker", {"none": False}, 400, "Send a date and its start times, or none."),
         ("attacker", {"date": OPEN_DAY, "hours": "21"}, 422, None),
+        ("attacker", {"date": OPEN_DAY, "hours": [10**400]}, 400, actions.BAD_HOURS_REASON),
+        ("attacker", {"date": OPEN_DAY, "hours": [-(10**400)]}, 400, actions.BAD_HOURS_REASON),
         ("unlinked", {"none": True}, 409, "minecraft_not_linked"),
         ("signed_out", {"none": True}, 401, "not_signed_in"),
     ],
@@ -219,6 +222,17 @@ def test_marks_are_refused_up_front(client, setup, body, status, detail):
     if detail:
         assert reply.json()["detail"] == detail
     assert _actions() == []
+
+
+def test_an_open_date_past_its_day_lock_is_being_decided(client):
+    deciding = _date(OPEN_DAY, day_locks_at=PAST)
+    _declare(client, _grid(dates=[_date(BATTLE_DAY, "battle", day_locks_at=PAST), deciding]))
+    _signed_in(client)
+    reply = _mark(client, {"date": OPEN_DAY, "hours": [21]})
+    assert reply.status_code == 409 and reply.json()["detail"] == actions.DAY_DECIDED_REASON
+    assert _mark(client, {"date": BATTLE_DAY, "hours": [21]}).status_code == 200, "A battle day waits for its time lock"
+    editable = {d["date"]: d["editable"] for d in _me(client)["vote"]["dates"]}
+    assert editable == {BATTLE_DAY: True, OPEN_DAY: False}
 
 
 def test_the_old_votes_and_the_grid_do_not_mix(client):
@@ -264,6 +278,23 @@ def test_applied_marks_show_until_the_plugin_state_arrives(client):
                                  private={"voting": _grid(marks={ATTACKER: {OPEN_DAY: [21]}})})])
     me = _me(client)
     assert me["marks"] == {OPEN_DAY: [21]} and me["none"] is False, "The plugin's newer state is the truth"
+
+
+def test_a_newer_pending_or_refused_change_keeps_the_applied_marks(client):
+    _declare(client, _grid())
+    _signed_in(client)
+    first = _mark(client, {"date": OPEN_DAY, "hours": [24, 25]}).json()["action"]
+    _pending(client)
+    _applied(client, [{"id": first["id"], "status": "applied"}])
+    second = _mark(client, {"date": OPEN_DAY, "hours": [21]}).json()["action"]
+    me = _me(client)
+    assert me["marks"][OPEN_DAY] == [24, 25], "The applied change shows while the next one waits"
+    assert [a["status"] for a in me["availability_actions"]] == ["pending"], "Status is the latest per date"
+    _pending(client)
+    _applied(client, [{"id": second["id"], "status": "rejected", "reason": "Too late."}])
+    me = _me(client)
+    assert me["marks"][OPEN_DAY] == [24, 25], "A refused change leaves the applied one"
+    assert [(a["id"], a["status"]) for a in me["availability_actions"]] == [(second["id"], "rejected")]
 
 
 # --- events, posts and DMs -----------------------------------------------------------------
@@ -356,6 +387,12 @@ def test_a_muted_war_sends_no_reminders(client):
     assert client.post("/wars/staff/mutes", json=body, headers=STAFF).json() == {"muted": True, "new": False}
     _post_events(client, [_reminder("2026-11-17T20:00:00Z")])
     assert [r["payload"]["discord_user_id"] for r in _rows("vote_reminder_dm")] == [DISCORD[DEFENDER]]
+    assert not _rows("vote_reminder_dm")[0]["acked_at"]
+    # Muting acknowledges the reminders still queued, so the bot never gets them.
+    defender = {"realm": "main", "war_key": WAR, "discord_user_id": DISCORD[DEFENDER]}
+    assert client.post("/wars/staff/mutes", json=defender, headers=STAFF).json()["new"] is True
+    assert _rows("vote_reminder_dm")[0]["acked_at"] is not None
+    assert "vote_reminder_dm" not in [r["kind"] for r in notifications.pending()]
     # A mute is per war and realm.
     _post_events(client, [_reminder("2026-11-17T20:00:00Z", war_key="w8-1793642400")])
     assert DISCORD[ATTACKER] in [r["payload"]["discord_user_id"] for r in _rows("vote_reminder_dm")]

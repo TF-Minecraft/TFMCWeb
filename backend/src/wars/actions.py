@@ -57,7 +57,7 @@ EXPIRED_REASON = "The server did not answer in time. Try again."
 REPLACED_REASON = "Replaced by a newer vote."
 NO_CALL_REASON = "Your faction has no call to arms in that war."
 CLOSED_REASON = "This vote is closed."
-NOT_ELIGIBLE_REASON = "Only members of the warring factions vote."
+NOT_ELIGIBLE_REASON = "Only members of the warring factions and their hired mercenaries vote."
 DAY_DECIDED_REASON = "That day is already decided. You can't change it now."
 NOT_SHOWN_REASON = "That day is not open for marking."
 BAD_HOURS_REASON = "Pick from the start times shown."
@@ -251,9 +251,16 @@ def availability_view(raw: dict) -> dict:
 
 
 def date_is_editable(row: dict, now: datetime | None = None) -> bool:
-    """Whether marks on this date may still change, as the latest private state shows it."""
-    locks = parse_instant(row["time_locks_at"])
-    return row["editable"] and (locks is None or locks > (now or _now()))
+    """Whether marks on this date may still change, as the latest private state shows it.
+
+    The plugin refuses a change once the time is locked, and on a date still `open` once
+    its day lock has passed (the day is being decided), even before its next event says so.
+    """
+    if not row["editable"]:
+        return False
+    now = now or _now()
+    locks = [row["time_locks_at"]] + ([row["day_locks_at"]] if row["state"] == "open" else [])
+    return all((at := parse_instant(value)) is None or at > now for value in locks)
 
 
 def _count(value: Any) -> int:
@@ -363,15 +370,25 @@ def _latest_actions(conn, realm: str, war_key: str, account: str) -> dict[str, d
     return {row["kind"]: row for row in rows}
 
 
-def _availability_actions(conn, realm: str, war_key: str, account: str) -> list[dict]:
-    """The account's latest availability action per date (and the latest "none" answer), oldest first."""
+def _availability_actions(conn, realm: str, war_key: str, account: str) -> tuple[list[dict], list[dict]]:
+    """The account's availability actions, oldest first: the latest per date (and the latest "none"
+    answer), for their status; and the latest applied per date, for the marks.
+
+    A newer change still pending, or refused, must not hide the change the server applied before it.
+    """
     rows = conn.execute(
-        "SELECT DISTINCT ON (COALESCE(payload ->> 'date', '')) * FROM war_actions "
+        "SELECT DISTINCT ON (COALESCE(payload ->> 'date', ''), status = 'applied') * FROM war_actions "
         "WHERE realm_id = %s AND war_key = %s AND account_uuid = %s AND kind = 'availability' "
-        "ORDER BY COALESCE(payload ->> 'date', ''), id DESC",
+        "ORDER BY COALESCE(payload ->> 'date', ''), status = 'applied', id DESC",
         (realm, war_key, account),
     ).fetchall()
-    return sorted(rows, key=lambda row: row["id"])
+    latest: dict[str, dict] = {}
+    for row in rows:
+        key = (row["payload"] or {}).get("date") or ""
+        if key not in latest or row["id"] > latest[key]["id"]:
+            latest[key] = row
+    applied = [row for row in rows if row["status"] == "applied"]
+    return sorted(latest.values(), key=lambda row: row["id"]), sorted(applied, key=lambda row: row["id"])
 
 
 def _call_answers(conn, realm: str, war_key: str, account: str) -> dict[str, dict]:
@@ -466,7 +483,7 @@ def me(realm: str, war_key: str, account: str | None, *, signed_in: bool) -> dic
         _expire_stale(conn)
         latest = _latest_actions(conn, realm, war_key, account)
         reply["actions"] = {kind: _action(latest.get(kind)) for kind in KINDS}
-        availability_rows = _availability_actions(conn, realm, war_key, account)
+        availability_rows, applied_rows = _availability_actions(conn, realm, war_key, account)
         if voting is not None and voting["kind"] == AVAILABILITY:
             shown = {d["date"] for d in voting["dates"]}
             reply["availability_actions"] = [
@@ -478,7 +495,7 @@ def me(realm: str, war_key: str, account: str | None, *, signed_in: bool) -> dic
             reply["eligible"] = True
             reply["side"] = side
             if vote_is_open(voting) and voting["kind"] == AVAILABILITY:
-                reply.update(_availability_reply(voting, account, availability_rows, voting_received))
+                reply.update(_availability_reply(voting, account, applied_rows, voting_received))
             elif vote_is_open(voting):
                 reply["vote"] = {
                     key: voting[key] for key in ("kind", "options", "option_labels", "closes_at")

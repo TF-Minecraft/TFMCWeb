@@ -364,7 +364,7 @@ def test_a_vote_is_queued_and_replaces_the_pending_one(client):
 @pytest.mark.parametrize(
     ("setup", "body", "status", "detail"),
     [
-        ("outsider", {"kind": "day", "picks": ["2026-11-17"]}, 403, "Only members of the warring factions vote."),
+        ("outsider", {"kind": "day", "picks": ["2026-11-17"]}, 403, actions.NOT_ELIGIBLE_REASON),
         ("attacker", {"kind": "day", "picks": ["2026-11-30"]}, 400, "Pick from the options of the vote."),
         ("attacker", {"kind": "day", "picks": "2026-11-17"}, 422, None),
         ("attacker", {"kind": "week", "picks": []}, 400, "kind must be day or hour."),

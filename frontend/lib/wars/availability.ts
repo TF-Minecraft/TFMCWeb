@@ -7,8 +7,8 @@
  * 24 is 00:00 and 25 is 01:00 the next calendar day.
  */
 
-import { SERVER_TIME_ZONE } from "./format";
-import type { SidePair } from "./types";
+import { SERVER_TIME_ZONE, serverInstant, serverZoneName } from "./format";
+import type { BattleDay, SidePair } from "./types";
 import type { ActionStatusView, WarAction, WarMe } from "./actions";
 
 export type DateState = "open" | "battle" | "no_battle";
@@ -48,30 +48,7 @@ export function availabilityVote(me: WarMe | null): AvailabilityVote | null {
 
 // --- server time -------------------------------------------------------------------------
 
-function zoneOffsetMs(at: number, timeZone: string): number {
-  const parts = new Intl.DateTimeFormat("en-GB", {
-    timeZone,
-    hourCycle: "h23",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-  }).formatToParts(new Date(at));
-  const get = (type: string) => Number(parts.find((part) => part.type === type)?.value ?? 0);
-  return Date.UTC(get("year"), get("month") - 1, get("day"), get("hour"), get("minute"), get("second")) - at;
-}
-
-/** The instant a battle-day hour starts: `2026-11-20` hour 25 is 01:00 Paris time on the 21st. */
-export function serverInstant(date: string, hour: number): Date | null {
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
-  if (!match) return null;
-  const wall = Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3]), hour);
-  let at = wall - zoneOffsetMs(wall, SERVER_TIME_ZONE);
-  at = wall - zoneOffsetMs(at, SERVER_TIME_ZONE);
-  return new Date(at);
-}
+export { serverInstant };
 
 /** `22:00` in the given time zone (the browser's by default). */
 export function clockTime(at: Date, timeZone?: string): string {
@@ -112,15 +89,7 @@ export function lockDateTime(value: string | null | undefined): string {
   })
     .format(at)
     .replace(",", "");
-  return `${day}, ${clockTime(at, SERVER_TIME_ZONE)} ${zoneName(at)}`;
-}
-
-function zoneName(at: Date): string {
-  const name =
-    new Intl.DateTimeFormat("en-GB", { timeZone: SERVER_TIME_ZONE, timeZoneName: "short" })
-      .formatToParts(at)
-      .find((part) => part.type === "timeZoneName")?.value ?? "CET";
-  return name.replace(/^GMT\+1$/, "CET").replace(/^GMT\+2$/, "CEST");
+  return `${day}, ${clockTime(at, SERVER_TIME_ZONE)} ${serverZoneName(at)}`;
 }
 
 /** `00:00 CET` for hour 24, with the plugin's label when it sent one. */
@@ -163,10 +132,16 @@ export function startingMarks(me: WarMe): Marks {
   return marks;
 }
 
-/** Whether the user answered "none of these days work", counting a pending answer. */
+/**
+ * Whether the user answered "none of these days work", counting a pending answer. Marks on
+ * dates already decided stay (the answer cannot clear them), so only editable dates count.
+ */
 export function answeredNone(me: WarMe, marks: Marks): boolean {
   const pendingNone = (me.availability_actions ?? []).some((a) => a.status === "pending" && a.payload.none);
-  return (pendingNone || me.none === true) && !hasMarks(marks);
+  const editableMarks = (availabilityVote(me)?.dates ?? []).some(
+    (date) => date.editable && (marks[date.date]?.length ?? 0) > 0,
+  );
+  return (pendingNone || me.none === true) && !editableMarks;
 }
 
 export function hasMarks(marks: Marks): boolean {
@@ -202,6 +177,36 @@ export function changedDates(draft: Marks, base: Marks, dates: readonly Availabi
   return dates.filter((d) => d.editable && !sameHours(draft[d.date], base[d.date])).map((d) => d.date);
 }
 
+/**
+ * The draft after a save the server refused part of, reloaded as `me`: dates that can no
+ * longer change show what was saved; the other unsent changes stay for another try. Null
+ * when nothing is left to save.
+ */
+export function reconcileDraft(draft: Marks, me: WarMe): Marks | null {
+  const dates = availabilityVote(me)?.dates ?? [];
+  const base = startingMarks(me);
+  const editable = new Set(dates.filter((d) => d.editable).map((d) => d.date));
+  const next: Marks = {};
+  for (const date of new Set([...Object.keys(draft), ...Object.keys(base)])) {
+    const hours = editable.has(date) ? draft[date] : base[date];
+    if (hours?.length) next[date] = hours;
+  }
+  return changedDates(next, base, dates).length ? next : null;
+}
+
+/**
+ * The viewer's clock times for one start hour across the dates, in date order and without
+ * repeats: one entry normally, two when the dates span a daylight-saving change.
+ */
+export function localHours(dates: readonly AvailabilityDate[], hour: number, timeZone?: string): string[] {
+  const seen: string[] = [];
+  for (const date of dates) {
+    const local = localHour(date.date, hour, timeZone);
+    if (!seen.includes(local)) seen.push(local);
+  }
+  return seen;
+}
+
 export function tallyCell(
   tally: readonly AvailabilityTallyRow[] | null | undefined,
   date: string,
@@ -229,8 +234,8 @@ export type DateBadge = { tone: "gold" | "grey" | "open"; text: string };
 export function dateBadge(date: AvailabilityDate): DateBadge {
   if (date.state === "no_battle") return { tone: "grey", text: "No battle" };
   if (date.state === "battle") {
-    if (date.hour !== null)
-      return { tone: "gold", text: `Battle at ${String(date.hour % 24).padStart(2, "0")}:00 CET` };
+    const at = date.hour !== null ? serverInstant(date.date, date.hour) : null;
+    if (at) return { tone: "gold", text: `⚔ Battle ${lockDateTime(at.toISOString())}` };
     const locks = lockLabel(date.time_locks_at);
     return { tone: "gold", text: locks ? `Battle day — time locks ${locks}` : "Battle day" };
   }
@@ -238,14 +243,26 @@ export function dateBadge(date: AvailabilityDate): DateBadge {
   return { tone: "open", text: decided ? `Open — decided ${decided}` : "Open" };
 }
 
-/** The next battle with a set time, if any: "⚔ Next battle: Fri 20 Nov, 22:00 CET (23:00 your time)". */
-export function nextBattleText(vote: AvailabilityVote, now: Date = new Date(), timeZone?: string): string | null {
-  for (const date of vote.dates ?? []) {
-    if (date.state !== "battle" || date.hour === null) continue;
-    const at = serverInstant(date.date, date.hour);
+/**
+ * The next battle with a set time, if any: "⚔ Next battle: Fri 20 Nov, 22:00 CET (23:00 your time)".
+ * The day is the calendar day it starts (hour 24 of Fri 20 Nov starts Sat 21 Nov, 00:00).
+ * Read from the grid's battle days, else from the war's locked `battle_days`.
+ */
+export function nextBattleText(
+  vote: AvailabilityVote,
+  now: Date = new Date(),
+  timeZone?: string,
+  battleDays?: readonly BattleDay[] | null,
+): string | null {
+  const fromGrid = (vote.dates ?? []).filter((date) => date.state === "battle" && date.hour !== null);
+  const days = fromGrid.length ? fromGrid : (battleDays ?? []);
+  for (const day of days) {
+    if (day.hour === null) continue;
+    const at = serverInstant(day.date, day.hour);
     if (!at || at.getTime() < now.getTime() - 3 * 3600_000) continue;
-    const local = localHour(date.date, date.hour, timeZone);
-    return `⚔ Next battle: ${dayLabel(date.date)}, ${hourLabel(vote, date.hour)}${local ? ` (${local} your time)` : ""}`;
+    const local = clockTime(at, timeZone);
+    const own = local === clockTime(at, SERVER_TIME_ZONE) ? "" : ` (${local} your time)`;
+    return `⚔ Next battle: ${lockDateTime(at.toISOString())}${own}`;
   }
   return null;
 }
@@ -255,6 +272,12 @@ export type Banner = { tone: "red" | "green" | "grey"; text: string };
 /** The user's own status: nothing marked, marked, or "none of these days". */
 export function markBanner(vote: AvailabilityVote, marks: Marks, none: boolean): Banner {
   const editable = (vote.dates ?? []).some((d) => d.editable);
+  // Before the marks: an answer of "none" leaves the marks on dates already decided.
+  if (none)
+    return {
+      tone: "grey",
+      text: "You said none of these days work for you. Mark a time if that changes.",
+    };
   if (hasMarks(marks)) {
     const next = lockDateTime(vote.closes_at);
     return {
@@ -264,13 +287,12 @@ export function markBanner(vote: AvailabilityVote, marks: Marks, none: boolean):
         : "✔ Marked.",
     };
   }
-  if (none) return { tone: "grey", text: "You said none of these days work for you. Mark a time if that changes." };
   return { tone: "red", text: "You haven't marked anything" };
 }
 
 /**
  * The status line of the user's availability changes: waiting while any is pending, else the
- * newest refusal (with its day), else "Saved". Old results are forgotten after `forgetMs`.
+ * newest refusal (with its day) still standing, else "Saved". Old results are forgotten after `forgetMs`.
  */
 export function availabilityStatus(
   actions: readonly WarAction[] | null | undefined,
@@ -280,7 +302,15 @@ export function availabilityStatus(
 ): ActionStatusView | null {
   const list = [...(actions ?? [])].sort((a, b) => b.id - a.id);
   if (list.some((a) => a.status === "pending")) return { tone: "pending", text: "Waiting for the server…" };
-  const recent = list.filter((a) => {
+  // Only the newest result per date (or "none" answer) counts: a later change replaces a refusal.
+  const seen = new Set<string>();
+  const latest = list.filter((a) => {
+    const key = a.payload.date ?? (a.payload.none ? "none" : "");
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+  const recent = latest.filter((a) => {
     const at = Date.parse(a.applied_at ?? a.created_at ?? "");
     return !Number.isFinite(at) || now.getTime() - at <= forgetMs;
   });
