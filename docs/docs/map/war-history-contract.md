@@ -199,3 +199,66 @@ with `private.notify = {"leader_account", "leader_character_id"}`) and
 
 SimpleFactions polls the website's action queue and applies votes and call to arms
 answers; the routes and shapes are in [war-history.md](war-history.md#war-actions).
+
+## v1.4 addendum: battle availability
+
+Players no longer vote on a first battle day and a daily hour. They mark every upcoming
+date and start time they could fight (a grid), and SimpleFactions turns the marks into
+battle days. The website keeps accepting the v1.3 `day`/`hour` votes until every server
+runs the new plugin; `private.voting.kind` says which one a war uses.
+
+`private.voting` of kind `availability`, sent at least on `votes_changed`:
+
+```json
+"voting": {
+  "kind": "availability",
+  "hours": [21, 22, 23, 24, 25],
+  "hour_labels": ["21:00 CET", "22:00 CET", "23:00 CET", "00:00 CET", "01:00 CET"],
+  "dates": [
+    {"date": "2026-11-20", "label": "Fri 20/11", "state": "open" | "battle" | "no_battle",
+     "day_locks_at": "...", "time_locks_at": "...", "hour": 22 | null, "editable": true, "forced": false}
+  ],
+  "closes_at": "<the next day or time lock among the dates>",
+  "need": {"attacker": 3, "defender": 2},
+  "eligible": {"<account uuid>": "attacker" | "defender"},
+  "marks": {"<account uuid>": {"2026-11-20": [21, 22]}},
+  "none": ["<account uuid>"],
+  "tally": [{"date": "2026-11-20", "hour": 21, "attacker": 4, "defender": 3}]
+}
+```
+
+Dates are battle-day dates in server time (Europe/Paris); hours are battle-day hours, so
+24 is 00:00 and 25 is 01:00 the next calendar day. `hour` is set once the start time is
+locked. `editable` is true for an `open` date, and for a `battle` date before its time lock.
+
+New action kind `availability` (website → plugin), payload `{"date": "2026-11-20",
+"hours": [21, 22]}` (replaces that account's marks on that date; `[]` clears them) or
+`{"none": true}` ("none of these days work"). Applied and answered like the v1.3 votes.
+
+New event types:
+
+| type | when | payload | private |
+| --- | --- | --- | --- |
+| `battle_day_locked` | a date's day lock makes it a battle day | `{"battle_day": "2026-11-20", "time_locks_at": "...", "forced": false}` | — |
+| `vote_reminder` | a reminder falls due | `{"reason": "mark_availability" \| "battle_day_locked" \| "time_lock_soon", "battle_day": "2026-11-20" \| null, "locks_at": "..."}` | `notify: {"accounts": ["<account uuid>", ...]}` |
+
+`battle_day_locked` has a timeline entry ("Battle day set: Fri 20 Nov.") and a thread
+post. `vote_reminder` is silent: no timeline entry, no channel post; the website turns
+it into DMs. `battle_scheduled` is still sent when the time locks. "No battle" dates send
+no event. SimpleFactions stops sending `day_vote_closed` and `battle_postponed` (except
+for the staff "skip battle day").
+
+`WarState` adds `next_lock_at` (ISO or null) and `battle_days` (`[{"date": "2026-11-20",
+"hour": 22 | null}]`, locked and not fought yet); `day_vote_closes_at` is null for
+availability wars. Both new fields are optional.
+
+PS notes:
+
+1. `vote_reminder` accounts are read from `private.notify.accounts`, or from a top-level
+   `notify.accounts` when `private` has none.
+2. `battle_days` rows with a malformed date are dropped; at most 14 are kept. Both new
+   fields are public and are also in the war list's `phase`.
+3. The website reads a date as not editable once its `time_locks_at` has passed, even if
+   the latest private state still says `editable`.
+4. A website "none" answer is shown as clearing the account's marks on the dates it can
+   still change, until the plugin's next `votes_changed` arrives.

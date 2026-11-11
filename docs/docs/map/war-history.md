@@ -51,6 +51,7 @@ routes in [`wars_routes.py`](../../../backend/src/api/wars_routes.py).
 | `war_notifications` | `id` | The Discord bot's outbox; see [Discord notifications](#discord-notifications) |
 | `war_notification_outbox` | `id` (always 1) | `outbox_id`, a random UUID naming this database's outbox |
 | `war_actions` | `id` | Votes and call to arms answers waiting for SimpleFactions; see [War actions](#war-actions) |
+| `war_dm_mutes` | `(realm_id, war_key, discord_user_id)` | Discord users who muted a war's reminder DMs; see [Battle availability](#battle-availability) |
 
 `war_events` and `war_battles` are append-only. `wars` is recomputed from both whenever
 one of its events or records arrives, under a row lock, so events and records may
@@ -136,8 +137,13 @@ resent event never posts twice. Code:
 | `war_ended` | `war_ended` | `reason`, `reason_label`, `winner`, `winner_name`, `winner_rgb`, `truce_until` |
 | `defender_dm` | `war_declared` | One row per Discord user: `discord_user_id`, `war_key`, `war_name`, `attacker_name`, `defender_name`, `goal_label`, `day_vote_closes_at`, `url` |
 | `call_to_arms_dm` | `call_to_arms_sent` | `discord_user_id`, `war_key`, `war_name`, `at`, `caller_name`, `caller_rgb`, `target_faction_id`, `target_name`, `side`, `enemy_name` (the other side's leader), `coalition`, `url`. No `summary`. |
+| `battle_day_locked` | `battle_day_locked` | `battle_day`, `battle_day_label` (`Fri 20 Nov`), `time_locks_at`, `forced`, `vote_url` (the war page with `#vote`) |
+| `vote_reminder_dm` | `vote_reminder` | One row per Discord user: `discord_user_id`, `realm`, `war_key`, `war_name`, `at`, `reason` (`mark_availability`, `battle_day_locked`, `time_lock_soon`), `battle_day` (or null), `battle_day_label` (or null), `locks_at`, `url`, `vote_url`. No `summary`. |
 
 - `next_battle_day`, `votes_changed` and `call_to_arms_closed` give no notification.
+- **Reminder DMs** (v1.4) go to the Discord users linked to `private.notify.accounts` of a
+  `vote_reminder` event, only in `WAR_NOTIFY_DM_REALMS`: at most one per Discord user per
+  war per UTC day, and none to a user who muted the war. An unknown `reason` gives no rows.
 - **Call to arms DMs** (v1.3) go to the Discord user linked to `private.notify.leader_account`
   of a `call_to_arms_sent` event, only in `WAR_NOTIFY_DM_REALMS`. The bot's Accept and
   Decline buttons queue a [war action](#war-actions).
@@ -161,17 +167,18 @@ resent event never posts twice. Code:
 | Env | Default | Meaning |
 | --- | --- | --- |
 | `WAR_NOTIFY_REALMS` | `main,dev` | Realms that get rows, comma separated. Set it empty to write none. |
-| `WAR_NOTIFY_DM_REALMS` | `main` | Realms whose defenders get a `defender_dm` and whose called leaders get a `call_to_arms_dm`. Dev is left out, so test wars never message real players. |
+| `WAR_NOTIFY_DM_REALMS` | `main` | Realms whose defenders get a `defender_dm`, whose called leaders get a `call_to_arms_dm` and whose players get a `vote_reminder_dm`. Dev is left out, so test wars never message real players. |
 | `PUBLIC_SITE_URL` | `SITE_PUBLIC_URL` | Base of the links in the posts |
 
 ### Routes
 
-Both need the staff key (`X-Staff-Key`).
+All need the staff key (`X-Staff-Key`).
 
 | Route | Body | Reply |
 | --- | --- | --- |
 | `GET /wars/staff/notifications?limit=50&realm=main` | | `{"outbox_id": "<uuid>", "notifications": [{"id", "realm_id", "war_key", "event_id", "kind", "created_at", "payload"}]}` |
 | `POST /wars/staff/notifications/ack` | `{"ids": [1, 2]}` | `{"acked": [ids that exist]}` |
+| `POST /wars/staff/mutes` | `{"realm", "war_key", "discord_user_id"}` | `{"muted": true, "new": bool}`; muting again is fine. 400 for a bad realm or user id, 404 for a bad war key. |
 
 The poll returns undelivered rows oldest first (`limit` 1-200, default 50) and stamps
 `dispatched_at`. A row handed out but not acked within 10 minutes is offered again. The
@@ -187,7 +194,8 @@ restored database keeps the `outbox_id` of its backup.
 
 ## War actions
 
-Contract v1.3. Players vote on the first battle day and the battle hour on the war page,
+Contract v1.3. Players vote on the first battle day and the battle hour on the war page
+(contract v1.4 replaces those votes with [battle availability](#battle-availability)),
 and leaders answer a call to arms on the war page or from the bot's DM. Every action is
 queued in `war_actions` for the Minecraft account it is made for; SimpleFactions polls the
 queue, applies each action with exactly the in-game rules, and reports `applied` or
@@ -222,6 +230,7 @@ Session cookie (Discord sign-in) and the map's access rules. Writes need the sit
 | --- | --- | --- |
 | `GET /{map}/wars/{war_key}/me` | | See below; `Cache-Control: no-store` |
 | `POST /{map}/wars/{war_key}/vote` | `{"kind": "day" \| "hour", "picks": [...]}` | `{"action": Action}` |
+| `POST /{map}/wars/{war_key}/availability` | `{"date", "hours": [...]}` or `{"none": true}` | `{"action": Action}` |
 | `POST /{map}/wars/{war_key}/call-to-arms` | `{"target_faction_id", "accept": bool}` | `{"action": Action}` |
 
 `Action` is `{"id", "kind", "status", "reason", "source", "payload", "created_at", "applied_at"}`.
@@ -276,6 +285,45 @@ Staff key (`X-Staff-Key`).
 
 409 `discord_not_linked` when the Discord user has no link, 404 for an unknown war or
 action, 400 for another kind or a bad payload.
+
+## Battle availability
+
+Contract v1.4. Players answer one question, "When can you fight?", by marking every date
+and start time they could fight on a grid. SimpleFactions turns the marks into battle
+days: a date becomes one two days before its battle window when, at one start time,
+enough of each side (`need`) marked it; its start time is decided a day before. The
+website shows the grid, queues changes and sends the reminders as DMs. Wars on servers
+that still send the v1.3 `day`/`hour` votes keep the old panel; `voting.kind` decides.
+
+- **Private state.** `private.voting` of kind `availability` holds `hours`, `hour_labels`,
+  `dates` (each with `state` `open`, `battle` or `no_battle`, `day_locks_at`,
+  `time_locks_at`, `hour`, `editable`, `forced`), `closes_at`, `need`, `eligible`, every
+  account's `marks` and `none` answer, and the `tally` per date and hour.
+- **Actions.** Kind `availability`, payload `{"date", "hours"}` (replaces the account's
+  marks on that date; `[]` clears them) or `{"none": true}`. A newer change of the same
+  date (or a newer "none") expires the pending one. The website refuses up front: no grid
+  (409 "This vote is closed."), an account not in `eligible` (403), a date not shown (409
+  "That day is not open for marking."), a date that is not editable or whose
+  `time_locks_at` passed (409 "That day is already decided. You can't change it now."), an
+  hour not offered (400 "Pick from the start times shown."). Same rate limit as votes.
+- **`/me`** adds `marks` (`{"2026-11-20": [21, 22]}`), `none`, `availability_actions` (the
+  latest change per shown date and the latest "none", oldest first) and
+  `actions.availability`. Eligible users get `vote` = `{"kind": "availability", "hours",
+  "hour_labels", "dates", "closes_at", "need"}` and the grid `tally`; everyone else gets
+  `{"kind", "closes_at"}`. `editable` there is false once a date's time lock passed.
+  Applied changes newer than the latest private state show at once, as for votes; a
+  "none" answer then clears the marks on the dates still editable.
+- **The panel** (`#vote` on the war page): dates as columns and start hours as rows on
+  wide screens, one date per row with hour chips on narrow ones. Each cell toggles a
+  start time; a date's header toggles the whole date. Cells show the tally ("A 4 · D 3").
+  Times read in CET and in the viewer's own time zone. Changes are sent with "Save my
+  times", one action per changed date. "None of these days work for me" is sent at once.
+- **Timeline and posts.** `battle_day_locked` adds "Battle day set: Fri 20 Nov." to the
+  timeline and a `battle_day_locked` thread post. `vote_reminder` is silent and gives
+  `vote_reminder_dm` rows (see [Discord notifications](#discord-notifications)).
+- **Mutes.** The bot's "Mute this war" button calls `POST /wars/staff/mutes`; the
+  website then sends that Discord user no more reminder DMs for that war
+  (`war_dm_mutes`, migration `0009_war_availability.sql`).
 
 ## Pages
 
