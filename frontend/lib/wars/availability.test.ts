@@ -226,6 +226,17 @@ describe("words", () => {
     expect(nextBattleText(late, now, "Europe/Paris")).toBe("⚔ Next battle: Sat 21 Nov, 01:00 CET");
   });
 
+  it("names the earliest battle whatever order the dates arrive in", () => {
+    const now = new Date("2026-11-17T10:00:00Z");
+    const set = vote({
+      dates: [
+        date({ date: "2026-11-21", state: "battle", hour: 21, editable: false }),
+        date({ date: "2026-11-20", state: "battle", hour: 22, editable: false }),
+      ],
+    });
+    expect(nextBattleText(set, now, "Europe/Paris")).toBe("⚔ Next battle: Fri 20 Nov, 22:00 CET");
+  });
+
   it("falls back to the war's battle days when no grid date has a time", () => {
     const now = new Date("2026-11-17T10:00:00Z");
     const days = [

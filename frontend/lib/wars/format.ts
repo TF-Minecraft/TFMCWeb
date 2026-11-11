@@ -246,6 +246,11 @@ function battleHour(date: string, hour: number, fullDay = false): string {
 }
 
 /** The war list's status chip. */
+/** The earliest locked battle day, whatever order the list is in. */
+function earliestBattleDay(days: readonly BattleDay[] | null | undefined): BattleDay | undefined {
+  return [...(days ?? [])].sort((a, b) => a.date.localeCompare(b.date))[0];
+}
+
 export function statusChip({ status, result, phase }: StatusInput, now: Date = new Date()): string {
   if (status === "ended") return resultLabel(result);
   if (!phase) return "In progress";
@@ -256,7 +261,7 @@ export function statusChip({ status, result, phase }: StatusInput, now: Date = n
   if (phase.buildup && phase.day_vote_closes_at && !phase.battle_day) {
     return `Buildup: day vote closes ${formatShortDay(phase.day_vote_closes_at)}`;
   }
-  const next = phase.battle_days?.[0];
+  const next = earliestBattleDay(phase.battle_days);
   if (next) {
     return `Battle day ${formatShortDay(next.date)}${next.hour != null ? ` ${battleHour(next.date, next.hour)}` : ""}`;
   }
@@ -304,7 +309,7 @@ export function statusLine(
   if (state.buildup && state.day_vote_closes_at && !state.battle_day) {
     return `Buildup: the vote on the first battle day closes ${formatDateTime(state.day_vote_closes_at)}.`;
   }
-  const next = state.battle_days?.[0];
+  const next = earliestBattleDay(state.battle_days);
   if (next) {
     return `Next battle day ${formatDay(next.date)}${next.hour != null ? `, starting ${battleHour(next.date, next.hour, true)}` : ""}.`;
   }

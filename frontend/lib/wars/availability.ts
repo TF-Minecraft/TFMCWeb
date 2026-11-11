@@ -255,7 +255,10 @@ export function nextBattleText(
   battleDays?: readonly BattleDay[] | null,
 ): string | null {
   const fromGrid = (vote.dates ?? []).filter((date) => date.state === "battle" && date.hour !== null);
-  const days = fromGrid.length ? fromGrid : (battleDays ?? []);
+  // Earliest first, whatever order the dates arrived in.
+  const days = [...(fromGrid.length ? fromGrid : (battleDays ?? []))].sort(
+    (a, b) => a.date.localeCompare(b.date) || (a.hour ?? 0) - (b.hour ?? 0),
+  );
   for (const day of days) {
     if (day.hour === null) continue;
     const at = serverInstant(day.date, day.hour);

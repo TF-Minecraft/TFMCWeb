@@ -392,14 +392,20 @@ export default function WarActions({
     let failed = false;
     try {
       for (const change of changes) await saveAvailability(mapId, warKey, change, sessionToken);
-      setMarksDraft(null);
     } catch (err) {
       failed = true;
       setVoteError(message(err));
     } finally {
       const next = await load();
-      // A date that locked meanwhile shows what was saved; other unsent changes stay to retry.
-      if (failed && next) setMarksDraft((draft) => (draft ? reconcileDraft(draft, next) : draft));
+      if (!next) {
+        // Keep the draft on screen: without a fresh state the player could not see what was saved.
+        if (!failed) setVoteError("Saved, but the page could not refresh. Reload it to see your marks.");
+      } else if (failed) {
+        // A date that locked meanwhile shows what was saved; other unsent changes stay to retry.
+        setMarksDraft((draft) => (draft ? reconcileDraft(draft, next) : draft));
+      } else {
+        setMarksDraft(null);
+      }
       setSaving(false);
     }
   };

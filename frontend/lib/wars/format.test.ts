@@ -116,6 +116,23 @@ describe("status", () => {
         now,
       ),
     ).toBe("Battle day 10/07 22:00 CEST");
+    // The earliest locked day, whatever order the list is in.
+    expect(
+      statusChip(
+        {
+          status: "active",
+          result: null,
+          phase: {
+            ...grid,
+            battle_days: [
+              { date: "2026-11-21", hour: null },
+              { date: "2026-11-20", hour: null },
+            ],
+          },
+        },
+        now,
+      ),
+    ).toBe("Battle day 20/11");
     // A battle time long past is stale, not "next".
     expect(
       statusChip(
