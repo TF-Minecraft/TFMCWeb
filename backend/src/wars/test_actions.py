@@ -276,8 +276,9 @@ def test_signed_out_users_see_only_that_a_vote_is_open(client):
     me = _me(client)
     assert me == {
         "signed_in": False, "linked": False, "eligible": False, "side": None,
-        "vote": {"kind": "day", "closes_at": OPEN_UNTIL}, "picks": None, "tally": None,
-        "actions": {"call_to_arms_answer": None, "day_vote": None, "hour_vote": None},
+        "vote": {"kind": "day", "closes_at": OPEN_UNTIL}, "picks": None, "marks": None, "none": None, "tally": None,
+        "actions": {"call_to_arms_answer": None, "day_vote": None, "hour_vote": None, "availability": None},
+        "availability_actions": [],
         "calls_to_arms": [],
     }
 

@@ -9,6 +9,10 @@ but not acked within ten minutes is offered again.
 Only realms in `WAR_NOTIFY_REALMS` (default `main,dev`) get rows. The bot picks
 the channel for each realm. Account UUIDs from SimpleFactions' private `notify`
 are turned into Discord user ids here and never leave this module otherwise.
+
+Contract v1.4: `battle_day_locked` gives a thread post, and `vote_reminder` gives
+`vote_reminder_dm` rows: at most one per Discord user per war per UTC day, none
+for a user who muted the war (`war_dm_mutes`, set by the bot's Mute button).
 """
 
 from __future__ import annotations
@@ -24,6 +28,7 @@ from src import database
 from .history_model import (
     SIDES,
     faction_ref,
+    format_day_label,
     iso,
     other_side,
     parse_instant,
@@ -58,7 +63,14 @@ KINDS = (
     "defender_dm",
     # Contract v1.3: a call to arms, sent to the called faction's leader with Accept and Decline.
     "call_to_arms_dm",
+    # Contract v1.4: a date became a battle day (thread post), and availability reminders (DMs).
+    "battle_day_locked",
+    "vote_reminder_dm",
 )
+
+REMINDER_REASONS = ("mark_availability", "battle_day_locked", "time_lock_soon")
+# The war page's vote panel.
+VOTE_ANCHOR = "#vote"
 
 # Event type -> the channel notification it gives (war_declared also gives defender_dm rows).
 _KIND_OF_EVENT = {
@@ -69,6 +81,7 @@ _KIND_OF_EVENT = {
     "battle_postponed": "battle_postponed",
     "battle_resolved": "battle_result",
     "war_ended": "war_ended",
+    "battle_day_locked": "battle_day_locked",
 }
 
 # The same words the war pages use (frontend/lib/wars/format.ts).
@@ -179,6 +192,11 @@ def _realm_map(realm: str) -> tuple[str, bool]:
         return realm, realm == live
     entries.sort(key=lambda entry: (not entry.live, entry.archived))
     return entries[0].id, entries[0].id == live
+
+
+def vote_url(realm: str, war_key: str) -> str:
+    """The war page's vote panel (`#vote`)."""
+    return war_url(realm, war_key) + VOTE_ANCHOR
 
 
 def war_url(realm: str, war_key: str, record_id: str | None = None) -> str:
@@ -308,6 +326,16 @@ def build_payload(
         }
     if event_type == "battle_postponed":
         return {**base, "summary": summary, "battle_day": payload["battle_day"]}
+    if event_type == "battle_day_locked":
+        return {
+            **base,
+            "summary": summary,
+            "battle_day": payload["battle_day"],
+            "battle_day_label": format_day_label(payload["battle_day"]),
+            "time_locks_at": payload["time_locks_at"],
+            "forced": payload["forced"],
+            "vote_url": vote_url(realm, war_key),
+        }
     if event_type == "battle_resolved":
         province_id = payload["province_id"]
         record = _record(conn, realm, payload["record_id"])
@@ -413,6 +441,43 @@ def _linked_discord_users(conn, accounts: list[str]) -> list[str]:
     return [row["discord_user_id"] for row in rows]
 
 
+def reminder_accounts(event: dict) -> list[str]:
+    """The account UUIDs of a `vote_reminder` event's private `notify.accounts` (or a top-level
+    `notify.accounts`), lower case, each once."""
+    for holder in (event.get("private"), event):
+        notify = holder.get("notify") if isinstance(holder, dict) else None
+        raw = notify.get("accounts") if isinstance(notify, dict) else None
+        if isinstance(raw, list):
+            out = [v.strip().lower() for v in raw[:MAX_ACCOUNTS] if isinstance(v, str) and 0 < len(v.strip()) <= 64]
+            return list(dict.fromkeys(out))
+    return []
+
+
+def reminder_payload(realm: str, event: dict, discord_user_id: str) -> dict | None:
+    """The `vote_reminder_dm` payload for one `vote_reminder` event, or None for an unknown reason."""
+    p = event.get("payload") if isinstance(event.get("payload"), dict) else {}
+    reason = p.get("reason")
+    if reason not in REMINDER_REASONS:
+        return None
+    state = public_state(event.get("state"))
+    war_key = event["war_key"]
+    battle_day = p.get("battle_day") if isinstance(p.get("battle_day"), str) else None
+    label = format_day_label(battle_day)
+    return {
+        "discord_user_id": discord_user_id,
+        "realm": realm,
+        "war_key": war_key,
+        "war_name": _war_name(state, war_key),
+        "at": iso(parse_instant(event.get("at"))),
+        "reason": reason,
+        "battle_day": battle_day if label else None,
+        "battle_day_label": label,
+        "locks_at": iso(parse_instant(p.get("locks_at"))),
+        "url": war_url(realm, war_key),
+        "vote_url": vote_url(realm, war_key),
+    }
+
+
 def _insert(conn, realm: str, event: dict, kind: str, payload: dict) -> bool:
     row = conn.execute(
         "INSERT INTO war_notifications (realm_id, war_key, event_id, kind, payload) VALUES (%s, %s, %s, %s, %s) "
@@ -432,6 +497,8 @@ def write_for_event(conn, realm: str, event: dict, notify: Any = None) -> int:
         return 0
     if event.get("type") == "call_to_arms_sent":
         return _write_call_to_arms(conn, realm, event)
+    if event.get("type") == "vote_reminder":
+        return _write_vote_reminders(conn, realm, event)
     if event.get("type") not in _KIND_OF_EVENT:
         return 0
     from .history_reads import fighter_stats_public, province_names
@@ -484,6 +551,58 @@ def _write_call_to_arms(conn, realm: str, event: dict) -> int:
     except Exception:  # noqa: BLE001 - never lose the event over its notification
         logger.exception("Could not queue the call to arms DM for event %s in realm %s", event.get("id"), realm)
         return 0
+
+
+def _write_vote_reminders(conn, realm: str, event: dict) -> int:
+    """One `vote_reminder_dm` per linked Discord user of the reminded accounts; only in DM realms,
+    at most one per user per war per UTC day, none for a user who muted the war."""
+    if realm not in dm_realms():
+        return 0
+    try:
+        with conn.transaction():
+            users = _linked_discord_users(conn, reminder_accounts(event))
+            if not users:
+                return 0
+            war_key = event["war_key"]
+            # Two batches of the same war wait for each other, so a user is never reminded twice in a day.
+            conn.execute("SELECT pg_advisory_xact_lock(hashtextextended(%s, 0))",
+                         (f"war_reminders:{realm}:{war_key}",))
+            skip = {
+                row["discord_user_id"] for row in conn.execute(
+                    "SELECT discord_user_id FROM war_dm_mutes WHERE realm_id = %s AND war_key = %s "
+                    "UNION SELECT payload ->> 'discord_user_id' FROM war_notifications "
+                    "WHERE realm_id = %s AND war_key = %s AND kind = 'vote_reminder_dm' "
+                    "AND created_at >= date_trunc('day', now() AT TIME ZONE 'UTC') AT TIME ZONE 'UTC'",
+                    (realm, war_key, realm, war_key),
+                ).fetchall()
+            }
+            written = 0
+            for user_id in users:
+                if user_id in skip:
+                    continue
+                payload = reminder_payload(realm, event, user_id)
+                if payload is None:
+                    return 0
+                if _insert(conn, realm, event, "vote_reminder_dm", payload):
+                    written += 1
+            return written
+    except Exception:  # noqa: BLE001 - never lose the event over its notification
+        logger.exception("Could not queue vote reminder DMs for event %s in realm %s", event.get("id"), realm)
+        return 0
+
+
+# --- mutes (the bot's Mute this war button) ---------------------------------------------
+
+
+def mute(realm: str, war_key: str, discord_user_id: str) -> bool:
+    """Stop availability reminder DMs of one war for one Discord user; True when newly muted."""
+    with database.connect() as conn:
+        row = conn.execute(
+            "INSERT INTO war_dm_mutes (realm_id, war_key, discord_user_id) VALUES (%s, %s, %s) "
+            "ON CONFLICT DO NOTHING RETURNING created_at",
+            (realm, war_key, discord_user_id),
+        ).fetchone()
+    return row is not None
 
 
 # --- the bot's poll --------------------------------------------------------------------
