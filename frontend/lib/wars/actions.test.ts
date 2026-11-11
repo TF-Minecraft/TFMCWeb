@@ -6,6 +6,7 @@ import {
   errorMessage,
   hasPendingAction,
   leadingOption,
+  legacyTally,
   optionLabel,
   samePicks,
   startingPicks,
@@ -162,7 +163,7 @@ describe("picks", () => {
 
 describe("leadingOption", () => {
   it("picks the option both sides can best make, ties to the earlier one", () => {
-    expect(leadingOption(me().tally)).toBe("2026-11-18");
+    expect(leadingOption(legacyTally(me()))).toBe("2026-11-18");
     expect(
       leadingOption([
         { option: 22, attacker: 3, defender: 1 },
@@ -184,7 +185,7 @@ describe("leadingOption", () => {
   });
 
   it("scales the bars to the biggest count", () => {
-    expect(tallyScale(me().tally)).toBe(2);
+    expect(tallyScale(legacyTally(me()))).toBe(2);
     expect(tallyScale([])).toBe(1);
   });
 });

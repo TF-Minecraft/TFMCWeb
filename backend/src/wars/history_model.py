@@ -43,9 +43,15 @@ EVENT_TYPES = (
     "votes_changed",
     "call_to_arms_sent",
     "call_to_arms_closed",
+    # Contract v1.4: a date's day lock made it a battle day (timeline entry and thread post).
+    "battle_day_locked",
+    # Contract v1.4: a reminder to mark availability, for DMs only; no timeline entry.
+    "vote_reminder",
 )
 
-SILENT_EVENT_TYPES = ("next_battle_day", "votes_changed", "call_to_arms_sent", "call_to_arms_closed")
+SILENT_EVENT_TYPES = (
+    "next_battle_day", "votes_changed", "call_to_arms_sent", "call_to_arms_closed", "vote_reminder",
+)
 
 RESOLUTIONS = ("fought", "autoresolve", "forfeit", "naval_default", "staff")
 
@@ -87,7 +93,12 @@ _STATE_KEYS = (
     "occupied_by_attacker",
     "occupied_by_defender",
     "battles_fought",
+    # Contract v1.4: the next day or time lock, and the locked battle days not fought yet.
+    "next_lock_at",
+    "battle_days",
 )
+
+MAX_BATTLE_DAYS = 14
 
 # How many heroes of each kind the top fighters list keeps.
 TOP_BY_KILLS = 10
@@ -138,7 +149,10 @@ def from_epoch_ms(value: Any) -> datetime | None:
 def _finite(value: Any) -> float | None:
     if isinstance(value, bool) or not isinstance(value, (int, float)):
         return None
-    number = float(value)
+    try:
+        number = float(value)
+    except OverflowError:  # an int too large for a float
+        return None
     return number if math.isfinite(number) else None
 
 
@@ -258,6 +272,8 @@ def public_state(state: Any) -> dict | None:
             out[key] = _count(value)
         elif _finite(value) is not None:
             out[key] = _int(value)
+    if "battle_days" in state:
+        out["battle_days"] = battle_days(state["battle_days"])
     initiative = state.get("initiative")
     if isinstance(initiative, dict):
         out["initiative"] = {
@@ -274,6 +290,24 @@ def public_state(state: Any) -> dict | None:
         out["sides"][side] = participants
     if "name" in out:
         out["name"] = strip_codes(out["name"]) or out["name"]
+    return out
+
+
+def battle_day_hour(value: Any) -> int | None:
+    """A battle-day hour (0..47; 24 is 00:00 the next calendar day), or None."""
+    if isinstance(value, bool) or _finite(value) is None or float(value) != int(value):
+        return None
+    hour = int(value)
+    return hour if 0 <= hour < 48 else None
+
+
+def battle_days(value: Any) -> list[dict]:
+    """WarState `battle_days` (v1.4): `[{"date": "YYYY-MM-DD", "hour": 22 | None}]`, cleaned."""
+    out: list[dict] = []
+    for row in value[:MAX_BATTLE_DAYS] if isinstance(value, list) else []:
+        day = row.get("date") if isinstance(row, dict) else None
+        if isinstance(day, str) and _DAY_RE.match(day):
+            out.append({"date": day, "hour": battle_day_hour(row.get("hour"))})
     return out
 
 
@@ -319,6 +353,18 @@ def format_day(value: Any) -> str | None:
     if moment is None:
         return None
     return moment.astimezone(_SERVER_ZONE).strftime("%d/%m/%Y")
+
+
+def format_day_label(value: Any) -> str | None:
+    """`2026-11-20` as `Fri 20 Nov`."""
+    match = _DAY_RE.match(value.strip()) if isinstance(value, str) else None
+    if not match:
+        return None
+    try:
+        day = datetime(int(match.group(1)), int(match.group(2)), int(match.group(3)))
+    except ValueError:
+        return None
+    return f"{day.strftime('%a')} {day.day} {day.strftime('%b')}"
 
 
 def format_instant(value: Any) -> str | None:
@@ -386,6 +432,13 @@ def public_payload(event_type: str, payload: Any) -> dict:
         }
     if event_type in ("battle_postponed", "next_battle_day"):
         return {"battle_day": _str(p.get("battle_day"), 32)}
+    if event_type == "battle_day_locked":
+        day = p.get("battle_day")
+        return {
+            "battle_day": day if isinstance(day, str) and _DAY_RE.match(day) else None,
+            "time_locks_at": iso(parse_instant(p.get("time_locks_at"))),
+            "forced": p.get("forced") is True,
+        }
     if event_type == "battle_resolved":
         resolution = _lower(p.get("resolution"))
         return {
@@ -874,6 +927,13 @@ def summarize(event_type: str, payload: dict, state: dict | None, battle: dict |
             where = f" at {names(province_id) or f'Province {province_id}'}"
         when = format_instant(payload.get("scheduled_at"))
         return f"{_article(kind)} {kind} was set{where}" + (f" for {when}." if when else ".")
+    if event_type == "battle_day_locked":
+        day = format_day_label(payload.get("battle_day"))
+        if not day:
+            return "A battle day was set."
+        if payload.get("forced"):
+            return f"Battle day set: {day}. Too many days went by without a battle, so this one is a battle day anyway."
+        return f"Battle day set: {day}."
     if event_type == "battle_postponed":
         day = format_day(payload.get("battle_day"))
         return f"The battle was postponed to {day}." if day else "The battle was postponed."
@@ -1097,7 +1157,8 @@ def build_war_summary(model: dict) -> dict:
             rows = [p for p in model["participants"] if p["side"] == side and not p["mercenary"]]
             leaders = [p["faction"] for p in sorted(rows, key=lambda p: -p["fighters"])[:1]]
         sides[side] = {"leaders": leaders, "count": len(rows)}
-    phase_keys = ("schedule_phase", "campaign_phase", "buildup", "day_vote_closes_at", "battle_day", "scheduled_at")
+    phase_keys = ("schedule_phase", "campaign_phase", "buildup", "day_vote_closes_at", "battle_day", "scheduled_at",
+                  "next_lock_at", "battle_days")
     return {
         "war_key": model["war_key"],
         "name": model["name"],

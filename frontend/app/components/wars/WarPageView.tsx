@@ -620,7 +620,13 @@ export default function WarPageView({ model, sessionToken }: { model: WarPageMod
         <WarHeader model={model} leaders={leaders} sessionToken={sessionToken} />
         <ScoreSection model={model} names={names} />
         {model.status === "active" && model.state ? (
-          <WarActions mapId={model.map_id} warKey={model.war_key} names={names} sessionToken={sessionToken} />
+          <WarActions
+            mapId={model.map_id}
+            warKey={model.war_key}
+            names={names}
+            sessionToken={sessionToken}
+            battleDays={model.state.battle_days ?? null}
+          />
         ) : null}
         <FrontSection model={model} names={names} />
         <LedgerSection model={model} names={names} />

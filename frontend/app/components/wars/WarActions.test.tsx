@@ -96,7 +96,7 @@ describe("VotePanel", () => {
       />,
     );
     expect(screen.getByRole("heading", { name: "Vote on the battle hour" })).toBeTruthy();
-    expect(screen.getByText(/Only members of the warring factions vote\./)).toBeTruthy();
+    expect(screen.getByText(/Only members of the warring factions and their hired mercenaries vote\./)).toBeTruthy();
     expect(screen.queryByRole("button")).toBeNull();
   });
 

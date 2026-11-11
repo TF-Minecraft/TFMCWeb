@@ -6,19 +6,23 @@
  * Every action is queued on the website and applied by SimpleFactions, which
  * re-checks it with the in-game rules; the page shows "Waiting for the server…"
  * until the plugin answers, then "Saved" or the reason it was refused.
+ *
+ * Contract v1.4 replaces the day and hour votes with battle availability (a grid of
+ * dates and start hours, `./availability.ts`); `vote.kind` says which one a war uses.
  */
 
 import { detailMessage, getApiBase, parseJson } from "@/lib/site/api";
 
 import type { FactionRef, WarSide } from "./types";
 import { warPath } from "./api";
+import type { AvailabilityTallyRow, AvailabilityVote, Marks } from "./availability";
 
 export type VoteKind = "day" | "hour";
 
 /** A day vote's options are `YYYY-MM-DD`; an hour vote's are schedule hours as in game. */
 export type VoteOption = string | number;
 
-export type WarActionKind = "call_to_arms_answer" | "day_vote" | "hour_vote";
+export type WarActionKind = "call_to_arms_answer" | "day_vote" | "hour_vote" | "availability";
 
 export type WarActionStatus = "pending" | "applied" | "rejected" | "expired";
 
@@ -30,7 +34,15 @@ export type WarAction = {
   /** The same action may work on a later try (a battle being fought, a server failure, an expiry). */
   retry?: boolean;
   source: "web" | "discord";
-  payload: { picks?: VoteOption[]; target_faction_id?: string; accept?: boolean };
+  payload: {
+    picks?: VoteOption[];
+    target_faction_id?: string;
+    accept?: boolean;
+    /** Availability: the date whose marks this replaces, or `none`. */
+    date?: string;
+    hours?: number[];
+    none?: boolean;
+  };
   created_at: string | null;
   applied_at: string | null;
 };
@@ -58,12 +70,28 @@ export type WarMe = {
   linked: boolean;
   eligible: boolean;
   side: WarSide | null;
-  vote: OpenVote | null;
+  vote: OpenVote | AvailabilityVote | null;
   picks: VoteOption[] | null;
-  tally: TallyRow[] | null;
-  actions: Record<WarActionKind, WarAction | null>;
+  /** Availability: the user's own marks (eligible users only). */
+  marks?: Marks | null;
+  /** Availability: the user said none of the shown days work. */
+  none?: boolean | null;
+  tally: TallyRow[] | AvailabilityTallyRow[] | null;
+  actions: Partial<Record<WarActionKind, WarAction | null>>;
+  /** Availability: the user's latest change per shown date, and their latest "none" answer. */
+  availability_actions?: WarAction[];
   calls_to_arms: OpenCallToArms[];
 };
+
+/** The day or hour vote of v1.3, or null (no vote, or an availability grid). */
+export function legacyVote(me: WarMe | null): OpenVote | null {
+  return me?.vote && me.vote.kind !== "availability" ? me.vote : null;
+}
+
+/** The tally of a day or hour vote. */
+export function legacyTally(me: WarMe): TallyRow[] | null {
+  return legacyVote(me) ? (me.tally as TallyRow[] | null) : null;
+}
 
 export const VOTE_ACTION: Record<VoteKind, WarActionKind> = { day: "day_vote", hour: "hour_vote" };
 
@@ -135,6 +163,19 @@ export async function saveVote(
   return reply.action;
 }
 
+/** One availability change: a date's start hours (`[]` clears them), or "none of these days work". */
+export type AvailabilityChange = { date: string; hours: number[] } | { none: true };
+
+export async function saveAvailability(
+  mapId: string,
+  warKey: string,
+  change: AvailabilityChange,
+  sessionToken?: string | null,
+): Promise<WarAction> {
+  const reply = await request<{ action: WarAction }>(`${warPath(mapId, warKey)}/availability`, sessionToken, change);
+  return reply.action;
+}
+
 export async function answerCallToArms(
   mapId: string,
   warKey: string,
@@ -157,17 +198,20 @@ export type VotePanelMode = "hidden" | "signed_out" | "not_linked" | "ineligible
 export function votePanelMode(me: WarMe | null): VotePanelMode {
   if (!me) return "hidden";
   const pendingVote = [me.actions.day_vote, me.actions.hour_vote].some((a) => a?.status === "pending");
-  if (!me.vote && !pendingVote) return "hidden";
+  const pendingMarks = (me.availability_actions ?? []).some((a) => a.status === "pending");
+  if (!me.vote && !pendingVote && !pendingMarks) return "hidden";
   if (!me.signed_in) return "signed_out";
   if (!me.linked) return "not_linked";
   if (!me.eligible) return "ineligible";
-  return me.vote?.options?.length || pendingVote ? "eligible" : "ineligible";
+  if (me.vote?.kind === "availability") return me.vote.dates?.length ? "eligible" : "ineligible";
+  return legacyVote(me)?.options?.length || pendingVote || pendingMarks ? "eligible" : "ineligible";
 }
 
 /** Whether `/me` should be polled: an action of the user is still waiting for the server. */
 export function hasPendingAction(me: WarMe | null): boolean {
   if (!me) return false;
   if (Object.values(me.actions).some((a) => a?.status === "pending")) return true;
+  if ((me.availability_actions ?? []).some((a) => a.status === "pending")) return true;
   return me.calls_to_arms.some((call) => call.action?.status === "pending");
 }
 
@@ -213,8 +257,9 @@ export function samePicks(a: readonly VoteOption[], b: readonly VoteOption[]): b
  * sent), else the saved ones.
  */
 export function startingPicks(me: WarMe): VoteOption[] {
-  const kind = me.vote?.kind;
-  const options = me.vote?.options ?? [];
+  const vote = legacyVote(me);
+  const kind = vote?.kind;
+  const options = vote?.options ?? [];
   const pending = kind ? me.actions[VOTE_ACTION[kind]] : null;
   const source = pending?.status === "pending" && pending.payload.picks ? pending.payload.picks : (me.picks ?? []);
   return options.filter((o) => source.includes(o));

@@ -38,6 +38,10 @@ export type WarState = {
   /** `YYYY-MM-DD`. */
   battle_day?: string | null;
   scheduled_at?: string | null;
+  /** Contract v1.4: the next day or time lock of the availability grid. */
+  next_lock_at?: string | null;
+  /** Contract v1.4: locked battle days not fought yet; `hour` once the start time is decided. */
+  battle_days?: BattleDay[];
   route_length?: number | null;
   objective_province_id?: number | null;
   objective_held_by?: string | null;
@@ -47,6 +51,8 @@ export type WarState = {
   initiative?: { attacker: number | null; defender: number | null; holder: WarSide | null };
   sides: SidePair<StateParticipant[]>;
 };
+
+export type BattleDay = { date: string; hour: number | null };
 
 export type WarStatus = "active" | "ended";
 
@@ -170,6 +176,8 @@ export type WarSummary = {
     day_vote_closes_at: string | null;
     battle_day: string | null;
     scheduled_at: string | null;
+    next_lock_at?: string | null;
+    battle_days?: BattleDay[] | null;
   };
 };
 

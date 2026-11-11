@@ -91,6 +91,12 @@ class StaffActionBody(BaseModel):
     payload: dict = Field(default_factory=dict)
 
 
+class StaffMuteBody(BaseModel):
+    realm: str | None = None
+    war_key: str = Field(..., min_length=1, max_length=64)
+    discord_user_id: str = Field(..., min_length=1, max_length=32)
+
+
 class RevokeCodeBody(BaseModel):
     id: int
     realm_id: str | None = None
@@ -263,6 +269,23 @@ def post_war_notifications_ack(
     """`{"ids": [...]}` -> `{"acked": [ids that exist]}`."""
     _require_staff(x_staff_key)
     return {"acked": war_notifications.ack(body.ids)}
+
+
+@wars_router.post("/staff/mutes")
+def post_war_dm_mute(
+    body: StaffMuteBody,
+    x_staff_key: str | None = Header(default=None, alias=HEADER_STAFF_KEY),
+):
+    """The bot's "Mute this war" button (contract v1.4): no more availability reminder DMs of that war
+    for that Discord user. `{"muted": true, "new": bool}`; muting again is fine."""
+    _require_staff(x_staff_key)
+    realm = _action_realm(body.realm)
+    if not WAR_KEY_RE.match(body.war_key):
+        raise HTTPException(status_code=404, detail="War not found")
+    user_id = body.discord_user_id.strip()
+    if not user_id.isdigit():
+        raise HTTPException(status_code=400, detail="discord_user_id must be a Discord user id")
+    return {"muted": True, "new": war_notifications.mute(realm, body.war_key, user_id)}
 
 
 # --- War actions (votes and call to arms answers from the website and Discord) ---------

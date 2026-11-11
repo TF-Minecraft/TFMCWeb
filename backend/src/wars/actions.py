@@ -1,5 +1,11 @@
 """War actions (contract addendum v1.3): votes and call to arms answers made outside the game.
 
+Contract v1.4 adds battle availability: `private.voting` of kind `availability` is a
+grid of dates and start hours, and the action kind `availability` replaces one
+account's marks on one date (`{"date", "hours"}`) or answers "none of these days
+work" (`{"none": true}`). The day and hour votes of v1.3 keep working until every
+server runs the new plugin; `voting.kind` says which one a war uses.
+
 A signed-in player votes on the war page, or a faction leader answers a call to
 arms from a Discord DM. Each action is queued in `war_actions` for the account
 it is made for; SimpleFactions polls the queue, applies each action with the
@@ -23,10 +29,12 @@ from typing import Any
 
 from src import database
 
-from .history_model import SIDES, faction_ref, iso, parse_instant, side_of
+from .history_model import SIDES, battle_day_hour, faction_ref, iso, parse_instant, side_of
 
-KINDS = ("call_to_arms_answer", "day_vote", "hour_vote")
+KINDS = ("call_to_arms_answer", "day_vote", "hour_vote", "availability")
 VOTE_KINDS = {"day": "day_vote", "hour": "hour_vote"}
+AVAILABILITY = "availability"
+DATE_STATES = ("open", "battle", "no_battle")
 SOURCES = ("web", "discord")
 RESULT_STATUSES = ("applied", "rejected")
 
@@ -39,6 +47,8 @@ MAX_LIMIT = 200
 MAX_RESULTS = 500
 MAX_REASON = 500
 MAX_OPTIONS = 64
+MAX_DATES = 31
+MAX_HOURS = 24
 # Per account, across wars: enough for anyone changing their mind, not for a script.
 RATE_LIMIT = 30
 RATE_WINDOW = timedelta(minutes=10)
@@ -46,6 +56,11 @@ RATE_WINDOW = timedelta(minutes=10)
 EXPIRED_REASON = "The server did not answer in time. Try again."
 REPLACED_REASON = "Replaced by a newer vote."
 NO_CALL_REASON = "Your faction has no call to arms in that war."
+CLOSED_REASON = "This vote is closed."
+NOT_ELIGIBLE_REASON = "Only members of the warring factions and their hired mercenaries vote."
+DAY_DECIDED_REASON = "That day is already decided. You can't change it now."
+NOT_SHOWN_REASON = "That day is not open for marking."
+BAD_HOURS_REASON = "Pick from the start times shown."
 
 _DAY_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 _FACTION_ID_RE = re.compile(r"^[A-Za-z0-9_.:-]{1,64}$")
@@ -95,6 +110,8 @@ def voting_view(raw: Any) -> dict | None:
     """
     if not isinstance(raw, dict):
         return None
+    if raw.get("kind") == AVAILABILITY:
+        return availability_view(raw)
     kind = raw.get("kind") if raw.get("kind") in VOTE_KINDS else None
     options: list = []
     labels: list[str] = []
@@ -108,13 +125,7 @@ def voting_view(raw: Any) -> dict | None:
             label = raw_labels[index] if index < len(raw_labels) else None
             options.append(option)
             labels.append(label[:80] if isinstance(label, str) and label else str(option))
-    eligible: dict[str, str] = {}
-    raw_eligible = raw.get("eligible") if isinstance(raw.get("eligible"), dict) else {}
-    for account, side in raw_eligible.items():
-        key = account_key(account)
-        side = side_of(side)
-        if key and side:
-            eligible[_bare(key)] = side
+    eligible = _eligible(raw)
     votes: dict[str, list] = {}
     raw_votes = raw.get("votes") if isinstance(raw.get("votes"), dict) else {}
     for account, picks in raw_votes.items():
@@ -142,6 +153,116 @@ def voting_view(raw: Any) -> dict | None:
     }
 
 
+def _eligible(raw: dict) -> dict[str, str]:
+    eligible: dict[str, str] = {}
+    raw_eligible = raw.get("eligible") if isinstance(raw.get("eligible"), dict) else {}
+    for account, side in raw_eligible.items():
+        key = account_key(account)
+        side = side_of(side)
+        if key and side:
+            eligible[_bare(key)] = side
+    return eligible
+
+
+def _day(value: Any) -> str | None:
+    return value if isinstance(value, str) and _DAY_RE.match(value) else None
+
+
+def _hours(values: Any, offered: list[int]) -> list[int]:
+    """The offered hours among `values`, in offered order."""
+    wanted = {battle_day_hour(v) for v in values[:MAX_HOURS * 2]} if isinstance(values, list) else set()
+    return [hour for hour in offered if hour in wanted]
+
+
+def availability_view(raw: dict) -> dict:
+    """`private.voting` of kind `availability` (contract v1.4), cleaned.
+
+    Accounts are keyed without dashes. `marks` keeps only shown dates and offered hours.
+    """
+    hours: list[int] = []
+    labels: list[str] = []
+    raw_hours = raw.get("hours") if isinstance(raw.get("hours"), list) else []
+    raw_labels = raw.get("hour_labels") if isinstance(raw.get("hour_labels"), list) else []
+    for index, value in enumerate(raw_hours[:MAX_HOURS]):
+        hour = battle_day_hour(value)
+        if hour is None or hour in hours:
+            continue
+        label = raw_labels[index] if index < len(raw_labels) else None
+        hours.append(hour)
+        labels.append(label[:40] if isinstance(label, str) and label else f"{hour % 24:02d}:00 CET")
+    dates: list[dict] = []
+    for row in raw.get("dates")[:MAX_DATES] if isinstance(raw.get("dates"), list) else []:
+        day = _day(row.get("date")) if isinstance(row, dict) else None
+        if day is None or any(d["date"] == day for d in dates):
+            continue
+        state = row.get("state") if row.get("state") in DATE_STATES else "open"
+        hour = battle_day_hour(row.get("hour"))
+        label = row.get("label")
+        dates.append({
+            "date": day,
+            "label": label[:40] if isinstance(label, str) and label else day,
+            "state": state,
+            "day_locks_at": iso(parse_instant(row.get("day_locks_at"))),
+            "time_locks_at": iso(parse_instant(row.get("time_locks_at"))),
+            "hour": hour if hour in hours else None,
+            "editable": row.get("editable") is True and state != "no_battle",
+            "forced": row.get("forced") is True,
+        })
+    shown = {d["date"] for d in dates}
+    marks: dict[str, dict[str, list[int]]] = {}
+    raw_marks = raw.get("marks") if isinstance(raw.get("marks"), dict) else {}
+    for account, by_date in raw_marks.items():
+        key = account_key(account)
+        if not key or not isinstance(by_date, dict):
+            continue
+        own = {day: _hours(values, hours) for day, values in by_date.items() if day in shown}
+        own = {day: values for day, values in own.items() if values}
+        if own:
+            marks[_bare(key)] = own
+    none = []
+    for account in raw.get("none") if isinstance(raw.get("none"), list) else []:
+        key = account_key(account)
+        if key and _bare(key) not in none:
+            none.append(_bare(key))
+    counts: dict[tuple[str, int], dict] = {}
+    for row in raw.get("tally") if isinstance(raw.get("tally"), list) else []:
+        if not isinstance(row, dict):
+            continue
+        day, hour = _day(row.get("date")), battle_day_hour(row.get("hour"))
+        if day in shown and hour in hours:
+            counts[(day, hour)] = {side: _count(row.get(side)) for side in SIDES}
+    tally = [
+        {"date": d["date"], "hour": hour, **counts.get((d["date"], hour), {"attacker": 0, "defender": 0})}
+        for d in dates for hour in hours
+    ]
+    raw_need = raw.get("need") if isinstance(raw.get("need"), dict) else {}
+    return {
+        "kind": AVAILABILITY,
+        "hours": hours,
+        "hour_labels": labels,
+        "dates": dates,
+        "closes_at": iso(parse_instant(raw.get("closes_at"))),
+        "need": {side: max(1, _count(raw_need.get(side))) for side in SIDES},
+        "eligible": _eligible(raw),
+        "marks": marks,
+        "none": none,
+        "tally": tally,
+    }
+
+
+def date_is_editable(row: dict, now: datetime | None = None) -> bool:
+    """Whether marks on this date may still change, as the latest private state shows it.
+
+    The plugin refuses a change once the time is locked, and on a date still `open` once
+    its day lock has passed (the day is being decided), even before its next event says so.
+    """
+    if not row["editable"]:
+        return False
+    now = now or _now()
+    locks = [row["time_locks_at"]] + ([row["day_locks_at"]] if row["state"] == "open" else [])
+    return all((at := parse_instant(value)) is None or at > now for value in locks)
+
+
 def _count(value: Any) -> int:
     if isinstance(value, bool) or not isinstance(value, (int, float)):
         return 0
@@ -153,6 +274,9 @@ def _now() -> datetime:
 
 
 def vote_is_open(voting: dict | None, now: datetime | None = None) -> bool:
+    if voting and voting["kind"] == AVAILABILITY:
+        # The grid stays on the page while it shows dates; each date has its own locks.
+        return bool(voting["dates"] and voting["hours"])
     if not voting or voting["kind"] is None or not voting["options"]:
         return False
     closes = parse_instant(voting["closes_at"])
@@ -246,6 +370,27 @@ def _latest_actions(conn, realm: str, war_key: str, account: str) -> dict[str, d
     return {row["kind"]: row for row in rows}
 
 
+def _availability_actions(conn, realm: str, war_key: str, account: str) -> tuple[list[dict], list[dict]]:
+    """The account's availability actions, oldest first: the latest per date (and the latest "none"
+    answer), for their status; and the latest applied per date, for the marks.
+
+    A newer change still pending, or refused, must not hide the change the server applied before it.
+    """
+    rows = conn.execute(
+        "SELECT DISTINCT ON (COALESCE(payload ->> 'date', ''), status = 'applied') * FROM war_actions "
+        "WHERE realm_id = %s AND war_key = %s AND account_uuid = %s AND kind = 'availability' "
+        "ORDER BY COALESCE(payload ->> 'date', ''), status = 'applied', id DESC",
+        (realm, war_key, account),
+    ).fetchall()
+    latest: dict[str, dict] = {}
+    for row in rows:
+        key = (row["payload"] or {}).get("date") or ""
+        if key not in latest or row["id"] > latest[key]["id"]:
+            latest[key] = row
+    applied = [row for row in rows if row["status"] == "applied"]
+    return sorted(latest.values(), key=lambda row: row["id"]), sorted(applied, key=lambda row: row["id"])
+
+
 def _call_answers(conn, realm: str, war_key: str, account: str) -> dict[str, dict]:
     """The account's latest call to arms answer per lower-case target faction id."""
     rows = conn.execute(
@@ -255,6 +400,51 @@ def _call_answers(conn, realm: str, war_key: str, account: str) -> dict[str, dic
         (realm, war_key, account),
     ).fetchall()
     return {str(row["payload"].get("target_faction_id") or "").lower(): row for row in rows}
+
+
+def _availability_reply(voting: dict, account: str, rows: list[dict], voting_received: datetime | None) -> dict:
+    """The grid for one eligible account: dates, hours, need, its own marks and "none" answer, the tally.
+
+    An action applied after the latest private state was received wins, so "Saved" never
+    shows next to the old marks while the plugin's next event is on its way. A "none"
+    answer clears the account's marks on the dates it can still change.
+    """
+    now = _now()
+    dates = [{**row, "editable": date_is_editable(row, now)} for row in voting["dates"]]
+    marks = {day: list(hours) for day, hours in voting["marks"].get(_bare(account), {}).items()}
+    none = _bare(account) in voting["none"]
+    for row in rows:
+        if row["status"] != "applied" or row["applied_at"] is None:
+            continue
+        if voting_received is not None and row["applied_at"] <= voting_received:
+            continue
+        payload = row["payload"] or {}
+        if payload.get("none") is True:
+            none = True
+            for d in dates:
+                if d["editable"]:
+                    marks.pop(d["date"], None)
+        elif isinstance(payload.get("date"), str):
+            hours = _hours(payload.get("hours"), voting["hours"])
+            if hours:
+                marks[payload["date"]] = hours
+                none = False
+            else:
+                marks.pop(payload["date"], None)
+    shown = [d["date"] for d in dates]
+    return {
+        "vote": {
+            "kind": AVAILABILITY,
+            "hours": voting["hours"],
+            "hour_labels": voting["hour_labels"],
+            "dates": dates,
+            "closes_at": voting["closes_at"],
+            "need": voting["need"],
+        },
+        "marks": {day: marks[day] for day in shown if marks.get(day)},
+        "none": none,
+        "tally": voting["tally"],
+    }
 
 
 def _public_vote(voting: dict | None) -> dict | None:
@@ -281,8 +471,11 @@ def me(realm: str, war_key: str, account: str | None, *, signed_in: bool) -> dic
             "side": None,
             "vote": _public_vote(voting),
             "picks": None,
+            "marks": None,
+            "none": None,
             "tally": None,
             "actions": {kind: None for kind in KINDS},
+            "availability_actions": [],
             "calls_to_arms": [],
         }
         if account is None:
@@ -290,11 +483,20 @@ def me(realm: str, war_key: str, account: str | None, *, signed_in: bool) -> dic
         _expire_stale(conn)
         latest = _latest_actions(conn, realm, war_key, account)
         reply["actions"] = {kind: _action(latest.get(kind)) for kind in KINDS}
+        availability_rows, applied_rows = _availability_actions(conn, realm, war_key, account)
+        if voting is not None and voting["kind"] == AVAILABILITY:
+            shown = {d["date"] for d in voting["dates"]}
+            reply["availability_actions"] = [
+                _action(row) for row in availability_rows
+                if row["payload"].get("none") is True or row["payload"].get("date") in shown
+            ]
         side = (voting or {}).get("eligible", {}).get(_bare(account))
         if side is not None:
             reply["eligible"] = True
             reply["side"] = side
-            if vote_is_open(voting):
+            if vote_is_open(voting) and voting["kind"] == AVAILABILITY:
+                reply.update(_availability_reply(voting, account, applied_rows, voting_received))
+            elif vote_is_open(voting):
                 reply["vote"] = {
                     key: voting[key] for key in ("kind", "options", "option_labels", "closes_at")
                 }
@@ -380,9 +582,9 @@ def queue_vote(realm: str, war_key: str, account: str, kind: str, picks: Any, *,
             raise WarActionError(404, "War not found")
         voting, _ = _war_voting(war)
         if not vote_is_open(voting) or voting["kind"] != kind:
-            raise WarActionError(409, "This vote is closed.")
+            raise WarActionError(409, CLOSED_REASON)
         if _bare(account) not in voting["eligible"]:
-            raise WarActionError(403, "Only members of the warring factions vote.")
+            raise WarActionError(403, NOT_ELIGIBLE_REASON)
         wanted = clean_picks(kind, picks, voting["options"])
         action_kind = VOTE_KINDS[kind]
         # One account's votes queue one after another, so a replaced row is never left pending.
@@ -394,6 +596,58 @@ def queue_vote(realm: str, war_key: str, account: str, kind: str, picks: Any, *,
             (REPLACED_REASON, realm, war_key, account, action_kind),
         )
         row = _insert(conn, realm, war_key, action_kind, account, {"picks": wanted},
+                      source="web", discord_user_id=discord_user_id)
+    return _action(row)
+
+
+def clean_availability(payload: Any, voting: dict) -> dict:
+    """`{"date", "hours"}` (hours in offered order) or `{"none": True}`; WarActionError for anything
+    the latest private state already refuses."""
+    if not isinstance(payload, dict):
+        raise WarActionError(400, "payload must be an object.")
+    if payload.get("none") is True and payload.get("date") is None:
+        return {"none": True}
+    day = _day(payload.get("date"))
+    hours = payload.get("hours")
+    if day is None or not isinstance(hours, list) or len(hours) > MAX_HOURS:
+        raise WarActionError(400, "Send a date and its start times, or none.")
+    row = next((d for d in voting["dates"] if d["date"] == day), None)
+    if row is None:
+        raise WarActionError(409, NOT_SHOWN_REASON)
+    if not date_is_editable(row):
+        raise WarActionError(409, DAY_DECIDED_REASON)
+    wanted = []
+    for value in hours:
+        hour = battle_day_hour(value)
+        if hour is None or hour not in voting["hours"]:
+            raise WarActionError(400, BAD_HOURS_REASON)
+        wanted.append(hour)
+    return {"date": day, "hours": [hour for hour in voting["hours"] if hour in wanted]}
+
+
+def queue_availability(realm: str, war_key: str, account: str, payload: Any, *,
+                       discord_user_id: str | None = None) -> dict:
+    """Queue a web availability change (contract v1.4). Replaces the account's still-pending change
+    of the same date (or its pending "none" answer)."""
+    with database.transaction() as conn:
+        war = _war(conn, realm, war_key)
+        if war is None:
+            raise WarActionError(404, "War not found")
+        voting, _ = _war_voting(war)
+        if not vote_is_open(voting) or voting["kind"] != AVAILABILITY:
+            raise WarActionError(409, CLOSED_REASON)
+        if _bare(account) not in voting["eligible"]:
+            raise WarActionError(403, NOT_ELIGIBLE_REASON)
+        change = clean_availability(payload, voting)
+        conn.execute("SELECT pg_advisory_xact_lock(hashtextextended(%s, 0))", (f"war_actions:{account}",))
+        _check_rate(conn, account)
+        conn.execute(
+            "UPDATE war_actions SET status = 'expired', reason = %s WHERE realm_id = %s AND war_key = %s "
+            "AND account_uuid = %s AND kind = 'availability' AND status = 'pending' "
+            "AND COALESCE(payload ->> 'date', '') = %s",
+            (REPLACED_REASON, realm, war_key, account, change.get("date") or ""),
+        )
+        row = _insert(conn, realm, war_key, AVAILABILITY, account, change,
                       source="web", discord_user_id=discord_user_id)
     return _action(row)
 

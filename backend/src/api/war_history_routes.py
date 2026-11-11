@@ -1,6 +1,7 @@
 """Public war history reads: the war list, a war's page and a battle's report.
 And the signed-in player's side of a war page (contract v1.3): `/me`, votes and
-call to arms answers, made with the site's Discord session.
+call to arms answers, made with the site's Discord session; v1.4 adds battle
+availability (`/availability`).
 
 Gated by the map's access rules, like every other map read; the realm comes
 from the map registry. Plain `def` handlers, so FastAPI runs the synchronous
@@ -67,6 +68,15 @@ def get_war_battle(
 class VoteBody(BaseModel):
     kind: str
     picks: list = []
+
+
+class AvailabilityBody(BaseModel):
+    """`{"date", "hours"}` replaces the marks on one date (`[]` clears them); `{"none": true}` says
+    none of the shown days work."""
+
+    date: str | None = None
+    hours: list | None = None
+    none: bool | None = None
 
 
 class CallToArmsBody(BaseModel):
@@ -138,6 +148,30 @@ def post_war_vote(
     try:
         action = war_actions.queue_vote(
             realm_for_map(entry.id), _war_key(war_key), account, body.kind, body.picks,
+            discord_user_id=user["discord_user_id"],
+        )
+    except war_actions.WarActionError as e:
+        raise HTTPException(status_code=e.status, detail=str(e)) from e
+    return {"action": action}
+
+
+@war_history_router.post("/{map_name}/wars/{war_key}/availability")
+def post_war_availability(
+    map_name: str,
+    war_key: str,
+    body: AvailabilityBody,
+    request: Request,
+    response: Response,
+    authorization: str | None = Header(default=None),
+):
+    """Queue a change to the user's battle availability (contract v1.4): `{"action": {...}}`."""
+    entry = ensure_map_access(map_name, authorization)
+    user, account = _writer(request)
+    _no_store(response)
+    payload = {"none": True} if body.none is True else {"date": body.date, "hours": body.hours}
+    try:
+        action = war_actions.queue_availability(
+            realm_for_map(entry.id), _war_key(war_key), account, payload,
             discord_user_id=user["discord_user_id"],
         )
     except war_actions.WarActionError as e:
