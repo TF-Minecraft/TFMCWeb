@@ -6,6 +6,7 @@
 import { parseRgbString } from "@/app/lib/map/titleRgb";
 
 import type {
+  BattleDay,
   FactionRef,
   ParticipantRole,
   Resolution,
@@ -190,8 +191,17 @@ export function resultLabel(result: WarResult | null | undefined): string {
 type StatusInput = {
   status: WarStatus;
   result: WarResult | null;
-  phase: Pick<WarState, "buildup" | "day_vote_closes_at" | "battle_day" | "scheduled_at"> | null;
+  phase:
+    | (Pick<WarState, "buildup" | "day_vote_closes_at" | "battle_day" | "scheduled_at"> & {
+        battle_days?: BattleDay[] | null;
+      })
+    | null;
 };
+
+/** `21:00 CET` for a battle-day hour (24 is 00:00, 25 is 01:00 the next day). */
+function battleHour(hour: number): string {
+  return `${String(hour % 24).padStart(2, "0")}:00 CET`;
+}
 
 /** The war list's status chip. */
 export function statusChip({ status, result, phase }: StatusInput, now: Date = new Date()): string {
@@ -204,6 +214,8 @@ export function statusChip({ status, result, phase }: StatusInput, now: Date = n
   if (phase.buildup && phase.day_vote_closes_at && !phase.battle_day) {
     return `Buildup: day vote closes ${formatShortDay(phase.day_vote_closes_at)}`;
   }
+  const next = phase.battle_days?.[0];
+  if (next) return `Battle day ${formatShortDay(next.date)}${next.hour != null ? ` ${battleHour(next.hour)}` : ""}`;
   if (phase.battle_day) return `Battle day ${formatShortDay(phase.battle_day)}`;
   if (phase.buildup) return "Buildup";
   return "In progress";
@@ -247,6 +259,10 @@ export function statusLine(
   }
   if (state.buildup && state.day_vote_closes_at && !state.battle_day) {
     return `Buildup: the vote on the first battle day closes ${formatDateTime(state.day_vote_closes_at)}.`;
+  }
+  const next = state.battle_days?.[0];
+  if (next) {
+    return `Next battle day ${formatDay(next.date)}${next.hour != null ? `, starting ${battleHour(next.hour)}` : ""}.`;
   }
   if (state.battle_day) return `Next battle day ${formatDay(state.battle_day)}.`;
   if (state.buildup) return "Buildup: the sides are gathering.";

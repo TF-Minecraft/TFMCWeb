@@ -96,6 +96,20 @@ describe("status", () => {
     expect(statusChip({ status: "active", result: null, phase: { ...buildup, battle_day: "2026-11-19" } }, now)).toBe(
       "Battle day 19/11",
     );
+    // Availability wars (v1.4) name their next locked battle day, with its time once decided.
+    const grid = { ...buildup, buildup: false, day_vote_closes_at: null };
+    expect(
+      statusChip(
+        { status: "active", result: null, phase: { ...grid, battle_days: [{ date: "2026-11-20", hour: null }] } },
+        now,
+      ),
+    ).toBe("Battle day 20/11");
+    expect(
+      statusChip(
+        { status: "active", result: null, phase: { ...grid, battle_days: [{ date: "2026-11-20", hour: 24 }] } },
+        now,
+      ),
+    ).toBe("Battle day 20/11 00:00 CET");
     // A battle time long past is stale, not "next".
     expect(
       statusChip(
@@ -120,6 +134,8 @@ describe("status", () => {
         now,
       ),
     ).toBe("Ended in a white peace.");
+    const state = { ...sampleActiveWar.state!, scheduled_at: null, battle_days: [{ date: "2026-11-20", hour: 22 }] };
+    expect(statusLine({ ...sampleActiveWar, state }, now)).toBe("Next battle day 20/11/2026, starting 22:00 CET.");
   });
 });
 

@@ -12,6 +12,8 @@ import {
   fetchWarMe,
   hasPendingAction,
   leadingOption,
+  legacyTally,
+  legacyVote,
   optionLabel,
   POLL_MS,
   samePicks,
@@ -24,43 +26,21 @@ import {
   VOTE_TITLE,
   votePanelMode,
   voteStatus,
-  type ActionStatusView,
+  saveAvailability,
+  type AvailabilityChange,
   type OpenCallToArms,
   type VoteOption,
   type WarMe,
 } from "@/lib/wars/actions";
-import { formatDateTime, SIDE_LABEL, warHref } from "@/lib/wars/format";
+import { availabilityVote, changedDates, startingMarks, type Marks } from "@/lib/wars/availability";
+import { SIDE_LABEL, warHref } from "@/lib/wars/format";
 import type { WarSide } from "@/lib/wars/types";
 
+import { closesText, STATUS_TONE, StatusLine } from "./ActionStatus";
+import AvailabilityPanel from "./AvailabilityPanel";
 import { FactionName, Section, SideLabel, mutedClass, linkClass, sideVar } from "./WarUi";
 
 type Names = Record<WarSide, string>;
-
-const STATUS_TONE: Record<ActionStatusView["tone"], string> = {
-  pending: "text-[var(--tfmc-stone)]",
-  done: "text-[var(--tfmc-accent)]",
-  refused: "text-[#e0a48f]",
-};
-
-export function StatusLine({ status }: { status: ActionStatusView | null }) {
-  if (!status) return null;
-  return (
-    <p role="status" className={`text-sm font-medium ${STATUS_TONE[status.tone]}`}>
-      {status.tone === "pending" ? (
-        <span
-          aria-hidden
-          className="mr-2 inline-block h-2 w-2 animate-pulse rounded-full bg-[var(--tfmc-stone)] align-middle"
-        />
-      ) : null}
-      {status.text}
-    </p>
-  );
-}
-
-function closesText(closesAt: string | null | undefined): string {
-  const when = formatDateTime(closesAt);
-  return when ? `The vote closes ${when}.` : "";
-}
 
 function TallyBars({ attacker, defender, scale }: { attacker: number; defender: number; scale: number }) {
   return (
@@ -109,7 +89,7 @@ export function VotePanel({
 }: VotePanelProps) {
   const mode = votePanelMode(me);
   if (mode === "hidden") return null;
-  const vote = me.vote;
+  const vote = legacyVote(me);
   const title = vote ? VOTE_TITLE[vote.kind] : "Your vote";
   const closes = closesText(vote?.closes_at);
   if (mode !== "eligible") {
@@ -144,14 +124,15 @@ export function VotePanel({
   }
 
   const kind = vote?.kind ?? (me.actions.hour_vote?.status === "pending" ? "hour" : "day");
-  const action = me.actions[VOTE_ACTION[kind]];
+  const action = me.actions[VOTE_ACTION[kind]] ?? null;
   const status = voteStatus(action, now);
   const options = vote?.options ?? [];
   const saved = me.picks ?? [];
   const pendingPicks = action?.status === "pending" ? (action.payload.picks ?? []) : null;
   const unchanged = samePicks(picks, pendingPicks ?? saved);
-  const leading = leadingOption(me.tally);
-  const scale = tallyScale(me.tally);
+  const tally = legacyTally(me);
+  const leading = leadingOption(tally);
+  const scale = tallyScale(tally);
   const side = me.side;
   return (
     <Section id="vote" eyebrow="The vote" title={title}>
@@ -176,7 +157,7 @@ export function VotePanel({
             {options.map((option) => {
               const label = optionLabel(vote, option);
               const on = picks.includes(option);
-              const row = me.tally?.find((r) => r.option === option);
+              const row = tally?.find((r) => r.option === option);
               return (
                 <li key={String(option)}>
                   <button
@@ -254,6 +235,8 @@ export type CallToArmsCardProps = {
 };
 
 /** An open call to arms, for the leader of the called faction. */
+export { StatusLine };
+
 export function CallToArmsCard({ call, names, onAnswer, busy = false, error = null }: CallToArmsCardProps) {
   const status = answerStatus(call.action);
   const answerable = canAnswer(call);
@@ -308,7 +291,8 @@ function message(err: unknown): string {
 
 /**
  * The signed-in player's side of a war page: answering calls to arms and the open
- * vote. Reads `/me` once, and every five seconds while an action is pending.
+ * vote (the availability grid, or a day or hour vote from an older server). Reads
+ * `/me` once, and every five seconds while an action is pending.
  */
 export default function WarActions({
   mapId,
@@ -323,6 +307,7 @@ export default function WarActions({
 }) {
   const [me, setMe] = useState<WarMe | null>(null);
   const [draft, setDraft] = useState<VoteOption[] | null>(null);
+  const [marksDraft, setMarksDraft] = useState<Marks | null>(null);
   const [saving, setSaving] = useState(false);
   const [voteError, setVoteError] = useState<string | null>(null);
   const [answering, setAnswering] = useState<string | null>(null);
@@ -359,10 +344,21 @@ export default function WarActions({
     return () => window.clearInterval(timer);
   }, [pending, load]);
 
+  // A link to `#vote` (the Discord reminders) lands before the panel exists: scroll once it does.
+  const loaded = me !== null;
+  useEffect(() => {
+    if (!loaded || window.location.hash !== "#vote") return;
+    document.getElementById("vote")?.scrollIntoView?.({ block: "start" });
+  }, [loaded]);
+
   if (!me) return null;
 
-  const options = me.vote?.options ?? [];
+  const vote = legacyVote(me);
+  const grid = availabilityVote(me);
+  const options = vote?.options ?? [];
   const picks = draft ?? startingPicks(me);
+  const baseMarks = startingMarks(me);
+  const marks = marksDraft ?? baseMarks;
   let signInHref: string | null = null;
   try {
     signInHref = discordSignInUrl(warHref(mapId, warKey));
@@ -371,16 +367,32 @@ export default function WarActions({
   }
 
   const save = async () => {
-    if (!me.vote) return;
+    if (!vote) return;
     setSaving(true);
     setVoteError(null);
     try {
-      await saveVote(mapId, warKey, me.vote.kind, picks, sessionToken);
+      await saveVote(mapId, warKey, vote.kind, picks, sessionToken);
       setDraft(null);
       await load();
     } catch (err) {
       setVoteError(message(err));
     } finally {
+      setSaving(false);
+    }
+  };
+
+  /** Send each changed date (or the "none" answer) in turn; the plugin applies them in that order. */
+  const sendMarks = async (changes: AvailabilityChange[]) => {
+    if (!changes.length) return;
+    setSaving(true);
+    setVoteError(null);
+    try {
+      for (const change of changes) await saveAvailability(mapId, warKey, change, sessionToken);
+      setMarksDraft(null);
+    } catch (err) {
+      setVoteError(message(err));
+    } finally {
+      await load();
       setSaving(false);
     }
   };
@@ -415,19 +427,43 @@ export default function WarActions({
           onAnswer={(accept) => void answer(call, accept)}
         />
       ))}
-      <VotePanel
-        me={me}
-        names={names}
-        picks={picks}
-        saving={saving}
-        error={voteError}
-        signInHref={signInHref}
-        onToggle={(option) => {
-          setVoteError(null);
-          setDraft(togglePick(picks, option, options));
-        }}
-        onSave={() => void save()}
-      />
+      <div id="vote" className="scroll-mt-[calc(var(--tfmc-header-h)+1rem)] empty:hidden">
+        {grid || (!vote && (me.availability_actions ?? []).length) ? (
+          <AvailabilityPanel
+            me={me}
+            names={names}
+            marks={marks}
+            dirty={marksDraft !== null && changedDates(marks, baseMarks, grid?.dates ?? []).length > 0}
+            saving={saving}
+            error={voteError}
+            signInHref={signInHref}
+            onChange={(next) => {
+              setVoteError(null);
+              setMarksDraft(next);
+            }}
+            onSave={() =>
+              void sendMarks(
+                changedDates(marks, baseMarks, grid?.dates ?? []).map((date) => ({ date, hours: marks[date] ?? [] })),
+              )
+            }
+            onNone={() => void sendMarks([{ none: true }])}
+          />
+        ) : (
+          <VotePanel
+            me={me}
+            names={names}
+            picks={picks}
+            saving={saving}
+            error={voteError}
+            signInHref={signInHref}
+            onToggle={(option) => {
+              setVoteError(null);
+              setDraft(togglePick(picks, option, options));
+            }}
+            onSave={() => void save()}
+          />
+        )}
+      </div>
     </>
   );
 }
