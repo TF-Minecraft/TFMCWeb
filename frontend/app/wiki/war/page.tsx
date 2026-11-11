@@ -92,6 +92,12 @@ export default function WarPage() {
         deaths in a field or siege battle costs that side a regiment.
       </p>
       <p className={`mt-3 ${body}`}>
+        A field battle is lost by running out of lives or retreating, and it can also be won by control. While your
+        side holds more capture points than the enemy, it gains control, faster the more points it holds. Holding every
+        point is four times faster again. The first side to 1000 control wins. A point counts once it is at least half
+        captured. Your side&apos;s control and the enemy&apos;s show on the capture point scoreboard.
+      </p>
+      <p className={`mt-3 ${body}`}>
         In a campaign battle, you can only use faction pool vehicles from your side, or vehicles berthed at an
         installation on your side that was committed to that battle. Signed-up players cannot use vehicles before the
         battle starts. You cannot join a warband while mounted.
