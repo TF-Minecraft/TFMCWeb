@@ -422,7 +422,7 @@ function StaffAltsCard({
         >
           {alts.map((alt) => {
             const name = alt.minecraft_name || "Minecraft account";
-            const added = formatDate(alt.linked_at);
+            const addedOn = formatDate(alt.linked_at);
             return (
               <AccountRow
                 key={alt.player_uuid}
@@ -438,7 +438,7 @@ function StaffAltsCard({
                 }
               >
                 <p className="truncate font-semibold text-[var(--tfmc-cream)]">{name}</p>
-                {added ? <p className="text-sm text-[var(--tfmc-stone)]">Added {added}</p> : null}
+                {addedOn ? <p className="text-sm text-[var(--tfmc-stone)]">Added {addedOn}</p> : null}
                 {confirm === alt.player_uuid ? (
                   <div className="mt-3 flex flex-wrap items-center gap-4">
                     <span className="text-sm text-[var(--tfmc-mist)]">Remove {name} from your staff alts?</span>

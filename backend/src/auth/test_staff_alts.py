@@ -186,6 +186,10 @@ def test_alts_are_capped(app):
     assert (res.status_code, res.json()["detail"]) == (400, f"You can link up to {staff_alts.MAX_ALTS} staff alts")
 
 
+def test_a_microsoft_link_of_an_alt_reads_as_taken():
+    assert auth_routes._LINK_CONFLICTS[STAFF_ALT_TAKEN] == "minecraft_taken"
+
+
 def test_an_alt_is_never_linked_as_an_own_account(app):
     _, c = wren(app)
     assert add_alt(c).status_code == 200
@@ -448,14 +452,26 @@ def test_an_owner_unbanned_and_banned_again_bans_the_alt_again(app):
     assert {b["player_uuid"] for b in list_ban_sync()["bans"]} == {OWNER, ALT}
 
 
-def test_a_longer_owner_ban_replaces_an_alts_own_shorter_ban(app):
+def test_an_alts_own_shorter_ban_survives_the_owners_ban_and_unban(app):
     _, c = wren(app)
     assert add_alt(c).status_code == 200
     now = int(time.time() * 1000)
     _ban(ALT, start=now - HOUR, hours=24, reason="Own ban", name="ShayminPlays")
     _ban(OWNER, start=now, hours=None)
+    enqueue_ban_event("unban", player_uuid=OWNER, minecraft_name="Wren", banned_at_ms=now, expires_at_ms=0)
     alt = {b["player_uuid"]: b for b in list_ban_sync()["bans"]}[ALT]
-    assert (alt["reason"], alt["expires_at_ms"]) == ("Staff alt of Wren: Abuse", 0)
+    assert (alt["reason"], alt["expires_at_ms"]) == ("Own ban", now - HOUR + 24 * HOUR)
+
+
+def test_an_alt_unbanned_before_a_late_owner_report_gets_the_copy(app):
+    _, c = wren(app)
+    assert add_alt(c).status_code == 200
+    now = int(time.time() * 1000)
+    _ban(ALT, start=now - 2 * HOUR, hours=24, reason="Own ban", name="ShayminPlays")
+    enqueue_ban_event("unban", player_uuid=ALT, minecraft_name="ShayminPlays")
+    # The owner's ban was made on a server before that unban, but reaches the site after it.
+    _ban(OWNER, start=now - HOUR, hours=24)
+    assert {b["player_uuid"] for b in list_ban_sync()["bans"]} == {OWNER, ALT}
 
 
 def test_a_server_echo_inside_the_same_ban_window_keeps_the_copy(app):

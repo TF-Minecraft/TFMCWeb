@@ -103,11 +103,12 @@ accounts on Profile → Accounts: log in to the alt, run `/linkdiscord`, paste t
   owner when the alt next joins, as with any web unlink.
 - A ban reported for the owner's account is copied to their alts (`player_bans.copied_from`),
   with the owner's times and reason ("Staff alt of …"), so ban sync applies it on every syncing
-  server. A copy never replaces a ban staff gave the alt itself, nor re-bans an alt unbanned after
-  the owner's ban was made. The owner's unban lifts only the copies, even after the alt link is
-  gone. Bans reported for an alt never go to the owner's Discord; only the owner's own ban does.
+  server. A copy never replaces a ban staff gave the alt itself while it holds, nor re-bans an alt
+  unbanned after the site stored the owner's ban. The owner's unban lifts only the copies, even
+  after the alt link is gone. Bans reported for an alt never go to the owner's Discord; only the owner's own ban does.
   Copies follow the owner's current Discord link, so an owner unlinked when banned gives none.
-  Warnings given to an alt do reach the owner's Discord, since it is the same person.
+  Warnings given to an alt do reach the owner's Discord, since it is the same person, and staff
+  case lookups for an active alt show the owner's Discord cases.
 
 | Route | Auth | Role |
 |-------|------|------|

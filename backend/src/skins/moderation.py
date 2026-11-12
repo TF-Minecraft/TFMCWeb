@@ -257,9 +257,11 @@ def _copy_to_staff_alts(conn, owner_uuid: str) -> None:
 
     A copy is stored like any ban, with the owner's times and copied_from set, so ban sync
     applies and lifts it on the servers; no Discord notice, the owner already gets one.
-    It never replaces a ban staff gave the alt itself that lasts at least as long, nor
-    re-bans an alt staff unbanned after the owner's ban was made (a copy lifted by the
-    owner's own unban keeps copied_from, so the owner's next ban is copied again).
+    It never replaces a ban staff gave the alt itself while that ban holds (the owner's
+    unban would otherwise lift it), nor re-bans an alt staff unbanned after the site
+    stored the owner's ban (a copy lifted by the owner's own unban keeps copied_from,
+    so the owner's next ban is copied again). An alt whose own ban ends while the
+    owner's still holds gets the copy only with the owner's next report.
     The owner's unban lifts only the copies, and
     finds them by copied_from, so it still works after the alt link or the owner's own
     Discord link is gone. Alts are found through the owner's current Discord link, so an
@@ -285,7 +287,16 @@ def _copy_to_staff_alts(conn, owner_uuid: str) -> None:
         return
     if owner["expires_at"] is not None and owner["expires_at"] <= now:
         return
-    since = owner["banned_at"] or owner["updated_at"]
+    # The site's own clock on both sides: when it stored the owner's ban and the alt's unban.
+    since = owner["updated_at"]
+    link = conn.execute(
+        "SELECT discord_user_id FROM discord_links WHERE lower(player_uuid) = %s", (owner_key,)
+    ).fetchone()
+    if link is None:
+        return
+    # The lock a staff alt link takes first, so an alt added meanwhile is either seen here or
+    # sees the owner's ban and is refused.
+    database.advisory_lock(conn, f"discord_link:{link['discord_user_id']}")
     for alt in alts_of(conn, owner_uuid):
         if alt["player_uuid"] == owner_key:
             continue
@@ -296,8 +307,7 @@ def _copy_to_staff_alts(conn, owner_uuid: str) -> None:
             (alt["player_uuid"],),
         ).fetchone()
         if held is not None and held["copied_from"] != owner_key:
-            own_ban = held["banned"] and (held["expires_at"] is None or (
-                owner["expires_at"] is not None and held["expires_at"] >= owner["expires_at"]))
+            own_ban = held["banned"] and (held["expires_at"] is None or held["expires_at"] > now)
             unbanned_since = not held["banned"] and held["updated_at"] >= since
             if own_ban or unbanned_since:
                 continue

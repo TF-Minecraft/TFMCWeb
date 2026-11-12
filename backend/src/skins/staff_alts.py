@@ -19,6 +19,7 @@ from src.auth import audit, roles
 
 from .codes import api_time
 from .discord_link import (
+    STAFF_ALT_TAKEN,
     LinkError,
     _code_candidate,
     _code_hash,

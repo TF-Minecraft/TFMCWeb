@@ -593,6 +593,7 @@ _LINK_CONFLICTS = {
     "This Discord account is already linked to a different Minecraft player": "discord_taken",
     "This Minecraft account is already linked to a different Discord account": "minecraft_taken",
     "This link attempt is no longer valid": "expired",
+    staff_alts.STAFF_ALT_TAKEN: "minecraft_taken",
 }
 
 
