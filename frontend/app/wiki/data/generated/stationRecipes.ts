@@ -287,7 +287,7 @@ export const generatedStationRecipes: Recipe[] = [
     ],
     output: {
       name: "Minor Health Potion",
-      qty: 2,
+      qty: 16,
       sourceId: "mmoitem:CONSUMABLES:MINOR_HEALTH_POTION",
       texture: "/wiki/textures/mmoitems/minor_health_potion.png",
     },
@@ -322,7 +322,7 @@ export const generatedStationRecipes: Recipe[] = [
     ],
     output: {
       name: "Minor Mana Potion",
-      qty: 2,
+      qty: 4,
       sourceId: "mmoitem:CONSUMABLES:MINOR_MANA_POTION",
       texture: "/wiki/textures/mmoitems/minor_mana_potion.png",
     },
@@ -362,7 +362,7 @@ export const generatedStationRecipes: Recipe[] = [
     ],
     output: {
       name: "Lesser Health Potion",
-      qty: 1,
+      qty: 8,
       sourceId: "mmoitem:CONSUMABLES:LESSER_HEALTH_POTION",
       texture: "/wiki/textures/mmoitems/lesser_health_potion.png",
     },
@@ -402,7 +402,7 @@ export const generatedStationRecipes: Recipe[] = [
     ],
     output: {
       name: "Lesser Mana Potion",
-      qty: 1,
+      qty: 2,
       sourceId: "mmoitem:CONSUMABLES:LESSER_MANA_POTION",
       texture: "/wiki/textures/mmoitems/lesser_mana_potion.png",
     },
@@ -442,7 +442,7 @@ export const generatedStationRecipes: Recipe[] = [
     ],
     output: {
       name: "Major Health Potion",
-      qty: 1,
+      qty: 8,
       sourceId: "mmoitem:CONSUMABLES:MAJOR_HEALTH_POTION",
       texture: "/wiki/textures/mmoitems/major_health_potion.png",
     },
@@ -482,7 +482,7 @@ export const generatedStationRecipes: Recipe[] = [
     ],
     output: {
       name: "Major Mana Potion",
-      qty: 1,
+      qty: 2,
       sourceId: "mmoitem:CONSUMABLES:MAJOR_MANA_POTION",
       texture: "/wiki/textures/mmoitems/major_mana_potion.png",
     },
@@ -522,7 +522,7 @@ export const generatedStationRecipes: Recipe[] = [
     ],
     output: {
       name: "Greater Health Potion",
-      qty: 1,
+      qty: 8,
       sourceId: "mmoitem:CONSUMABLES:GREATER_HEALTH_POTION",
       texture: "/wiki/textures/mmoitems/greater_health_potion.png",
     },
@@ -562,7 +562,7 @@ export const generatedStationRecipes: Recipe[] = [
     ],
     output: {
       name: "Greater Mana Potion",
-      qty: 1,
+      qty: 2,
       sourceId: "mmoitem:CONSUMABLES:GREATER_MANA_POTION",
       texture: "/wiki/textures/mmoitems/greater_mana_potion.png",
     },

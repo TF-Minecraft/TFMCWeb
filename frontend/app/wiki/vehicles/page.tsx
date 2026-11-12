@@ -158,7 +158,8 @@ export default function VehiclesPage() {
         You can own three personal vehicles in total. Trains do not count toward this total, including the Locomotive.
         Each type also has its own limit. You can own one of each type, except Horse Carts, Wooden Carts, Small Cars,
         Coal Cars, Passenger Cars and Flat Cars, which allow three each. Construction is refused when you reach a limit.
-        Each vehicle page lists its daily upkeep, paid from the owner&apos;s bank.
+        Most vehicles cost daily upkeep, paid from the owner&apos;s bank, and bigger or armed vehicles cost more. Each
+        vehicle page lists its upkeep.
       </p>
       <WikiSectionHeading id="faction-vehicles">Faction vehicles</WikiSectionHeading>
       <p className="text-sm text-[var(--tfmc-mist)]">

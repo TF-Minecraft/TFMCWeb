@@ -113,27 +113,27 @@ const softMaterials: [string, [string, string][]][] = [
     "Leather",
     [
       ["Leather", V("leather.png")],
-      ["Rare Leather", T("pets/rareleather.png")],
-      ["Epic Leather", T("pets/epicleather.png")],
-      ["Legendary Leather", T("pets/legendaryleather.png")],
+      ["Good Quality Leather", T("pets/rareleather.png")],
+      ["Great Quality Leather", T("pets/epicleather.png")],
+      ["Perfect Quality Leather", T("pets/legendaryleather.png")],
     ],
   ],
   [
     "Feather",
     [
       ["Feather", V("feather.png")],
-      ["Rare Feather", T("pets/rarefeather.png")],
-      ["Epic Feather", T("pets/epicfeather.png")],
-      ["Legendary Feather", T("pets/legendaryfeather.png")],
+      ["Good Quality Feather", T("pets/rarefeather.png")],
+      ["Great Quality Feather", T("pets/epicfeather.png")],
+      ["Perfect Quality Feather", T("pets/legendaryfeather.png")],
     ],
   ],
   [
     "Wool",
     [
       ["Wool", V("white_wool.png")],
-      ["Rare Wool", T("pets/rarewool.png")],
-      ["Epic Wool", T("pets/epicwool.png")],
-      ["Legendary Wool", T("pets/legendarywool.png")],
+      ["Good Quality Wool", T("pets/rarewool.png")],
+      ["Great Quality Wool", T("pets/epicwool.png")],
+      ["Perfect Quality Wool", T("pets/legendarywool.png")],
     ],
   ],
   ["Enchanted Dust", [["Enchanted Dust", T("magic_crafting/enchanted_dust.png")]]],
@@ -196,7 +196,7 @@ const recipeCount = armorRecipeTemplates.length + weaponRecipeTemplates.length +
 export default function AdvancedCraftingPage() {
   return (
     <WikiPage
-      lastModified="2026-11-04"
+      lastModified="2026-11-12"
       title="Advanced Crafting"
       intro={
         <>
