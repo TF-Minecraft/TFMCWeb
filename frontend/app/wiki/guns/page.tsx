@@ -193,9 +193,7 @@ export default function GunsPage() {
           Press the swap-hands key (F) while holding the gun to choose which shot the next reload uses. If you run out
           of that kind, the reload fails until you choose another.
         </li>
-        <li>
-          Crouch to aim. The gun comes up, you walk slower and your view narrows. Shots fired from the hip spread wider.
-        </li>
+        <li>Crouch to aim. The gun comes up, you walk slower and your view narrows.</li>
         <li>
           Right-click to fire. If the chamber holds more than one shot, the gun fires that many times before it needs
           reloading.
@@ -210,8 +208,8 @@ export default function GunsPage() {
         </li>
       </ul>
       <p className={`mt-3 ${body}`}>
-        Crouching gives the tightest shots. Walking, riding, sprinting and jumping all spread them wider. Your Charisma
-        tightens your aim and speeds up your reloads.
+        Shots fired from the hip spread wider, and walking, riding, sprinting and jumping spread them more. Your
+        Charisma tightens your aim and speeds up your reloads.
       </p>
       <p className={`mt-3 ${body}`}>
         Bullets drop over distance, and past a certain range they start to lose damage. They fly through leaves and
@@ -219,9 +217,8 @@ export default function GunsPage() {
         each hit straight through armour.
       </p>
       <p className={`mt-3 ${body}`}>
-        Rockets explode when they hit something and hurt everyone nearby. They never break blocks, and they don&apos;t
-        lose damage over distance. A rocket that bursts close to where it was fired hurts others only a little, but you
-        always take your own blast in full.
+        Rockets explode when they hit something and hurt everyone nearby. They never break blocks. A rocket hits others
+        harder the further it flies, but you always take your own blast in full.
       </p>
       <p className={`mt-3 ${body}`}>
         Bullets and rockets also damage vehicles. Bullets you fire from a seat in your own vehicle pass through it.
@@ -230,7 +227,7 @@ export default function GunsPage() {
       <WikiSectionHeading id="parts">Parts</WikiSectionHeading>
       <p className={body}>
         The cost is paid in the material you choose. Ingots are ingots of your metal, and refined wood is Refined
-        Barkwood, Maplewood, Elderwood or Demonwood. The leather, wool or feathers are the fitting.
+        Barkwood, Maplewood, Elderwood or Demonwood.
       </p>
       {partGroups.map(([kind, heading]) => (
         <section key={kind}>

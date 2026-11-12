@@ -231,8 +231,7 @@ export const skills: Record<string, Skill> = {
   ICE_SHIELD: { name: "Ice Shield", description: "Gain an absorption shield." },
   RUNIC_WARD: {
     name: "Runic Ward",
-    description:
-      "For a short while, Silenced and Frozen fall off you as soon as they land. You cannot cast it while Silenced.",
+    description: "For a short while, Silenced and Frozen fall off you as soon as they land.",
   },
   GROUP_UP: { name: "Group Up", description: "Give everyone around you, but not yourself, an absorption shield." },
   GUARDIAN_ANGEL: {

@@ -42,7 +42,10 @@ export default function WarPage() {
         Calls to arms
       </WikiSectionHeading>
       <ul className={`mt-3 list-disc space-y-2 pl-5 ${body}`}>
-        <li>Only factions that were allies of a side when the war was declared can be called.</li>
+        <li>
+          Only factions that were allies of a side when the war was declared can be called, and they must still be
+          allies when they accept.
+        </li>
         <li>A call never runs out. It waits on the war until the leader answers, even if they are offline.</li>
         <li>
           The leader of the called faction answers with <code className={code}>/war call accept &lt;war id&gt;</code> or{" "}
@@ -62,8 +65,8 @@ export default function WarPage() {
         The buildup
       </WikiSectionHeading>
       <p className={body}>
-        The first battle day is at least a week after the declaration, so you mark your days a week ahead. Until that
-        first battle starts, every faction in the war is frozen, and so is any ally that joins later:
+        The first battle day is at least a week after the declaration, so you mark your days a week ahead. Until the
+        war&apos;s first battle or raid starts, every faction in the war is frozen, and so is any ally that joins later:
       </p>
       <ul className={`mt-3 list-disc space-y-2 pl-5 ${body}`}>
         <li>
@@ -95,13 +98,13 @@ export default function WarPage() {
         rows={[
           [
             "21:00, two days before",
-            "The date becomes a battle day if at least 3 players of each side can come at the same start time. A side with fewer than 3 members needs all of them. If not, that date has no battle.",
+            "The date becomes a battle day if at least 3 players of each side can come at the same start time. If a side has fewer than 3 active players, all of them must be able to come. If not, that date has no battle.",
           ],
           ["21:00, the day before", "The start time is fixed to the hour most of both sides can make."],
         ]}
       />
       <ul className={`mt-3 list-disc space-y-2 pl-5 ${body}`}>
-        <li>Battles can be on days in a row.</li>
+        <li>Battles can fall on back-to-back days.</li>
         <li>
           After three dates in a row without a battle, the third becomes a battle day anyway. If one side marked nothing
           for it, the battle is decided automatically.
@@ -119,7 +122,7 @@ export default function WarPage() {
         rows={[
           ["16:00", "The battle is set on its province. Installations must be committed by then."],
           [
-            "From 19:00",
+            "19:00 to 21:00",
             <span key="raids">
               <a href="#raids" className={link}>
                 Raids
@@ -177,10 +180,10 @@ export default function WarPage() {
         Raids
       </WikiSectionHeading>
       <p className={body}>
-        Once the war has its first battle day set and the buildup week is over, raids can be launched every evening from
-        19:00. A faction leader at war launches a raid from one of their own ports or airports. A port can raid an enemy
-        port, an airport an enemy airport, and either one an enemy fort. Each side can launch one raid a day, and none
-        while a battle of the war is being fought. The attackers have 60 seconds to join with{" "}
+        Once the war has its first battle day set and the buildup week is over, raids can be launched every evening
+        between 19:00 and 21:00. A faction leader at war launches a raid from one of their own ports or airports. A port
+        can raid an enemy port, an airport an enemy airport, and either one an enemy fort. Each side can launch one raid
+        a day, and none while a battle of the war is being fought. The attackers have 60 seconds to join with{" "}
         <code className={code}>/raid join &lt;raid&gt;</code>, and the raid then lasts 10 minutes. You cannot join while
         mounted. A raided installation cannot berth or unberth vehicles for 48 hours.
       </p>
@@ -225,9 +228,9 @@ export default function WarPage() {
         mercenaries on its roster. A subject defending its own province brings its whole militia.
       </p>
       <p className={`mt-3 ${body}`}>
-        Deaths in a campaign battle don&apos;t shrink your regiments. They become wounds on the forces that fought,
-        split by the lives each one brought. Slots your Military law gives you for free are full again after every
-        battle. Wounded paid slots can&apos;t fight and cost no upkeep, and you lose them when the war ends.
+        Deaths in a field battle or siege don&apos;t shrink your regiments. They become wounds on the forces that
+        fought, split by the lives each one brought. Slots your Military law gives you for free are full again after
+        every battle. Wounded paid slots can&apos;t fight and cost no upkeep, and you lose them when the war ends.
       </p>
 
       <WikiSectionHeading id="mercenaries" intro="Guilds can run a mercenary company and fight for other factions.">

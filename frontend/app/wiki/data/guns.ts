@@ -339,8 +339,7 @@ const copper: Slot = { name: "Copper Ingot", qty: 1, texture: V("copper_ingot.pn
 
 const METAL_NOTE =
   "Shown in the lowest metal it can be made from. Each metal needs its own Smith perk and costs the same number of its ingots.";
-const WOOD_NOTE =
-  "Shown in barkwood with a plain fitting. Other woods and better fittings cost the same amounts. Each wood needs its own Smith perk, and fittings need none.";
+const WOOD_NOTE = "Shown in barkwood with a plain fitting. Other woods and better fittings cost the same amounts.";
 
 /** One Gunsmithing Station recipe per part, shown at the lowest perk it can be made with. */
 function partRecipe(part: GunPart): Recipe {
