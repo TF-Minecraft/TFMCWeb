@@ -187,6 +187,8 @@ function StaffAltLine({ profile, canRemove, reload }: { profile: Profile; canRem
       reload();
     } catch (err) {
       setError(adminErrorMessage(err));
+      // Already removed elsewhere: show the player as they are now.
+      if (err instanceof AccountApiError && err.status === 404) reload();
     } finally {
       setBusy(false);
     }

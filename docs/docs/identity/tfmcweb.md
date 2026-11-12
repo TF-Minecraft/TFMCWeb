@@ -107,6 +107,7 @@ accounts on Profile → Accounts: log in to the alt, run `/linkdiscord`, paste t
   the owner's ban was made. The owner's unban lifts only the copies, even after the alt link is
   gone. Bans reported for an alt never go to the owner's Discord; only the owner's own ban does.
   Copies follow the owner's current Discord link, so an owner unlinked when banned gives none.
+  Warnings given to an alt do reach the owner's Discord, since it is the same person.
 
 | Route | Auth | Role |
 |-------|------|------|

@@ -434,3 +434,35 @@ def test_an_alts_ban_sends_nothing_to_its_owners_discord(app):
     assert add_alt(c).status_code == 200
     result = _ban(ALT, start=int(time.time() * 1000), discord_id=discord_id, name="ShayminPlays")
     assert result["mirrored"] is False and list_undelivered_moderation() == []
+
+
+def test_an_owner_unbanned_and_banned_again_bans_the_alt_again(app):
+    _, c = wren(app)
+    assert add_alt(c).status_code == 200
+    now = int(time.time() * 1000)
+    _ban(OWNER, start=now - 60_000, hours=1)
+    enqueue_ban_event("unban", player_uuid=OWNER, minecraft_name="Wren", banned_at_ms=now - 60_000,
+                      expires_at_ms=now - 60_000 + HOUR)
+    # The new ban was made before the unban was reported, as when a server's report is late.
+    _ban(OWNER, start=now - 30_000, hours=24)
+    assert {b["player_uuid"] for b in list_ban_sync()["bans"]} == {OWNER, ALT}
+
+
+def test_a_longer_owner_ban_replaces_an_alts_own_shorter_ban(app):
+    _, c = wren(app)
+    assert add_alt(c).status_code == 200
+    now = int(time.time() * 1000)
+    _ban(ALT, start=now - HOUR, hours=24, reason="Own ban", name="ShayminPlays")
+    _ban(OWNER, start=now, hours=None)
+    alt = {b["player_uuid"]: b for b in list_ban_sync()["bans"]}[ALT]
+    assert (alt["reason"], alt["expires_at_ms"]) == ("Staff alt of Wren: Abuse", 0)
+
+
+def test_a_server_echo_inside_the_same_ban_window_keeps_the_copy(app):
+    _, c = wren(app)
+    assert add_alt(c).status_code == 200
+    now = int(time.time() * 1000)
+    _ban(OWNER, start=now, hours=24)
+    _ban(ALT, start=now + 1000, hours=24, name="ShayminPlays", reason="Staff alt of Wren: Abuse")
+    enqueue_ban_event("unban", player_uuid=OWNER, minecraft_name="Wren", banned_at_ms=now, expires_at_ms=now + 24 * HOUR)
+    assert list_ban_sync()["bans"] == []

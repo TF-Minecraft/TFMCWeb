@@ -195,8 +195,9 @@ def _record_ban(
     """Store a ban or unban for the player. False when it repeats what is stored.
 
     For an unban, banned_at and expires_at describe the ban the server lifted.
-    copied_from marks a staff alt's copy of its owner's ban; any other ban or unban
-    stored for the player clears it, and a repeat keeps it.
+    copied_from marks a staff alt's copy of its owner's ban, and an unban that lifted
+    such a copy; any other ban or unban stored for the player clears it, and a repeat
+    keeps it.
     """
     database.advisory_lock(conn, f"moderation:ban:{uuid.lower()}")
     row = conn.execute(
@@ -238,15 +239,15 @@ def _record_ban(
         return False
     conn.execute(
         """
-        INSERT INTO player_bans (player_uuid, minecraft_name, banned, updated_at)
-        VALUES (%s, %s, false, %s)
+        INSERT INTO player_bans (player_uuid, minecraft_name, banned, updated_at, copied_from)
+        VALUES (%s, %s, false, %s, %s)
         ON CONFLICT (player_uuid) DO UPDATE SET
             minecraft_name = COALESCE(EXCLUDED.minecraft_name, player_bans.minecraft_name),
             banned = false,
             updated_at = EXCLUDED.updated_at,
-            copied_from = NULL
+            copied_from = EXCLUDED.copied_from
         """,
-        (uuid, minecraft_name, now),
+        (uuid, minecraft_name, now, copied_from),
     )
     return True
 
@@ -256,8 +257,10 @@ def _copy_to_staff_alts(conn, owner_uuid: str) -> None:
 
     A copy is stored like any ban, with the owner's times and copied_from set, so ban sync
     applies and lifts it on the servers; no Discord notice, the owner already gets one.
-    It never replaces a ban staff gave the alt itself while that holds, nor re-bans an alt
-    unbanned after the owner's ban was made. The owner's unban lifts only the copies, and
+    It never replaces a ban staff gave the alt itself that lasts at least as long, nor
+    re-bans an alt staff unbanned after the owner's ban was made (a copy lifted by the
+    owner's own unban keeps copied_from, so the owner's next ban is copied again).
+    The owner's unban lifts only the copies, and
     finds them by copied_from, so it still works after the alt link or the owner's own
     Discord link is gone. Alts are found through the owner's current Discord link, so an
     owner who is unlinked when banned gives no copies (their alts don't count as linked).
@@ -277,7 +280,8 @@ def _copy_to_staff_alts(conn, owner_uuid: str) -> None:
         ).fetchall()
         for copy in copies:
             _record_ban(conn, "unban", copy["player_uuid"], minecraft_name=copy["minecraft_name"], reason=None,
-                        staff_name=None, banned_at=copy["banned_at"], expires_at=copy["expires_at"])
+                        staff_name=None, banned_at=copy["banned_at"], expires_at=copy["expires_at"],
+                        copied_from=owner_key)
         return
     if owner["expires_at"] is not None and owner["expires_at"] <= now:
         return
@@ -285,12 +289,15 @@ def _copy_to_staff_alts(conn, owner_uuid: str) -> None:
     for alt in alts_of(conn, owner_uuid):
         if alt["player_uuid"] == owner_key:
             continue
+        # Read under the lock _record_ban takes, so a pardon committing meanwhile is seen.
+        database.advisory_lock(conn, f"moderation:ban:{alt['player_uuid']}")
         held = conn.execute(
             "SELECT banned, expires_at, updated_at, copied_from FROM player_bans WHERE player_uuid = %s",
             (alt["player_uuid"],),
         ).fetchone()
         if held is not None and held["copied_from"] != owner_key:
-            own_ban = held["banned"] and (held["expires_at"] is None or held["expires_at"] > now)
+            own_ban = held["banned"] and (held["expires_at"] is None or (
+                owner["expires_at"] is not None and held["expires_at"] >= owner["expires_at"]))
             unbanned_since = not held["banned"] and held["updated_at"] >= since
             if own_ban or unbanned_since:
                 continue

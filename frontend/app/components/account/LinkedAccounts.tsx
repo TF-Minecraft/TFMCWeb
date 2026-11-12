@@ -330,6 +330,7 @@ export default function LinkedAccounts({
         <StaffAltsCard
           staffAlts={account.staff_alts}
           linked={minecraft !== null}
+          staff={STAFF_ROLES.includes(user.role ?? "")}
           discordName={discordHandle}
           refresh={refresh}
           onError={onError}
@@ -339,10 +340,13 @@ export default function LinkedAccounts({
   );
 }
 
+const STAFF_ROLES = ["mod", "admin", "root"];
+
 /** Staff only: more Minecraft accounts that count as linked through this Discord account. */
 function StaffAltsCard({
   staffAlts,
   linked,
+  staff,
   discordName,
   refresh,
   onError,
@@ -350,6 +354,8 @@ function StaffAltsCard({
   staffAlts: StaffAlts;
   /** Whether their own Minecraft account is linked. */
   linked: boolean;
+  /** Whether their site role is staff; alts count only for staff with their own link. */
+  staff: boolean;
   discordName: string;
   refresh: () => Promise<void>;
   onError: (message: string | null) => void;
@@ -402,9 +408,11 @@ function StaffAltsCard({
       </p>
       {!active ? (
         <p className="mt-2 text-sm text-[#e8c48a]" role="status">
-          {linked
+          {!staff
             ? "Your staff alts are paused while you’re not on staff. You can still remove them."
-            : "Link your own Minecraft account above to use staff alts."}
+            : !linked
+              ? "Link your own Minecraft account above to use staff alts."
+              : "Your staff alts are paused. Reload the page to check again."}
         </p>
       ) : null}
       {alts.length || canAdd ? (
