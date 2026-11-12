@@ -261,7 +261,8 @@ def _copy_to_staff_alts(conn, owner_uuid: str) -> None:
     unban would otherwise lift it), nor re-bans an alt staff unbanned after the site
     stored the owner's ban (a copy lifted by the owner's own unban keeps copied_from,
     so the owner's next ban is copied again). An alt whose own ban ends while the
-    owner's still holds gets the copy only with the owner's next report.
+    owner's still holds, by a lapse or an unban a server reports, stays unbanned until
+    the owner's next new ban: repeats of the owner's current ban don't copy it.
     The owner's unban lifts only the copies, and
     finds them by copied_from, so it still works after the alt link or the owner's own
     Discord link is gone. Alts are found through the owner's current Discord link, so an
