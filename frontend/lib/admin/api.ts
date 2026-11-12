@@ -75,6 +75,7 @@ const ERROR_MESSAGES: Record<string, string> = {
   directory_busy: "The player list is busy. Try again in a moment.",
   report_not_found: "No report with that code in the last 30 days.",
   audit_unavailable: "This can’t be shown because the view couldn’t be logged. Try again.",
+  staff_alt_not_found: "That staff alt link has already been removed.",
 };
 
 export function adminErrorMessage(err: unknown): string {
@@ -228,8 +229,29 @@ export type PlayerProfile = {
     character_id: string;
     updated_at: string | null;
   })[];
+  /** Set when this account is a staff member's alt, linked through their Discord link. */
+  staff_alt_of?: StaffAltOwner | null;
+  /** The staff alts of this account's Discord link. */
+  staff_alts?: StaffAltLink[];
   coreprotect: CoreProtectStatus & { server_label: string | null; ping_seconds: number | null };
 };
+
+export type StaffAltOwner = {
+  discord_user_id: string;
+  /** The owner's own linked account; null if they have since unlinked it. */
+  player_uuid: string | null;
+  minecraft_name: string | null;
+  linked_at: string;
+};
+
+export type StaffAltLink = { player_uuid: string; minecraft_name: string | null; linked_at: string };
+
+/** Remove this account's staff alt link, whoever owns it (admins). */
+export function unlinkStaffAltAsAdmin(
+  playerUuid: string,
+): Promise<{ staff_alt_of: StaffAltOwner | null; staff_alts: StaffAltLink[] }> {
+  return adminRequest(`/admin/players/${encodeURIComponent(playerUuid)}/staff-alt/unlink`, { method: "POST" });
+}
 
 export function playerCharacterPictureUrl(
   uuid: string,

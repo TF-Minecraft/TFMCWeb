@@ -8,13 +8,17 @@ import {
   getAccount,
   getAccountOverview,
   linkMinecraft,
+  linkStaffAlt,
   previewMinecraftLink,
+  previewStaffAlt,
   signOut,
   startLinkedProfileSession,
   startMicrosoftLink,
   unlinkAccountPatreon,
+  unlinkStaffAlt,
   type Account,
   type AccountMinecraft,
+  type StaffAlts,
 } from "../../../lib/account/api";
 import { ProfileApiError, getProfileDashboard, type ProfileDashboard } from "../../../lib/profile/api";
 import { getSession, setSession } from "../../../lib/profile/session";
@@ -77,6 +81,9 @@ vi.mock("../../../lib/account/api", async (importOriginal) => ({
   startLinkedProfileSession: vi.fn(),
   startMicrosoftLink: vi.fn(),
   unlinkAccountPatreon: vi.fn(),
+  previewStaffAlt: vi.fn(),
+  linkStaffAlt: vi.fn(),
+  unlinkStaffAlt: vi.fn(),
 }));
 vi.mock("../../../lib/profile/api", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../../../lib/profile/api")>()),
@@ -482,6 +489,81 @@ it("leaves Patreon out when Patreon linking is off", async () => {
   render(<ProfilePanel signin={null} />);
   await screen.findByLabelText("Minecraft account");
   expect(screen.queryByLabelText("Patreon")).toBeNull();
+});
+
+function staffAlts(overrides: Partial<StaffAlts> = {}): StaffAlts {
+  return { alts: [], max: 3, active: true, ...overrides };
+}
+
+const SHAYMIN = { player_uuid: "alt-uuid", minecraft_name: "ShayminPlays", linked_at: "2026-11-12T10:00:00Z" };
+
+it("adds a staff alt with a code from the alt, naming both accounts", async () => {
+  vi.mocked(getAccount)
+    .mockResolvedValueOnce(account({ minecraft: linked(), staff_alts: staffAlts() }))
+    .mockResolvedValueOnce(account({ minecraft: linked(), staff_alts: staffAlts({ alts: [SHAYMIN] }) }));
+  vi.mocked(previewStaffAlt).mockResolvedValue({
+    player_uuid: "alt-uuid",
+    minecraft_name: "ShayminPlays",
+    expires_at: "z",
+  });
+  vi.mocked(linkStaffAlt).mockResolvedValue(staffAlts({ alts: [SHAYMIN] }));
+  visit("accounts");
+  render(<ProfilePanel signin={null} />);
+  const list = await screen.findByRole("list", { name: "Staff alts" });
+  expect(list.textContent).toContain("No staff alts yet");
+  fireEvent.click(within(list).getByRole("button", { name: "Add a staff alt" }));
+  expect(within(list).getByText(/Log in to the alt, run/)).toBeTruthy();
+  fireEvent.change(within(list).getByLabelText("Link code"), { target: { value: "abcd1234ef56" } });
+  fireEvent.click(within(list).getByRole("button", { name: "Continue" }));
+  expect((await within(list).findByText(/as a staff alt of/)).textContent).toBe(
+    "Add Minecraft account ShayminPlays as a staff alt of Discord @steve_tfmc?",
+  );
+  fireEvent.click(within(list).getByRole("button", { name: "Add staff alt" }));
+  const row = await screen.findByLabelText("Staff alt ShayminPlays");
+  expect(row.textContent).toContain("ShayminPlays");
+  expect(linkStaffAlt).toHaveBeenCalledWith("abcd1234ef56");
+  expect(previewMinecraftLink).not.toHaveBeenCalled();
+  // A fresh form for the next alt, not the finished one.
+  fireEvent.click(
+    within(screen.getByRole("list", { name: "Staff alts" })).getByRole("button", { name: "Add a staff alt" }),
+  );
+  expect(screen.getByRole("button", { name: "Continue" })).toBeTruthy();
+});
+
+it("removes a staff alt after confirming", async () => {
+  vi.mocked(getAccount)
+    .mockResolvedValueOnce(account({ minecraft: linked(), staff_alts: staffAlts({ alts: [SHAYMIN] }) }))
+    .mockResolvedValueOnce(account({ minecraft: linked(), staff_alts: staffAlts() }));
+  vi.mocked(unlinkStaffAlt).mockResolvedValue(staffAlts());
+  visit("accounts");
+  render(<ProfilePanel signin={null} />);
+  const row = await screen.findByLabelText("Staff alt ShayminPlays");
+  fireEvent.click(within(row).getByRole("button", { name: "Remove" }));
+  expect(unlinkStaffAlt).not.toHaveBeenCalled();
+  expect(row.textContent).toContain("Remove ShayminPlays from your staff alts?");
+  fireEvent.click(within(row).getByRole("button", { name: "Remove" }));
+  expect(await screen.findByText("No staff alts yet")).toBeTruthy();
+  expect(unlinkStaffAlt).toHaveBeenCalledWith("alt-uuid");
+});
+
+it("explains paused staff alts and offers no new ones", async () => {
+  vi.mocked(getAccount).mockResolvedValue(
+    account({ minecraft: linked(), staff_alts: staffAlts({ alts: [SHAYMIN], active: false }) }),
+  );
+  visit("accounts");
+  render(<ProfilePanel signin={null} />);
+  expect((await screen.findByRole("status")).textContent).toContain("paused while you’re not on staff");
+  const list = screen.getByRole("list", { name: "Staff alts" });
+  expect(within(list).queryByRole("button", { name: "Add a staff alt" })).toBeNull();
+  expect(within(list).getByRole("button", { name: "Remove" })).toBeTruthy();
+});
+
+it("shows players no staff alts", async () => {
+  vi.mocked(getAccount).mockResolvedValue(account({ minecraft: linked() }));
+  visit("accounts");
+  render(<ProfilePanel signin={null} />);
+  await screen.findByLabelText("Minecraft account");
+  expect(screen.queryByRole("heading", { name: "Staff alts" })).toBeNull();
 });
 
 it("invites a connected Patreon without a tier to support, and disconnects after confirming", async () => {

@@ -5,8 +5,10 @@ import {
   discordSignInUrl,
   isNotGuildMember,
   linkMinecraft,
+  linkStaffAlt,
   needsGuildRecheck,
   previewMinecraftLink,
+  previewStaffAlt,
   AccountApiError,
   type MinecraftLinkPreview,
 } from "../../../lib/account/api";
@@ -18,6 +20,9 @@ const quietButtonClass =
 
 function errorText(err: unknown): string {
   if (isNotGuildMember(err)) return "Linking needs you to be in the TFMC Discord server.";
+  if (err instanceof AccountApiError && err.status === 403 && err.message === "forbidden") {
+    return "Only staff can add staff alts.";
+  }
   if (err instanceof AccountApiError && err.status === 429) return err.message;
   if (err instanceof AccountApiError && err.status === 400) return err.message;
   return "We couldn’t check that code just now. Please try again.";
@@ -26,9 +31,11 @@ function errorText(err: unknown): string {
 type Props = {
   discordName: string;
   onLinked: () => void | Promise<void>;
+  /** Add the account as one of your staff alts instead of linking it as your own. */
+  staffAlt?: boolean;
 };
 
-export default function MinecraftLinkForm({ discordName, onLinked }: Props) {
+export default function MinecraftLinkForm({ discordName, onLinked, staffAlt = false }: Props) {
   const [code, setCode] = useState("");
   const [preview, setPreview] = useState<MinecraftLinkPreview | null>(null);
   const [busy, setBusy] = useState(false);
@@ -44,7 +51,7 @@ export default function MinecraftLinkForm({ discordName, onLinked }: Props) {
     }
     setBusy(true);
     try {
-      setPreview(await previewMinecraftLink(code.trim()));
+      setPreview(await (staffAlt ? previewStaffAlt : previewMinecraftLink)(code.trim()));
     } catch (err) {
       setError(errorText(err));
     } finally {
@@ -56,7 +63,7 @@ export default function MinecraftLinkForm({ discordName, onLinked }: Props) {
     setBusy(true);
     setError(null);
     try {
-      await linkMinecraft(code.trim());
+      await (staffAlt ? linkStaffAlt : linkMinecraft)(code.trim());
       await onLinked();
     } catch (err) {
       if (needsGuildRecheck(err)) {
@@ -84,14 +91,15 @@ export default function MinecraftLinkForm({ discordName, onLinked }: Props) {
     return (
       <div>
         <p className="text-[var(--tfmc-cream)]">
+          {staffAlt ? "Add " : "Link "}
           {preview.minecraft_name ? (
             <>
-              Link Minecraft account <strong>{preview.minecraft_name}</strong>
+              Minecraft account <strong>{preview.minecraft_name}</strong>
             </>
           ) : (
-            "Link this Minecraft account"
+            "this Minecraft account"
           )}{" "}
-          to Discord <strong>{discordName}</strong>?
+          {staffAlt ? "as a staff alt of" : "to"} Discord <strong>{discordName}</strong>?
         </p>
         <p className="mt-2 text-sm text-[var(--tfmc-mist)]">
           Only continue if you ran /linkdiscord yourself. Never enter a code someone else gave you.
@@ -103,7 +111,7 @@ export default function MinecraftLinkForm({ discordName, onLinked }: Props) {
         ) : null}
         <div className="mt-4 flex flex-wrap items-center gap-4">
           <button type="button" onClick={() => void onConfirm()} disabled={busy} className={buttonClass}>
-            {busy ? "Linking…" : "Link account"}
+            {busy ? "Linking…" : staffAlt ? "Add staff alt" : "Link account"}
           </button>
           <button type="button" onClick={() => setPreview(null)} disabled={busy} className={quietButtonClass}>
             Cancel
@@ -116,8 +124,9 @@ export default function MinecraftLinkForm({ discordName, onLinked }: Props) {
   return (
     <form onSubmit={onCheck} className="flex flex-col gap-4">
       <p className="text-sm text-[var(--tfmc-mist)]">
-        Run <code className="text-[var(--tfmc-accent)]">/linkdiscord</code> in game, click the code in chat to copy it,
-        then paste it here.
+        {staffAlt ? "Log in to the alt, run " : "Run "}
+        <code className="text-[var(--tfmc-accent)]">/linkdiscord</code> in game, click the code in chat to copy it, then
+        paste it here.
       </p>
       <label className="flex flex-col gap-2">
         <span className="text-sm font-medium text-[var(--tfmc-stone)]">Link code</span>

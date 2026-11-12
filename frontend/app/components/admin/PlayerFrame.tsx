@@ -11,6 +11,7 @@ import {
   coreProtectMessage,
   getAdminMe,
   getPlayer,
+  unlinkStaffAltAsAdmin,
   type AdminMe,
   type PlayerProfile as Profile,
 } from "../../../lib/admin/api";
@@ -148,6 +149,11 @@ export default function PlayerFrame({ uuid, children }: { uuid: string; children
               </>
             ) : null}
           </p>
+          <StaffAltLine
+            profile={profile}
+            canRemove={me?.capabilities.includes("manage_staff_alts") ?? false}
+            reload={loadProfile}
+          />
           {notice ? (
             <p className="mt-2 text-sm text-[#e8c48a]" role="status">
               {notice}
@@ -158,6 +164,88 @@ export default function PlayerFrame({ uuid, children }: { uuid: string; children
       </AdminColumn>
       <PlayerContext.Provider value={{ profile, me, movement, reload: loadProfile }}>{children}</PlayerContext.Provider>
     </>
+  );
+}
+
+const accentLink = "text-[var(--tfmc-accent)] underline-offset-2 hover:underline";
+
+/** Staff alt links: whose alt this account is (admins may remove it), or the alts of its Discord link. */
+function StaffAltLine({ profile, canRemove, reload }: { profile: Profile; canRemove: boolean; reload: () => void }) {
+  const [busy, setBusy] = useState(false);
+  const [confirm, setConfirm] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const owner = profile.staff_alt_of;
+  const alts = profile.staff_alts ?? [];
+  if (!owner && !alts.length) return null;
+
+  async function onRemove() {
+    setBusy(true);
+    setError(null);
+    try {
+      await unlinkStaffAltAsAdmin(profile.uuid);
+      setConfirm(false);
+      reload();
+    } catch (err) {
+      setError(adminErrorMessage(err));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <p className="mt-1 text-sm text-[var(--tfmc-mist)]">
+      {owner ? (
+        <>
+          Staff alt of{" "}
+          {owner.player_uuid ? (
+            <Link href={`/admin/players/${owner.player_uuid}`} className={accentLink}>
+              {owner.minecraft_name ?? owner.player_uuid}
+            </Link>
+          ) : (
+            <span className="font-mono text-xs">Discord {owner.discord_user_id}</span>
+          )}
+          , linked {formatEpoch(Date.parse(owner.linked_at) / 1000)}
+          {canRemove ? (
+            confirm ? (
+              <>
+                {" · Remove this staff alt link? "}
+                <button type="button" disabled={busy} onClick={() => void onRemove()} className={accentLink}>
+                  {busy ? "Removing…" : "Remove"}
+                </button>
+                {" · "}
+                <button type="button" disabled={busy} onClick={() => setConfirm(false)} className={accentLink}>
+                  Keep it
+                </button>
+              </>
+            ) : (
+              <>
+                {" · "}
+                <button type="button" onClick={() => setConfirm(true)} className={accentLink}>
+                  Remove link
+                </button>
+              </>
+            )
+          ) : null}
+        </>
+      ) : (
+        <>
+          Staff alts:{" "}
+          {alts.map((alt, i) => (
+            <span key={alt.player_uuid}>
+              {i ? ", " : null}
+              <Link href={`/admin/players/${alt.player_uuid}`} className={accentLink}>
+                {alt.minecraft_name ?? alt.player_uuid}
+              </Link>
+            </span>
+          ))}
+        </>
+      )}
+      {error ? (
+        <span className="ml-2 text-[#e8c48a]" role="alert">
+          {error}
+        </span>
+      ) : null}
+    </p>
   );
 }
 

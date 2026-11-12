@@ -19,7 +19,7 @@ Companion: [integrations/discord-bot.md](../integrations/discord-bot.md) · [int
 | Does **not** own | Pack writing (ArmourShop/DrinkBuilder), map regen (SimpleFactions), character data (RPCharacters), Essentials ban execution |
 | Discord required | Every player must link Discord **and** be in the TFMC guild to play Survival |
 | Staff / helpers | Discord gate applies **only in Survival** |
-| Alts | **None** - one Discord ↔ one Minecraft UUID |
+| Alts | One Discord ↔ one Minecraft UUID; staff may add up to 3 [staff alts](#staff-alts) |
 | Leave Discord | **1 hour grace** - rejoin within 1h stays linked; after grace → unlink + freeze |
 | Freeze | **RPCharacters** freeze reason `DISCORD_REQUIRED`; do not touch characters |
 | Bans | Essentials `/tempban` / `/ban`; TFMCWeb mirrors to Discord bot |
@@ -84,6 +84,32 @@ Link tables live in the site PostgreSQL database (`discord_links`, `discord_link
 | `GET /skins/discord/identity/{discord_user_id}` | Staff (bot) | Resolve selected Discord account to UUID and latest known Minecraft name for moderation |
 | `POST /skins/discord/link/unlink` | Plugin | Explicit unlink |
 | Guild leave/join | Staff (bot) | 1h grace on leave; clear on rejoin |
+
+### Staff alts
+
+Staff (site role mod or above) whose own Minecraft account is linked can add up to three more
+accounts on Profile → Accounts: log in to the alt, run `/linkdiscord`, paste the code under
+**Staff alts**. Only someone who can log in to the alt gets that code. The alt is stored in
+`staff_alt_links` (not `discord_links`, which stays one to one) and audited
+(`account.staff_alt.link` / `.unlink`).
+
+- While the owner's Discord link stands and the owner is staff, `GET /skins/discord/status/{alt}`
+  answers linked with the owner's Discord account (`link_method: staff_alt`, `staff_alt_of`), so
+  the alt passes the Discord gate and can mint `/token` codes (Profile, Wardrobe, skins, drinks).
+  When either stops, the alt reads unlinked but keeps its row, and works again if they return.
+- A staff alt can't be linked as anyone's own account, and `/linkdiscord` on it answers "already
+  linked" with the owner's handle, until the owner (Profile) or an admin (staff player page,
+  `manage_staff_alts`) removes it.
+- A ban or unban reported for the owner's account is copied to their alts, with the owner's times
+  and reason ("Staff alt of …"), so ban sync applies and lifts it on every syncing server. Only
+  the owner's ban goes to Discord.
+
+| Route | Auth | Role |
+|-------|------|------|
+| `POST /account/staff-alts/preview` | Staff session | Name the account a code would add |
+| `POST /account/staff-alts/link` | Staff session | Add the alt; spends the code |
+| `POST /account/staff-alts/{uuid}/unlink` | Owner session | Remove one of your alts |
+| `POST /admin/players/{uuid}/staff-alt/unlink` | Admin session | Remove anyone's alt link |
 
 ## War declare codes
 

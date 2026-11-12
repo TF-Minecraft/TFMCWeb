@@ -21,6 +21,7 @@ from src.coreprotect.reader import REQUEST_BUDGET_SECONDS, Budget, CoreProtectCo
 from src import database
 from src.characters.roster import list_roster
 from src.characters.wardrobe import active_face_png, active_figure_png, WardrobeError
+from src.skins import staff_alts
 
 from . import audit, discord_names, roles, users
 
@@ -410,6 +411,8 @@ def profile(config: CoreProtectConfig, text: str) -> dict:
         "online": sessions.is_fresh(event, now, config.ping_seconds),
         "discord": _discord(link),
         "account": _account(link),
+        # Whose staff alt this account is, and its own alts (src/skins/staff_alts.py).
+        **staff_alts.for_player(key),
         "characters": [
             {**sheets.get((c["realm_id"], c["character_id"]), {}),
              **{k: c[k] for k in ("realm_id", "character_id", "name", "race", "class", "updated_at")},

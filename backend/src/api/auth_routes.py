@@ -16,11 +16,12 @@ from collections import defaultdict
 from urllib.parse import urlencode, urlsplit
 
 from fastapi import APIRouter, HTTPException, Request, Response
+from fastapi import Path as PathParam
 from fastapi.responses import RedirectResponse
 from pydantic import BaseModel, Field
 
 from src.api.prod_guard import is_production
-from src.auth import account_overview, guild_check, preview_sign_in, users, view_as
+from src.auth import account_overview, guild_check, preview_sign_in, roles, users, view_as
 from src.auth.config import AuthConfig
 from src.auth import microsoft_link
 from src.auth.discord import DiscordClient, DiscordError
@@ -28,6 +29,7 @@ from src.auth.microsoft import MicrosoftClient, MicrosoftConfig, MicrosoftError
 from src.patreon import linking as patreon_linking
 from src.patreon import service as patreon_service
 from src.patreon.config import Config as PatreonConfig
+from src.skins import staff_alts
 from src.skins.codes import CodeError, start_linked_profile_session
 from src.skins.discord_link import (
     LinkError,
@@ -480,6 +482,8 @@ def get_account(request: Request, response: Response):
         "minecraft": minecraft,
         "microsoft_link": MicrosoftConfig.from_env().usable,
         "patreon": _patreon(user),
+        # Staff only (or anyone who still has alts): src/skins/staff_alts.py.
+        "staff_alts": staff_alts.account_view(user),
         "viewing_as": (
             {"staff_name": user["acting_name"], "expires_at": user["expires_at"]}
             if user["acting_user_id"] is not None else None
@@ -510,11 +514,13 @@ def get_account_overview(request: Request, response: Response):
 
 
 @auth_router.get("/account/minecraft/head")
-def get_minecraft_head(request: Request):
-    """The linked player's skin face. Only your own, so the site is no open Mojang proxy."""
+def get_minecraft_head(request: Request, u: str | None = None):
+    """The linked player's skin face, or with ?u= one of your staff alts'. Only your own
+    accounts, so the site is no open Mojang proxy."""
     config = _config()
     user = current_user(request, config)
-    png = account_overview.head(_linked_player(user))
+    alt = (u or "").strip()
+    png = account_overview.head(alt if alt and staff_alts.owns(user, alt) else _linked_player(user))
     if png is None:
         raise HTTPException(404, detail="head_unavailable")
     return Response(content=png, media_type="image/png", headers={"Cache-Control": "private, max-age=3600"})
@@ -690,6 +696,61 @@ def minecraft_unlink(request: Request, response: Response):
     except LinkError as e:
         raise HTTPException(400, detail=str(e)) from e
     return {"minecraft": None}
+
+
+# --------------------
+# Staff alts (src/skins/staff_alts.py)
+# --------------------
+
+_UUID_PATH = r"^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$"
+
+
+def _staff_alt_user(request: Request, config: AuthConfig) -> dict:
+    """A same-origin request from signed-in staff, within the link attempt limit."""
+    require_same_origin(request, config)
+    user = current_user(request, config)
+    if not roles.is_staff(user["role"]):
+        raise HTTPException(403, detail="forbidden")
+    _check_link_rate(user["user_id"])
+    return user
+
+
+@auth_router.post("/account/staff-alts/preview")
+def staff_alt_preview(request: Request, body: CodeBody, response: Response):
+    """Name the account a /linkdiscord code from an alt would add, without using the code."""
+    config = _config()
+    user = _staff_alt_user(request, config)
+    _no_store(response)
+    try:
+        return staff_alts.preview(normalise_code(body.code), user["discord_user_id"])
+    except LinkError as e:
+        raise HTTPException(400, detail=str(e)) from e
+
+
+@auth_router.post("/account/staff-alts/link")
+def staff_alt_link(request: Request, body: CodeBody, response: Response):
+    config = _config()
+    user = _staff_alt_user(request, config)
+    _no_store(response)
+    try:
+        staff_alts.link(normalise_code(body.code), user)
+    except LinkError as e:
+        raise HTTPException(400, detail=str(e)) from e
+    return {"staff_alts": staff_alts.account_view(user)}
+
+
+@auth_router.post("/account/staff-alts/{player_uuid}/unlink")
+def staff_alt_unlink(request: Request, response: Response, player_uuid: str = PathParam(pattern=_UUID_PATH)):
+    """Remove one of your staff alts; also open to owners no longer on staff."""
+    config = _config()
+    require_same_origin(request, config)
+    user = current_user(request, config)
+    _no_store(response)
+    try:
+        staff_alts.unlink(player_uuid, user)
+    except LinkError as e:
+        raise HTTPException(404, detail=str(e)) from e
+    return {"staff_alts": staff_alts.account_view(user)}
 
 
 @auth_router.post("/account/patreon/unlink")

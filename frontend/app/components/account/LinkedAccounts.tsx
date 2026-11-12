@@ -12,9 +12,11 @@ import {
   startMicrosoftLink,
   unlinkAccountPatreon,
   unlinkMinecraft,
+  unlinkStaffAlt,
   AccountApiError,
   type Account,
   type AccountMinecraft,
+  type StaffAlts,
 } from "../../../lib/account/api";
 import { endLinkedProfileSession } from "../../../lib/account/profileSession";
 import type { PatreonStatus } from "../../../lib/profile/patreon";
@@ -324,7 +326,145 @@ export default function LinkedAccounts({
           />
         ) : null}
       </ul>
+      {account.staff_alts ? (
+        <StaffAltsCard
+          staffAlts={account.staff_alts}
+          linked={minecraft !== null}
+          discordName={discordHandle}
+          refresh={refresh}
+          onError={onError}
+        />
+      ) : null}
     </fieldset>
+  );
+}
+
+/** Staff only: more Minecraft accounts that count as linked through this Discord account. */
+function StaffAltsCard({
+  staffAlts,
+  linked,
+  discordName,
+  refresh,
+  onError,
+}: {
+  staffAlts: StaffAlts;
+  /** Whether their own Minecraft account is linked. */
+  linked: boolean;
+  discordName: string;
+  refresh: () => Promise<void>;
+  onError: (message: string | null) => void;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [confirm, setConfirm] = useState<string | null>(null);
+  const [showForm, setShowForm] = useState(false);
+  const { alts, max, active } = staffAlts;
+  const canAdd = active && alts.length < max;
+
+  async function onRemove(playerUuid: string) {
+    setBusy(true);
+    onError(null);
+    try {
+      await unlinkStaffAlt(playerUuid);
+      setConfirm(null);
+      await refresh();
+    } catch {
+      onError("We couldn’t remove that staff alt just now. Please try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function onAdded() {
+    setShowForm(false);
+    await refresh();
+  }
+
+  return (
+    <section aria-labelledby="staff-alts-heading" className="mt-6">
+      <h3 id="staff-alts-heading" className="text-sm font-semibold text-[var(--tfmc-cream)]">
+        Staff alts
+      </h3>
+      <p className="mt-1 text-sm text-[var(--tfmc-mist)]">
+        Other Minecraft accounts you play on as staff, up to {max}. Each can use{" "}
+        <code className="text-[var(--tfmc-accent)]">/token</code> codes, Profile and the Wardrobe like your own account.
+      </p>
+      {!active ? (
+        <p className="mt-2 text-sm text-[#e8c48a]" role="status">
+          {linked
+            ? "Your staff alts are paused while you’re not on staff. You can still remove them."
+            : "Link your own Minecraft account above to use staff alts."}
+        </p>
+      ) : null}
+      {alts.length || canAdd ? (
+        <ul
+          className={`${cardClass} mt-3 divide-y divide-[color-mix(in_srgb,var(--tfmc-cream)_8%,transparent)]`}
+          aria-label="Staff alts"
+        >
+          {alts.map((alt) => {
+            const name = alt.minecraft_name || "Minecraft account";
+            const added = formatDate(alt.linked_at);
+            return (
+              <AccountRow
+                key={alt.player_uuid}
+                label={`Staff alt ${name}`}
+                service="Staff alt"
+                icon={<PlayerHead uuid={alt.player_uuid} fallback={null} size={32} />}
+                action={
+                  confirm === alt.player_uuid ? null : (
+                    <button type="button" onClick={() => setConfirm(alt.player_uuid)} className={quietButtonClass}>
+                      Remove
+                    </button>
+                  )
+                }
+              >
+                <p className="truncate font-semibold text-[var(--tfmc-cream)]">{name}</p>
+                {added ? <p className="text-sm text-[var(--tfmc-stone)]">Added {added}</p> : null}
+                {confirm === alt.player_uuid ? (
+                  <div className="mt-3 flex flex-wrap items-center gap-4">
+                    <span className="text-sm text-[var(--tfmc-mist)]">Remove {name} from your staff alts?</span>
+                    <button
+                      type="button"
+                      onClick={() => void onRemove(alt.player_uuid)}
+                      disabled={busy}
+                      className={buttonClass}
+                    >
+                      Remove
+                    </button>
+                    <button type="button" onClick={() => setConfirm(null)} disabled={busy} className={quietButtonClass}>
+                      Keep it
+                    </button>
+                  </div>
+                ) : null}
+              </AccountRow>
+            );
+          })}
+          {canAdd ? (
+            <AccountRow
+              label="Add a staff alt"
+              service="Staff alt"
+              icon={<EmptyIcon />}
+              action={
+                <button
+                  type="button"
+                  onClick={() => setShowForm((open) => !open)}
+                  aria-expanded={showForm}
+                  className={quietButtonClass}
+                >
+                  Add a staff alt
+                </button>
+              }
+              // A new form after each add: a finished one would reopen on its "Linking…" step.
+              below={<MinecraftLinkForm key={alts.length} discordName={discordName} onLinked={onAdded} staffAlt />}
+              belowOpen={showForm}
+            >
+              <p className="text-[var(--tfmc-stone)]">
+                {alts.length ? `${alts.length} of ${max} linked` : "No staff alts yet"}
+              </p>
+            </AccountRow>
+          ) : null}
+        </ul>
+      ) : null}
+    </section>
   );
 }
 

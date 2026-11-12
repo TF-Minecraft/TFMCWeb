@@ -246,6 +246,42 @@ def _record_ban(
     return True
 
 
+def _copy_to_staff_alts(conn, owner_uuid: str) -> None:
+    """Give the owner's staff alts (src/skins/staff_alts.py) the owner's ban, or lift it with theirs.
+
+    Stored like any ban, with the owner's times, so ban sync applies and lifts it on the
+    servers; no Discord notice, the owner already gets one. A stored repeat changes nothing.
+    """
+    from .staff_alts import alts_of
+
+    owner = conn.execute("SELECT * FROM player_bans WHERE player_uuid = %s", (owner_uuid,)).fetchone()
+    if owner is None:
+        return
+    now = _utcnow()
+    active = owner["banned"] and (owner["expires_at"] is None or owner["expires_at"] > now)
+    if owner["banned"] and not active:
+        return
+    for alt in alts_of(conn, owner_uuid):
+        if not active:
+            alt_ban = conn.execute(
+                "SELECT banned FROM player_bans WHERE player_uuid = %s", (alt["player_uuid"],)
+            ).fetchone()
+            if alt_ban is None or not alt_ban["banned"]:
+                continue
+        name = alt["owner_name"] or owner["minecraft_name"] or "a banned player"
+        reason = f"Staff alt of {name}" + (f": {owner['reason']}" if owner["reason"] else "")
+        _record_ban(
+            conn,
+            "ban" if active else "unban",
+            alt["player_uuid"],
+            minecraft_name=alt["minecraft_name"],
+            reason=reason[:_REASON_MAX],
+            staff_name=owner["staff_name"],
+            banned_at=owner["banned_at"],
+            expires_at=owner["expires_at"],
+        )
+
+
 def enqueue_ban_event(
     event: str,
     *,
@@ -299,7 +335,7 @@ def enqueue_ban_event(
         raise ModerationError("ban times are out of range") from e
 
     with database.connect() as conn:
-        if uuid and not _record_ban(
+        stored = bool(uuid) and _record_ban(
             conn,
             etype,
             uuid,
@@ -308,7 +344,11 @@ def enqueue_ban_event(
             staff_name=staff,
             banned_at=banned_at,
             expires_at=expires_at,
-        ):
+        )
+        if uuid:
+            # Also on a repeat: a later report may fill in the times the alts need to sync.
+            _copy_to_staff_alts(conn, uuid)
+        if uuid and not stored:
             return {"ok": True, "mirrored": False, "duplicate": True, "notification_id": None}
         if not discord_id:
             return {"ok": True, "mirrored": False, "notification_id": None}

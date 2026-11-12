@@ -28,6 +28,8 @@ from src.api.auth_routes import (
     staff_cookie,
 )
 from src.auth import admin, audit, players, roles, users, view_as
+from src.skins import staff_alts
+from src.skins.discord_link import LinkError
 from src.auth import cases as person_cases
 from src.precedent.db import PrecedentDBError
 from src.coreprotect.reader import CoreProtectConfig
@@ -379,6 +381,19 @@ def post_view_as(player_uuid: str, request: Request):
     _set_cookie(response, config, session_cookie(config), view["token"], seconds_left(view["expires_at"]))
     _set_cookie(response, config, staff_cookie(config), staff, seconds_left(view["staff_expires_at"]))
     return response
+
+
+@admin_router.post("/players/{player_uuid}/staff-alt/unlink")
+def post_staff_alt_unlink(player_uuid: str, request: Request, response: Response):
+    """Remove this account's staff alt link, whoever owns it; audited."""
+    require_same_origin(request, _config())
+    actor = _capable(request, "manage_staff_alts")
+    _no_store(response)
+    try:
+        staff_alts.unlink(player_uuid, actor, any_owner=True)
+    except LinkError:
+        raise HTTPException(404, detail="staff_alt_not_found") from None
+    return staff_alts.for_player(player_uuid)
 
 
 # Request validation runs before the handlers above, so malformed writes are
