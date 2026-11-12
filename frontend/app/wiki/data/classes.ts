@@ -89,20 +89,12 @@ export const skills: Record<string, Skill> = {
     passive: true,
     description: "Your arrows make the target glow and slow it.",
   },
-  FLEET_FOOTED: {
-    name: "Fleet-Footed",
-    passive: true,
-    description: "Gain Speed II when an enemy comes within 5 blocks.",
-  },
+  FLEET_FOOTED: { name: "Fleet-Footed", passive: true, description: "Gain Speed II when an enemy comes close." },
   EVASION: { name: "Evasion", passive: true, description: "When an enemy hits you, leap back and gain Speed II." },
-  FINISHER: {
-    name: "Finisher",
-    passive: true,
-    description: "Your arrows deal extra damage to enemies below 40% health.",
-  },
+  FINISHER: { name: "Finisher", passive: true, description: "Your arrows deal extra damage to badly hurt enemies." },
   POISON_ARROW: {
     name: "Poison Arrow",
-    description: "Your next arrow poisons the target and leaves a poison trap where it lands.",
+    description: "Your next arrow damages and poisons the target and leaves a poison trap where it lands.",
   },
   ARCHER_STEP: {
     name: "Archer Step",
@@ -110,13 +102,13 @@ export const skills: Record<string, Skill> = {
   },
   TOTEM_MINE: {
     name: "Totem Mine",
-    description: "Throw a mine that burns and damages everything within 5 blocks when an enemy sets it off.",
+    description: "Throw a mine. When an enemy sets it off, it burns, damages and slows everything near it.",
   },
   SEITHR_GLYPH: {
     name: "Seithr Glyph",
     description: "Draw a glyph on the ground. When someone steps on it, it goes off and freezes everyone on it.",
   },
-  VENOM_TIPS: { name: "Venom Tips", passive: true, description: "Your arrows blind the target." },
+  VENOM_TIPS: { name: "Venom Tips", passive: true, description: "Your arrows Wound the target." },
   CAMOUFLAGE: {
     name: "Camouflage",
     passive: true,
@@ -126,17 +118,16 @@ export const skills: Record<string, Skill> = {
   ICE_SHARD: { name: "Ice Shard", description: "Fire a shard that slows the target." },
   SILENCING_SHARD: { name: "Silencing Shard", description: "Fire a shard that stops the target casting spells." },
   TIDE_SHARD: { name: "Tide Shard", description: "Fire a shard that damages the target and pushes it back." },
-  FREEZING_SHOT: { name: "Freezing Shot", description: "Your next arrow freezes the target in place." },
+  FREEZING_SHOT: { name: "Freezing Shot", description: "Your next arrow damages the target and freezes it in place." },
   HAWK_EYE: {
     name: "Hawk Eye",
     description:
-      "Your next arrow marks every enemy within 14 blocks of where it lands, making them glow, slowing them and revealing hidden players.",
+      "Your next arrow damages what it hits and marks every enemy in a wide area around where it lands. They glow and are slowed, and hidden players are revealed.",
   },
-  ARROW_VOLLEY: { name: "Arrow Volley", description: "Your next shot becomes a wide volley of 40 arrows." },
+  ARROW_VOLLEY: { name: "Arrow Volley", description: "Your next shot becomes a wide volley of arrows." },
   FROSTVEIL: {
     name: "Frostveil",
-    description:
-      "Cover the ground in frost within 12 blocks of where you look. Anyone inside is slowed and cannot cast spells.",
+    description: "Cover a large area where you look in frost. Anyone inside is slowed and cannot cast spells.",
   },
   // Bard
   RHAPSODY: { name: "Rhapsody", description: "Play a song that keeps you and players around you at Speed II." },
@@ -149,7 +140,11 @@ export const skills: Record<string, Skill> = {
     name: "Shield of Harmony",
     description: "A ring of notes gives you and the players around you Resistance II.",
   },
-  CRESCENDO: { name: "Crescendo", passive: true, description: "Regularly gives mana to the players around you." },
+  CRESCENDO: {
+    name: "Crescendo",
+    passive: true,
+    description: "Regularly gives mana to the players around you, but not yourself.",
+  },
   ENCORE: {
     name: "Encore",
     passive: true,
@@ -158,17 +153,18 @@ export const skills: Record<string, Skill> = {
   MARCHING_SONG: {
     name: "Marching Song",
     passive: true,
-    description: "Regularly gives you and the players around you Speed I.",
+    description:
+      "Regularly removes Slowed from you and the players around you, friend or foe, except the enemy you are fighting.",
   },
   MEMENTO_MORI: {
     name: "Memento Mori",
-    description: "Fire a homing note that damages the target, blinds it and withers it.",
+    description: "Fire a homing note that damages the target, blinds it, withers it and Wounds it.",
   },
   FIRE_BREATH: { name: "Fire Breath", description: "Breathe fire in a cone that burns enemies in front of you." },
   ICE_WAVE: { name: "Ice Wave", description: "Push the enemies in front of you away, damaging and slowing them." },
   TELEPORT: {
     name: "Teleport",
-    description: "After 3 seconds standing still, carry you and the players around you up to 40 blocks ahead.",
+    description: "After a few seconds standing still, carry you and the players around you a long way ahead.",
   },
   VIBRATIVE_STRIKE: {
     name: "Vibrative Strike",
@@ -201,10 +197,15 @@ export const skills: Record<string, Skill> = {
   SECOND_WIND: {
     name: "Second Wind",
     passive: true,
-    description: "When a hit leaves you below 50% health, heal and gain Resistance II.",
+    description: "When a hit leaves you badly hurt, heal and gain Resistance II.",
   },
   SHIELD_BASH: { name: "Shield Bash", passive: true, description: "Your hits knock the target back and slow it." },
-  UNBROKEN: { name: "Unbroken", passive: true, description: "When you are hit, shake off Slowed and Weakened." },
+  UNBROKEN: {
+    name: "Unbroken",
+    passive: true,
+    description:
+      "When you are hit while Slowed, Weakened or Frozen, shake them off and gain Resistance I for a moment.",
+  },
   TANK_PULL: { name: "Tank Pull", description: "Pull the enemies in front of you towards you and slow them." },
   GROUND_SMASH: {
     name: "Ground Smash",
@@ -216,7 +217,8 @@ export const skills: Record<string, Skill> = {
   },
   SHIELD_WALL: {
     name: "Shield Wall",
-    description: "Raise a wall of shields: you stay rooted, and players within 4 blocks take no damage.",
+    description:
+      "Raise a wall of shields: you stay rooted with Resistance II, and players close to you take no damage.",
   },
   VIGIL: { name: "Vigil", passive: true, description: "Regularly gives you and the players around you Resistance I." },
   INTERCEPT: {
@@ -224,13 +226,19 @@ export const skills: Record<string, Skill> = {
     passive: true,
     description: "When an enemy hits you, you and the players around you gain an absorption shield.",
   },
+  SUNDER: { name: "Sunder", passive: true, description: "Your hits Wound the target." },
   MENDING: { name: "Mending", description: "Channel a heal on yourself. You are rooted and weakened while it lasts." },
   ICE_SHIELD: { name: "Ice Shield", description: "Gain an absorption shield." },
+  RUNIC_WARD: {
+    name: "Runic Ward",
+    description:
+      "For a short while, Silenced and Frozen fall off you as soon as they land. You cannot cast it while Silenced.",
+  },
   GROUP_UP: { name: "Group Up", description: "Give everyone around you, but not yourself, an absorption shield." },
   GUARDIAN_ANGEL: {
     name: "Guardian Angel",
     description:
-      "Ward a player so they take less damage and you lose that health instead. The ward never takes you below 6 health.",
+      "Ward a player so they take less damage and you lose that health instead. The ward never takes you low enough to kill you.",
   },
   COLD_EMBRACE: { name: "Cold Embrace", description: "Mark a spot that weakens everyone near it a second later." },
   FROZEN_TOMB: {
@@ -251,18 +259,21 @@ export const skills: Record<string, Skill> = {
     description: "When an enemy you recently hit dies, heal and gain Strength I and Speed I.",
   },
   JUDGEMENT: { name: "Judgement", passive: true, description: "Your hits weaken the target and make it glow." },
+  SPELLBREAKER: {
+    name: "Spellbreaker",
+    passive: true,
+    description: "Your hits Silence the target, so it cannot cast spells.",
+  },
   HEALING_STRIKE: {
     name: "Healing Strike",
-    description: "A holy strike that throws enemies up and heals you for half the damage it deals.",
+    description: "A holy strike that throws enemies up and heals you for part of the damage it deals.",
   },
   HEALING_ORB: { name: "Healing Orb", description: "Fire an orb that heals the player it hits." },
-  RESPITE: { name: "Respite", description: "Instantly heal yourself." },
-  SHIELD_UP: { name: "Shield Up", description: "Brace yourself for Resistance I, at the cost of moving slower." },
   BLESS: {
     name: "Bless",
     description: "Remove Slowed and Weakened from you and the players right next to you.",
   },
-  SMITE: { name: "Smite", description: "Call down a pillar of light that damages everything within 4 blocks." },
+  SMITE: { name: "Smite", description: "Call down a pillar of light that damages and Wounds everything around you." },
   CHALLENGE: {
     name: "Challenge",
     description:
@@ -296,7 +307,7 @@ export const skills: Record<string, Skill> = {
   RESTORATION: {
     name: "Restoration",
     description:
-      "After a short channel, remove Slowed, Frozen, Burnt and Weakened from you and the players around you.",
+      "After a short channel, remove Slowed, Frozen, Burnt, Weakened and Wounded from you and the players around you. Silenced stays.",
   },
   CERRITH_GLYPH: {
     name: "Cerrith Glyph",
@@ -306,19 +317,14 @@ export const skills: Record<string, Skill> = {
     name: "Blessing of Healing",
     description: "Toggle: stay rooted and fire a healing bolt every second, draining mana until you stop.",
   },
-  MANA_TRANSFER: {
-    name: "Mana Transfer",
-    description:
-      "Toggle: bind yourself to a player right next to you and pour your mana into them. You are both held in place and cannot cast other spells. It ends when you cast it again or run out of mana, or when either of you takes damage, teleports, moves away or loses sight of the other.",
-  },
   // Warrior
   BLOODLUST: { name: "Bloodlust", passive: true, description: "Your hits heal you." },
-  CLEAVE: { name: "Cleave", passive: true, description: "Your hits also damage every enemy within 4 blocks of you." },
+  CLEAVE: { name: "Cleave", passive: true, description: "Your hits also damage every enemy near you." },
   FRENZY: { name: "Frenzy", passive: true, description: "Killing an enemy gives you Strength I and Speed I." },
   UNDYING_RAGE: {
     name: "Undying Rage",
     passive: true,
-    description: "When a hit leaves you below 35% health, gain Resistance I, Regeneration I and Strength I.",
+    description: "When a hit leaves you at low health, gain Resistance I, Regeneration I and Strength I.",
   },
   REND: { name: "Rend", passive: true, description: "Your hits make the target bleed." },
   WAR_CHANT: {
@@ -329,9 +335,9 @@ export const skills: Record<string, Skill> = {
   RALLY: {
     name: "Rally",
     passive: true,
-    description: "Every 5th hit you land gives you and the players around you Strength I.",
+    description: "Every few hits you land, you and the players around you gain Strength I.",
   },
-  EARTHSHAKER: { name: "Earthshaker", passive: true, description: "Your hits slow every enemy within 4 blocks." },
+  EARTHSHAKER: { name: "Earthshaker", passive: true, description: "Your hits slow every enemy near you." },
   HOLD_THE_LINE: {
     name: "Hold the Line",
     passive: true,
@@ -348,19 +354,15 @@ export const skills: Record<string, Skill> = {
     name: "Warrior Beam",
     description: "Fire a beam of burning light that damages each enemy it passes through.",
   },
-  OSENI_GLYPH: {
-    name: "Oseni Glyph",
-    description: "Draw a glyph on the ground. When someone steps on it, it goes off and damages everyone on it.",
-  },
-  EMBER_BURST: {
-    name: "Ember Burst",
+  EMBER_STRIKE: {
+    name: "Ember Strike",
     passive: true,
-    description: "Every 3rd hit erupts in embers that damage everyone close to you, allies too.",
+    description: "A few quick hits on the same target deal extra damage to it and Burn it.",
   },
   MANA_EDGE: {
     name: "Mana Edge",
     passive: true,
-    description: "While you have at least half your mana, your hits spend a little of it to sear the target.",
+    description: "While your mana is high, your hits spend a little of it to sear the target.",
   },
   ARCANE_WARD: {
     name: "Arcane Ward",
@@ -381,7 +383,7 @@ export type Subclass = {
   skills: string[];
 };
 
-/** The 15 paths, picked at level 2 (`MMOCore/classes/<id>.yml` on Main). */
+/** The 15 subclasses, picked at level 2 (`MMOCore/classes/<id>.yml` on Main). */
 export const subclasses: Subclass[] = [
   {
     id: "ranger",
@@ -400,7 +402,7 @@ export const subclasses: Subclass[] = [
     equipment: "Crossbows, Light Armour",
     magic: "Cerrith, Mitlan, Oseni, Seithr",
     lore: "Covers the ground with mines, poison and frost glyphs, then waits unseen.",
-    skills: ["POISON_ARROW", "ARCHER_STEP", "TOTEM_MINE", "SEITHR_GLYPH", "HUNTERS_MARK", "VENOM_TIPS", "CAMOUFLAGE"],
+    skills: ["POISON_ARROW", "ARCHER_STEP", "TOTEM_MINE", "SEITHR_GLYPH", "VENOM_TIPS", "CAMOUFLAGE"],
   },
   {
     id: "arcane_archer",
@@ -409,8 +411,8 @@ export const subclasses: Subclass[] = [
     type: "Full caster",
     equipment: "Shortbows, Light Armour",
     magic: "Seithr, Mitlan",
-    lore: "Turns every shot into a spell: frozen arrows, volleys, tides and silencing shards.",
-    skills: ["ICE_SHARD", "SILENCING_SHARD", "TIDE_SHARD", "FREEZING_SHOT", "HAWK_EYE", "ARROW_VOLLEY", "FROSTVEIL"],
+    lore: "Turns every shot into a spell: frozen arrows, volleys, marking shots and silencing shards.",
+    skills: ["ICE_SHARD", "SILENCING_SHARD", "FREEZING_SHOT", "HAWK_EYE", "ARROW_VOLLEY", "FROSTVEIL"],
   },
   {
     id: "minstrel",
@@ -438,8 +440,8 @@ export const subclasses: Subclass[] = [
     type: "Full caster",
     equipment: "Lutes, Light Armour",
     magic: "Oseni, Seithr, Mitlan",
-    lore: "Plays music that burns, freezes and tears a battlefield apart.",
-    skills: ["MEMENTO_MORI", "FIRE_BREATH", "ICE_WAVE", "TELEPORT", "VIBRATIVE_STRIKE", "SYMPHONY_OF_DESTRUCTION"],
+    lore: "Plays music that withers, freezes and tears a battlefield apart.",
+    skills: ["MEMENTO_MORI", "ICE_WAVE", "TELEPORT", "VIBRATIVE_STRIKE", "SYMPHONY_OF_DESTRUCTION"],
   },
   {
     id: "siren",
@@ -465,20 +467,20 @@ export const subclasses: Subclass[] = [
     name: "Warden",
     base: "guardian",
     type: "Semi-caster",
-    equipment: "Spears, Swords, Polearms, Shields, Battle Standards, Heavy Armour",
+    equipment: "Spears, Swords, Polearms, Warhammers, Shields, Battle Standards, Heavy Armour",
     magic: "Seithr",
     lore: "Holds the line, pulling and pinning enemies with frost to protect the group.",
     skills: [
       "FOE_SENSE",
-      "ICE_SHARD",
       "TANK_PULL",
       "GROUND_SMASH",
       "SUBSTITUTE",
       "ICE_WAVE",
       "SHIELD_WALL",
+      "GUARDIAN_ANGEL",
       "VIGIL",
-      "RETALIATION",
       "INTERCEPT",
+      "SUNDER",
     ],
   },
   {
@@ -494,9 +496,9 @@ export const subclasses: Subclass[] = [
       "SILENCING_SHARD",
       "MENDING",
       "ICE_SHIELD",
+      "RUNIC_WARD",
       "GROUP_UP",
       "SEITHR_GLYPH",
-      "GUARDIAN_ANGEL",
       "COLD_EMBRACE",
       "FROZEN_TOMB",
     ],
@@ -508,7 +510,7 @@ export const subclasses: Subclass[] = [
     type: "Martial",
     equipment: "Warhammers, Greathammers, Longswords, Shields, Battle Standards, Medium Armour",
     lore: "Carries faith on the edge of a blade, hitting harder and mending allies nearby.",
-    skills: ["FOE_SENSE", "ZEAL", "STEADFAST", "AURA_OF_VALOR", "RIGHTEOUS_FURY", "JUDGEMENT"],
+    skills: ["FOE_SENSE", "ZEAL", "STEADFAST", "AURA_OF_VALOR", "RIGHTEOUS_FURY", "JUDGEMENT", "SPELLBREAKER"],
   },
   {
     id: "templar",
@@ -518,19 +520,7 @@ export const subclasses: Subclass[] = [
     equipment: "Swords, Warhammers, Spears, Polearms, Shields, Medium Armour",
     magic: "Cerrith",
     lore: "A sworn knight who fights at the front with holy strikes, blessings and protective oaths.",
-    skills: [
-      "HEALING_STRIKE",
-      "HEALING_ORB",
-      "RESPITE",
-      "SHIELD_UP",
-      "BLESS",
-      "SMITE",
-      "CHALLENGE",
-      "DUEL_INSTINCT",
-      "HOLY_WARD",
-      "CONSECRATION",
-      "PURITY",
-    ],
+    skills: ["HEALING_STRIKE", "BLESS", "SMITE", "CHALLENGE", "DUEL_INSTINCT", "HOLY_WARD", "CONSECRATION", "PURITY"],
   },
   {
     id: "cleric",
@@ -550,7 +540,6 @@ export const subclasses: Subclass[] = [
       "RESTORATION",
       "CERRITH_GLYPH",
       "BLESSING_OF_HEALING",
-      "MANA_TRANSFER",
     ],
   },
   {
@@ -585,17 +574,16 @@ export const subclasses: Subclass[] = [
       "WARRIOR_LUNGE",
       "FIRE_BREATH",
       "WARRIOR_BEAM",
-      "OSENI_GLYPH",
-      "EMBER_BURST",
+      "EMBER_STRIKE",
       "MANA_EDGE",
       "ARCANE_WARD",
     ],
   },
 ];
 
-/** Skill slots per path type (`skill-slots` in each subclass file, `exp-tables.yml` on Main). */
+/** Skill slots per subclass type (`skill-slots` in each subclass file, `exp-tables.yml` on Main). */
 export const slotRows: [PathType, string, string, string, string][] = [
-  ["Martial", "Passive", "Slot III: passive, 25% weaker with a 25% longer cooldown", "Slot II: passive", "None"],
+  ["Martial", "Passive", "Slot III: passive, weaker and with a longer cooldown", "Slot II: passive", "None"],
   ["Semi-caster", "Spell or passive", "Slot III: passive", "Slot II: spell or passive", "None"],
   ["Full caster", "Spell", "Slot II: spell", "Slot III: spell", "Slot IV: spell"],
 ];
@@ -604,14 +592,15 @@ export type AttributeInfo = { name: string; perPoint: string };
 
 /** The six attributes you spend points on, each capped at 20 points (`MMOCore/attributes/attributes.yml` on Main). */
 export const attributes: AttributeInfo[] = [
-  { name: "Strength", perPoint: "+1 Physical Damage" },
-  { name: "Dexterity", perPoint: "+1 Projectile Damage" },
-  { name: "Constitution", perPoint: "+0.3 Max Health" },
-  { name: "Intelligence", perPoint: "+1 Max Mana, +0.01 Mana Regeneration" },
-  { name: "Wisdom", perPoint: "+0.75 Cooldown Reduction" },
+  { name: "Strength", perPoint: "More physical damage, the kind weapon hits deal." },
+  { name: "Dexterity", perPoint: "More damage with bows and crossbows." },
+  { name: "Constitution", perPoint: "More maximum health." },
+  { name: "Intelligence", perPoint: "More maximum mana, and your mana comes back faster." },
+  { name: "Wisdom", perPoint: "Shorter skill cooldowns." },
   {
     name: "Charisma",
-    perPoint: "+1 Recoil Reduction, +1 Reload Reduction, +1 Magic Damage, +0.25 Critical Strike Chance",
+    perPoint:
+      "Guns aim tighter and reload faster. More magic damage, the kind class spells deal, and a higher critical strike chance.",
   },
 ];
 
@@ -726,8 +715,8 @@ export const classesCommands: WikiCommandSet = {
     },
     {
       command: "/subclass",
-      description: "Opens Subclass Selection with the paths of your current class.",
-      notes: "Paths unlock at class level 2.",
+      description: "Opens Subclass Selection with the subclasses of your current class.",
+      notes: "Subclasses unlock at class level 2.",
     },
     {
       command: "/player",
@@ -771,7 +760,7 @@ export const classesSection: WikiSection = {
     href: "/wiki/classes",
     label: "Classes & Professions",
     category: "character",
-    blurb: "Pick a class and a path, slot your skills, spend attribute points and level three professions.",
+    blurb: "Pick a class and a subclass, slot your skills, spend attribute points and level three professions.",
   },
   commands: classesCommands,
 };

@@ -1,6 +1,6 @@
 import type { WikiCommandSet, WikiSection } from "./types";
 
-// SimpleFactions 4.14.3 with Main's configs. Staff commands (force*, admin, reload and so on),
+// SimpleFactions 4.32 with Main's configs. Staff commands (force*, admin, reload and so on),
 // coalitions (off on Main) and the Spymaster's private sabotage are left out.
 
 // ---------- Factions ----------
@@ -264,6 +264,12 @@ export const guildsCommands: WikiCommandSet = {
       notes: "Anyone can use bank to pay from their own bank. Without bank, faction leaders pay from their pouch.",
     },
     {
+      command: "/faction vehicle disable",
+      aliases: ["/faction vehicle cancel"],
+      description:
+        "Stops a vehicle click you started, for example after /faction vehicle transfer, take, give, handover or maintenance pay. Your next click on a vehicle then does nothing special.",
+    },
+    {
       command: "/faction findvehicles <installation id>",
       description: "Lists the vehicles berthed at an installation and where they are.",
       notes: "Faction leader.",
@@ -302,6 +308,17 @@ export const warCommands: WikiCommandSet = {
   href: "/wiki/war",
   commands: [
     { command: "/war list", description: "Shows the wars going on." },
+    {
+      command: "/war vote <war id>",
+      description: "Opens the war's availability grid, where you mark the dates and start times you can fight.",
+    },
+    { command: "/war calls", description: "Lists your open calls to arms." },
+    {
+      command: "/war call accept <war id>",
+      aliases: ["/war call decline <war id>"],
+      description: "Answers a call to arms.",
+      notes: "Faction leader. Declining costs your faction stability.",
+    },
     { command: "/warband list", description: "Lists warbands, including your side's war warband." },
     {
       command: "/warband join <warband>",
@@ -333,6 +350,7 @@ export const warCommands: WikiCommandSet = {
       description: "Lists staff-run battles, or enters your warband into one.",
       notes: "Warband leader.",
     },
+    { command: "/battle stats", description: "Opens your battle stats: your record, your battles and your wars." },
     {
       command: "/company found <name>",
       description: "Founds a mercenary company for your guild.",

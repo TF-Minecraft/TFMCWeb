@@ -40,18 +40,18 @@
   "mmoitem:KEYS:IRON_KEY": ["Requires a Basic Lockpicking Set to be Lockpicked."],
   "mmoitem:KEYS:KEY_CHAIN": ["Can hold up to five keys."],
   "mmoitem:LOCKPICKS:BASIC_LOCKPICK": [
-    "Success Chance: 5%",
-    "Break Chance: 40%",
-    "Left Click on a locked door or chest to attempt a Lockpick.",
-    "HINT: Using this item will consume the entire",
-    "stack. Make sure to unstack before using."
+    "Right click a locked door, chest or",
+    "display to try to pick it.",
+    "Only one lockpick from the stack",
+    "breaks at a time."
   ],
   "mmoitem:LOCKPICKS:STRONG_LOCKPICK": [
-    "Success Chance: 5%",
-    "Break Chance: 50%",
-    "Left Click on a locked door or chest to attempt a Lockpick.",
-    "HINT: Using this item will consume the entire",
-    "stack. Make sure to unstack before using."
+    "Right click a locked door, chest or",
+    "display to try to pick it.",
+    "Strong enough for Golden Key doors",
+    "and displays.",
+    "Only one lockpick from the stack",
+    "breaks at a time."
   ],
   "mmoitem:LOOT:INFUSION_TOKEN": [
     "Can be used to Infuse up to 10",

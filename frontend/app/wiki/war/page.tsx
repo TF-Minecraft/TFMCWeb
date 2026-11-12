@@ -9,7 +9,7 @@ const code = "text-[var(--tfmc-accent)]";
 export default function WarPage() {
   return (
     <WikiPage
-      lastModified="2026-10-24"
+      lastModified="2026-11-12"
       title="War & Mercenaries"
       intro={
         <>
@@ -18,7 +18,7 @@ export default function WarPage() {
             factions
           </Link>{" "}
           are fought as scheduled battles, one evening at a time. You don&apos;t need to lead anything to take part:
-          sign up for your side&apos;s warband on a battle day.
+          mark the days you can fight, then sign up for your side&apos;s warband on a battle day.
         </>
       }
     >
@@ -27,7 +27,7 @@ export default function WarPage() {
       </WikiSectionHeading>
       <ul className={`mt-3 list-disc space-y-2 pl-5 ${body}`}>
         <li>
-          Your faction&apos;s opinion of the target must be -50 or lower, and at least one of its members must be
+          Your faction&apos;s opinion of the target must be -50 or lower. Nobody from the target faction needs to be
           online.
         </li>
         <li>No truce can stand between you. A truce lasts 10 days after a war ends.</li>
@@ -38,17 +38,95 @@ export default function WarPage() {
         </li>
       </ul>
 
-      <WikiSectionHeading id="battles" intro="All times are Paris time (CET/CEST).">
-        Battle days
+      <WikiSectionHeading id="calls" intro="Once war is declared, each side can call its allies to arms.">
+        Calls to arms
+      </WikiSectionHeading>
+      <ul className={`mt-3 list-disc space-y-2 pl-5 ${body}`}>
+        <li>Only factions that were allies of a side when the war was declared can be called.</li>
+        <li>A call never runs out. It waits on the war until the leader answers, even if they are offline.</li>
+        <li>
+          The leader of the called faction answers with <code className={code}>/war call accept &lt;war id&gt;</code> or{" "}
+          <code className={code}>/war call decline &lt;war id&gt;</code>. <code className={code}>/war calls</code> lists
+          your open calls. With only one call open, <code className={code}>/faction accept</code> and{" "}
+          <code className={code}>/faction decline</code> work too.
+        </li>
+        <li>Declining costs your faction stability.</li>
+        <li>An ally can only join between battles.</li>
+      </ul>
+      <p className={`mt-3 ${body}`}>
+        If you were offline, the war news waits for you at your next login: declarations, calls to arms and the battle
+        days that were chosen.
+      </p>
+
+      <WikiSectionHeading id="buildup" intro="Every new war starts with a buildup.">
+        The buildup
       </WikiSectionHeading>
       <p className={body}>
-        Battles start the day after war is declared, at most one a day, along the route toward the enemy.
+        The first battle day is at least a week after the declaration, so you mark your days a week ahead. Until that
+        first battle starts, every faction in the war is frozen, and so is any ally that joins later:
       </p>
+      <ul className={`mt-3 list-disc space-y-2 pl-5 ${body}`}>
+        <li>
+          Timers already running for regiments, installations, war-related guild upgrades, mercenary companies and
+          vehicle construction pause.
+        </li>
+        <li>Nothing new of those can be started.</li>
+        <li>No vehicle can be added to the faction pool or berthed.</li>
+      </ul>
+      <p className={`mt-3 ${body}`}>
+        Gear, trade and the rest of the economy carry on. You still get the slots your laws give, upkeep and wages are
+        still paid, and you can still hire mercenaries.
+      </p>
+
+      <WikiSectionHeading id="availability" intro="All times on this page are Paris time (CET/CEST).">
+        Picking battle days
+      </WikiSectionHeading>
+      <p className={body}>
+        Battle days are picked from the days players say they can fight. Everyone on both sides marks each date and
+        start time they can make. Open the grid in game with <code className={code}>/war vote &lt;war id&gt;</code>,
+        from a reminder or from the war&apos;s campaign menu, or on the war&apos;s page under{" "}
+        <Link href="/wars" className={link}>
+          Wars
+        </Link>{" "}
+        on this website. It shows 7 dates, with start times at 21:00, 22:00, 23:00, 00:00 and 01:00.
+      </p>
+      <DataTable
+        columns={[{ header: "When", nowrap: true }, { header: "What happens" }]}
+        rows={[
+          [
+            "21:00, two days before",
+            "The date becomes a battle day if at least 3 players of each side can come at the same start time. A side with fewer than 3 members needs all of them. If not, that date has no battle.",
+          ],
+          ["21:00, the day before", "The start time is fixed to the hour most of both sides can make."],
+        ]}
+      />
+      <ul className={`mt-3 list-disc space-y-2 pl-5 ${body}`}>
+        <li>Battles can be on days in a row.</li>
+        <li>
+          After three dates in a row without a battle, the third becomes a battle day anyway. If one side marked nothing
+          for it, the battle is decided automatically.
+        </li>
+      </ul>
+      <p className={`mt-3 ${body}`}>
+        Until you mark something, you get reminders in game, and as Discord DMs if your Discord is linked. Choose{" "}
+        <strong>None of these days work for me</strong> to stop being asked until new dates appear.
+      </p>
+
+      <WikiSectionHeading id="battles">Battle days</WikiSectionHeading>
+      <p className={body}>Battles are fought along the route toward the enemy. A battle day goes like this:</p>
       <DataTable
         columns={[{ header: "Time", nowrap: true }, { header: "What happens" }]}
         rows={[
-          ["Until 16:00", "Members of both sides vote on the battle hour."],
-          ["19:00 to 20:00", "Raids can be launched."],
+          ["16:00", "The battle is set on its province. Installations must be committed by then."],
+          [
+            "From 19:00",
+            <span key="raids">
+              <a href="#raids" className={link}>
+                Raids
+              </a>{" "}
+              can be launched.
+            </span>,
+          ],
           [
             "From 20:00",
             <span key="signup">
@@ -56,17 +134,13 @@ export default function WarPage() {
               <code className={code}>/warband join</code>.
             </span>,
           ],
-          ["21:00, 22:00 or 23:00", "The battle starts."],
+          ["21:00 to 01:00", "The battle starts at the start time fixed the day before."],
         ]}
       />
-      <ul className={`mt-3 list-disc space-y-2 pl-5 ${body}`}>
-        <li>Each side&apos;s lives in a battle come from its regiments.</li>
-        <li>
-          After 20 minutes, a warband leader can <code className={code}>/warband retreat</code>, which ends the battle
-          as a loss for that side.
-        </li>
-      </ul>
-
+      <p className={`mt-3 ${body}`}>
+        After 20 minutes, a warband leader can <code className={code}>/warband retreat</code>, which ends the battle as
+        a loss for that side.
+      </p>
       <p className={`mt-3 ${body}`}>
         The faction that loses the war, and its subjects, pay the winner a quarter of their guilds&apos; trade income
         for 10 days.
@@ -74,22 +148,18 @@ export default function WarPage() {
 
       <WikiSectionHeading id="campaign">Managing the campaign</WikiSectionHeading>
       <p className={body}>
-        Open <code className={code}>/war list</code> and select the war to see its campaign menu. Vote for a battle hour
-        before voting closes. The vote needs at least 4 voters, or every member of the smaller side. If it falls short,
-        the battle is postponed once. If the next vote also falls short, the battle is decided automatically.
-      </p>
-      <p className={`mt-3 ${body}`}>
-        Leaders commit installations to the next battle from this menu. In a naval battle slot, the attacking side loses
-        automatically if it has no ship berthed at a committed port. After winning a battle, choose Push to advance or
-        Hold to stay put. Leaders can offer white peace or surrender to end the war, concede a battle slot, or ask for
-        an automatic result instead of fighting it. For an agreed automatic result, the other leader must answer with{" "}
+        Open <code className={code}>/war list</code> and select the war to see its campaign menu. Leaders commit
+        installations to the next battle from this menu. In a naval battle slot, the attacking side loses automatically
+        if it has no ship berthed at a committed port. After winning a battle, choose Push to advance or Hold to stay
+        put. Leaders can offer white peace or surrender to end the war, concede a battle slot, or ask for an automatic
+        result instead of fighting it. For an agreed automatic result, the other leader must answer with{" "}
         <code className={code}>/faction accept</code> within 60 seconds.
       </p>
+
       <WikiSectionHeading id="in-battle">In battle</WikiSectionHeading>
       <p className={body}>
         You keep your inventory when you die, and your gear wears much more slowly. Friendly fire is on, so take care
-        around your own side. Field battles use capture points and shared lives. Sieges use a contest timer. Every 5
-        deaths in a field or siege battle costs that side a regiment.
+        around your own side. Field battles use capture points and shared lives. Sieges use a contest timer.
       </p>
       <p className={`mt-3 ${body}`}>
         A field battle is lost by running out of lives or retreating, and it can also be won by control. While your side
@@ -107,11 +177,33 @@ export default function WarPage() {
         Raids
       </WikiSectionHeading>
       <p className={body}>
-        During the raid hour, a faction leader at war can launch a raid from one of their own ports or airports. A port
-        can raid an enemy port, an airport an enemy airport, and either one an enemy fort. Each side can launch one raid
-        per battle day. The attackers have 60 seconds to join with <code className={code}>/raid join &lt;raid&gt;</code>
-        , and the raid then lasts 10 minutes. You cannot join while mounted. A raided installation cannot berth or
-        unberth vehicles for 48 hours.
+        Once the war has its first battle day set and the buildup week is over, raids can be launched every evening from
+        19:00. A faction leader at war launches a raid from one of their own ports or airports. A port can raid an enemy
+        port, an airport an enemy airport, and either one an enemy fort. Each side can launch one raid a day, and none
+        while a battle of the war is being fought. The attackers have 60 seconds to join with{" "}
+        <code className={code}>/raid join &lt;raid&gt;</code>, and the raid then lasts 10 minutes. You cannot join while
+        mounted. A raided installation cannot berth or unberth vehicles for 48 hours.
+      </p>
+
+      <WikiSectionHeading id="stats">Battle stats</WikiSectionHeading>
+      <p className={body}>
+        When a battle ends, every fighter still online gets a line in chat. Click it to see how you did.{" "}
+        <code className={code}>/battle stats</code> opens a menu with:
+      </p>
+      <ul className={`mt-3 list-disc space-y-2 pl-5 ${body}`}>
+        <li>
+          Your record over every battle: battles won and lost, kills, assists, deaths, damage, healing and crowd
+          control.
+        </li>
+        <li>
+          Your battles. Click one for its report, with each side&apos;s totals, your own numbers and where you ranked
+          among everyone who fought.
+        </li>
+        <li>Your wars, each with a war report.</li>
+      </ul>
+      <p className={`mt-3 ${body}`}>
+        Every kind of battle counts: field, siege, naval, raid and staff-run. Battles fought before battle stats were
+        added are not listed.
       </p>
 
       <WikiSectionHeading
@@ -127,6 +219,15 @@ export default function WarPage() {
       <p className={`mt-3 ${body}`}>
         New slots take hours to fill. The Military law changes which slots you get for free. If the faction bank
         can&apos;t pay, regiments shrink.
+      </p>
+      <p className={`mt-3 ${body}`}>
+        Each side&apos;s lives in a battle come from its regiments, plus the levies of its subjects and the hired
+        mercenaries on its roster. A subject defending its own province brings its whole militia.
+      </p>
+      <p className={`mt-3 ${body}`}>
+        Deaths in a campaign battle don&apos;t shrink your regiments. They become wounds on the forces that fought,
+        split by the lives each one brought. Slots your Military law gives you for free are full again after every
+        battle. Wounded paid slots can&apos;t fight and cost no upkeep, and you lose them when the war ends.
       </p>
 
       <WikiSectionHeading id="mercenaries" intro="Guilds can run a mercenary company and fight for other factions.">
@@ -155,6 +256,14 @@ export default function WarPage() {
         terms before signing. Missing mercenaries trigger absence refunds. Dropping below the number of places promised
         triggers the breach refund. Absences and breaches harm the company&apos;s reputation. Days already served still
         have to be paid.
+      </p>
+      <p className={`mt-3 ${body}`}>
+        While a contract runs, hired mercenaries mark the{" "}
+        <a href="#availability" className={link}>
+          days they can fight
+        </a>{" "}
+        for the faction that hired them, and their marks count for that side. A company never loses places in battle,
+        and its wounds heal over time.
       </p>
       <p className={`mt-3 ${body}`}>
         Company upgrades are Hardened Bodies for health, Warding Sigils for mana and Steady Focus for mana recovery.

@@ -11,7 +11,7 @@ const link = "text-[var(--tfmc-accent)] hover:underline";
 export default function DowsingPage() {
   return (
     <WikiPage
-      lastModified="2026-10-22"
+      lastModified="2026-11-12"
       title="Resource Nodes"
       intro="A node is a guild's mine, farm, forestry or quarry. Your guild stocks it with tools and other fittings, and it keeps producing resources for as long as it stays active."
       width="lg"
@@ -76,8 +76,16 @@ export default function DowsingPage() {
       <WikiSectionHeading id="efficiency">Efficiency</WikiSectionHeading>
       <p className={body}>
         A node&apos;s efficiency, shown in its menu, also sets the cycle length: at 0% a cycle takes four times as long
-        as at 100%. A new node starts at 50%. Efficiency rises by 0.1% per guild member each hour, up to 1% an hour, and
-        is capped at 25% per member, so a guild needs four members to reach 100%. Changing the node type costs 40%.
+        as at 100%. A new node starts at 50%. Efficiency rises by 0.1% per active guild member each hour, up to 1% an
+        hour, and is capped at 25% per active member, so a guild needs four active members to reach 100%. Changing the
+        node type costs 40%.
+      </p>
+      <p className={`mt-3 ${body}`}>
+        A member who has been offline for four weeks is{" "}
+        <Link href="/wiki/factions#inactivity" className={link}>
+          inactive
+        </Link>{" "}
+        and doesn&apos;t count.
       </p>
 
       <WikiSectionHeading id="levels">Levels and upkeep</WikiSectionHeading>

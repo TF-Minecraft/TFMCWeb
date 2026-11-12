@@ -9,6 +9,7 @@ Everything under `/wiki` is a public player manual. Write for someone joining th
 - Do not publish staff or administration commands, bug reports, draft notices, uncertainty reports, or unavailable workflows.
 - Include every ordinary player command supported by the evidence. Omit commands that require an operator or an unconfirmed external grant.
 - Keep real gameplay cautions, costs, cooldowns, item consumption, death effects, and irreversible choices.
+- Keep balance numbers off the wiki: the damage, healing, cooldowns, durations, health thresholds and radii of spells, skills and passives, attribute amounts, and the combat stats of weapons, armour, guns, ammunition and vehicles. Any balance pass would make the page wrong, so describe the effect in words. Prices, costs, timings and limits may stay.
 - Do not use em dash characters or em dash HTML or JavaScript escapes. Use a comma, colon, parentheses, or a full stop. Use `N/A` or `None` for an empty table value.
 - `WikiPage` displays an `Updated` date. Use the optional `lastModified` prop for a page-specific revision; otherwise the maintained `WIKI_LAST_MODIFIED` date is used.
 - Cards and callouts use a uniform neutral border. Do not add a coloured left border.

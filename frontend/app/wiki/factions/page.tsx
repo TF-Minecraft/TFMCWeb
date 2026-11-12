@@ -9,7 +9,7 @@ const code = "text-[var(--tfmc-accent)]";
 export default function FactionsPage() {
   return (
     <WikiPage
-      lastModified="2026-11-04"
+      lastModified="2026-11-12"
       title="Factions"
       intro={
         <>
@@ -73,8 +73,12 @@ export default function FactionsPage() {
           spent.
         </li>
         <li>
-          Prestige comes mostly from members and the time they play, plus your wealth, trade, land, titles and subjects.
-          Low stability and long inactivity lower it.
+          Prestige comes mostly from active members and the time they play, plus your wealth, trade, land, titles and
+          subjects. Low stability and long{" "}
+          <a href="#inactivity" className={link}>
+            inactivity
+          </a>{" "}
+          lower it.
         </li>
         <li>If your prestige drops too low for the land you hold, other factions can claim your provinces from you.</li>
         <li>You can hold at most 5 provinces outside a title. Form a County to grow further.</li>
@@ -88,9 +92,9 @@ export default function FactionsPage() {
         rows={factionTitles.map((t) => [t.title, t.formedFrom, t.prestige])}
       />
       <p className={`mt-3 ${body}`}>
-        Only your highest title adds prestige, on top of 10 for each province. You can&apos;t hold more Counties than
-        you have members. Titles that already exist on the map can be claimed from the Titles menu once you hold enough
-        of their provinces. How much depends on your faction&apos;s rank:
+        Only your highest title adds prestige, on top of 10 for each province. You can&apos;t form or claim another
+        County once you hold as many as you have active members. Titles that already exist on the map can be claimed
+        from the Titles menu once you hold enough of their provinces. How much depends on your faction&apos;s rank:
       </p>
       <DataTable
         columns={[
@@ -154,8 +158,12 @@ export default function FactionsPage() {
 
       <p className={`mt-3 ${body}`}>
         Choose Friendly, Neutral, Unfriendly or Hostile to move opinion over time. Diplomatic capacity limits the
-        relations you can maintain. An ally can call you to war. An unanswered call expires after 5 minutes without
-        counting as a decline.
+        relations you can maintain. An ally at war can call you to arms, and the call stays open until you answer it
+        (see{" "}
+        <Link href="/wiki/war#calls" className={link}>
+          War
+        </Link>
+        ).
       </p>
       <DataTable
         columns={[{ header: "Relation" }, { header: "What it means" }]}
@@ -191,9 +199,24 @@ export default function FactionsPage() {
 
       <WikiSectionHeading id="inactivity">Inactivity</WikiSectionHeading>
       <p className={body}>
-        If every member stays offline for 3 weeks, the faction slowly loses prestige. As it loses the prestige needed to
-        hold its land, it loses provinces too, with the capital last. Inactive guilds keep their upgrade levels, but the
-        output from those upgrades fades while they remain inactive.
+        A member who stays offline for four weeks is marked inactive. They stay in their guild, and playing again makes
+        them active.
+      </p>
+      <ul className={`mt-3 list-disc space-y-2 pl-5 ${body}`}>
+        <li>
+          An inactive member adds no prestige and doesn&apos;t count toward limits based on member numbers: new county
+          claims, levy caps, guild stability shares and movement strength.
+        </li>
+        <li>
+          They give up council seats, candidacies, votes, their place in the succession, the leadership of a movement or
+          cause, and an appointed Spymaster post.
+        </li>
+        <li>A faction leader stays leader, and a guild leader keeps the guild.</li>
+      </ul>
+      <p className={`mt-3 ${body}`}>
+        If every member is inactive, the faction slowly loses prestige. As it loses the prestige needed to hold its
+        land, it loses provinces too, with the capital last. Inactive guilds keep their upgrade levels, but the output
+        from those upgrades fades while they remain inactive.
       </p>
 
       <WikiSectionHeading

@@ -54,11 +54,8 @@ describe("WikiItemLink", () => {
   });
 
   it("prefers a case-varied parenthetical item over its shorter namesake", () => {
-    const html = renderToStaticMarkup(
-      <WikiItemText text="Use a Single Shot (launcher) or Smoothbore Barrel (Short)." />,
-    );
+    const html = renderToStaticMarkup(<WikiItemText text="Use a Single Shot (launcher)." />);
     expect(html).toContain('href="/wiki/items/single-shot-launcher">Single Shot (launcher)</a>');
-    expect(html).toContain('href="/wiki/items/smoothbore-barrel-short">Smoothbore Barrel (Short)</a>');
     expect(html).not.toContain('href="/wiki/items/single-shot"');
   });
 

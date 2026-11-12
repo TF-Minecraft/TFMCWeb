@@ -19,7 +19,7 @@ const body = "text-sm text-[var(--tfmc-mist)]";
 export default function CharactersPage() {
   return (
     <WikiPage
-      lastModified="2026-11-04"
+      lastModified="2026-11-12"
       title="Characters"
       intro={
         <>
@@ -272,6 +272,12 @@ export default function CharactersPage() {
           ]}
         />
       </div>
+      <p className={`mt-3 ${body}`}>
+        Each body part can only hold so much. Your arms hold at most two of Broken Arm, One-Handed and an arm
+        prosthetic. Your legs hold at most two of Broken Leg, One-Legged and a leg prosthetic. Your eyes hold one
+        injury, Half Blind or Blind. When a full body part takes a permanent injury, it replaces that part&apos;s
+        healing injury instead of adding a new one, so Half Blind becomes Blind.
+      </p>
       <p className={`mt-3 ${body}`}>
         To roleplay an injury with someone&apos;s agreement, run{" "}
         <code className={code}>/rpcharacter injure &lt;player&gt;</code> within 10 blocks of them and pick the injury

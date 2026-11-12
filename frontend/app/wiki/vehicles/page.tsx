@@ -42,7 +42,7 @@ const ammunitionName = (name: string) => {
 export default function VehiclesPage() {
   return (
     <WikiPage
-      lastModified="2026-11-06"
+      lastModified="2026-11-12"
       title="Vehicles & Construction"
       width="lg"
       intro="Build a cart, crew a ship or fly an airship. Choose a vehicle below for its materials, build time, fuel and 3D preview."
@@ -50,8 +50,8 @@ export default function VehiclesPage() {
       <StatGrid
         stats={[
           { label: "Vehicles", value: vehicles.length },
-          { label: "Construction", value: "2 hours to 3 days" },
-          { label: "Air vehicle unlock", value: "6 Crafter points total" },
+          { label: "Construction", value: "5 minutes to 3 days" },
+          { label: "Armed aircraft unlock", value: "6 Crafter points total" },
         ]}
       />
       <WikiSectionHeading id="catalogue">Choose a vehicle</WikiSectionHeading>
@@ -59,12 +59,14 @@ export default function VehiclesPage() {
       <WikiSectionHeading id="construction">Build your first vehicle</WikiSectionHeading>
       <ol className="list-decimal space-y-3 pl-5 text-sm text-[var(--tfmc-mist)]">
         <li>
-          Open <code className="text-[var(--tfmc-accent)]">/professions</code> and buy Engineer ranks in the{" "}
+          Open <code className="text-[var(--tfmc-accent)]">/professions</code> and, in the{" "}
           <Link href="/wiki/characters" className={linkClass}>
             Crafter profession
           </Link>
-          . Engineer I costs 1 point for ground vehicles. Engineer II requires I and costs 2 more points for ships.
-          Engineer III requires II and costs 3 more points for aircraft.
+          , buy the Engineer rank your vehicle needs. Engineer I costs 1 point for ground vehicles. Engineer II requires
+          I and costs 2 more points for ships. Engineer III requires II and costs 3 more points for aircraft. Five
+          vehicles need no rank, so you can skip this step for them: the Small Car, the Wooden Cart, the Scout plane,
+          the Windrider balloon and the Karve sailing boat.
         </li>
         <li>
           Craft and place an <StationLink name="Engineering Table" /> for land vehicles, fixed guns and aircraft, or a{" "}
@@ -93,8 +95,7 @@ export default function VehiclesPage() {
         <Link href="/wiki/vehicles/wooden-cart" className={linkClass}>
           Wooden Cart
         </Link>{" "}
-        needs Engineer I, 64 Oak Logs, 16 Iron Ingots and 16 Sticks. It takes two hours to build and carries 54 cargo
-        slots.
+        costs 16 Oak Logs, 8 Iron Ingots and 8 Sticks. It takes five minutes to build and has 54 cargo slots.
       </Callout>
       <Callout variant="warning">
         Breaking the construction station during a build cancels construction and drops the materials at the station.
@@ -247,13 +248,14 @@ export default function VehiclesPage() {
       <WikiSectionHeading id="weapons">Mounted weapons and ammunition</WikiSectionHeading>
       <p className="text-sm text-[var(--tfmc-mist)]">
         Choose the seat assigned to a weapon. Hold its ammunition and right-click to reload, then use Space to fire. W/S
-        adjusts elevation and A/D traverses; mounted rifles aim toward your cursor. Check{" "}
-        <code className="text-[var(--tfmc-accent)]">/vf keybinds</code> for the controls of your current seat.
+        adjusts elevation and A/D traverses; most mounted rifles aim toward your cursor, but the Monoplane and Biplane
+        front rifles fire straight ahead. Check <code className="text-[var(--tfmc-accent)]">/vf keybinds</code> for the
+        controls of your current seat.
       </p>
       <DataTable
         className="mt-4"
-        columns={[{ header: "Weapon" }, { header: "Reload" }, { header: "Ammunition" }]}
-        rows={vehicleWeapons.map((row) => [row[1], row[2], ammoName(row[4])])}
+        columns={[{ header: "Weapon" }, { header: "Ammunition" }, { header: "Aiming" }]}
+        rows={vehicleWeapons.map((row) => [row[1], ammoName(row[2]), row[3]])}
       />
       <DataTable
         className="mt-4"
@@ -269,8 +271,7 @@ export default function VehiclesPage() {
       </Callout>
       <Callout variant="warning">
         <WikiItemLink name="Cannonball">Cannonballs</WikiItemLink> and bombs can damage terrain.{" "}
-        <WikiItemLink name="Cannonball">Cannonballs</WikiItemLink> can also start fires and apply Poison for ten
-        seconds.
+        <WikiItemLink name="Cannonball">Cannonballs</WikiItemLink> can also start fires and apply Poison.
       </Callout>
       <WikiSectionHeading id="tracks">Train tracks</WikiSectionHeading>
       <p className="text-sm text-[var(--tfmc-mist)]">
