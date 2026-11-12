@@ -15,7 +15,7 @@ export default async function VehicleDetail({ params }: { params: Promise<{ slug
   const seats = getSeatCounts(vehicle);
   const seatless = seats.total === 0;
   return (
-    <WikiPage lastModified="2026-11-06" title={vehicle.name}>
+    <WikiPage lastModified="2026-11-12" title={vehicle.name}>
       <Link href="/wiki/vehicles" className="text-sm text-[var(--tfmc-accent)] underline">
         All vehicles and operating guide
       </Link>
@@ -42,7 +42,7 @@ export default async function VehicleDetail({ params }: { params: Promise<{ slug
           ["Construction station", <StationLink key="station" name={vehicle.station} />],
           ["Category", vehicle.kind],
           ["Personal limit", vehicle.personalLimit],
-          ["Daily upkeep", `${vehicle.upkeep} d`],
+          ["Daily upkeep", vehicle.upkeep ? `${vehicle.upkeep} d` : "None"],
           ["Profession", vehicle.requirement],
           ["Build time", vehicle.buildTime],
         ]}
@@ -67,8 +67,6 @@ export default async function VehicleDetail({ params }: { params: Promise<{ slug
         columns={[{ header: "Feature" }, { header: "Details" }]}
         rows={[
           ["Seats: captain / mechanic / passenger", vehicle.seats],
-          ["Components and HP", vehicle.components],
-          ["Speed", vehicle.speed],
           ["Fuel", <WikiItemLink key="fuel" name={vehicle.fuel} />],
           ["Mounted weapons", vehicle.weapons],
           ["Cargo", vehicle.cargo],
@@ -78,15 +76,8 @@ export default async function VehicleDetail({ params }: { params: Promise<{ slug
         <>
           <WikiSectionHeading id="fuel">Fuel tank</WikiSectionHeading>
           <DataTable
-            columns={[
-              { header: "Capacity" },
-              { header: "Burn / second" },
-              { header: "Items to fill" },
-              { header: "Full-tank runtime" },
-            ]}
-            rows={[
-              [vehicle.fuelStats.capacity, vehicle.fuelStats.burn, vehicle.fuelStats.items, vehicle.fuelStats.runtime],
-            ]}
+            columns={[{ header: "Capacity" }, { header: "Items to fill" }]}
+            rows={[[vehicle.fuelStats.capacity, vehicle.fuelStats.items]]}
           />
           <Callout>
             Each fuel item supplies 100 units. Hold <WikiItemLink name={vehicle.fuel} /> and right-click once per item.{" "}
@@ -100,7 +91,9 @@ export default async function VehicleDetail({ params }: { params: Promise<{ slug
             {vehicle.category === "planes" || vehicle.category === "airships"
               ? vehicle.id === "behemoth"
                 ? "The Behemoth can refuel and reload in flight."
-                : "Land before refuelling. Land to reload bomb bays and the Monoplane's or Biplane's front rifles; other mounted guns can reload in flight."
+                : vehicle.weapons === "N/A"
+                  ? "Land before refuelling."
+                  : "Land before refuelling. Land to reload bomb bays and the Monoplane's or Biplane's front rifles; other mounted guns can reload in flight."
               : null}{" "}
             Fuel burn is flat whenever the engine runs at nonzero throttle; using 20% throttle does not save fuel.
             {vehicle.category === "train" ? " Overdrive above 100% burns more." : null}

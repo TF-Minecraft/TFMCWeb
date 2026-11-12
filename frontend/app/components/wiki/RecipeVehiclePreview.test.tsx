@@ -17,7 +17,7 @@ describe("material vehicle links", () => {
       </>,
     );
 
-    expect(vehicleRecipes).toHaveLength(22);
+    expect(vehicleRecipes).toHaveLength(25);
     for (const recipe of vehicleRecipes) {
       const link = screen.getByRole("link", { name: `View ${recipe.output.name} in vehicle catalogue` });
       expect(link.getAttribute("href")).toBe(`/wiki/vehicles?vehicle=${recipe.key.replace(/^vehicle-/, "")}#catalogue`);

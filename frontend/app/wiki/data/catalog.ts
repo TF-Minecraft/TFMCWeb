@@ -23,6 +23,7 @@ function buildMaterialCatalog(): Map<string, MaterialCatalogEntry> {
         texture: m.texture,
         lore: m.lore,
         usedFor: m.usedFor,
+        guide: m.guide,
         recipes: [],
         acquisition: m.acquisition,
         unpackingRecipes: allRecipes.filter((r) => m.unpackingRecipeKeys?.includes(r.key)),

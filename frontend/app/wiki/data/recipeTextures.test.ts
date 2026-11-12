@@ -105,7 +105,8 @@ describe("recipe textures", () => {
     const guns = renderToStaticMarkup(GunsPage());
     const ammo = ammoMetals.flatMap((metal) => gunAmmoKinds.map((kind) => `${metal} ${kind.kind}`));
     for (const name of [...gunParts.map((part) => part.part), ...ammo]) {
-      expect(guns, name).toContain(`alt="${name}"`);
+      const alt = name.replaceAll("&", "&amp;").replaceAll("'", "&#x27;");
+      expect(guns, name).toContain(`alt="${alt}"`);
     }
     const fishing = renderToStaticMarkup(FishingPage());
     for (const name of ["Iron Rod", "Steel Rod", "Abyssalite Rod", "Mythril Rod"]) {

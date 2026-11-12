@@ -25,10 +25,22 @@ const skillKind = (id: string) => {
   return skill.passive ? "Passive" : "Spell";
 };
 
+const statuses: [string, string][] = [
+  ["Slowed", "You move slower."],
+  ["Weakened", "You get the Weakness effect."],
+  ["Burnt", "You take damage every second."],
+  ["Frozen", "You cannot move or jump."],
+  ["Silenced", "You cannot cast spells."],
+  [
+    "Wounded",
+    "All healing you get is much weaker, lifesteal and regeneration included. Absorption shields are not affected. Only the Cleric's Restoration removes it early.",
+  ],
+];
+
 export default function ClassesPage() {
   return (
     <WikiPage
-      lastModified="2026-11-04"
+      lastModified="2026-11-12"
       title="Classes & Professions"
       intro="Your class decides what equipment you can use and which skills you get. Professions are levelled separately, through gathering and crafting."
       width="lg"
@@ -37,17 +49,21 @@ export default function ClassesPage() {
       <p className={body}>
         You choose one of seven classes while creating your character. Archer, Bard, Guardian, Paladin and Warrior are
         starting points. They have no skills and no class equipment of their own. At class level 2 each of them splits
-        into three <strong>paths</strong> (subclasses), and the path you pick decides your gear and skills. The game
-        reminds you to pick one with <code className={code}>/class</code>, and your level carries over. Mage and
-        Musketeer have no paths and keep their own equipment from the start.
+        into three <strong>subclasses</strong>, and the subclass you pick decides your gear and skills. The game reminds
+        you to pick one with <code className={code}>/class</code>, and your level carries over. Mage and Musketeer have
+        no subclasses and keep their own equipment from the start.
       </p>
       <p className={`mt-3 ${body}`}>
         <code className={code}>/class</code> opens Class Selection and <code className={code}>/subclass</code> shows the
-        paths of your current class. Click a class once to select it and again to confirm. You can only pick paths of
-        your current class, and changing your base class removes your path, so the menu asks first.
+        subclasses of your current class. Click a class once to select it and again to confirm. You can only pick
+        subclasses of your current class, and changing your base class removes your subclass, so the menu asks first.
       </p>
       <ul className={`mt-3 list-disc space-y-1 pl-5 ${body}`}>
-        <li>Your first class and your first path are free.</li>
+        <li>Your first class is free.</li>
+        <li>
+          Your first subclass is free, and so is the first one you pick after each class change. Switching to another
+          subclass of the same class is a paid change.
+        </li>
         <li>Any change is also free for the first 5 days after the character was created.</li>
         <li>
           After that, changes cost 100, then 1,000, then 3,000 denars, and 3,000 for every change after that. The menu
@@ -56,9 +72,9 @@ export default function ClassesPage() {
         </li>
       </ul>
 
-      <WikiSectionHeading id="classes">Classes and paths</WikiSectionHeading>
+      <WikiSectionHeading id="classes">Classes and subclasses</WikiSectionHeading>
       <p className={body}>
-        Every path is one of three types. <strong>Martial</strong> paths have only passive skills,{" "}
+        Every subclass is one of three types. <strong>Martial</strong> subclasses have only passive skills,{" "}
         <strong>semi-casters</strong> mix spells and passives, and <strong>full casters</strong> have only spells.
         Spells cost mana and are cast from your skill bar; the magic schools listed are the ones their spells draw on.
       </p>
@@ -75,7 +91,11 @@ export default function ClassesPage() {
           ) : (
             <DataTable
               className="mt-2"
-              columns={[{ header: "Path", nowrap: true }, { header: "Type", nowrap: true }, { header: "Equipment" }]}
+              columns={[
+                { header: "Subclass", nowrap: true },
+                { header: "Type", nowrap: true },
+                { header: "Equipment" },
+              ]}
               rows={pathsOf(base.id).map((path) => [
                 <a key={path.id} href={`#path-${path.id}`} className={link}>
                   {path.name}
@@ -101,14 +121,15 @@ export default function ClassesPage() {
         ).
       </p>
       <Callout className="mt-4">
-        Some gear made before the paths were added still lists the old base classes, so no path can use it.
+        Some gear made before the subclasses were added still lists the old base classes, so no subclass can use it. A
+        Warden also cannot use warhammers crafted before 7 November 2026.
       </Callout>
 
       <WikiSectionHeading id="skills">Skill slots and points</WikiSectionHeading>
       <p className={body}>
         Open <code className={code}>/skills</code>, shift-left-click a skill, then left-click a slot to bind it.
         Right-click a slot to empty it. To cast a bound spell, press F (swap hands), then the number shown on the action
-        bar. Each slot only takes certain kinds of skill, and new slots open as your path levels up:
+        bar. Each slot only takes certain kinds of skill, and new slots open as your subclass levels up:
       </p>
       <div className="mt-4">
         <DataTable
@@ -123,8 +144,8 @@ export default function ClassesPage() {
         />
       </div>
       <p className={`mt-3 ${body}`}>
-        Skills unlock at class level 2 and can be upgraded to skill level 4. Paths get 2 skill points at levels 7, 12
-        and 17, and each upgrade costs 1 point. Picking a path above those levels still gives you their slots and
+        Skills unlock at class level 2 and can be upgraded to skill level 4. Subclasses get 2 skill points at levels 7,
+        12 and 17, and each upgrade costs 1 point. Picking a subclass above those levels still gives you their slots and
         points. Foe Sense and Duel Instinct are always on and need no slot.
       </p>
       <p className={`mt-3 ${body}`}>
@@ -136,9 +157,9 @@ export default function ClassesPage() {
 
       <WikiSectionHeading id="acts">Level caps</WikiSectionHeading>
       <p className={body}>
-        The current story act sets the highest level a path, Mage or Musketeer can reach. The server is in{" "}
+        The current story act sets the highest level a subclass, Mage or Musketeer can reach. The server is in{" "}
         <strong>Act 1</strong>, so the cap is 11. Base classes stop at level 6 whatever the act, which is another reason
-        to pick your path at level 2. Class EXP comes from killing creatures and from{" "}
+        to pick your subclass at level 2. Class EXP comes from killing creatures and from{" "}
         <Link href="/wiki/codex" className={link}>
           Codex
         </Link>{" "}
@@ -156,18 +177,27 @@ export default function ClassesPage() {
         />
       </div>
 
-      <WikiSectionHeading id="path-skills">Path skills</WikiSectionHeading>
+      <WikiSectionHeading id="path-skills">Subclass skills</WikiSectionHeading>
       <p className={body}>
-        Each path&apos;s skills are listed below. The in-game tooltips show each skill&apos;s effect, mana cost and
+        Each subclass&apos;s skills are listed below. The in-game tooltips show each skill&apos;s effect, mana cost and
         cooldown at every skill level.
       </p>
+      <h3 id="statuses" className={h3}>
+        Statuses
+      </h3>
+      <p className={`mt-1 ${body}`}>Some skills put a status on whoever they hit. Each status wears off on its own.</p>
+      <DataTable
+        className="mt-2"
+        columns={[{ header: "Status", nowrap: true }, { header: "What it does" }]}
+        rows={statuses}
+      />
       {subclasses.map((path) => (
         <div key={path.id}>
           <h3 id={`path-${path.id}`} className={h3}>
             {path.name}
           </h3>
           <p className={`mt-1 ${body}`}>
-            {path.type} {baseClasses.find((b) => b.id === path.base)?.name} path. {path.lore}
+            {path.type} {baseClasses.find((b) => b.id === path.base)?.name} subclass. {path.lore}
             {path.magic ? ` Magic: ${path.magic}.` : ""}
           </p>
           <DataTable
@@ -185,7 +215,7 @@ export default function ClassesPage() {
       </p>
       <div className="mt-4">
         <DataTable
-          columns={[{ header: "Attribute", nowrap: true }, { header: "Each point gives" }]}
+          columns={[{ header: "Attribute", nowrap: true }, { header: "What it improves" }]}
           rows={attributes.map((a) => [a.name, a.perPoint])}
         />
       </div>

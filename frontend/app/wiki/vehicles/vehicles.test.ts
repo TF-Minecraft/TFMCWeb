@@ -17,10 +17,10 @@ import VehiclesPage from "./page";
 
 describe("vehicle catalogue and actual assets", () => {
   it("covers every base blueprint and lists only skins with a model", () => {
-    expect(vehicles).toHaveLength(22);
-    expect(new Set(vehicles.map((v) => v.slug)).size).toBe(22);
+    expect(vehicles).toHaveLength(25);
+    expect(new Set(vehicles.map((v) => v.slug)).size).toBe(25);
     const skins = vehicles.flatMap((v) => v.skins);
-    expect(skins.filter((s) => s.modelUrl)).toHaveLength(38);
+    expect(skins.filter((s) => s.modelUrl)).toHaveLength(41);
     expect(skins.filter((s) => !s.modelUrl)).toHaveLength(0);
     for (const vehicle of vehicles) {
       expect(vehicle.seats, vehicle.slug).toMatch(/^\d+\/\d+\/\d+$/);
@@ -29,7 +29,8 @@ describe("vehicle catalogue and actual assets", () => {
       expect(vehicleRecipes.find((r) => r.output.name === vehicle.name)?.ingredients.length).toBeGreaterThan(0);
     }
     expect(getVehicleBySlug("unknown")).toBeUndefined();
-    expect(vehicleRecipes.find((r) => r.output.name === "Wooden Cart")?.time).toBe(2 * 3600);
+    expect(vehicleRecipes.find((r) => r.output.name === "Wooden Cart")?.time).toBe(5 * 60);
+    expect(vehicleRecipes.find((r) => r.output.name === "Simple Locomotive")?.time).toBe(4 * 3600);
     expect(vehicleRecipes.find((r) => r.output.name === "Behemoth")?.time).toBe(3 * 86400);
   });
 
@@ -147,6 +148,33 @@ describe("vehicle page rendering", () => {
     expect(ironclad).toContain("or from a mechanic seat");
     expect(ironclad).toContain("passenger access and tickets");
     expect(ironclad).not.toContain('href="/wiki/vehicles#routes"');
+
+    // Civilian vehicles: no rank, no upkeep, no weapons; the Karve sails and the balloon burns Arcane Fuel.
+    const karve = await detail("karve");
+    expect(karve).toContain("Its sails use wind.");
+    expect(karve).toContain("Shift reopens seat selection.");
+    expect(karve).not.toContain('id="fuel"');
+    const windrider = await detail("windrider");
+    expect(windrider).toContain('id="fuel"');
+    expect(windrider).toContain("Land before refuelling.");
+    expect(windrider).not.toContain("reload bomb bays");
+    expect(windrider).toContain("in flight, Shift alone descends");
+    expect(windrider).toContain("Cargo Hold, 27 slots");
+    for (const slug of ["scout", "windrider", "karve"]) {
+      const vehicle = getVehicleBySlug(slug)!;
+      expect(vehicle.requirement, slug).toBe("None");
+      expect(vehicle.upkeep, slug).toBe(0);
+      expect(vehicle.weapons, slug).toBe("N/A");
+      expect(await detail(slug)).toMatch(/Daily upkeep<\/td><td[^>]*>None</);
+    }
+
+    // No balance numbers (component health, speed, burn rate, runtime) on any vehicle page.
+    for (const vehicle of vehicles) {
+      const html = await detail(vehicle.slug);
+      for (const banned of ["Components and HP", "Speed", "Burn / second", "Full-tank runtime"]) {
+        expect(html, `${vehicle.slug} ${banned}`).not.toContain(banned);
+      }
+    }
 
     // Seatless wording assumes a coupled train car with a hold opened from its menu.
     for (const vehicle of vehicles.filter((v) => getSeatCounts(v).total === 0)) {

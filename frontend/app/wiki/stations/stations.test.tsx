@@ -54,16 +54,16 @@ describe("station registry and source coverage", () => {
       "block-station": 133,
       "copper-station": 119,
       "engineer-station": 18,
-      "engineering-table": 17,
+      "engineering-table": 19,
       "fishing-station": 27,
       "forester-station": 117,
-      "gunsmithing-station": 21,
+      "gunsmithing-station": 37,
       "ingot-station": 71,
       "instrument-station": 10,
       "magic-station": 13,
       "meal-prep-station": 22,
       "medicine-station": 42,
-      dockyard: 5,
+      dockyard: 6,
       "research-station": 36,
       "tool-station": 59,
     };
@@ -288,7 +288,7 @@ describe("station routes", () => {
     const station = await StationDetailPage({ params: Promise.resolve({ slug: "engineering-table" }) });
     const html = renderToStaticMarkup(station);
     expect(html).toContain("Getting one");
-    expect(html).toContain("Recipes (17)");
+    expect(html).toContain("Recipes (19)");
     expect(html).toContain("Right-click it without sneaking to open it.");
     expect(html).toContain('href="/wiki/vehicles"');
   });

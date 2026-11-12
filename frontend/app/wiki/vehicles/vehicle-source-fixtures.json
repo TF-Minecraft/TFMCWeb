@@ -895,7 +895,7 @@
         "rotation": [0, 0, 0]
       },
       {
-        "origin": [0, 6, 34.0],
+        "origin": [0, 6, 34],
         "rotation": [0, 0, 0]
       },
       {
@@ -1285,6 +1285,63 @@
     ]
   },
   {
+    "id": "karve",
+    "path": "karve",
+    "resolution": {
+      "width": 256,
+      "height": 256
+    },
+    "textures": [
+      {
+        "id": "0",
+        "uv_width": 256,
+        "uv_height": 256
+      }
+    ],
+    "cube": {
+      "uuid": "97aec724-49fd-45ab-9e32-4ab1a0286029",
+      "from": [-32, 28, -9],
+      "to": [32, 40, -9],
+      "origin": [0, 40, -9],
+      "faces": {
+        "north": {
+          "uv": [64, 104, 128, 116],
+          "texture": 0
+        },
+        "south": {
+          "uv": [64, 104, 128, 116],
+          "texture": 0
+        }
+      }
+    },
+    "parents": [
+      {
+        "origin": [0, 0, 0]
+      },
+      {
+        "origin": [0, 0, 0]
+      },
+      {
+        "origin": [0, 12, -4]
+      },
+      {
+        "origin": [0, 82, -7]
+      },
+      {
+        "origin": [0, 80, -9],
+        "rotation": [22.5, 0, 0]
+      },
+      {
+        "origin": [0, 68, -9],
+        "rotation": [-22.5, 0, 0]
+      },
+      {
+        "origin": [0, 40, -9],
+        "rotation": [-22.5, 0, 0]
+      }
+    ]
+  },
+  {
     "id": "monoplane",
     "path": "monoplane",
     "resolution": {
@@ -1458,6 +1515,71 @@
       {
         "origin": [10, 0.75, 17],
         "rotation": [-45, 0, 0]
+      }
+    ]
+  },
+  {
+    "id": "scout",
+    "path": "scout",
+    "resolution": {
+      "width": 256,
+      "height": 256
+    },
+    "textures": [
+      {
+        "id": "0",
+        "uv_width": 256,
+        "uv_height": 256
+      }
+    ],
+    "cube": {
+      "uuid": "feef16e9-64ef-4ebe-aff3-600735f11af2",
+      "from": [8, 12, -20],
+      "to": [10, 51.5, -18],
+      "origin": [9, 12, -19],
+      "faces": {
+        "north": {
+          "uv": [72, 12, 74, 51.5],
+          "texture": 0
+        },
+        "east": {
+          "uv": [108, 12, 110, 51.5],
+          "texture": 0
+        },
+        "south": {
+          "uv": [72, 12, 74, 51.5],
+          "texture": 0
+        },
+        "west": {
+          "uv": [108, 12, 110, 51.5],
+          "texture": 0
+        },
+        "up": {
+          "uv": [72, 44, 74, 46],
+          "texture": 0
+        },
+        "down": {
+          "uv": [72, 44, 74, 46],
+          "texture": 0
+        }
+      }
+    },
+    "parents": [
+      {
+        "origin": [0, 20, -8]
+      },
+      {
+        "origin": [0, 20, -8]
+      },
+      {
+        "origin": [0, 17, 0]
+      },
+      {
+        "origin": [0, 41, -9]
+      },
+      {
+        "origin": [9, 12, -19],
+        "rotation": [0, 0, -45]
       }
     ]
   },
@@ -1865,6 +1987,68 @@
       {
         "origin": [-25.95, 19, -6],
         "rotation": [0, 0, -45]
+      }
+    ]
+  },
+  {
+    "id": "windrider",
+    "path": "windrider",
+    "resolution": {
+      "width": 256,
+      "height": 256
+    },
+    "textures": [
+      {
+        "id": "0",
+        "uv_width": 256,
+        "uv_height": 256
+      }
+    ],
+    "cube": {
+      "uuid": "6e91a2a3-2f5e-44e2-b11f-86fdaae15479",
+      "from": [22, 5.5, 11],
+      "to": [24, 22.5, 29],
+      "origin": [24, 6, 10],
+      "faces": {
+        "north": {
+          "uv": [22, 40, 24, 57],
+          "texture": 0
+        },
+        "east": {
+          "uv": [10, 40, 28, 57],
+          "texture": 0
+        },
+        "south": {
+          "uv": [22, 40, 24, 57],
+          "texture": 0
+        },
+        "west": {
+          "uv": [10, 40, 28, 57],
+          "texture": 0
+        },
+        "up": {
+          "uv": [22, 10, 24, 28],
+          "texture": 0
+        },
+        "down": {
+          "uv": [22, 10, 24, 28],
+          "texture": 0
+        }
+      }
+    },
+    "parents": [
+      {
+        "origin": [0, 0, 0]
+      },
+      {
+        "origin": [0, 40, 0]
+      },
+      {
+        "origin": [0, 6, 0]
+      },
+      {
+        "origin": [24, 6, 10],
+        "rotation": [0, -45, 0]
       }
     ]
   },

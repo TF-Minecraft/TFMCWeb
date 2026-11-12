@@ -94,7 +94,8 @@ export default function VehicleGallery({ vehicles }: { vehicles: VehicleInfo[] }
           ) : null}
         </div>
         <p className="mt-2 text-sm text-[var(--tfmc-mist)]">
-          {selected.kind} · {selected.requirement} · {selected.buildTime}
+          {selected.kind} · {selected.requirement === "None" ? "No Engineer rank" : selected.requirement} ·{" "}
+          {selected.buildTime}
         </p>
       </div>
     </div>

@@ -27,7 +27,8 @@
  *      (ModelEngine uses those for hitboxes and mount points).
  *
  * Read-only against C:\Users\MSI\Desktop\plugins. Run from `frontend/`:
- *   node scripts/convert-vehicle-bbmodels.mjs
+ *   node scripts/convert-vehicle-bbmodels.mjs [vehicle or skin ids...]
+ * Set VEHICLE_BLUEPRINTS to read the `.bbmodel` files from another folder.
  */
 
 import { createHash } from "node:crypto";
@@ -37,7 +38,7 @@ import { fileURLToPath } from "node:url";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const FRONTEND = join(HERE, "..");
-const BLUEPRINTS = "C:/Users/MSI/Desktop/plugins/ModelEngine/blueprints";
+const BLUEPRINTS = process.env.VEHICLE_BLUEPRINTS ?? "C:/Users/MSI/Desktop/plugins/ModelEngine/blueprints";
 const OUT_MODELS = join(FRONTEND, "public", "wiki", "models", "vehicles");
 const OUT_TEXTURES = join(FRONTEND, "public", "wiki", "textures", "vehicles");
 
@@ -58,12 +59,15 @@ export const VEHICLES = {
   gyrobomber: "gyrobomber",
   horse_cart: "vehicles/land/horse_cart",
   ironclad: "ironclad",
+  karve: "karve",
   monoplane: "monoplane",
   passenger_car: "vehicles/trains/passenger_car",
+  scout: "scout",
   simple_locomotive: "simple_locomotive",
   sloop: "sloop",
   small_car: "vehicles/land/small_car",
   torpedoboat: "torpedoboat",
+  windrider: "windrider",
   wooden_cart: "vehicles/land/wooden_cart",
 };
 

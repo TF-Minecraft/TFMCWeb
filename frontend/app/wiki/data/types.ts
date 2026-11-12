@@ -196,6 +196,8 @@ export type CatalogMaterial = {
   acquisition?: MaterialAcquisition[];
   /** Uses that no station recipe on the wiki shows, such as smithing or node upgrades. */
   usedFor?: string;
+  /** A guide page that covers what the material is used for, linked after `usedFor`. */
+  guide?: { href: string; label: string };
   /** Existing-stock conversions, not a source of new material. */
   unpackingRecipeKeys?: string[];
 };
@@ -213,6 +215,7 @@ export type MaterialCatalogEntry = {
   name: string;
   group: MaterialGroup;
   usedFor?: string;
+  guide?: { href: string; label: string };
   texture?: string;
   lore?: string;
   recipe?: Recipe;

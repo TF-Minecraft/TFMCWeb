@@ -498,7 +498,7 @@ export const stations: StationInfo[] = [
     group: "Smithing and tools",
     blurb: "Builds rifles, pistols, shotguns and launchers from parts you choose.",
     usage:
-      "Pick a gun type, then a part for each slot. Each part needs its smith perk, and the materials come out of your inventory when you take the gun. Anyone with the perks can build a gun, but only a Musketeer can fire it.",
+      "Pick a gun type, then a part for each slot and the metal or wood to make it from. Your Smith perks decide which metals and woods you can use, and the materials come out of your inventory when you take the gun. Anyone with the perks can build a gun, but only a Musketeer can fire it.",
     icon: T("ammunition/bronzeshot.png"),
     interaction: "Right click",
     guide: { href: "/wiki/guns", label: "Guns guide" },

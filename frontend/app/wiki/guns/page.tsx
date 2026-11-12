@@ -1,17 +1,64 @@
 import Link from "next/link";
 import { DataTable, SeeAlso, StationLink, WikiPage, WikiSectionHeading, wikiPixelIcon } from "@/app/components/wiki";
+import type { Recipe } from "@/app/wiki/data";
 import { ammoMetals, gunAmmoKinds, gunAmmoRecipe, gunPartTexture, gunParts } from "../data/guns";
 
 const link = "text-[var(--tfmc-accent)] hover:underline";
 const body = "text-sm text-[var(--tfmc-mist)]";
+const subheading = "mt-6 text-sm font-semibold uppercase tracking-wide text-[var(--tfmc-mist)]";
 
-const partKinds = ["Barrel", "Loader", "Chamber", "Action", "Stock"] as const;
+const partGroups = [
+  ["Barrel", "Barrels"],
+  ["Loader", "Loaders"],
+  ["Chamber", "Chambers"],
+  ["Action", "Actions"],
+  ["Stock", "Stocks"],
+  ["Grip", "Grips"],
+] as const;
+
+const partColumns = [
+  { header: "Part", width: "24%" },
+  { header: "Fits", width: "16%" },
+  { header: "Cost", width: "18%" },
+  { header: "Notes" },
+];
 
 const gunTypes = [
-  ["Rifle", "Barrel, loader, chamber, action and stock.", "Iron Smith"],
-  ["Pistol", "Barrel, loader, chamber and action. No stock.", "Iron Smith"],
-  ["Shotgun", "Spread Barrel, loader, chamber, action and stock.", "Steel Smith"],
-  ["Launcher", "Launcher Barrel, loader, chamber and Rocketlock. No stock.", "Abyssalite Smith"],
+  ["Rifle", "Barrel, loader, chamber, action and stock.", "Yes"],
+  ["Pistol", "Barrel, loader, chamber, action and grip.", "No"],
+  ["Shotgun", "Barrel, loader, chamber, action and stock.", "No"],
+  ["Launcher", "Barrel, loader, chamber and action. No stock.", "Yes"],
+];
+
+const smithMaterials = [
+  {
+    perk: "Iron Smith",
+    metal: "Iron",
+    metalNote: "Cheap and crude. Upsides are smaller and downsides are harsher.",
+    wood: "Barkwood",
+    woodNote: "Crude, like iron.",
+  },
+  {
+    perk: "Steel Smith",
+    metal: "Steel",
+    metalNote: "Every part works as designed.",
+    wood: "Maplewood",
+    woodNote: "Steadier on the move and mounted.",
+  },
+  {
+    perk: "Abyssalite Smith",
+    metal: "Abyssalite",
+    metalNote: "The most accurate and the best at piercing armour, but slow to reload and heavy on the move.",
+    wood: "Elderwood",
+    woodNote: "The most accurate.",
+  },
+  {
+    perk: "Mythril Smith",
+    metal: "Mythril",
+    metalNote: "The fastest and the steadiest, with the mildest downsides.",
+    wood: "Demonwood",
+    woodNote: "Strong and light.",
+  },
 ];
 
 function ItemName({ name, texture, qty }: { name: string; texture: string; qty?: number }) {
@@ -24,10 +71,33 @@ function ItemName({ name, texture, qty }: { name: string; texture: string; qty?:
   );
 }
 
+function Material({ name, note }: { name: string; note: string }) {
+  return (
+    <>
+      <strong className="text-[var(--tfmc-cream)]">{name}.</strong> {note}
+    </>
+  );
+}
+
+/** What a recipe makes, plus what it takes when that is more than one of each ingredient. */
+function AmmoYield({ recipe }: { recipe: Recipe }) {
+  const takesMore = recipe.ingredients.some((item) => item.qty > 1);
+  return (
+    <>
+      <ItemName name={recipe.output.name} qty={recipe.output.qty} texture={recipe.output.texture!} />
+      {takesMore ? (
+        <span className="mt-1 block text-xs text-[var(--tfmc-stone)]">
+          from {recipe.ingredients.map((item) => `${item.qty} ${item.name}`).join(" + ")}
+        </span>
+      ) : null}
+    </>
+  );
+}
+
 export default function GunsPage() {
   return (
     <WikiPage
-      lastModified="2026-10-24"
+      lastModified="2026-11-12"
       title="Guns & Gunsmithing"
       intro={
         <>
@@ -46,42 +116,70 @@ export default function GunsPage() {
         <li>
           Craft the <StationLink name="Gunsmithing Station" /> on a crafting table and place it on the floor.
         </li>
-        <li>Right-click it without sneaking. The Gun Assembly menu opens on a rifle.</li>
-        <li>Click the button in the top-left corner to switch between rifle, pistol, shotgun and launcher.</li>
+        <li>Right-click it without sneaking. The Gun Assembly menu opens.</li>
         <li>
-          Each part slot already holds a part you are able to make. Click a slot to pick a different part. A barrier
-          means you can&apos;t make any part for that slot yet. Pistols and launchers always show one in the stock slot,
-          because they take no stock.
+          Click the button in the top-left corner to choose a rifle, pistol, shotgun or launcher. Switching clears the
+          parts you picked.
         </li>
         <li>
-          Click the finished gun on the right. The materials for all its parts are taken from your inventory at once.
+          Each part slot starts with a part you can make. Click a slot to pick a different one. Green arrows show what a
+          part does well and red arrows what it does badly, without numbers. A barrier means you can&apos;t make any
+          part for that slot. A launcher always shows one where the stock would go.
+        </li>
+        <li>
+          Pick the metal to make the part from. Stocks and grips are made from wood instead, and each takes a fitting of
+          leather, wool or feathers. Pick its quality: plain, Good, Great or Perfect.
+        </li>
+        <li>
+          The finished gun appears on the right and shows its real stats. Click it to take it. The materials for every
+          part come out of your inventory at once. If you are missing any, nothing is taken.
         </li>
       </ol>
-      <p className={`mt-3 ${body}`}>
-        Which parts you can use depends on your <strong>Smith</strong> perks from the Crafter profession, the same perks
-        that unlock metals and woods for{" "}
-        <Link href="/wiki/advanced-crafting#before-you-start" className={link}>
-          Advanced Crafting
-        </Link>
-        : Iron Smith for iron parts and oak stocks, Steel Smith for steel and maplewood, Abyssalite Smith for abyssalite
-        and elderwood, and Mythril Smith for mythril and demonwood.
-      </p>
       <DataTable
         className="mt-4"
-        columns={[{ header: "Gun", nowrap: true }, { header: "Parts" }, { header: "Lowest perk", nowrap: true }]}
+        columns={[{ header: "Gun", nowrap: true }, { header: "Parts" }, { header: "Two-handed", nowrap: true }]}
         rows={gunTypes}
       />
       <p className={`mt-3 ${body}`}>
-        The gun is named after its parts (a Matchlock Musket, a Steamlock Pistol, a Blunderbuss) and its look comes from
-        its action, or from its barrel for shotguns and launchers. Its tooltip lists its stats and the ammunition it
-        takes.
+        The gun is named after its parts, for example a Matchlock Musket, a Double Flintlock Rifle or a Flintlock
+        Blunderbuss. You can see every part on it, each in its own metal or wood.
+      </p>
+
+      <WikiSectionHeading id="materials">Perks and materials</WikiSectionHeading>
+      <p className={body}>
+        Your <strong>Smith</strong> perks from the Crafter profession decide which materials you can build with, not
+        which parts. They are the same perks that unlock metals and woods for{" "}
+        <Link href="/wiki/advanced-crafting#before-you-start" className={link}>
+          Advanced Crafting
+        </Link>
+        , and each needs the one before it. Iron Smith is enough to build every type of gun. Fittings need no perk.
+      </p>
+      <p className={`mt-3 ${body}`}>A better material is not better at everything.</p>
+      <DataTable
+        className="mt-4"
+        minWidth="40rem"
+        columns={[{ header: "Perk", nowrap: true }, { header: "Metal parts" }, { header: "Stocks and grips" }]}
+        rows={smithMaterials.map((row) => [
+          row.perk,
+          <Material key="metal" name={row.metal} note={row.metalNote} />,
+          <Material key="wood" name={row.wood} note={row.woodNote} />,
+        ])}
+      />
+      <p className={`mt-3 ${body}`}>
+        A better fitting improves only what its stock or grip is for, never its downsides. The{" "}
+        <Link href="#parts" className={link}>
+          parts table
+        </Link>{" "}
+        says what that is. Plain leather is ordinary Leather, and plain wool has to be White Wool.
       </p>
 
       <WikiSectionHeading id="firing">Loading and firing</WikiSectionHeading>
       <ul className={`mt-2 list-disc space-y-2 pl-5 ${body}`}>
         <li>Guns only work while you are playing a character.</li>
+        <li>A two-handed gun says so in its tooltip. Keep your off hand empty while you use one.</li>
         <li>
-          Rifles and launchers are two-handed, and their tooltip says so. Keep your off hand empty while you use one.
+          A gun you have just taken in hand has to be drawn before it will fire or reload. Its hotbar slot shows the
+          wait. Moving slows the draw and crouching speeds it up.
         </li>
         <li>
           Hold the gun in your main hand with its ammunition in your inventory. When it is empty, right-click to reload.
@@ -91,10 +189,18 @@ export default function GunsPage() {
           Moving while you reload slows it down. Switching to another hotbar slot stops the reload and gives the ammo
           back.
         </li>
-        <li>Right-click to fire. Revolvers and Quad Shot launchers fire several times before they need reloading.</li>
         <li>
-          Sneak and right-click to choose which ammunition the next reload uses. If you run out of that kind, the reload
-          fails until you choose another.
+          Press the swap-hands key (F) while holding the gun to choose which shot the next reload uses. If you run out
+          of that kind, the reload fails until you choose another.
+        </li>
+        <li>Crouch to aim. The gun comes up, you walk slower and your view narrows.</li>
+        <li>
+          Right-click to fire. If the chamber holds more than one shot, the gun fires that many times before it needs
+          reloading.
+        </li>
+        <li>
+          A rifle with the Experimental Arclock is fired through its scope. Aim, hold right-click until the scope
+          steadies, then release to fire. Letting go too early lowers the scope without a shot.
         </li>
         <li>
           Only one gun of each type stays loaded. Firing one unloads your other guns of the same type and gives their
@@ -102,73 +208,90 @@ export default function GunsPage() {
         </li>
       </ul>
       <p className={`mt-3 ${body}`}>
-        Bullets drop over distance and fly through leaves and glass without breaking them. A shot to a player&apos;s
-        head does extra damage. Shot and rockets push part of each hit straight through armour. Rockets explode when
-        they hit something and hurt everyone nearby, you included, but they never break blocks. Bullets and rockets also
-        damage vehicles. Your Charisma tightens your aim and speeds up your reloads.
+        Shots fired from the hip spread wider, and walking, riding, sprinting and jumping spread them more. Your
+        Charisma tightens your aim and speeds up your reloads.
+      </p>
+      <p className={`mt-3 ${body}`}>
+        Bullets drop over distance, and past a certain range they start to lose damage. They fly through leaves and
+        glass without breaking them. A shot to a player&apos;s head does extra damage. Shot and rockets push part of
+        each hit straight through armour.
+      </p>
+      <p className={`mt-3 ${body}`}>
+        Rockets explode when they hit something and hurt everyone nearby. They never break blocks. A rocket hits others
+        harder the further it flies, but you always take your own blast in full.
+      </p>
+      <p className={`mt-3 ${body}`}>
+        Bullets and rockets also damage vehicles. Bullets you fire from a seat in your own vehicle pass through it.
       </p>
 
       <WikiSectionHeading id="parts">Parts</WikiSectionHeading>
       <p className={body}>
-        A part&apos;s exact stats show in the Gun Assembly menu. Better metal and wood generally means a better gun.
+        The cost is paid in the material you choose. Ingots are ingots of your metal, and refined wood is Refined
+        Barkwood, Maplewood, Elderwood or Demonwood.
       </p>
-      <DataTable
-        className="mt-4"
-        minWidth="44rem"
-        columns={[
-          { header: "Part" },
-          { header: "Fits", nowrap: true },
-          { header: "Perk", nowrap: true },
-          { header: "Cost", nowrap: true },
-          { header: "Notes" },
-        ]}
-        rows={partKinds.flatMap((kind) =>
-          gunParts
-            .filter((part) => part.kind === kind)
-            .map((part) => [
-              <ItemName key={part.part} name={part.part} texture={gunPartTexture(part.part)} />,
-              part.for.replaceAll("/", ", "),
-              `${part.rank[0].toUpperCase()}${part.rank.slice(1)} Smith`,
-              part.cost,
-              part.note,
-            ]),
-        )}
-      />
+      {partGroups.map(([kind, heading]) => (
+        <section key={kind}>
+          <h3 className={subheading}>{heading}</h3>
+          <DataTable
+            minWidth="46rem"
+            fixedLayout
+            columns={partColumns}
+            rowKey={(_, index) => `${kind}-${index}`}
+            rows={gunParts
+              .filter((part) => part.kind === kind)
+              .map((part) => [
+                <ItemName key={part.part} name={part.part} texture={gunPartTexture(part.part)} />,
+                part.for,
+                part.cost,
+                part.note,
+              ])}
+          />
+        </section>
+      ))}
 
       <WikiSectionHeading id="ammo">Ammunition</WikiSectionHeading>
       <p className={body}>
-        Ammunition is made at the <StationLink name="Alchemy Station" /> from one ingot, with no perk needed. Add one
-        Gunpowder to make the <strong>Powered</strong> version, which hits a little harder. Better metal hits harder and
-        gets more of each hit through armour (for Spreadshot: more pellets that fly further), but you get fewer rounds
-        per ingot.
+        Ammunition is made at the <StationLink name="Alchemy Station" /> from ingots, with no perk needed. Add Gunpowder
+        to make the <strong>Powered</strong> version, which hits a little harder (for Spreadshot: one more pellet and a
+        little more range). Better metal hits harder and gets more of each hit through armour (for Spreadshot: more
+        pellets that fly further), but you get fewer rounds per ingot.
+      </p>
+      <p className={`mt-3 ${body}`}>
+        The table shows what one ingot makes, or one ingot and one Gunpowder for the powered version. The biggest
+        rockets take more, and the table says how much.
       </p>
       <DataTable
         className="mt-4"
-        minWidth="44rem"
+        minWidth="52rem"
         columns={[
-          { header: "Ammunition" },
+          { header: "Ammunition", nowrap: true },
           { header: "Fired by" },
-          ...ammoMetals.map((metal) => ({ header: `From 1 ${metal} Ingot` })),
+          ...ammoMetals.map((metal) => ({ header: metal })),
         ]}
-        rows={gunAmmoKinds.map((kind) => [
-          kind.kind,
-          kind.firedBy,
-          ...ammoMetals.map((metal) => {
-            const recipe = gunAmmoRecipe(metal, kind);
-            return (
-              <ItemName
-                key={metal}
-                name={recipe.output.name}
-                qty={recipe.output.qty}
-                texture={recipe.output.texture!}
-              />
-            );
-          }),
-        ])}
+        rows={gunAmmoKinds.flatMap((kind) =>
+          [false, true].map((powered) => [
+            powered ? `Powered ${kind.kind}` : kind.kind,
+            kind.firedBy,
+            ...ammoMetals.map((metal) => <AmmoYield key={metal} recipe={gunAmmoRecipe(metal, kind, powered)} />),
+          ]),
+        )}
       />
       <p className={`mt-3 ${body}`}>
-        Rifled barrels take Iron or Steel Shot and smoothbore barrels only Iron Shot. Bronze and Mythril Shot only fit a
-        rifle with the Experimental Arclock. Spreadshot and Rockets of every metal fit any shotgun or launcher.
+        The metal of the barrel decides which metals the gun can load, plain or powered. An iron barrel loads only iron.
+        A steel barrel adds steel, an abyssalite barrel adds bronze, and a mythril barrel loads all four. It works the
+        same for Shot, Spreadshot and Rockets. The Proof Chamber and the Steamlock narrow it further, as the{" "}
+        <Link href="#parts" className={link}>
+          parts table
+        </Link>{" "}
+        says. The gun&apos;s tooltip lists every shot it takes.
+      </p>
+
+      <WikiSectionHeading id="old-guns">Old guns</WikiSectionHeading>
+      <p className={body}>
+        Guns built before you could choose a material for each part are taken apart automatically. It happens when you
+        join with one, select it on your hotbar, click it in your inventory, or right-click the Gunsmithing Station
+        while holding it. You get back the materials it cost and any shots loaded in it. A gun that was free or given by
+        staff is removed with nothing back. An old gun in a chest stays as it is until someone takes it out.
       </p>
 
       <SeeAlso hrefs={["/wiki/classes", "/wiki/advanced-crafting", "/wiki/recycler", "/wiki/stations"]} />

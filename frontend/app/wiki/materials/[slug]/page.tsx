@@ -22,7 +22,7 @@ export default async function MaterialDetailPage({ params }: { params: Promise<{
 
   return (
     <WikiPage
-      lastModified="2026-11-06"
+      lastModified="2026-11-12"
       title={material.name}
       beforeTitle={
         <Link href="/wiki/materials" className="text-xs text-[var(--tfmc-mist)] hover:text-[var(--tfmc-cream)]">
@@ -88,6 +88,16 @@ export default async function MaterialDetailPage({ params }: { params: Promise<{
       {material.usedFor ? (
         <p className="mt-2 text-sm text-[var(--tfmc-mist)]">
           <WikiItemText text={material.usedFor} excludeHref={self} />
+          {material.guide ? (
+            <>
+              {" "}
+              See{" "}
+              <Link href={material.guide.href} className="text-[var(--tfmc-accent)] hover:underline">
+                {material.guide.label}
+              </Link>
+              .
+            </>
+          ) : null}
         </p>
       ) : null}
       {material.usedIn.length ? (
