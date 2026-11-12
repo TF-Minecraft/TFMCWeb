@@ -343,15 +343,22 @@ const WOOD_NOTE = "Shown in barkwood with a plain fitting. Other woods and bette
 
 /** One Gunsmithing Station recipe per part, shown at the lowest perk it can be made with. */
 function partRecipe(part: GunPart): Recipe {
+  const id = partIds[part.part];
+  if (!id) throw new Error(`Gun part "${part.part}" has no id`);
   const wooden = part.kind === "Stock" || part.kind === "Grip";
-  const ingots = Number(part.cost.match(/^(\d+) ingots$/)?.[1] ?? 0);
   const noIron = part.part === "Multi-Tube Chamber";
-  const fitting = Object.keys(fittings).find((kind) => part.cost.includes(`2 ${kind}`));
-  const ingredients: Slot[] = wooden
-    ? [barkwood, fittings[fitting!], ...(part.cost.includes("Copper Ingot") ? [copper] : [])]
-    : [noIron ? steel(ingots) : iron(ingots)];
+  let ingredients: Slot[];
+  if (wooden) {
+    const fitting = Object.keys(fittings).find((kind) => part.cost.includes(`2 ${kind}`));
+    if (!fitting) throw new Error(`Gun part "${part.part}" has no leather, wool or feather cost`);
+    ingredients = [barkwood, fittings[fitting], ...(part.cost.includes("Copper Ingot") ? [copper] : [])];
+  } else {
+    const ingots = Number(part.cost.match(/^(\d+) ingots$/)?.[1]);
+    if (!ingots) throw new Error(`Gun part "${part.part}" has no ingot cost`);
+    ingredients = [noIron ? steel(ingots) : iron(ingots)];
+  }
   return {
-    key: `gun-part-${partIds[part.part]}`,
+    key: `gun-part-${id}`,
     title: part.part,
     station: "Gunsmithing Station",
     requirement: noIron ? "Steel Smith" : "Iron Smith",
@@ -359,7 +366,7 @@ function partRecipe(part: GunPart): Recipe {
     output: {
       name: part.part,
       qty: 1,
-      sourceId: `gunsandgadgets:part:${partIds[part.part]}`,
+      sourceId: `gunsandgadgets:part:${id}`,
       texture: gunPartTexture(part.part),
     },
     note: wooden ? WOOD_NOTE : METAL_NOTE,
