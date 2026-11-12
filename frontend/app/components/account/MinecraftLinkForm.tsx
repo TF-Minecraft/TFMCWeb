@@ -18,9 +18,9 @@ const buttonClass =
 const quietButtonClass =
   "text-sm text-[var(--tfmc-stone)] underline-offset-2 hover:text-[var(--tfmc-cream)] hover:underline disabled:opacity-50";
 
-function errorText(err: unknown): string {
+function errorText(err: unknown, staffAlt: boolean): string {
   if (isNotGuildMember(err)) return "Linking needs you to be in the TFMC Discord server.";
-  if (err instanceof AccountApiError && err.status === 403 && err.message === "forbidden") {
+  if (staffAlt && err instanceof AccountApiError && err.status === 403 && err.message === "forbidden") {
     return "Only staff can add staff alts.";
   }
   if (err instanceof AccountApiError && err.status === 429) return err.message;
@@ -53,7 +53,7 @@ export default function MinecraftLinkForm({ discordName, onLinked, staffAlt = fa
     try {
       setPreview(await (staffAlt ? previewStaffAlt : previewMinecraftLink)(code.trim()));
     } catch (err) {
-      setError(errorText(err));
+      setError(errorText(err, staffAlt));
     } finally {
       setBusy(false);
     }
@@ -69,7 +69,7 @@ export default function MinecraftLinkForm({ discordName, onLinked, staffAlt = fa
       if (needsGuildRecheck(err)) {
         setRecheck(true);
       } else {
-        setError(errorText(err));
+        setError(errorText(err, staffAlt));
         setPreview(null);
       }
       setBusy(false);

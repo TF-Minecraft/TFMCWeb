@@ -32,6 +32,15 @@ from .plugin_notices import enqueue_link_success
 MAX_ALTS = 3
 
 
+class StaffAltRefused(LinkError):
+    """A refused removal: an HTTP status and a stable code for the staff tools."""
+
+    def __init__(self, status: int, code: str):
+        super().__init__(code)
+        self.status = status
+        self.code = code
+
+
 def _owner(conn, discord_id: str):
     """The Discord account's own link and site role, or None without a link."""
     return conn.execute(
@@ -133,27 +142,39 @@ def link(code: str, actor: dict) -> dict:
 
 
 def unlink(player_uuid: str, actor: dict, *, any_owner: bool = False) -> dict:
-    """Remove a staff alt: the actor's own, or anyone's when any_owner (admins); audited."""
+    """Remove a staff alt: the actor's own, or with any_owner (admins) anyone's whose owner
+    they outrank, as for other staff actions on accounts; audited.
+
+    Raises StaffAltRefused 404 staff_alt_not_found, or 403 target_outranks_you.
+    """
     uuid = (player_uuid or "").strip().lower()
     with database.connect() as conn:
         row = conn.execute(
             "SELECT discord_user_id FROM staff_alt_links WHERE player_uuid = %s", (uuid,)
         ).fetchone()
-    if row is None or (not any_owner and row["discord_user_id"] != actor.get("discord_user_id")):
-        raise LinkError("No staff alt with that UUID")
+    mine = row is not None and row["discord_user_id"] == actor.get("discord_user_id")
+    if row is None or not (mine or any_owner):
+        raise StaffAltRefused(404, "staff_alt_not_found")
     owner_id = row["discord_user_id"]
     with _link_write(owner_id, uuid) as conn:
+        owner = conn.execute(
+            "SELECT id AS user_id, discord_user_id, discord_username, discord_global_name, role FROM users "
+            "WHERE discord_user_id = %s AND NOT placeholder",
+            (owner_id,),
+        ).fetchone()
+        if not mine and owner is not None and not roles.outranks(actor.get("role"), owner["role"]):
+            raise StaffAltRefused(403, "target_outranks_you")
         removed = conn.execute(
             "DELETE FROM staff_alt_links WHERE player_uuid = %s AND discord_user_id = %s "
             "RETURNING minecraft_name",
             (uuid, owner_id),
         ).fetchone()
         if removed is None:
-            raise LinkError("No staff alt with that UUID")
+            raise StaffAltRefused(404, "staff_alt_not_found")
         audit.record(
             conn, actor=actor,
-            action="admin.staff_alt.unlink" if any_owner else "account.staff_alt.unlink", outcome="ok",
-            target={"discord_user_id": owner_id},
+            action="account.staff_alt.unlink" if mine else "account.staff_alt.remove", outcome="ok",
+            target=dict(owner) if owner is not None else {"discord_user_id": owner_id},
             detail={"player_uuid": uuid, "minecraft_name": removed["minecraft_name"]},
         )
     return {"ok": True, "player_uuid": uuid}

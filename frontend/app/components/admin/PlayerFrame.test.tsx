@@ -5,7 +5,7 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import PlayerFrame, { usePlayer } from "./PlayerFrame";
 import { AccountApiError } from "../../../lib/account/api";
 import { viewSiteAs } from "../../../lib/account/viewAs";
-import { getAdminMe, getPlayer, type PlayerProfile as Profile } from "../../../lib/admin/api";
+import { getAdminMe, getPlayer, unlinkStaffAltAsAdmin, type PlayerProfile as Profile } from "../../../lib/admin/api";
 
 const UUID = "0615a817-8cb4-4aef-95f7-f6c9bf7611b8";
 vi.mock("next/navigation", () => ({
@@ -17,6 +17,7 @@ vi.mock("../../../lib/admin/api", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../../../lib/admin/api")>()),
   getAdminMe: vi.fn(),
   getPlayer: vi.fn(),
+  unlinkStaffAltAsAdmin: vi.fn(),
 }));
 
 const PROFILE = {
@@ -118,4 +119,58 @@ it.each([
   await screen.findByText("Page for MrEnzo99");
   await Promise.resolve();
   expect(screen.queryByRole("button", { name: /View the site as/ })).toBeNull();
+});
+
+const OWNER = {
+  discord_user_id: "42",
+  player_uuid: "owner-uuid",
+  minecraft_name: "WrenPlays",
+  linked_at: "2026-11-12T10:00:00Z",
+};
+
+it("names a staff alt's owner and lets an admin remove the link after confirming", async () => {
+  vi.mocked(getPlayer)
+    .mockResolvedValueOnce({ ...PROFILE, staff_alt_of: OWNER, staff_alts: [] } as unknown as Profile)
+    .mockResolvedValueOnce({ ...PROFILE, staff_alt_of: null, staff_alts: [] } as unknown as Profile);
+  vi.mocked(getAdminMe).mockResolvedValue({ capabilities: ["manage_staff_alts"] } as never);
+  vi.mocked(unlinkStaffAltAsAdmin).mockResolvedValue({ staff_alt_of: null, staff_alts: [] });
+  render(
+    <PlayerFrame uuid={UUID}>
+      <Name />
+    </PlayerFrame>,
+  );
+  const owner = await screen.findByRole("link", { name: "WrenPlays" });
+  expect(owner.getAttribute("href")).toBe("/admin/players/owner-uuid");
+  fireEvent.click(await screen.findByRole("button", { name: "Remove link" }));
+  expect(unlinkStaffAltAsAdmin).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole("button", { name: "Remove" }));
+  await vi.waitFor(() => expect(screen.queryByText(/Staff alt of/)).toBeNull());
+  expect(unlinkStaffAltAsAdmin).toHaveBeenCalledWith(UUID);
+});
+
+it("shows mods a staff alt's owner without a way to remove it", async () => {
+  vi.mocked(getPlayer).mockResolvedValue({ ...PROFILE, staff_alt_of: OWNER, staff_alts: [] } as unknown as Profile);
+  render(
+    <PlayerFrame uuid={UUID}>
+      <Name />
+    </PlayerFrame>,
+  );
+  expect(await screen.findByRole("link", { name: "WrenPlays" })).toBeTruthy();
+  expect(screen.queryByRole("button", { name: "Remove link" })).toBeNull();
+});
+
+it("lists the staff alts of an owner's account", async () => {
+  vi.mocked(getPlayer).mockResolvedValue({
+    ...PROFILE,
+    staff_alt_of: null,
+    staff_alts: [{ player_uuid: "alt-uuid", minecraft_name: "ShayminPlays", linked_at: "2026-11-12T10:00:00Z" }],
+  } as unknown as Profile);
+  render(
+    <PlayerFrame uuid={UUID}>
+      <Name />
+    </PlayerFrame>,
+  );
+  const alt = await screen.findByRole("link", { name: "ShayminPlays" });
+  expect(alt.getAttribute("href")).toBe("/admin/players/alt-uuid");
+  expect(alt.parentElement?.parentElement?.textContent).toContain("Staff alts:");
 });

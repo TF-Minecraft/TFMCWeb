@@ -357,6 +357,8 @@ function StaffAltsCard({
   const [busy, setBusy] = useState(false);
   const [confirm, setConfirm] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
+  // Counts adds, so each add starts a new form; a finished one would reopen on "Linking…".
+  const [added, setAdded] = useState(0);
   const { alts, max, active } = staffAlts;
   const canAdd = active && alts.length < max;
 
@@ -364,7 +366,12 @@ function StaffAltsCard({
     setBusy(true);
     onError(null);
     try {
-      await unlinkStaffAlt(playerUuid);
+      try {
+        await unlinkStaffAlt(playerUuid);
+      } catch (err) {
+        // Already removed, in another tab or by an admin: show the list as it is now.
+        if (!(err instanceof AccountApiError && err.status === 404)) throw err;
+      }
       setConfirm(null);
       await refresh();
     } catch {
@@ -376,7 +383,12 @@ function StaffAltsCard({
 
   async function onAdded() {
     setShowForm(false);
-    await refresh();
+    setAdded((n) => n + 1);
+    try {
+      await refresh();
+    } catch {
+      onError("Your staff alt was added, but the page couldn’t reload. Refresh to see it.");
+    }
   }
 
   return (
@@ -453,8 +465,7 @@ function StaffAltsCard({
                   Add a staff alt
                 </button>
               }
-              // A new form after each add: a finished one would reopen on its "Linking…" step.
-              below={<MinecraftLinkForm key={alts.length} discordName={discordName} onLinked={onAdded} staffAlt />}
+              below={<MinecraftLinkForm key={added} discordName={discordName} onLinked={onAdded} staffAlt />}
               belowOpen={showForm}
             >
               <p className="text-[var(--tfmc-stone)]">

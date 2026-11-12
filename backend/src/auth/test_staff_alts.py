@@ -10,7 +10,8 @@ from fastapi.testclient import TestClient
 
 from src.api import admin_routes, auth_routes
 from src.api.view_as_guard import ViewAsGuard
-from src.auth import account_overview, testing, users
+from src.auth import account_overview, players, testing, users
+from src.coreprotect.reader import CoreProtectConfig
 from src.skins import codes, discord_link, staff_alts, submissions
 from src.skins.discord_link import STAFF_ALT_TAKEN, LinkError
 from src.skins.moderation import enqueue_ban_event, list_ban_sync, list_undelivered_moderation
@@ -241,7 +242,8 @@ def test_admins_remove_anyones_alt(app):
     res = admin.post(f"/admin/players/{ALT}/staff-alt/unlink", headers=ORIGIN)
     assert res.status_code == 200 and res.json() == {"staff_alt_of": None, "staff_alts": []}
     row = testing.audit_rows()[-1]
-    assert (row["action"], row["actor_name"], row["detail"]["player_uuid"]) == ("admin.staff_alt.unlink", "ryan", ALT)
+    assert (row["action"], row["actor_name"], row["target_name"], row["detail"]["player_uuid"]) == (
+        "account.staff_alt.remove", "ryan", "wren", ALT)
     assert admin.post(f"/admin/players/{ALT}/staff-alt/unlink", headers=ORIGIN).status_code == 404
 
 
@@ -304,3 +306,131 @@ def test_unbanning_an_owner_leaves_unbanned_alts_alone(app):
     assert add_alt(c).status_code == 200
     enqueue_ban_event("unban", player_uuid=OWNER, minecraft_name="Wren")
     assert testing.value("SELECT count(*) FROM player_bans WHERE player_uuid = %s", (ALT,)) == 0
+
+
+def test_admins_cannot_remove_the_alts_of_staff_who_outrank_them(app):
+    discord_id, c = wren(app, "root")
+    assert add_alt(c).status_code == 200
+    _, admin_token = account("ryan", "admin")
+    res = client(app, admin_token).post(f"/admin/players/{ALT}/staff-alt/unlink", headers=ORIGIN)
+    assert (res.status_code, res.json()["detail"]) == (403, "target_outranks_you")
+    row = testing.audit_rows()[-1]
+    assert (row["action"], row["outcome"], row["detail"]["error"]) == (
+        "account.staff_alt.remove", "denied", "target_outranks_you")
+    assert testing.value("SELECT count(*) FROM staff_alt_links") == 1
+
+
+def test_former_staff_can_still_remove_their_alts(app):
+    discord_id, c = wren(app)
+    assert add_alt(c).status_code == 200
+    testing.set_role(discord_id, "player")
+    res = c.post(f"/account/staff-alts/{ALT}/unlink", headers=ORIGIN)
+    assert res.status_code == 200 and res.json()["staff_alts"] is None
+
+
+def test_a_view_of_the_site_cannot_change_staff_alts(app):
+    discord_id, c = wren(app)
+    assert add_alt(c, OTHER, "Other").status_code == 200
+    viewer = testing.value("SELECT id FROM users WHERE discord_user_id = %s", (discord_id,))
+    testing.execute("UPDATE user_sessions SET acting_user_id = %s", (viewer,))
+    for path, body in (("/account/staff-alts/preview", {"code": code()}), ("/account/staff-alts/link", {"code": code()}),
+                       (f"/account/staff-alts/{OTHER}/unlink", None)):
+        res = c.post(path, json=body, headers=ORIGIN)
+        assert (res.status_code, res.json()["detail"]) == (403, "viewing_as_player")
+    assert testing.value("SELECT count(*) FROM staff_alt_links") == 1
+
+
+def test_uuid_case_does_not_matter(app):
+    discord_id, c = wren(app)
+    res = c.post("/account/staff-alts/link", json={"code": raw_code(ALT.upper())}, headers=ORIGIN)
+    assert res.status_code == 200 and res.json()["staff_alts"]["alts"][0]["player_uuid"] == ALT
+    assert discord_link.get_identity_status(ALT.upper())["discord_user_id"] == discord_id
+    with pytest.raises(LinkError, match=STAFF_ALT_TAKEN):
+        discord_link.complete_link(raw_code(ALT.upper()), "555555555555555555")
+
+
+def test_expired_and_used_codes_are_refused(app):
+    _, c = wren(app)
+    plain = code()
+    testing.execute("UPDATE discord_link_codes SET expires_at = now() - interval '1 minute'")
+    for path in ("/account/staff-alts/preview", "/account/staff-alts/link"):
+        res = c.post(path, json={"code": plain}, headers=ORIGIN)
+        assert (res.status_code, res.json()["detail"]) == (400, "Link code has expired")
+    assert add_alt(c, OTHER, "Other").status_code == 200
+    used = testing.value("SELECT count(*) FROM discord_link_codes WHERE used_at IS NOT NULL")
+    assert used == 1
+
+
+def test_an_alt_follows_its_owners_guild_grace(app):
+    discord_id, c = wren(app)
+    assert add_alt(c).status_code == 200
+    discord_link.record_guild_left(discord_id)
+    assert discord_link.get_identity_status(ALT)["in_grace"] is True
+    testing.execute("UPDATE discord_links SET grace_until = now() - interval '1 minute'")
+    assert discord_link.get_identity_status(ALT)["linked"] is False
+
+
+def test_an_inactive_alt_still_answers_already_linked(app):
+    discord_id, c = wren(app)
+    assert add_alt(c).status_code == 200
+    testing.set_role(discord_id, "player")
+    assert discord_link.start_link(ALT, "ShayminPlays")["already_linked"] is True
+    with pytest.raises(LinkError, match=STAFF_ALT_TAKEN):
+        discord_link.preview_link(raw_code())
+
+
+def test_staff_player_page_shows_an_alt_never_seen_in_game(app, coreprotect):
+    discord_id, c = wren(app)
+    assert add_alt(c).status_code == 200
+    config = CoreProtectConfig.from_env()
+    alt = players.profile(config, ALT)
+    assert alt["staff_alt_of"]["player_uuid"] == OWNER and alt["staff_alts"] == []
+    owner = players.profile(config, OWNER)
+    assert owner["staff_alt_of"] is None and [a["minecraft_name"] for a in owner["staff_alts"]] == ["ShayminPlays"]
+
+
+def _ban(uuid, *, start, hours=None, reason="Abuse", discord_id=None, name="Wren"):
+    return enqueue_ban_event("ban", player_uuid=uuid, discord_user_id=discord_id, minecraft_name=name, reason=reason,
+                             staff_name="Ryan", banned_at_ms=start, expires_at_ms=start + hours * HOUR if hours else 0)
+
+
+def test_an_alts_own_ban_is_kept_through_the_owners_ban_and_unban(app):
+    _, c = wren(app)
+    assert add_alt(c).status_code == 200
+    now = int(time.time() * 1000)
+    _ban(ALT, start=now - HOUR, reason="Own ban", name="ShayminPlays")
+    _ban(OWNER, start=now, hours=1)
+    own = {b["player_uuid"]: b for b in list_ban_sync()["bans"]}[ALT]
+    assert (own["reason"], own["expires_at_ms"]) == ("Own ban", 0)
+    enqueue_ban_event("unban", player_uuid=OWNER, minecraft_name="Wren", banned_at_ms=now, expires_at_ms=now + HOUR)
+    assert {b["player_uuid"] for b in list_ban_sync()["bans"]} == {ALT}
+
+
+def test_an_alt_unbanned_by_staff_is_not_banned_again_by_a_repeat_report(app):
+    _, c = wren(app)
+    assert add_alt(c).status_code == 200
+    now = int(time.time() * 1000)
+    _ban(OWNER, start=now, hours=24)
+    enqueue_ban_event("unban", player_uuid=ALT, minecraft_name="ShayminPlays")
+    _ban(OWNER, start=now, hours=24)  # another server reports the same ban
+    assert {b["player_uuid"] for b in list_ban_sync()["bans"]} == {OWNER}
+    # A new ban of the owner is copied again.
+    _ban(OWNER, start=now + HOUR, hours=48)
+    assert {b["player_uuid"] for b in list_ban_sync()["bans"]} == {OWNER, ALT}
+
+
+def test_the_owners_unban_lifts_copies_after_the_alt_link_is_gone(app):
+    _, c = wren(app)
+    assert add_alt(c).status_code == 200
+    now = int(time.time() * 1000)
+    _ban(OWNER, start=now, hours=24)
+    assert c.post(f"/account/staff-alts/{ALT}/unlink", headers=ORIGIN).status_code == 200
+    enqueue_ban_event("unban", player_uuid=OWNER, minecraft_name="Wren", banned_at_ms=now, expires_at_ms=now + 24 * HOUR)
+    assert list_ban_sync()["bans"] == []
+
+
+def test_an_alts_ban_sends_nothing_to_its_owners_discord(app):
+    discord_id, c = wren(app)
+    assert add_alt(c).status_code == 200
+    result = _ban(ALT, start=int(time.time() * 1000), discord_id=discord_id, name="ShayminPlays")
+    assert result["mirrored"] is False and list_undelivered_moderation() == []

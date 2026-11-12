@@ -706,7 +706,11 @@ _UUID_PATH = r"^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9
 
 
 def _staff_alt_user(request: Request, config: AuthConfig) -> dict:
-    """A same-origin request from signed-in staff, within the link attempt limit."""
+    """A same-origin request from signed-in staff, within the link attempt limit.
+
+    No fresh guild check, unlike linking your own account: an alt counts only through
+    the owner's own link, whose guild-leave grace ends it.
+    """
     require_same_origin(request, config)
     user = current_user(request, config)
     if not roles.is_staff(user["role"]):
@@ -748,8 +752,8 @@ def staff_alt_unlink(request: Request, response: Response, player_uuid: str = Pa
     _no_store(response)
     try:
         staff_alts.unlink(player_uuid, user)
-    except LinkError as e:
-        raise HTTPException(404, detail=str(e)) from e
+    except staff_alts.StaffAltRefused as e:
+        raise HTTPException(e.status, detail=e.code) from e
     return {"staff_alts": staff_alts.account_view(user)}
 
 

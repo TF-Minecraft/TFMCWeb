@@ -91,18 +91,22 @@ Staff (site role mod or above) whose own Minecraft account is linked can add up 
 accounts on Profile → Accounts: log in to the alt, run `/linkdiscord`, paste the code under
 **Staff alts**. Only someone who can log in to the alt gets that code. The alt is stored in
 `staff_alt_links` (not `discord_links`, which stays one to one) and audited
-(`account.staff_alt.link` / `.unlink`).
+(`account.staff_alt.link`, `.unlink` by the owner, `.remove` by an admin).
 
 - While the owner's Discord link stands and the owner is staff, `GET /skins/discord/status/{alt}`
   answers linked with the owner's Discord account (`link_method: staff_alt`, `staff_alt_of`), so
   the alt passes the Discord gate and can mint `/token` codes (Profile, Wardrobe, skins, drinks).
   When either stops, the alt reads unlinked but keeps its row, and works again if they return.
 - A staff alt can't be linked as anyone's own account, and `/linkdiscord` on it answers "already
-  linked" with the owner's handle, until the owner (Profile) or an admin (staff player page,
-  `manage_staff_alts`) removes it.
-- A ban or unban reported for the owner's account is copied to their alts, with the owner's times
-  and reason ("Staff alt of …"), so ban sync applies and lifts it on every syncing server. Only
-  the owner's ban goes to Discord.
+  linked" with the owner's handle, until the owner (Profile) or an admin who outranks the owner
+  (staff player page, `manage_staff_alts`) removes it. The plugin hears of a removal or a lapsed
+  owner when the alt next joins, as with any web unlink.
+- A ban reported for the owner's account is copied to their alts (`player_bans.copied_from`),
+  with the owner's times and reason ("Staff alt of …"), so ban sync applies it on every syncing
+  server. A copy never replaces a ban staff gave the alt itself, nor re-bans an alt unbanned after
+  the owner's ban was made. The owner's unban lifts only the copies, even after the alt link is
+  gone. Bans reported for an alt never go to the owner's Discord; only the owner's own ban does.
+  Copies follow the owner's current Discord link, so an owner unlinked when banned gives none.
 
 | Route | Auth | Role |
 |-------|------|------|

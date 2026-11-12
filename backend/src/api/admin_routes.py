@@ -29,7 +29,6 @@ from src.api.auth_routes import (
 )
 from src.auth import admin, audit, players, roles, users, view_as
 from src.skins import staff_alts
-from src.skins.discord_link import LinkError
 from src.auth import cases as person_cases
 from src.precedent.db import PrecedentDBError
 from src.coreprotect.reader import CoreProtectConfig
@@ -385,15 +384,20 @@ def post_view_as(player_uuid: str, request: Request):
 
 @admin_router.post("/players/{player_uuid}/staff-alt/unlink")
 def post_staff_alt_unlink(player_uuid: str, request: Request, response: Response):
-    """Remove this account's staff alt link, whoever owns it; audited."""
-    require_same_origin(request, _config())
+    """Remove this account's staff alt link, if you outrank its owner; audited, refusals too."""
+    action, target = "account.staff_alt.remove", {"player_uuid": player_uuid[:64]}
     actor = _capable(request, "manage_staff_alts")
     _no_store(response)
-    try:
-        staff_alts.unlink(player_uuid, actor, any_owner=True)
-    except LinkError:
-        raise HTTPException(404, detail="staff_alt_not_found") from None
-    return staff_alts.for_player(player_uuid)
+
+    def remove(_token):
+        try:
+            staff_alts.unlink(player_uuid, actor, any_owner=True)
+        except staff_alts.StaffAltRefused as exc:
+            audit.record_refusal(actor=actor, action=action, outcome="denied", detail={"error": exc.code, **target})
+            raise admin.AdminError(exc.status, exc.code, "denied") from None
+        return staff_alts.for_player(player_uuid)
+
+    return _write(request, action, target, remove)
 
 
 # Request validation runs before the handlers above, so malformed writes are

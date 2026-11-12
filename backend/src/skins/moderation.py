@@ -190,10 +190,13 @@ def _record_ban(
     staff_name: str | None,
     banned_at: datetime | None,
     expires_at: datetime | None,
+    copied_from: str | None = None,
 ) -> bool:
     """Store a ban or unban for the player. False when it repeats what is stored.
 
     For an unban, banned_at and expires_at describe the ban the server lifted.
+    copied_from marks a staff alt's copy of its owner's ban; any other ban or unban
+    stored for the player clears it, and a repeat keeps it.
     """
     database.advisory_lock(conn, f"moderation:ban:{uuid.lower()}")
     row = conn.execute(
@@ -214,8 +217,8 @@ def _record_ban(
             """
             INSERT INTO player_bans (
                 player_uuid, minecraft_name, banned, reason, staff_name,
-                banned_at, expires_at, updated_at
-            ) VALUES (%s, %s, true, %s, %s, %s, %s, %s)
+                banned_at, expires_at, updated_at, copied_from
+            ) VALUES (%s, %s, true, %s, %s, %s, %s, %s, %s)
             ON CONFLICT (player_uuid) DO UPDATE SET
                 minecraft_name = COALESCE(EXCLUDED.minecraft_name, player_bans.minecraft_name),
                 banned = true,
@@ -223,9 +226,10 @@ def _record_ban(
                 staff_name = EXCLUDED.staff_name,
                 banned_at = EXCLUDED.banned_at,
                 expires_at = EXCLUDED.expires_at,
-                updated_at = EXCLUDED.updated_at
+                updated_at = EXCLUDED.updated_at,
+                copied_from = EXCLUDED.copied_from
             """,
-            (uuid, minecraft_name, reason, staff_name, banned_at, expires_at, now),
+            (uuid, minecraft_name, reason, staff_name, banned_at, expires_at, now, copied_from),
         )
         return True
     if row is not None and not row["banned"]:
@@ -239,7 +243,8 @@ def _record_ban(
         ON CONFLICT (player_uuid) DO UPDATE SET
             minecraft_name = COALESCE(EXCLUDED.minecraft_name, player_bans.minecraft_name),
             banned = false,
-            updated_at = EXCLUDED.updated_at
+            updated_at = EXCLUDED.updated_at,
+            copied_from = NULL
         """,
         (uuid, minecraft_name, now),
     )
@@ -247,38 +252,60 @@ def _record_ban(
 
 
 def _copy_to_staff_alts(conn, owner_uuid: str) -> None:
-    """Give the owner's staff alts (src/skins/staff_alts.py) the owner's ban, or lift it with theirs.
+    """Give the owner's staff alts (src/skins/staff_alts.py) the owner's ban, or lift the copies.
 
-    Stored like any ban, with the owner's times, so ban sync applies and lifts it on the
-    servers; no Discord notice, the owner already gets one. A stored repeat changes nothing.
+    A copy is stored like any ban, with the owner's times and copied_from set, so ban sync
+    applies and lifts it on the servers; no Discord notice, the owner already gets one.
+    It never replaces a ban staff gave the alt itself while that holds, nor re-bans an alt
+    unbanned after the owner's ban was made. The owner's unban lifts only the copies, and
+    finds them by copied_from, so it still works after the alt link or the owner's own
+    Discord link is gone. Alts are found through the owner's current Discord link, so an
+    owner who is unlinked when banned gives no copies (their alts don't count as linked).
     """
     from .staff_alts import alts_of
 
+    owner_key = owner_uuid.lower()
     owner = conn.execute("SELECT * FROM player_bans WHERE player_uuid = %s", (owner_uuid,)).fetchone()
     if owner is None:
         return
     now = _utcnow()
-    active = owner["banned"] and (owner["expires_at"] is None or owner["expires_at"] > now)
-    if owner["banned"] and not active:
+    if not owner["banned"]:
+        copies = conn.execute(
+            "SELECT player_uuid, minecraft_name, banned_at, expires_at FROM player_bans "
+            "WHERE copied_from = %s AND banned ORDER BY player_uuid",
+            (owner_key,),
+        ).fetchall()
+        for copy in copies:
+            _record_ban(conn, "unban", copy["player_uuid"], minecraft_name=copy["minecraft_name"], reason=None,
+                        staff_name=None, banned_at=copy["banned_at"], expires_at=copy["expires_at"])
         return
+    if owner["expires_at"] is not None and owner["expires_at"] <= now:
+        return
+    since = owner["banned_at"] or owner["updated_at"]
     for alt in alts_of(conn, owner_uuid):
-        if not active:
-            alt_ban = conn.execute(
-                "SELECT banned FROM player_bans WHERE player_uuid = %s", (alt["player_uuid"],)
-            ).fetchone()
-            if alt_ban is None or not alt_ban["banned"]:
+        if alt["player_uuid"] == owner_key:
+            continue
+        held = conn.execute(
+            "SELECT banned, expires_at, updated_at, copied_from FROM player_bans WHERE player_uuid = %s",
+            (alt["player_uuid"],),
+        ).fetchone()
+        if held is not None and held["copied_from"] != owner_key:
+            own_ban = held["banned"] and (held["expires_at"] is None or held["expires_at"] > now)
+            unbanned_since = not held["banned"] and held["updated_at"] >= since
+            if own_ban or unbanned_since:
                 continue
         name = alt["owner_name"] or owner["minecraft_name"] or "a banned player"
         reason = f"Staff alt of {name}" + (f": {owner['reason']}" if owner["reason"] else "")
         _record_ban(
             conn,
-            "ban" if active else "unban",
+            "ban",
             alt["player_uuid"],
             minecraft_name=alt["minecraft_name"],
             reason=reason[:_REASON_MAX],
             staff_name=owner["staff_name"],
             banned_at=owner["banned_at"],
             expires_at=owner["expires_at"],
+            copied_from=owner_key,
         )
 
 
@@ -335,6 +362,11 @@ def enqueue_ban_event(
         raise ModerationError("ban times are out of range") from e
 
     with database.connect() as conn:
+        if uuid and discord_id and conn.execute(
+            "SELECT 1 FROM staff_alt_links WHERE player_uuid = lower(%s)", (uuid,)
+        ).fetchone() is not None:
+            # A staff alt reports its owner's Discord account; its ban is no reason to message them.
+            discord_id = None
         stored = bool(uuid) and _record_ban(
             conn,
             etype,

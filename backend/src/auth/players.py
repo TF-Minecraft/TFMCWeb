@@ -389,11 +389,12 @@ def profile(config: CoreProtectConfig, text: str) -> dict:
     except Unavailable as exc:
         error = exc
     links, roster = _site_rows(key)
+    alt_links = staff_alts.for_player(key)
     # A link whose handle is unknown: ask Discord now (with a bot token), so the profile shows it.
     if links and not (links[0]["account_username"] or links[0]["discord_username"]):
         if discord_names.refresh_one(links[0]["discord_user_id"]):
             links, roster = _site_rows(key)
-    if not accounts and not links and not roster and error is None:
+    if not accounts and not links and not roster and not alt_links["staff_alt_of"] and error is None:
         raise PlayerError(404, "player_not_found")
     link = links[0] if links else None
     current = accounts[-1]["user"] if accounts else (link["minecraft_name"] if link else None)
@@ -412,7 +413,7 @@ def profile(config: CoreProtectConfig, text: str) -> dict:
         "discord": _discord(link),
         "account": _account(link),
         # Whose staff alt this account is, and its own alts (src/skins/staff_alts.py).
-        **staff_alts.for_player(key),
+        **alt_links,
         "characters": [
             {**sheets.get((c["realm_id"], c["character_id"]), {}),
              **{k: c[k] for k in ("realm_id", "character_id", "name", "race", "class", "updated_at")},
