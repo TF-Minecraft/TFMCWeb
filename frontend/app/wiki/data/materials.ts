@@ -2,6 +2,9 @@ import { T } from "./helpers";
 import { collectorHerbMaterials } from "./herb-acquisition";
 import type { CatalogMaterial, MaterialAcquisition, WikiSection } from "./types";
 
+/** Gun parts are forged from any metal or wood the Smith perks allow, so the material pages point at the guide. */
+const guns = { href: "/wiki/guns", label: "Guns & Gunsmithing" };
+
 // ---------- Materials ----------
 //
 // Sources, checked against Main on 2026-10-23: `TFMCCore/drops.yml` (profession
@@ -90,6 +93,7 @@ export const serverCraftedMaterials: CatalogMaterial[] = [
     texture: T("materials/steel_ingot.png"),
     lore: "The step up from iron.",
     usedFor: "Smithing steel weapons and armour at the Forging Station, and building guns and vehicles.",
+    guide: guns,
   },
   {
     name: "Bronze Ingot",
@@ -104,13 +108,15 @@ export const serverCraftedMaterials: CatalogMaterial[] = [
     texture: T("materials/abyssalite_ingot.png"),
     lore: "The metal after Steel.",
     usedFor: "Smithing abyssalite weapons and armour at the Forging Station, and building guns and vehicles.",
+    guide: guns,
   },
   {
     name: "Mythril Ingot",
     group: "Metals and gold",
     texture: T("materials/mythril_ingot.png"),
     lore: "The finest metal.",
-    usedFor: "Smithing mythril weapons and armour at the Forging Station.",
+    usedFor: "Smithing mythril weapons and armour at the Forging Station, and building guns.",
+    guide: guns,
   },
   {
     name: "Barkwood",
@@ -141,28 +147,32 @@ export const serverCraftedMaterials: CatalogMaterial[] = [
     group: "Wood",
     texture: T("materials/refined_barkwood.png"),
     lore: "The first tier of smithing wood.",
-    usedFor: forgingUse("bows, shields and other wooden parts"),
+    usedFor: `${forgingUse("bows, shields and other wooden parts")} Also gun stocks and grips.`,
+    guide: guns,
   },
   {
     name: "Refined Maplewood",
     group: "Wood",
     texture: T("materials/refined_maplewood.png"),
     lore: "The second tier of smithing wood.",
-    usedFor: `${forgingUse("bows, shields and other wooden parts")} Also gun stocks.`,
+    usedFor: `${forgingUse("bows, shields and other wooden parts")} Also gun stocks and grips.`,
+    guide: guns,
   },
   {
     name: "Refined Elderwood",
     group: "Wood",
     texture: T("materials/refined_elderwood.png"),
     lore: "The third tier of smithing wood.",
-    usedFor: `${forgingUse("bows, shields and other wooden parts")} Also gun stocks.`,
+    usedFor: `${forgingUse("bows, shields and other wooden parts")} Also gun stocks and grips.`,
+    guide: guns,
   },
   {
     name: "Refined Demonwood",
     group: "Wood",
     texture: T("materials/refined_demonwood.png"),
     lore: "The fourth and best tier of smithing wood.",
-    usedFor: `${forgingUse("bows, shields and other wooden parts")} Also gun stocks.`,
+    usedFor: `${forgingUse("bows, shields and other wooden parts")} Also gun stocks and grips.`,
+    guide: guns,
   },
   {
     name: "Alchemy Powder",
