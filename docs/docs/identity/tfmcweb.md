@@ -104,8 +104,8 @@ accounts on Profile → Accounts: log in to the alt, run `/linkdiscord`, paste t
 - A ban reported for the owner's account is copied to their alts (`player_bans.copied_from`),
   with the owner's times and reason ("Staff alt of …"), so ban sync applies it on every syncing
   server. A copy never replaces a ban staff gave the alt itself while it holds, nor re-bans an alt
-  unbanned after the site stored the owner's ban; an alt whose own ban ends or is lifted while the
-  owner's holds stays unbanned until the owner's next new ban. The owner's unban lifts only the
+  staff pardoned after the site stored the owner's ban; an alt whose own ban runs out while the
+  owner's holds gets the copy with the owner's next report. The owner's unban lifts only the
   copies, even after the alt link is gone. Bans reported for an alt never go to the owner's Discord; only the owner's own ban does.
   Copies follow the owner's current Discord link, so an owner unlinked when banned gives none.
   Warnings given to an alt do reach the owner's Discord, since it is the same person, and staff
@@ -245,7 +245,8 @@ Non-primary servers therefore use their own key: list it in `PLUGIN_KEYS_SECONDA
 - Survival player without Discord link (or past leave grace) is frozen via RPCharacters; characters untouched.
 - Staff in non-Survival are not Discord-gated.
 - Leave Discord → 1h grace → rejoin OK; after 1h → freeze.
-- No alts (one Discord ↔ one UUID).
+- One Discord ↔ one UUID, apart from staff alts: staff can link up to 3, each only with a
+  `/linkdiscord` code from that alt, and an alt counts as linked only while its owner is linked staff.
 - `/token create skin`, `drink`, and `profile` work from TFMCWeb.
 - Shared skin↔drink mint cooldown enforced on TFMCWeb.
 - `/tempban` mirrors to Discord; `/warning` hits chat + Discord.

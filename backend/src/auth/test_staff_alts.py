@@ -501,3 +501,36 @@ def test_the_admin_removal_refuses_other_sites_and_views(app):
     res = admin.post(f"/admin/players/{ALT}/staff-alt/unlink", headers=ORIGIN)
     assert (res.status_code, res.json()["detail"]) == (403, "viewing_as_player")
     assert testing.value("SELECT count(*) FROM staff_alt_links") == 1
+
+
+@pytest.mark.parametrize("reported", [False, True])
+def test_an_alt_whose_own_ban_ran_out_gets_the_copy_on_a_repeat(app, reported):
+    _, c = wren(app)
+    assert add_alt(c).status_code == 200
+    now = int(time.time() * 1000)
+    _ban(ALT, start=now - 2 * HOUR, hours=3, reason="Own ban", name="ShayminPlays")
+    _ban(OWNER, start=now - 30 * 60_000, hours=None)
+    assert {b["player_uuid"]: b for b in list_ban_sync()["bans"]}[ALT]["reason"] == "Own ban"
+    # The alt's own ban runs out while the owner's holds.
+    testing.execute("UPDATE player_bans SET expires_at = now() - interval '1 minute' WHERE player_uuid = %s",
+                    (ALT,))
+    if reported:  # a server reports the lapse as an unban
+        lapsed_at = int(testing.value("SELECT extract(epoch FROM expires_at) * 1000 FROM player_bans "
+                                      "WHERE player_uuid = %s", (ALT,)))
+        enqueue_ban_event("unban", player_uuid=ALT, minecraft_name="ShayminPlays",
+                          banned_at_ms=now - 2 * HOUR, expires_at_ms=lapsed_at)
+    _ban(OWNER, start=now - 30 * 60_000, hours=None)  # another server repeats the owner's ban
+    alt = {b["player_uuid"]: b for b in list_ban_sync()["bans"]}[ALT]
+    assert (alt["reason"], alt["expires_at_ms"]) == ("Staff alt of Wren: Abuse", 0)
+
+
+def test_an_own_ban_over_a_copy_survives_the_owners_unban(app):
+    _, c = wren(app)
+    assert add_alt(c).status_code == 200
+    now = int(time.time() * 1000)
+    _ban(OWNER, start=now, hours=None)
+    # Staff permanently ban the alt itself; same (permanent) times as the copy.
+    _ban(ALT, start=now + 60_000, hours=None, reason="Own offence", name="ShayminPlays")
+    enqueue_ban_event("unban", player_uuid=OWNER, minecraft_name="Wren", banned_at_ms=now, expires_at_ms=0)
+    alt = {b["player_uuid"]: b for b in list_ban_sync()["bans"]}[ALT]
+    assert alt["reason"] == "Own offence"
