@@ -105,7 +105,9 @@ accounts on Profile → Accounts: log in to the alt, run `/linkdiscord`, paste t
   with the owner's times and reason ("Staff alt of …"), so ban sync applies it on every syncing
   server. A copy never replaces a ban staff gave the alt itself while it holds, nor re-bans an alt
   staff pardoned after the site stored the owner's ban; an alt whose own ban runs out while the
-  owner's holds gets the copy with the owner's next report. The owner's unban lifts only the
+  owner's holds gets the copy with the owner's next report. A ban reported over a copy with
+  another reason is the alt's own ban and stays after the owner's unban; a report with no reason,
+  or still worded "Staff alt of …", is the copy repeated. The owner's unban lifts only the
   copies, even after the alt link is gone. Bans reported for an alt never go to the owner's Discord; only the owner's own ban does.
   Copies follow the owner's current Discord link, so an owner unlinked when banned gives none.
   Warnings given to an alt do reach the owner's Discord, since it is the same person, and staff

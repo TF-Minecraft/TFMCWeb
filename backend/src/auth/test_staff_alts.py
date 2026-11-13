@@ -534,3 +534,49 @@ def test_an_own_ban_over_a_copy_survives_the_owners_unban(app):
     enqueue_ban_event("unban", player_uuid=OWNER, minecraft_name="Wren", banned_at_ms=now, expires_at_ms=0)
     alt = {b["player_uuid"]: b for b in list_ban_sync()["bans"]}[ALT]
     assert alt["reason"] == "Own offence"
+
+
+@pytest.mark.parametrize("reason", [None, "Staff alt of Wren: Abu"])
+def test_an_echo_of_a_copy_is_still_lifted_by_the_owners_unban(app, reason):
+    _, c = wren(app)
+    assert add_alt(c).status_code == 200
+    now = int(time.time() * 1000)
+    _ban(OWNER, start=now, hours=None)
+    enqueue_ban_event("ban", player_uuid=ALT, minecraft_name="ShayminPlays", reason=reason,
+                      banned_at_ms=now, expires_at_ms=0)
+    enqueue_ban_event("unban", player_uuid=OWNER, minecraft_name="Wren", banned_at_ms=now, expires_at_ms=0)
+    assert list_ban_sync()["bans"] == []
+
+
+def test_an_own_ban_over_a_tempban_copy_survives_the_owners_unban(app):
+    _, c = wren(app)
+    assert add_alt(c).status_code == 200
+    now = int(time.time() * 1000)
+    _ban(OWNER, start=now, hours=24)
+    _ban(ALT, start=now, hours=24, reason="Own offence", name="ShayminPlays")
+    enqueue_ban_event("unban", player_uuid=OWNER, minecraft_name="Wren", banned_at_ms=now,
+                      expires_at_ms=now + 24 * HOUR)
+    assert {b["player_uuid"]: b for b in list_ban_sync()["bans"]}[ALT]["reason"] == "Own offence"
+
+
+def test_an_early_pardon_of_an_alts_own_ban_blocks_a_repeat_copy(app):
+    _, c = wren(app)
+    assert add_alt(c).status_code == 200
+    now = int(time.time() * 1000)
+    _ban(ALT, start=now - HOUR, hours=24, reason="Own ban", name="ShayminPlays")
+    _ban(OWNER, start=now - 30 * 60_000, hours=None)
+    enqueue_ban_event("unban", player_uuid=ALT, minecraft_name="ShayminPlays",
+                      banned_at_ms=now - HOUR, expires_at_ms=now + 23 * HOUR)
+    _ban(OWNER, start=now - 30 * 60_000, hours=None)  # a repeat of the owner's ban
+    assert {b["player_uuid"] for b in list_ban_sync()["bans"]} == {OWNER}
+
+
+def test_a_long_owner_reason_is_cut_without_a_trailing_space(app):
+    _, c = wren(app)
+    assert add_alt(c).status_code == 200
+    now = int(time.time() * 1000)
+    long_reason = ("x" * 475) + " tail words"
+    _ban(OWNER, start=now, hours=None, reason=long_reason)
+    alt = {b["player_uuid"]: b for b in list_ban_sync()["bans"]}[ALT]
+    assert len(alt["reason"]) <= 500 and alt["reason"] == alt["reason"].rstrip()
+

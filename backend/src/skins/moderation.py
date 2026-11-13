@@ -138,6 +138,8 @@ def record_warning(
 # Two reports of one ban: Main and Lobby each ban the player, or a server
 # reports a ban again. Their end times differ by the seconds between them.
 _SAME_BAN_WINDOW = timedelta(minutes=10)
+# How a staff alt's copy of its owner's ban begins (_copy_to_staff_alts).
+_COPY_REASON = "Staff alt of "
 # How long an unban stays in the list the servers sync from.
 _UNBAN_SYNC_DAYS = 30
 
@@ -199,7 +201,7 @@ def _record_ban(
     such a copy; any other ban or unban stored for the player clears it, and a repeat
     keeps it. A report over a copy that gives another reason is the alt's own ban, not a
     server repeating the copy, even when its times match: the owner's unban must not lift
-    it. A report with no reason can't tell, so it counts as a repeat.
+    it. A report with no reason, or one still worded as a copy, counts as a repeat.
     """
     database.advisory_lock(conn, f"moderation:ban:{uuid.lower()}")
     row = conn.execute(
@@ -212,6 +214,8 @@ def _record_ban(
         own_over_copy = (
             row is not None and copied_from is None and row["copied_from"] is not None
             and reason is not None and reason != row["reason"]
+            # A server echoing the copy may trim or cut its text; it still reads as a copy.
+            and not reason.startswith(_COPY_REASON)
         )
         if row is not None and not own_over_copy and _same_ban(row, banned_at, expires_at, now):
             if row["banned_at"] is None and banned_at is not None:
@@ -316,19 +320,22 @@ def _copy_to_staff_alts(conn, owner_uuid: str) -> None:
         if held is not None and held["copied_from"] != owner_key:
             own_ban = held["banned"] and (held["expires_at"] is None or held["expires_at"] > now)
             # An unban is a pardon unless it came as the ban ran out (servers report lapses as
-            # unbans); a lapsed own ban, reported or not, lets the owner's ban be copied.
-            lapsed = held["expires_at"] is not None and held["expires_at"] <= held["updated_at"] + _SAME_BAN_WINDOW
+            # unbans); a lapsed own ban, reported or not, lets the owner's ban be copied. With
+            # the cross-server window as tolerance, a pardon in a ban's last 10 minutes reads as
+            # a lapse; a ban stored without times has no end, so its lapse reads as a pardon.
+            ends = held["expires_at"]
+            lapsed = ends is not None and ends <= held["updated_at"] + _SAME_BAN_WINDOW
             pardoned_since = not held["banned"] and not lapsed and held["updated_at"] >= since
             if own_ban or pardoned_since:
                 continue
         name = alt["owner_name"] or owner["minecraft_name"] or "a banned player"
-        reason = f"Staff alt of {name}" + (f": {owner['reason']}" if owner["reason"] else "")
+        reason = f"{_COPY_REASON}{name}" + (f": {owner['reason']}" if owner["reason"] else "")
         _record_ban(
             conn,
             "ban",
             alt["player_uuid"],
             minecraft_name=alt["minecraft_name"],
-            reason=reason[:_REASON_MAX],
+            reason=reason[:_REASON_MAX].rstrip(),
             staff_name=owner["staff_name"],
             banned_at=owner["banned_at"],
             expires_at=owner["expires_at"],
