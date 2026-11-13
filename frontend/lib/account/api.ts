@@ -33,6 +33,8 @@ export type StaffAlts = {
   max: number;
   /** False when the alts don’t count as linked: no own Minecraft link, or no longer staff. */
   active: boolean;
+  /** Whether the site role is staff, so a paused card can say why. */
+  staff: boolean;
 };
 
 export type AccountActivity = {

@@ -106,7 +106,7 @@ def test_staff_link_an_alt_with_its_code(app):
     assert res.status_code == 200, res.text
     view = res.json()["staff_alts"]
     assert [a["minecraft_name"] for a in view["alts"]] == ["ShayminPlays"]
-    assert view["active"] is True and view["max"] == staff_alts.MAX_ALTS
+    assert view["active"] is True and view["staff"] is True and view["max"] == staff_alts.MAX_ALTS
     assert c.get("/account").json()["staff_alts"] == view
     # The code is spent, the alt hears it is linked, and the link is on record.
     assert c.post("/account/staff-alts/link", json={"code": plain}, headers=ORIGIN).status_code == 400
@@ -213,7 +213,7 @@ def test_an_alt_counts_only_while_its_owner_is_linked_staff(app):
         codes.issue_code(ALT, "profile")
     # The link stays, shown as inactive, so they can still remove it; it works again if they return.
     view = c.get("/account").json()["staff_alts"]
-    assert view["active"] is False and len(view["alts"]) == 1
+    assert view["active"] is False and view["staff"] is False and len(view["alts"]) == 1
     testing.set_role(discord_id, "admin")
     assert discord_link.get_identity_status(ALT)["eligible"] is True
 
@@ -389,6 +389,7 @@ def test_staff_player_page_shows_an_alt_never_seen_in_game(app, coreprotect):
     config = CoreProtectConfig.from_env()
     alt = players.profile(config, ALT)
     assert alt["staff_alt_of"]["player_uuid"] == OWNER and alt["staff_alts"] == []
+    assert alt["minecraft_name"] == "ShayminPlays"
     owner = players.profile(config, OWNER)
     assert owner["staff_alt_of"] is None and [a["minecraft_name"] for a in owner["staff_alts"]] == ["ShayminPlays"]
 
@@ -469,6 +470,8 @@ def test_an_alt_unbanned_before_a_late_owner_report_gets_the_copy(app):
     now = int(time.time() * 1000)
     _ban(ALT, start=now - 2 * HOUR, hours=24, reason="Own ban", name="ShayminPlays")
     enqueue_ban_event("unban", player_uuid=ALT, minecraft_name="ShayminPlays")
+    # A clear gap on the site's clock, which a coarse timer could otherwise tie.
+    testing.execute("UPDATE player_bans SET updated_at = updated_at - interval '1 minute' WHERE player_uuid = %s", (ALT,))
     # The owner's ban was made on a server before that unban, but reaches the site after it.
     _ban(OWNER, start=now - HOUR, hours=24)
     assert {b["player_uuid"] for b in list_ban_sync()["bans"]} == {OWNER, ALT}
@@ -482,3 +485,19 @@ def test_a_server_echo_inside_the_same_ban_window_keeps_the_copy(app):
     _ban(ALT, start=now + 1000, hours=24, name="ShayminPlays", reason="Staff alt of Wren: Abuse")
     enqueue_ban_event("unban", player_uuid=OWNER, minecraft_name="Wren", banned_at_ms=now, expires_at_ms=now + 24 * HOUR)
     assert list_ban_sync()["bans"] == []
+
+
+def test_the_admin_removal_refuses_other_sites_and_views(app):
+    discord_id, c = wren(app)
+    assert add_alt(c).status_code == 200
+    admin_id, admin_token = account("ryan", "admin")
+    admin = client(app, admin_token)
+    res = admin.post(f"/admin/players/{ALT}/staff-alt/unlink")
+    assert res.status_code == 403
+    row = testing.audit_rows()[-1]
+    assert (row["action"], row["outcome"]) == ("account.staff_alt.remove", "denied")
+    viewer = testing.value("SELECT id FROM users WHERE discord_user_id = %s", (admin_id,))
+    testing.execute("UPDATE user_sessions SET acting_user_id = %s WHERE user_id = %s", (viewer, viewer))
+    res = admin.post(f"/admin/players/{ALT}/staff-alt/unlink", headers=ORIGIN)
+    assert (res.status_code, res.json()["detail"]) == (403, "viewing_as_player")
+    assert testing.value("SELECT count(*) FROM staff_alt_links") == 1

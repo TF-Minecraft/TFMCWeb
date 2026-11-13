@@ -492,7 +492,7 @@ it("leaves Patreon out when Patreon linking is off", async () => {
 });
 
 function staffAlts(overrides: Partial<StaffAlts> = {}): StaffAlts {
-  return { alts: [], max: 3, active: true, ...overrides };
+  return { alts: [], max: 3, active: true, staff: true, ...overrides };
 }
 
 const SHAYMIN = { player_uuid: "alt-uuid", minecraft_name: "ShayminPlays", linked_at: "2026-11-12T10:00:00Z" };
@@ -548,7 +548,7 @@ it("removes a staff alt after confirming", async () => {
 
 it("explains paused staff alts and offers no new ones", async () => {
   vi.mocked(getAccount).mockResolvedValue(
-    account({ minecraft: linked(), staff_alts: staffAlts({ alts: [SHAYMIN], active: false }) }),
+    account({ minecraft: linked(), staff_alts: staffAlts({ alts: [SHAYMIN], active: false, staff: false }) }),
   );
   visit("accounts");
   render(<ProfilePanel signin={null} />);

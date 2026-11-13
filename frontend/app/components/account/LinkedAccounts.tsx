@@ -330,7 +330,6 @@ export default function LinkedAccounts({
         <StaffAltsCard
           staffAlts={account.staff_alts}
           linked={minecraft !== null}
-          staff={STAFF_ROLES.includes(user.role ?? "")}
           discordName={discordHandle}
           refresh={refresh}
           onError={onError}
@@ -340,13 +339,10 @@ export default function LinkedAccounts({
   );
 }
 
-const STAFF_ROLES = ["mod", "admin", "root"];
-
 /** Staff only: more Minecraft accounts that count as linked through this Discord account. */
 function StaffAltsCard({
   staffAlts,
   linked,
-  staff,
   discordName,
   refresh,
   onError,
@@ -354,8 +350,6 @@ function StaffAltsCard({
   staffAlts: StaffAlts;
   /** Whether their own Minecraft account is linked. */
   linked: boolean;
-  /** Whether their site role is staff; alts count only for staff with their own link. */
-  staff: boolean;
   discordName: string;
   refresh: () => Promise<void>;
   onError: (message: string | null) => void;
@@ -365,7 +359,7 @@ function StaffAltsCard({
   const [showForm, setShowForm] = useState(false);
   // Counts adds, so each add starts a new form; a finished one would reopen on "Linking…".
   const [added, setAdded] = useState(0);
-  const { alts, max, active } = staffAlts;
+  const { alts, max, active, staff } = staffAlts;
   const canAdd = active && alts.length < max;
 
   async function onRemove(playerUuid: string) {

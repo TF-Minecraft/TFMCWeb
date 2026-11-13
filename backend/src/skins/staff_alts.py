@@ -192,7 +192,8 @@ def _alt_json(row) -> dict:
 def account_view(user: dict) -> dict | None:
     """What the Account page shows: staff, or anyone who still has alts, may see them.
 
-    active says whether the alts count as linked now (own link and staff role).
+    active says whether the alts count as linked now (own link and staff role); staff
+    says whether the site role is staff, so the page can say why they are paused.
     """
     discord_id = user["discord_user_id"]
     with database.connect() as conn:
@@ -211,7 +212,17 @@ def account_view(user: dict) -> dict | None:
         "alts": [_alt_json(row) for row in alts],
         "max": MAX_ALTS,
         "active": staff and linked,
+        "staff": staff,
     }
+
+
+def alt_name(player_uuid: str) -> str | None:
+    """The name a staff alt had when linked, for staff tools that know no other."""
+    with database.connect() as conn:
+        row = conn.execute(
+            "SELECT minecraft_name FROM staff_alt_links WHERE player_uuid = lower(%s)", ((player_uuid or "").strip(),)
+        ).fetchone()
+    return row["minecraft_name"] if row else None
 
 
 def owns(user: dict, player_uuid: str) -> bool:

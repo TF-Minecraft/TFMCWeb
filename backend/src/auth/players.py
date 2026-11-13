@@ -398,6 +398,9 @@ def profile(config: CoreProtectConfig, text: str) -> dict:
         raise PlayerError(404, "player_not_found")
     link = links[0] if links else None
     current = accounts[-1]["user"] if accounts else (link["minecraft_name"] if link else None)
+    if current is None and alt_links["staff_alt_of"]:
+        # An alt never seen in game: the name it had when linked.
+        current = staff_alts.alt_name(key)
     sheets = {
         (realm, c["id"]): c
         for uuid, realm in {(c["player_uuid"], c["realm_id"]) for c in roster}
