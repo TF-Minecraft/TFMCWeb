@@ -516,7 +516,11 @@ def get_account_overview(request: Request, response: Response):
 @auth_router.get("/account/minecraft/head")
 def get_minecraft_head(request: Request, u: str | None = None):
     """The linked player's skin face, or with ?u= one of your staff alts'. Only your own
-    accounts, so the site is no open Mojang proxy."""
+    accounts, so the site is no open Mojang proxy.
+
+    Any other ?u= gets your own face, not an error: the page has always sent ?u=<your own
+    uuid> as a cache key, so a u that is not one of your alts means your linked account.
+    """
     config = _config()
     user = current_user(request, config)
     alt = (u or "").strip()

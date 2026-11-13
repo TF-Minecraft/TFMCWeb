@@ -157,6 +157,8 @@ def unlink(player_uuid: str, actor: dict, *, any_owner: bool = False) -> dict:
     if row is None or not (mine or any_owner):
         raise StaffAltRefused(404, "staff_alt_not_found")
     owner_id = row["discord_user_id"]
+    # Read before the lock to know which owner's lock to take; the DELETE below rechecks
+    # the owner under it, so a row removed or moved meanwhile is refused, never misdeleted.
     with _link_write(owner_id, uuid) as conn:
         owner = conn.execute(
             "SELECT id AS user_id, discord_user_id, discord_username, discord_global_name, role FROM users "

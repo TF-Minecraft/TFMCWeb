@@ -385,7 +385,11 @@ def post_view_as(player_uuid: str, request: Request):
 @admin_router.post("/players/{player_uuid}/staff-alt/unlink")
 def post_staff_alt_unlink(request: Request, response: Response,
                           player_uuid: str = Path(pattern=r"^[0-9A-Fa-f]{8}(-[0-9A-Fa-f]{4}){3}-[0-9A-Fa-f]{12}$")):
-    """Remove this account's staff alt link, if you outrank its owner; audited, refusals too."""
+    """Remove this account's staff alt link, if you outrank its owner; audited.
+
+    Refusals from another site and by rank are audited too; a missing capability (403)
+    and writes during a view (ViewAsGuard) are refused before this, as on other routes.
+    """
     action, target = "account.staff_alt.remove", {"player_uuid": player_uuid[:64]}
     actor = _capable(request, "manage_staff_alts")
     _no_store(response)
