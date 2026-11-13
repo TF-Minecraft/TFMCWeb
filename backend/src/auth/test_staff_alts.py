@@ -575,8 +575,10 @@ def test_a_long_owner_reason_is_cut_without_a_trailing_space(app):
     _, c = wren(app)
     assert add_alt(c).status_code == 200
     now = int(time.time() * 1000)
-    long_reason = ("x" * 475) + " tail words"
-    _ban(OWNER, start=now, hours=None, reason=long_reason)
+    prefix = "Staff alt of Wren: "
+    # The 500-character cut lands on the space before "tail".
+    pad = "x" * (500 - len(prefix) - 1)
+    _ban(OWNER, start=now, hours=None, reason=pad + " tail words")
     alt = {b["player_uuid"]: b for b in list_ban_sync()["bans"]}[ALT]
-    assert len(alt["reason"]) <= 500 and alt["reason"] == alt["reason"].rstrip()
+    assert alt["reason"] == prefix + pad
 
