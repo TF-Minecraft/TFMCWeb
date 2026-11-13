@@ -11,7 +11,7 @@ import re
 import urllib.parse
 import psycopg
 
-from fastapi import APIRouter, FastAPI, HTTPException, Query, Request, Response
+from fastapi import APIRouter, FastAPI, HTTPException, Path, Query, Request, Response
 from fastapi.exception_handlers import request_validation_exception_handler
 from fastapi.exceptions import RequestValidationError
 from pydantic import BaseModel, Field, StrictBool
@@ -28,6 +28,7 @@ from src.api.auth_routes import (
     staff_cookie,
 )
 from src.auth import admin, audit, players, roles, users, view_as
+from src.skins import staff_alts
 from src.auth import cases as person_cases
 from src.precedent.db import PrecedentDBError
 from src.coreprotect.reader import CoreProtectConfig
@@ -379,6 +380,29 @@ def post_view_as(player_uuid: str, request: Request):
     _set_cookie(response, config, session_cookie(config), view["token"], seconds_left(view["expires_at"]))
     _set_cookie(response, config, staff_cookie(config), staff, seconds_left(view["staff_expires_at"]))
     return response
+
+
+@admin_router.post("/players/{player_uuid}/staff-alt/unlink")
+def post_staff_alt_unlink(request: Request, response: Response,
+                          player_uuid: str = Path(pattern=r"^[0-9A-Fa-f]{8}(-[0-9A-Fa-f]{4}){3}-[0-9A-Fa-f]{12}$")):
+    """Remove this account's staff alt link, if you outrank its owner; audited.
+
+    Refusals from another site and by rank are audited too; a missing capability (403)
+    and writes during a view (ViewAsGuard) are refused before this, as on other routes.
+    """
+    action, target = "account.staff_alt.remove", {"player_uuid": player_uuid[:64]}
+    actor = _capable(request, "manage_staff_alts")
+    _no_store(response)
+
+    def remove(_token):
+        try:
+            staff_alts.unlink(player_uuid, actor, any_owner=True)
+        except staff_alts.StaffAltRefused as exc:
+            audit.record_refusal(actor=actor, action=action, outcome="denied", detail={"error": exc.code, **target})
+            raise admin.AdminError(exc.status, exc.code, "denied") from None
+        return staff_alts.for_player(player_uuid)
+
+    return _write(request, action, target, remove)
 
 
 # Request validation runs before the handlers above, so malformed writes are

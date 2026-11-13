@@ -27,6 +27,8 @@ CAPABILITIES = {
     "change_luckperms": "admin",
     # Moderation case log; the Discord bot reaches it with its own key.
     "use_precedent": "mod",
+    # Remove anyone's staff alt link (src/skins/staff_alts.py); audited.
+    "manage_staff_alts": "admin",
     # Read-only lookup of skin and drink codes.
     "inspect_codes": "mod",
     # Reports players send from the /diagnostic page.

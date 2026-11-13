@@ -19,7 +19,7 @@ Companion: [integrations/discord-bot.md](../integrations/discord-bot.md) · [int
 | Does **not** own | Pack writing (ArmourShop/DrinkBuilder), map regen (SimpleFactions), character data (RPCharacters), Essentials ban execution |
 | Discord required | Every player must link Discord **and** be in the TFMC guild to play Survival |
 | Staff / helpers | Discord gate applies **only in Survival** |
-| Alts | **None** - one Discord ↔ one Minecraft UUID |
+| Alts | One Discord ↔ one Minecraft UUID; staff may add up to 3 [staff alts](#staff-alts) |
 | Leave Discord | **1 hour grace** - rejoin within 1h stays linked; after grace → unlink + freeze |
 | Freeze | **RPCharacters** freeze reason `DISCORD_REQUIRED`; do not touch characters |
 | Bans | Essentials `/tempban` / `/ban`; TFMCWeb mirrors to Discord bot |
@@ -84,6 +84,41 @@ Link tables live in the site PostgreSQL database (`discord_links`, `discord_link
 | `GET /skins/discord/identity/{discord_user_id}` | Staff (bot) | Resolve selected Discord account to UUID and latest known Minecraft name for moderation |
 | `POST /skins/discord/link/unlink` | Plugin | Explicit unlink |
 | Guild leave/join | Staff (bot) | 1h grace on leave; clear on rejoin |
+
+### Staff alts
+
+Staff (site role mod or above) whose own Minecraft account is linked can add up to three more
+accounts on Profile → Accounts: log in to the alt, run `/linkdiscord`, paste the code under
+**Staff alts**. Only someone who can log in to the alt gets that code. The alt is stored in
+`staff_alt_links` (not `discord_links`, which stays one to one) and audited
+(`account.staff_alt.link`, `.unlink` by the owner, `.remove` by an admin).
+
+- While the owner's Discord link stands and the owner is staff, `GET /skins/discord/status/{alt}`
+  answers linked with the owner's Discord account (`link_method: staff_alt`, `staff_alt_of`), so
+  the alt passes the Discord gate and can mint `/token` codes (Profile, Wardrobe, skins, drinks).
+  When either stops, the alt reads unlinked but keeps its row, and works again if they return.
+- A staff alt can't be linked as anyone's own account, and `/linkdiscord` on it answers "already
+  linked" with the owner's handle, until the owner (Profile) or an admin who outranks the owner
+  (staff player page, `manage_staff_alts`) removes it. The plugin hears of a removal or a lapsed
+  owner when the alt next joins, as with any web unlink.
+- A ban reported for the owner's account is copied to their alts (`player_bans.copied_from`),
+  with the owner's times and reason ("Staff alt of …"), so ban sync applies it on every syncing
+  server. A copy never replaces a ban staff gave the alt itself while it holds, nor re-bans an alt
+  staff pardoned after the site stored the owner's ban; an alt whose own ban runs out while the
+  owner's holds gets the copy with the owner's next report. A ban reported over a copy with
+  another reason is the alt's own ban and stays after the owner's unban; a report with no reason,
+  or still worded "Staff alt of …", is the copy repeated. The owner's unban lifts only the
+  copies, even after the alt link is gone. Bans reported for an alt never go to the owner's Discord; only the owner's own ban does.
+  Copies follow the owner's current Discord link, so an owner unlinked when banned gives none.
+  Warnings given to an alt do reach the owner's Discord, since it is the same person, and staff
+  case lookups for an active alt show the owner's Discord cases.
+
+| Route | Auth | Role |
+|-------|------|------|
+| `POST /account/staff-alts/preview` | Staff session | Name the account a code would add |
+| `POST /account/staff-alts/link` | Staff session | Add the alt; spends the code |
+| `POST /account/staff-alts/{uuid}/unlink` | Owner session | Remove one of your alts |
+| `POST /admin/players/{uuid}/staff-alt/unlink` | Admin session | Remove anyone's alt link |
 
 ## War declare codes
 
@@ -212,7 +247,8 @@ Non-primary servers therefore use their own key: list it in `PLUGIN_KEYS_SECONDA
 - Survival player without Discord link (or past leave grace) is frozen via RPCharacters; characters untouched.
 - Staff in non-Survival are not Discord-gated.
 - Leave Discord → 1h grace → rejoin OK; after 1h → freeze.
-- No alts (one Discord ↔ one UUID).
+- One Discord ↔ one UUID, apart from staff alts: staff can link up to 3, each only with a
+  `/linkdiscord` code from that alt, and an alt counts as linked only while its owner is linked staff.
 - `/token create skin`, `drink`, and `profile` work from TFMCWeb.
 - Shared skin↔drink mint cooldown enforced on TFMCWeb.
 - `/tempban` mirrors to Discord; `/warning` hits chat + Discord.

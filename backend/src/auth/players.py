@@ -21,6 +21,7 @@ from src.coreprotect.reader import REQUEST_BUDGET_SECONDS, Budget, CoreProtectCo
 from src import database
 from src.characters.roster import list_roster
 from src.characters.wardrobe import active_face_png, active_figure_png, WardrobeError
+from src.skins import staff_alts
 
 from . import audit, discord_names, roles, users
 
@@ -388,14 +389,18 @@ def profile(config: CoreProtectConfig, text: str) -> dict:
     except Unavailable as exc:
         error = exc
     links, roster = _site_rows(key)
+    alt_links = staff_alts.for_player(key)
     # A link whose handle is unknown: ask Discord now (with a bot token), so the profile shows it.
     if links and not (links[0]["account_username"] or links[0]["discord_username"]):
         if discord_names.refresh_one(links[0]["discord_user_id"]):
             links, roster = _site_rows(key)
-    if not accounts and not links and not roster and error is None:
+    if not accounts and not links and not roster and not alt_links["staff_alt_of"] and error is None:
         raise PlayerError(404, "player_not_found")
     link = links[0] if links else None
     current = accounts[-1]["user"] if accounts else (link["minecraft_name"] if link else None)
+    if current is None and alt_links["staff_alt_of"]:
+        # An alt never seen in game: the name it had when linked.
+        current = staff_alts.alt_name(key)
     sheets = {
         (realm, c["id"]): c
         for uuid, realm in {(c["player_uuid"], c["realm_id"]) for c in roster}
@@ -410,6 +415,8 @@ def profile(config: CoreProtectConfig, text: str) -> dict:
         "online": sessions.is_fresh(event, now, config.ping_seconds),
         "discord": _discord(link),
         "account": _account(link),
+        # Whose staff alt this account is, and its own alts (src/skins/staff_alts.py).
+        **alt_links,
         "characters": [
             {**sheets.get((c["realm_id"], c["character_id"]), {}),
              **{k: c[k] for k in ("realm_id", "character_id", "name", "race", "class", "updated_at")},

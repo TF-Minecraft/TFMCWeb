@@ -10,12 +10,44 @@ from datetime import datetime, timedelta, timezone
 from .codes import api_time, generate_plaintext_code, hash_secret
 from .plugin_notices import enqueue_link_success, enqueue_plugin_notice
 from src import database
+from src.auth.roles import ROLES, is_staff
 from src.coreprotect.reader import CoreProtectConfig, Reader, Unavailable
 from src.text_validation import TextValidationError, assert_optional_display_name
 
 
 class LinkError(ValueError):
     """Invalid, expired, used, or conflicting Discord link."""
+
+
+# Site roles that keep a staff alt linked (src/skins/staff_alts.py).
+STAFF_ROLES = [role for role in ROLES if is_staff(role)]
+STAFF_ALT_TAKEN = "This Minecraft account is a staff alt of a Discord account"
+
+# A staff alt with its owner's Discord link, while the owner is still on staff.
+_ACTIVE_ALT = """
+    SELECT a.player_uuid AS alt_uuid, a.minecraft_name AS alt_name, a.linked_at AS alt_linked_at, dl.*
+    FROM staff_alt_links a
+    JOIN discord_links dl ON dl.discord_user_id = a.discord_user_id
+    JOIN users u ON u.discord_user_id = a.discord_user_id AND NOT u.placeholder
+    WHERE a.player_uuid = lower(%s) AND u.role = ANY(%s)
+"""
+
+
+def _active_alt(conn, player_uuid: str):
+    return conn.execute(_ACTIVE_ALT, (player_uuid, STAFF_ROLES)).fetchone()
+
+
+def _alt_status(row, *, now: datetime | None = None) -> dict:
+    """The owner's link status, told for the alt: its own UUID, name and link time."""
+    status = _status_from_row(row, now=now)
+    status.update(
+        player_uuid=str(row["alt_uuid"]),
+        minecraft_name=row["alt_name"],
+        linked_at=api_time(row["alt_linked_at"]),
+        link_method="staff_alt",
+        staff_alt_of={"player_uuid": str(row["player_uuid"]), "minecraft_name": row["minecraft_name"]},
+    )
+    return status
 
 
 _MC_NAME_MAX = 16
@@ -119,6 +151,14 @@ def start_link(
             """,
             (uuid,),
         ).fetchone()
+        if existing is None:
+            # A staff alt is linked through its owner; the owner removes it on the website.
+            existing = conn.execute(
+                "SELECT dl.discord_username FROM staff_alt_links a "
+                "LEFT JOIN discord_links dl ON dl.discord_user_id = a.discord_user_id "
+                "WHERE a.player_uuid = lower(%s)",
+                (uuid,),
+            ).fetchone()
         if existing is not None:
             username = existing["discord_username"]
             if username is not None:
@@ -294,6 +334,46 @@ def _refuse_code(row, now: datetime) -> None:
         raise LinkError("Link code has expired")
 
 
+def _is_staff_alt(conn, player_uuid: str) -> bool:
+    return conn.execute(
+        "SELECT 1 FROM staff_alt_links WHERE player_uuid = lower(%s)", (player_uuid,)
+    ).fetchone() is not None
+
+
+def _code_candidate(code_hash: str) -> str:
+    """The player a code names, read before taking that player's link lock."""
+    with database.connect() as conn:
+        candidate = conn.execute("SELECT player_uuid FROM discord_link_codes WHERE code_hash = %s",
+                                 (code_hash,)).fetchone()
+    if candidate is None:
+        raise LinkError("Invalid link code")
+    return candidate["player_uuid"]
+
+
+def _spend_code(conn, code_hash: str):
+    """Spend a code inside the caller's link write; return its row, or raise why it can't be used.
+
+    The update that checks the code spends it, so of two redemptions only one gets it.
+    The caller rechecks expires_at before committing, after any later lock waits.
+    """
+    conn.execute("SELECT id FROM discord_link_codes WHERE code_hash = %s FOR UPDATE", (code_hash,)).fetchone()
+    now = _utcnow()
+    row = conn.execute(
+        """
+        UPDATE discord_link_codes SET used_at = %s
+        WHERE code_hash = %s AND used_at IS NULL AND expires_at >= %s
+        RETURNING player_uuid, minecraft_name, expires_at
+        """,
+        (now, code_hash, now),
+    ).fetchone()
+    if row is None:
+        _refuse_code(conn.execute(
+            "SELECT used_at, expires_at FROM discord_link_codes WHERE code_hash = %s", (code_hash,)
+        ).fetchone(), now)
+        raise LinkError("Link code has already been used")
+    return row
+
+
 def preview_link(code: str) -> dict:
     """Name the Minecraft account a code would link, without using the code."""
     with database.connect() as conn:
@@ -306,6 +386,8 @@ def preview_link(code: str) -> dict:
             "SELECT 1 FROM discord_links WHERE player_uuid = %s",
             (row["player_uuid"],),
         ).fetchone()
+        if linked is None and _is_staff_alt(conn, row["player_uuid"]):
+            raise LinkError(STAFF_ALT_TAKEN)
     if linked is not None:
         raise LinkError("This Minecraft account is already linked to a Discord account")
     return {
@@ -337,29 +419,11 @@ def complete_link(
         raise LinkError("discord_user_id is required")
 
     username = _sanitize_discord_username(discord_username)
-    with database.connect() as conn:
-        candidate = conn.execute("SELECT player_uuid FROM discord_link_codes WHERE code_hash = %s",
-                                 (code_hash,)).fetchone()
-    if candidate is None:
-        raise LinkError("Invalid link code")
+    candidate = _code_candidate(code_hash)
 
-    with _link_write(discord_id, candidate["player_uuid"]) as conn:
-        conn.execute("SELECT id FROM discord_link_codes WHERE code_hash = %s FOR UPDATE", (code_hash,)).fetchone()
-        now = _utcnow()
-        row = conn.execute(
-            """
-            UPDATE discord_link_codes SET used_at = %s
-            WHERE code_hash = %s AND used_at IS NULL AND expires_at >= %s
-            RETURNING player_uuid, minecraft_name, expires_at
-            """,
-            (now, code_hash, now),
-        ).fetchone()
-        if row is None:
-            _refuse_code(conn.execute(
-                "SELECT used_at, expires_at FROM discord_link_codes WHERE code_hash = %s", (code_hash,)
-            ).fetchone(), now)
-            raise LinkError("Link code has already been used")
-        result = _bind(conn, row["player_uuid"], row["minecraft_name"], discord_id, username, now, "code")
+    with _link_write(discord_id, candidate) as conn:
+        row = _spend_code(conn, code_hash)
+        result = _bind(conn, row["player_uuid"], row["minecraft_name"], discord_id, username, _utcnow(), "code")
         # Binding may wait on a link or sibling code after the original code lock.
         # Keep all spends and the outbox insert in the rollback on expiry.
         if row["expires_at"] < _utcnow():
@@ -407,7 +471,11 @@ def _bind(conn, player_uuid: str, minecraft_name: str | None, discord_id: str, u
 
     The insert does nothing when either side is already linked, waiting first for
     a link of either side that is being committed; the existing row then says why.
+    A staff alt is never linked as anyone's own account: its owner removes it first.
+    The caller holds this player's link lock, which a staff alt link also takes.
     """
+    if _is_staff_alt(conn, player_uuid):
+        raise LinkError(STAFF_ALT_TAKEN)
     for _attempt in range(2):
         inserted = conn.execute(
             """
@@ -491,7 +559,10 @@ def get_discord_id_for_uuid(player_uuid: str) -> str | None:
 
 
 def get_link_for_uuid(player_uuid: str) -> dict | None:
-    """Active Discord link row for UUID (includes grace fields)."""
+    """Active Discord link row for UUID (includes grace fields).
+
+    An active staff alt answers with its owner's Discord link under its own UUID and name.
+    """
     uuid = (player_uuid or "").strip()
     if not uuid:
         return None
@@ -505,6 +576,15 @@ def get_link_for_uuid(player_uuid: str) -> dict | None:
             """,
             (uuid,),
         ).fetchone()
+        alt = _active_alt(conn, uuid) if row is None else None
+    if alt is not None:
+        return {
+            **_row_to_link(alt),
+            "player_uuid": str(alt["alt_uuid"]),
+            "minecraft_name": alt["alt_name"],
+            "linked_at": api_time(alt["alt_linked_at"]),
+            "link_method": "staff_alt",
+        }
     if row is None:
         return None
     return _row_to_link(row)
@@ -676,7 +756,10 @@ def expire_due_graces() -> int:
 
 
 def get_identity_status(player_uuid: str) -> dict:
-    """Plugin-facing status; expires due graces first."""
+    """Plugin-facing status; expires due graces first.
+
+    An active staff alt is linked through its owner (src/skins/staff_alts.py).
+    """
     uuid = (player_uuid or "").strip()
     if not uuid:
         raise LinkError("player_uuid is required")
@@ -686,6 +769,9 @@ def get_identity_status(player_uuid: str) -> dict:
             "SELECT * FROM discord_links WHERE player_uuid = %s",
             (uuid,),
         ).fetchone()
+        alt = _active_alt(conn, uuid) if row is None else None
+    if alt is not None:
+        return _alt_status(alt)
     if row is None:
         return _unlinked_status(uuid)
     return _status_from_row(row)

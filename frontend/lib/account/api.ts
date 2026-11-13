@@ -21,6 +21,22 @@ export type AccountMinecraft = {
   link_method?: "code" | "microsoft" | null;
 };
 
+/** A second Minecraft account a staff member plays on, linked through their own Discord link. */
+export type StaffAlt = {
+  player_uuid: string;
+  minecraft_name: string | null;
+  linked_at: string;
+};
+
+export type StaffAlts = {
+  alts: StaffAlt[];
+  max: number;
+  /** False when the alts don’t count as linked: no own Minecraft link, or no longer staff. */
+  active: boolean;
+  /** Whether the site role is staff, so a paused card can say why. */
+  staff: boolean;
+};
+
 export type AccountActivity = {
   first_seen: number | null;
   last_seen: number | null;
@@ -53,6 +69,8 @@ export type Account = {
   /** True when "Connect with Microsoft" is set up on this site. */
   microsoft_link?: boolean;
   patreon: PatreonStatus | null;
+  /** Staff only, or anyone who still has staff alts; null otherwise. */
+  staff_alts?: StaffAlts | null;
   /** Set while an admin views the site as this player; everything is view only. */
   viewing_as?: { staff_name: string | null; expires_at: string } | null;
 };
@@ -129,6 +147,29 @@ export async function linkMinecraft(code: string): Promise<AccountMinecraft | nu
     body: JSON.stringify({ code }),
   });
   return data.minecraft;
+}
+
+export function previewStaffAlt(code: string): Promise<MinecraftLinkPreview> {
+  return accountRequest("/account/staff-alts/preview", {
+    method: "POST",
+    body: JSON.stringify({ code }),
+  });
+}
+
+export async function linkStaffAlt(code: string): Promise<StaffAlts | null> {
+  const data = await accountRequest<{ staff_alts: StaffAlts | null }>("/account/staff-alts/link", {
+    method: "POST",
+    body: JSON.stringify({ code }),
+  });
+  return data.staff_alts;
+}
+
+export async function unlinkStaffAlt(playerUuid: string): Promise<StaffAlts | null> {
+  const data = await accountRequest<{ staff_alts: StaffAlts | null }>(
+    `/account/staff-alts/${encodeURIComponent(playerUuid)}/unlink`,
+    { method: "POST" },
+  );
+  return data.staff_alts;
 }
 
 export function unlinkMinecraft(): Promise<unknown> {
