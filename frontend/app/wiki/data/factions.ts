@@ -269,7 +269,7 @@ export const guildsCommands: WikiCommandSet = {
     {
       command: "/guild vehicle upkeep [request|approve <id>|deny <id>|give <member>]",
       description: "The same as /faction vehicle upkeep, for your guild's upkeep-only vehicles.",
-      notes: "Approve, deny and give: guild leader.",
+      notes: "Approve, deny and give: guild leader. A member accepts a given vehicle with /faction accept.",
     },
     {
       command: "/guild vehicle disable",

@@ -302,7 +302,9 @@ export default function CharactersPage() {
       </ul>
       <p className={`mt-3 ${body}`}>
         A <WikiItemLink name="Walking Cane" /> adds two more while you hold it. Make one at the{" "}
-        <StationLink name="Tool Station" />.
+        <StationLink name="Tool Station" />. The Canes category in <code className={code}>/armourshop</code> has free
+        looks for it, including the old Forearm Crutch and Slim Forearm Crutch, and a cane with one of those looks still
+        works as a cane.
       </p>
       <ul className={`mt-2 list-disc space-y-2 pl-5 ${body}`}>
         <li>

@@ -247,7 +247,8 @@ export default function VehiclesPage() {
       <p className="mt-3 text-sm text-[var(--tfmc-mist)]">
         <code className="text-[var(--tfmc-accent)]">/faction vehicle upkeep</code> lists the upkeep-only vehicles with
         their upkeep, any that are unpaid, the room left and the requests waiting. A guild leader uses the same commands
-        under <code className="text-[var(--tfmc-accent)]">/guild vehicle</code>.
+        under <code className="text-[var(--tfmc-accent)]">/guild vehicle</code>. A member given a guild vehicle still
+        accepts with <code className="text-[var(--tfmc-accent)]">/faction accept</code>.
       </p>
       <WikiSectionHeading id="repair">Repair and repaint</WikiSectionHeading>
       <p className="text-sm text-[var(--tfmc-mist)]">

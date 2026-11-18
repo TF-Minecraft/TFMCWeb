@@ -192,8 +192,8 @@ export default function WarPage() {
         When a battle ends, every fighter still in it gets spoils, win, lose or draw. You get{" "}
         <WikiItemLink name="Ignitium" />, Iron Ingots and coins, and sometimes <WikiItemLink name="Tin" /> or{" "}
         <WikiItemLink name="Abyssalite Fragment">Abyssalite Fragments</WikiItemLink> too. The longer the battle lasted,
-        the more you get, up to two hours. A Battle spoils line in chat lists what you got, and anything that
-        doesn&apos;t fit in your inventory drops at your feet. Raids give no spoils.
+        the more you get. A Battle spoils line in chat lists what you got, and anything that doesn&apos;t fit in your
+        inventory drops at your feet. Raids give no spoils.
       </p>
 
       <WikiSectionHeading id="raids" intro="A short attack launched from a port or airport.">
