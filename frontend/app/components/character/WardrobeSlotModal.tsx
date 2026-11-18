@@ -93,6 +93,14 @@ export default function WardrobeSlotModal({
   const [maskedPreviewBusy, setMaskedPreviewBusy] = useState(false);
   const [displayName, setDisplayName] = useState(initialDisplayName);
   const [description, setDescription] = useState(initialDescription);
+  // The editor saved the picked file (a later step failed): a retry must not upload it again.
+  // Cleared during render, so it lands in the same update as the error and Save never sees
+  // the stale file.
+  const [seenFileSavedCount, setSeenFileSavedCount] = useState(fileSavedCount);
+  if (fileSavedCount !== seenFileSavedCount) {
+    setSeenFileSavedCount(fileSavedCount);
+    setFile(null);
+  }
 
   useEffect(() => {
     if (!open) return;
@@ -113,11 +121,6 @@ export default function WardrobeSlotModal({
     // poll refreshes the saved values while it is open; unsaved fields must survive that.
     // oxlint-disable-next-line react/exhaustive-deps
   }, [open, slotId]);
-
-  useEffect(() => {
-    // The editor saved the picked file (a later step failed): a retry must not upload it again.
-    if (fileSavedCount > 0) setFile(null);
-  }, [fileSavedCount]);
 
   useEffect(() => {
     if (!file) {
