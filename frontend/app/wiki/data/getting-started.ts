@@ -1,6 +1,6 @@
 import type { WikiCommandSet, WikiSection } from "./types";
 
-// ---------- Lobby RuleQuiz, ActivityTF (activity and referrals), VotingPlugin and Essentials /helpop ----------
+// ---------- Lobby RuleQuiz, ActivityTF (activity and referrals), VotingPlugin, TFMCCore /guide and Essentials /helpop ----------
 
 export const gettingStartedCommands: WikiCommandSet = {
   system: "Getting Started",
@@ -28,6 +28,10 @@ export const gettingStartedCommands: WikiCommandSet = {
     {
       command: "/vote",
       description: "Lists the sites where you can vote for the server.",
+    },
+    {
+      command: "/guide [topic]",
+      description: "Lists this guide's topics in chat as links you can click, or sends you the link to one topic.",
     },
     {
       command: "/helpop <message>",

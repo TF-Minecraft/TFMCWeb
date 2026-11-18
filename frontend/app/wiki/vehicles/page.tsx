@@ -42,7 +42,7 @@ const ammunitionName = (name: string) => {
 export default function VehiclesPage() {
   return (
     <WikiPage
-      lastModified="2026-11-12"
+      lastModified="2026-11-18"
       title="Vehicles & Construction"
       width="lg"
       intro="Build a cart, crew a ship or fly an airship. Choose a vehicle below for its materials, build time, fuel and 3D preview."
@@ -81,6 +81,10 @@ export default function VehiclesPage() {
           seconds of selecting the blueprint. The materials are consumed when you choose the spot.
         </li>
         <li>
+          While it builds, right-click the station to see how far along it is. The builder can cancel the build from
+          that menu. The materials then go back into your inventory, and any faction fee you paid is refunded.
+        </li>
+        <li>
           Wait for the build to finish. Stay within 96 blocks so the completed vehicle can appear. If it has seats,
           right-click it to select one.
         </li>
@@ -98,8 +102,8 @@ export default function VehiclesPage() {
         costs 16 Oak Logs, 8 Iron Ingots and 8 Sticks. It takes five minutes to build and has 54 cargo slots.
       </Callout>
       <Callout variant="warning">
-        Breaking the construction station during a build cancels construction and drops the materials at the station.
-        Collect them before they despawn.
+        Breaking the construction station during a build cancels it too, but the materials drop at the station instead
+        of going to your inventory. Collect them before they despawn.
       </Callout>
       <WikiSectionHeading id="operation">Enter, drive, refuel and tow</WikiSectionHeading>
       <ol className="list-decimal space-y-3 pl-5 text-sm text-[var(--tfmc-mist)]">
@@ -200,6 +204,51 @@ export default function VehiclesPage() {
           vehicle restrictions during campaign battles
         </Link>
         .
+      </p>
+      <WikiSectionHeading id="upkeep-only">Upkeep-only vehicles</WikiSectionHeading>
+      <p className="text-sm text-[var(--tfmc-mist)]">
+        A faction or guild can take over the upkeep of any vehicle. That makes it an upkeep-only vehicle. A
+        faction&apos;s are paid daily from the main guild bank, and a guild&apos;s from its own bank. If the bank
+        can&apos;t pay, the vehicle goes unpaid like any other and the leader is told.
+      </p>
+      <p className="mt-3 text-sm text-[var(--tfmc-mist)]">
+        An upkeep-only vehicle can&apos;t be used in battles. To fight with it, the faction leader moves it to the
+        faction pool or berths it at an installation, so a guild leader has to ask them.
+      </p>
+      <p className="mt-3 text-sm text-[var(--tfmc-mist)]">
+        A faction can have three upkeep-only vehicles for each member of its realm, and a guild three for each of its
+        members, leaders included. If members leave and the limit drops, the vehicles already in stay.
+      </p>
+      <p className="mt-3 text-sm text-[var(--tfmc-mist)]">There are two ways to move a vehicle in:</p>
+      <ul className="mt-2 list-disc space-y-2 pl-5 text-sm text-[var(--tfmc-mist)]">
+        <li>
+          The leader runs <code className="text-[var(--tfmc-accent)]">/faction vehicle transfer upkeep</code>, then
+          right-clicks the vehicle. This works like the transfers above, so another owner&apos;s vehicle still needs its
+          owner to accept.
+        </li>
+        <li>
+          The owner runs <code className="text-[var(--tfmc-accent)]">/faction vehicle upkeep request</code>, then
+          right-clicks their own vehicle. The leader gets Approve and Deny buttons, or can answer with{" "}
+          <code className="text-[var(--tfmc-accent)]">/faction vehicle upkeep approve &lt;id&gt;</code> or{" "}
+          <code className="text-[var(--tfmc-accent)]">/faction vehicle upkeep deny &lt;id&gt;</code>. A request with no
+          answer lapses after 10 minutes.
+        </li>
+      </ul>
+      <p className="mt-3 text-sm text-[var(--tfmc-mist)]">
+        Once a vehicle is in, it is the leader&apos;s to manage and the old owner can&apos;t take it back. Members
+        can&apos;t board unless the leader lets them in Ownership Settings, the same as on a personal vehicle.
+      </p>
+      <p className="mt-3 text-sm text-[var(--tfmc-mist)]">
+        To hand one to a member, the leader runs{" "}
+        <code className="text-[var(--tfmc-accent)]">/faction vehicle upkeep give &lt;member&gt;</code>, then
+        right-clicks it. The member accepts with <code className="text-[var(--tfmc-accent)]">/faction accept</code>, and
+        it becomes their personal vehicle, so they need room under their personal limit.
+      </p>
+      <p className="mt-3 text-sm text-[var(--tfmc-mist)]">
+        <code className="text-[var(--tfmc-accent)]">/faction vehicle upkeep</code> lists the upkeep-only vehicles with
+        their upkeep, any that are unpaid, the room left and the requests waiting. A guild leader uses the same commands
+        under <code className="text-[var(--tfmc-accent)]">/guild vehicle</code>. A member given a guild vehicle still
+        accepts with <code className="text-[var(--tfmc-accent)]">/faction accept</code>.
       </p>
       <WikiSectionHeading id="repair">Repair and repaint</WikiSectionHeading>
       <p className="text-sm text-[var(--tfmc-mist)]">

@@ -1,6 +1,6 @@
 import type { WikiCommandSet, WikiSection } from "./types";
 
-// SimpleFactions 4.32 with Main's configs. Staff commands (force*, admin, reload and so on),
+// SimpleFactions 4.36 with Main's configs. Staff commands (force*, admin, reload and so on),
 // coalitions (off on Main) and the Spymaster's private sabotage are left out.
 
 // ---------- Factions ----------
@@ -67,7 +67,8 @@ export const factionsCommands: WikiCommandSet = {
     {
       command: "/faction kick <player>",
       description: "Removes a member.",
-      notes: "Leader. Members of another guild must first be removed by its leader with /guild kick.",
+      notes:
+        "Leader. Works on members of the faction's other guilds too, but not on a guild leader. To remove one, evict the whole guild from its guild menu.",
     },
     {
       command: "/faction setleader <player>",
@@ -249,6 +250,32 @@ export const guildsCommands: WikiCommandSet = {
       notes: "Faction leader. The owner must be close by and accept.",
     },
     {
+      command: "/faction vehicle transfer upkeep",
+      description:
+        "Then right-click a vehicle to make it an upkeep-only faction vehicle. The faction pays its upkeep, and it can't be used in battles.",
+      notes: "Faction leader. Another owner's vehicle waits for that owner to be close by and accept.",
+    },
+    {
+      command: "/faction vehicle upkeep [request|approve <id>|deny <id>|give <member>]",
+      description:
+        "With nothing after it, lists the faction's upkeep-only vehicles. request asks the leader to take your vehicle in, approve and deny answer a request, and give hands a vehicle to a member.",
+      notes: "Approve, deny and give: faction leader. After request or give, right-click the vehicle.",
+    },
+    {
+      command: "/guild vehicle transfer upkeep",
+      description: "Then right-click a vehicle to make it an upkeep-only guild vehicle, paid from the guild bank.",
+      notes: "Guild leader. Another owner's vehicle waits for that owner to be close by and accept.",
+    },
+    {
+      command: "/guild vehicle upkeep [request|approve <id>|deny <id>|give <member>]",
+      description: "The same as /faction vehicle upkeep, for your guild's upkeep-only vehicles.",
+      notes: "Approve, deny and give: guild leader. A member accepts a given vehicle with /faction accept.",
+    },
+    {
+      command: "/guild vehicle disable",
+      description: "Stops a vehicle click you started with a /guild vehicle command.",
+    },
+    {
       command: "/faction vehicle take",
       aliases: ["/faction vehicle give <player>"],
       description: "Takes a faction vehicle as your own, or gives it to a player.",
@@ -311,6 +338,11 @@ export const warCommands: WikiCommandSet = {
     {
       command: "/war vote <war id>",
       description: "Opens the war's availability grid, where you mark the dates and start times you can fight.",
+    },
+    {
+      command: "/war installations <war id>",
+      description: "Opens the installation choices for the faction you lead in that war.",
+      notes: "Faction leader.",
     },
     { command: "/war calls", description: "Lists your open calls to arms." },
     {

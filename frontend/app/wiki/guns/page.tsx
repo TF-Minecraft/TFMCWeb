@@ -97,7 +97,7 @@ function AmmoYield({ recipe }: { recipe: Recipe }) {
 export default function GunsPage() {
   return (
     <WikiPage
-      lastModified="2026-11-12"
+      lastModified="2026-11-18"
       title="Guns & Gunsmithing"
       intro={
         <>
@@ -122,17 +122,18 @@ export default function GunsPage() {
           parts you picked.
         </li>
         <li>
-          Each part slot starts with a part you can make. Click a slot to pick a different one. Green arrows show what a
-          part does well and red arrows what it does badly, without numbers. A barrier means you can&apos;t make any
-          part for that slot. A launcher always shows one where the stock would go.
+          Each part slot starts with a part you can make. Click a slot to pick a different one. Every part, metal and
+          fitting shows what it would change on your gun, before and after, in green when it gets better and red when it
+          gets worse. A barrier means you can&apos;t make any part for that slot. A launcher always shows one where the
+          stock would go.
         </li>
         <li>
           Pick the metal to make the part from. Stocks and grips are made from wood instead, and each takes a fitting of
           leather, wool or feathers. Pick its quality: plain, Good, Great or Perfect.
         </li>
         <li>
-          The finished gun appears on the right and shows its real stats. Click it to take it. The materials for every
-          part come out of your inventory at once. If you are missing any, nothing is taken.
+          The finished gun appears on the right with a sheet of its stats in plain units. Click it to take it. The
+          materials for every part come out of your inventory at once. If you are missing any, nothing is taken.
         </li>
       </ol>
       <DataTable
@@ -214,7 +215,12 @@ export default function GunsPage() {
       <p className={`mt-3 ${body}`}>
         Bullets drop over distance, and past a certain range they start to lose damage. They fly through leaves and
         glass without breaking them. A shot to a player&apos;s head does extra damage. Shot and rockets push part of
-        each hit straight through armour.
+        each hit straight through armour, and very high armour piercing also gets past part of the target&apos;s damage
+        reduction.
+      </p>
+      <p className={`mt-3 ${body}`}>
+        On a gun that holds one shot, anything that changes how quickly it fires again changes its reload a little
+        instead.
       </p>
       <p className={`mt-3 ${body}`}>
         Rockets explode when they hit something and hurt everyone nearby. They never break blocks. A rocket hits others

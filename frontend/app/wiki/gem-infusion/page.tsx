@@ -9,7 +9,7 @@ const subheading = "mt-6 text-sm font-semibold uppercase tracking-wide text-[var
 export default function GemInfusionPage() {
   return (
     <WikiPage
-      lastModified="2026-10-24"
+      lastModified="2026-11-18"
       title="Gems & Goldsmithing"
       width="lg"
       intro="Blank gemstones are infused with a stat at an Enchanting Table. Infused gems go into the sockets of forged gear, or a goldsmith can set one in a piece of gold jewellery."
@@ -18,6 +18,24 @@ export default function GemInfusionPage() {
       <p className={body}>
         Anyone can infuse. You need blank gemstones and an <WikiItemLink name="Infusion Ticket" />, and any Enchanting
         Table will do. Ordinary vanilla gems don&apos;t work.
+      </p>
+      <p className={`mt-3 ${body}`}>
+        Blank gemstones drop while you mine ore, coal ore included, with the Crafter perks Gemstone Miner I to IV, and
+        while you chop logs with the Herborist perks Tree Gatherer I to IV. Each tier of a perk adds the next kind: I
+        gives Basic gemstones, II Polished, III Radiant and IV Mythical. You can also get gemstone pouches by{" "}
+        <Link href="/wiki/fishing" className={link}>
+          fishing
+        </Link>
+        , from{" "}
+        <Link href="/wiki/infestations" className={link}>
+          infestation
+        </Link>{" "}
+        monsters and from{" "}
+        <Link href="/wiki/trial-rooms" className={link}>
+          Trial Room
+        </Link>{" "}
+        chests. Right-click a Pouch of Basic, Polished, Radiant or Mythical Gemstones to get one random gemstone of that
+        kind.
       </p>
       <ol className={`mt-3 list-decimal space-y-2 pl-5 ${body}`}>
         <li>Right-click the table with a blank gem to put it in. A batch holds up to 10.</li>

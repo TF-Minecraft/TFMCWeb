@@ -1,11 +1,11 @@
 import { stationRecipe } from "./station-recipes";
 import type { Recipe, WikiCommandSet, WikiSection } from "./types";
 
-// ---------- Arcane Trace Detector (GeigerCounters v2.4.0 on Main) ----------
+// ---------- Arcane Trace Detector (GeigerCounters v2.5.0 on Main) ----------
 //
 // Main runs one buried cache per character (`mode: player`). Distance thresholds,
-// click rates and reward lists stay off the page: the hunt is read by feel, and the
-// rewards belong to the Act System.
+// click rates and reward chances stay off the page: the hunt is read by feel, and the
+// rewards belong to the Act System. The page only names what a cache can hold.
 
 /**
  * Recipes from the authoritative server `engineer-station.yml`, via

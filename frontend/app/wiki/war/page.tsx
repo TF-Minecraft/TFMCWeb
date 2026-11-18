@@ -1,5 +1,13 @@
 import Link from "next/link";
-import { Callout, CommandTable, DataTable, SeeAlso, WikiPage, WikiSectionHeading } from "@/app/components/wiki";
+import {
+  Callout,
+  CommandTable,
+  DataTable,
+  SeeAlso,
+  WikiItemLink,
+  WikiPage,
+  WikiSectionHeading,
+} from "@/app/components/wiki";
 import { regiments, warCommands } from "../data/factions";
 
 const link = "text-[var(--tfmc-accent)] hover:underline";
@@ -9,7 +17,7 @@ const code = "text-[var(--tfmc-accent)]";
 export default function WarPage() {
   return (
     <WikiPage
-      lastModified="2026-11-12"
+      lastModified="2026-11-18"
       title="War & Mercenaries"
       intro={
         <>
@@ -120,7 +128,10 @@ export default function WarPage() {
       <DataTable
         columns={[{ header: "Time", nowrap: true }, { header: "What happens" }]}
         rows={[
-          ["16:00", "The battle is set on its province. Installations must be committed by then."],
+          [
+            "16:00",
+            "The battle is set on its province. Installations must be committed by then, and faction leaders get warnings in game before the choices lock.",
+          ],
           [
             "19:00 to 21:00",
             <span key="raids">
@@ -174,6 +185,15 @@ export default function WarPage() {
         In a campaign battle, you can only use faction pool vehicles from your side, or vehicles berthed at an
         installation on your side that was committed to that battle. Signed-up players cannot use vehicles before the
         battle starts. You cannot join a warband while mounted.
+      </p>
+
+      <WikiSectionHeading id="spoils">Battle spoils</WikiSectionHeading>
+      <p className={body}>
+        When a battle ends, every fighter still in it gets spoils, win, lose or draw. You get{" "}
+        <WikiItemLink name="Ignitium" />, Iron Ingots and coins, and sometimes <WikiItemLink name="Tin" /> or{" "}
+        <WikiItemLink name="Abyssalite Fragment">Abyssalite Fragments</WikiItemLink> too. The longer the battle lasted,
+        the more you get. A Battle spoils line in chat lists what you got, and anything that doesn&apos;t fit in your
+        inventory drops at your feet. Raids give no spoils.
       </p>
 
       <WikiSectionHeading id="raids" intro="A short attack launched from a port or airport.">

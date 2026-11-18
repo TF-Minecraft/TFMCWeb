@@ -24,7 +24,7 @@ const nextGuides = [
 export default function GettingStartedPage() {
   return (
     <WikiPage
-      lastModified="2026-10-24"
+      lastModified="2026-11-18"
       title={gettingStartedSection.nav.label}
       intro="How to get from the server address to your first day as a character. Each step links to the page with the details."
     >
@@ -103,6 +103,10 @@ export default function GettingStartedPage() {
         </li>
         <li>The world has an edge. As you get close, you are warned to turn back, and going any farther hurts you.</li>
         <li>
+          <code className={code}>/guide</code> lists this guide&apos;s topics in chat as links you can click, and{" "}
+          <code className={code}>/guide &lt;topic&gt;</code> sends you the link to one of them.
+        </li>
+        <li>
           <code className={code}>/helpop &lt;message&gt;</code> reaches the staff and helpers who are online. For
           anything else, open a ticket in the Discord. Tips show up in chat now and then, and{" "}
           <code className={code}>/tfmc tips disable</code> turns them off.
@@ -111,22 +115,31 @@ export default function GettingStartedPage() {
 
       <WikiSectionHeading id="activity">Daily tasks</WikiSectionHeading>
       <p className={body}>
-        <code className={code}>/activity</code> opens your activity menu. Each day it deals you a set of hidden tasks,
-        such as voting, playing for an hour or cooking dishes. Click a task to reveal it, because only revealed tasks
-        earn points. Points fill your weekly bar. Each time the bar reaches a reward, claim it in the same menu. The bar
-        starts again every Monday. <code className={code}>/vote</code> lists the voting sites.
+        <code className={code}>/activity</code> opens your activity menu. Each day it deals you a set of tasks, such as
+        cooking dishes or spending time playing, and some of them follow your character&apos;s professions. Tasks count
+        on their own as soon as they are dealt, so you don&apos;t have to open the menu first. Only Voting has to be
+        clicked. Click its card in <code className={code}>/activity</code>, and the votes you cast earlier that day are
+        paid then. Time spent idle does not count as playing. Points fill your weekly bar. Each time the bar reaches a
+        reward, claim it in the same menu. The bar starts again every Monday. <code className={code}>/vote</code> lists
+        the voting sites.
       </p>
 
       <p className={`mt-3 ${body}`}>
-        The rewards make daily tasks worth doing. The first ones each week give metals of the current act:{" "}
+        The rewards make daily tasks worth doing. The first ones each week give metals of the current act (
         <WikiItemLink name="Ignitium" />, <WikiItemLink name="Tin" /> or{" "}
-        <WikiItemLink name="Abyssalite Fragment">Abyssalite Fragments</WikiItemLink>. The later ones give{" "}
+        <WikiItemLink name="Abyssalite Fragment">Abyssalite Fragments</WikiItemLink>) along with other resources. The
+        later ones give{" "}
         <Link href="/wiki/armour-shop#scrolls" className={link}>
           Skin Scrolls
         </Link>{" "}
-        for changing how your gear looks. <RankName rank="Noble" /> and above also get a daily Skin Scroll once they
-        have revealed all of that day&apos;s tasks, and <RankName rank="Ascended" /> and <RankName rank="Legacy" /> can
-        reroll their daily tasks once a day before earning any points.
+        for changing how your gear looks. Hover the weekly bar to see every reward you could get, later milestones
+        included.
+      </p>
+      <p className={`mt-3 ${body}`}>
+        <RankName rank="Noble" /> and above also get a daily Skin Scroll once they have clicked that day&apos;s Voting
+        card. <RankName rank="Ascended" /> and <RankName rank="Legacy" /> can reroll their daily tasks once a day, as
+        long as no task other than Voting and playtime has earned them points yet. A reroll only swaps the tasks they
+        haven&apos;t started, and they keep their points.
       </p>
 
       <WikiSectionHeading id="referrals">Referrals</WikiSectionHeading>
@@ -144,11 +157,11 @@ export default function GettingStartedPage() {
       <p className={`mt-3 ${body}`}>
         Rewards unlock at 1, 4, 12 and 24 hours of the invited player&apos;s playtime, and both of you claim them in the
         same menu. AFK time does not count. The invited player&apos;s first reward is steel tools, rations and denars,
-        and the later ones add metals of the current act. The inviter gets denars and act metals for each player they
-        invited. Inviters also have a <strong>rare track</strong> that pays Tin and Abyssalite Fragments: its first step
-        opens once two of your invited players have reached 24 hours, and the next ones at four, six, eight and ten
-        players, where it ends. Claim each reward while playing a character, because it goes to the character you are
-        playing.
+        and the later ones add metals of the current act and other resources. The inviter gets denars, act metals and
+        other resources for each player they invited. Inviters also have a <strong>rare track</strong> that pays Tin and
+        Abyssalite Fragments: its first step opens once two of your invited players have reached 24 hours, and the next
+        ones at four, six, eight and ten players, where it ends. Claim each reward while playing a character, because it
+        goes to the character you are playing.
       </p>
 
       <WikiSectionHeading id="choose-path">Where to go next</WikiSectionHeading>

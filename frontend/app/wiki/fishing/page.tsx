@@ -8,19 +8,47 @@ const body = "text-sm text-[var(--tfmc-mist)]";
 const code = "text-[var(--tfmc-accent)]";
 const link = "text-[var(--tfmc-accent)] hover:underline";
 
+/** Ocean, river and beach catches on Main's Iron, Steel and Abyssalite Rods (`CustomFishing/loot-conditions.yml`). */
+const waterMaterials: [string, string][] = [
+  ["Stone Core", "Stone Cores"],
+  ["Bark", "Bark"],
+  ["Wood Core", "Wood Cores"],
+  ["Flower Core", "Flower Cores"],
+];
+const waterTreasure: [string, string][] = [
+  ["Ignitium", "Ignitium"],
+  ["Tin", "Tin"],
+  ["Abyssalite Fragment", "Abyssalite Fragments"],
+  ["Lost Knowledge Fragment", "Lost Knowledge Fragments"],
+  ["Enchanted Dust", "Enchanted Dust"],
+  ["Niter", "Niter"],
+  ["Arcane Crystal", "Arcane Crystals"],
+];
+
+/** Item links separated by commas, for use inside a longer list. */
+function itemList(items: [string, string][]) {
+  return items.map(([name, label], index) => (
+    <span key={name}>
+      {index > 0 && ", "}
+      <WikiItemLink name={name}>{label}</WikiItemLink>
+    </span>
+  ));
+}
+
 export default function FishingPage() {
   return (
     <WikiPage
-      lastModified="2026-10-24"
+      lastModified="2026-11-18"
       title="Fishing"
       width="lg"
       intro="Cast into water and wait for a bite. What you can catch depends on the biome and on your rod, and the more valuable catches make you win a short minigame first."
     >
       <WikiSectionHeading id="catching">Catching something</WikiSectionHeading>
       <p className={body}>
-        Most catches, such as fish, fragments and music discs, go straight to you. Act materials, animal materials and
-        pottery sherds start a minigame when they bite. Win it to land the catch. If you lose, it gets away. The
-        minigame is harder with a better rod: Easy on an Iron Rod, then Normal, Hard and Very hard on a Mythril Rod.
+        Fish, ore and disc fragments and music discs go straight to you. Treasure, animal materials, coal, Bark, pottery
+        sherds and the Stone, Wood and Flower Cores start a minigame when they bite. Win it to land the catch. If you
+        lose, it gets away. The minigame is harder with a better rod: Easy on an Iron Rod, then Normal, Hard and Very
+        hard on a Mythril Rod.
       </p>
       <p className={`mt-3 ${body}`}>
         Fishing levels the{" "}
@@ -45,17 +73,33 @@ export default function FishingPage() {
       </ul>
 
       <WikiSectionHeading id="where">What you can catch</WikiSectionHeading>
-      <ul className={`mt-3 list-disc space-y-2 pl-5 ${body}`}>
-        <li>
-          <strong>Oceans, rivers and beaches</strong> give fish, including four custom fish for each kind of water, plus
-          ore and disc fragments, music discs and animal materials. Better rods give better-quality animal materials,
-          and some act materials can only be caught with a steel or abyssalite rod.
-        </li>
-        <li>
-          <strong>Water in land biomes</strong>, such as a forest pond or a swamp, gives that biome&apos;s blocks, mob
-          drops, fragments and pottery sherds. These are the same for every rod.
-        </li>
-      </ul>
+      <p className={body}>
+        In oceans, rivers and beaches, an Iron, Steel or Abyssalite Rod can bring up everything in this table.
+      </p>
+      <DataTable
+        className="mt-4"
+        columns={[{ header: "Catch", nowrap: true }, { header: "What comes up" }]}
+        rows={[
+          ["Fish", "Vanilla fish, and four custom fish for each kind of water"],
+          [
+            "Materials",
+            <>
+              Raw Iron, Raw Gold and Diamond Fragments, coal, {itemList(waterMaterials)}, disc fragments and music discs
+            </>,
+          ],
+          ["Animal materials", "Leather, wool and feathers. Steel and Abyssalite Rods bring up better ones."],
+          ["Treasure", <>{itemList(waterTreasure)}, coins and gemstone pouches of all four kinds</>],
+        ]}
+      />
+      <p className={`mt-3 ${body}`}>
+        All three rods catch the same treasure. Ignitium, Tin and Abyssalite Fragments sometimes come up several at
+        once, and an Abyssalite Rod brings up bigger piles of coins. Right-click a gemstone pouch to get one random
+        gemstone of its kind.
+      </p>
+      <p className={`mt-3 ${body}`}>
+        <strong>Water in land biomes</strong>, such as a forest pond or a swamp, gives that biome&apos;s blocks, mob
+        drops, fragments and pottery sherds. These are the same for every rod.
+      </p>
       <p className={`mt-3 ${body}`}>
         Custom fish come out as{" "}
         <Link href="/wiki/cooking" className={link}>

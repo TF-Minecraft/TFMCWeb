@@ -21,7 +21,7 @@ const piece = (name: string) => (
 export default function CookingPage() {
   return (
     <WikiPage
-      lastModified="2026-10-29"
+      lastModified="2026-11-18"
       title="Cooking"
       width="lg"
       intro="You cook on furniture placed in the world, not in a menu. Food keeps track of how fresh it is, how it was cooked and how it was seasoned, and has a quality from 1 to 5 stars."
@@ -221,6 +221,10 @@ export default function CookingPage() {
       <p className={`mt-3 ${body}`}>
         Perishable food goes from Fresh to Stale to Rotten in real time, including in storage and while you are offline.
         Shelf life varies by food. Stale and rotten food nourish you less, so check its description before eating.
+      </p>
+      <p className={`mt-3 ${body}`}>
+        Once food is cooked, boiled or burnt, it stays fresh for only a few days, however long its ingredients would
+        have kept, so cook close to when you plan to eat. Cooking never makes food fresher.
       </p>
 
       <SeeAlso

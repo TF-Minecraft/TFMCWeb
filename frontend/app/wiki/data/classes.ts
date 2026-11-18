@@ -82,6 +82,11 @@ export const skills: Record<string, Skill> = {
     always: true,
     description: "Remembers who you trade hits with, so Challenge can target them and your group's support skips them.",
   },
+  RECOVERY: {
+    name: "Recovery",
+    always: true,
+    description: "Out of combat, you heal every second on top of your normal regeneration. Wounded weakens it.",
+  },
   // Archer
   STEADY_AIM: { name: "Steady Aim", passive: true, description: "Your arrows deal extra damage." },
   HUNTERS_MARK: {
@@ -106,7 +111,8 @@ export const skills: Record<string, Skill> = {
   },
   SEITHR_GLYPH: {
     name: "Seithr Glyph",
-    description: "Draw a glyph on the ground. When someone steps on it, it goes off and freezes everyone on it.",
+    description:
+      "Draw a glyph on the ground where you aim. It takes a moment to draw. When someone steps on it, it freezes everyone on it.",
   },
   VENOM_TIPS: { name: "Venom Tips", passive: true, description: "Your arrows Wound the target." },
   CAMOUFLAGE: {
@@ -154,7 +160,7 @@ export const skills: Record<string, Skill> = {
     name: "Marching Song",
     passive: true,
     description:
-      "Regularly removes Slowed from you and the players around you, friend or foe, except the enemy you are fighting.",
+      "When you or a player near you is Slowed or Frozen, removes both from you and every player near you, friend or foe, except the enemy you are fighting.",
   },
   MEMENTO_MORI: {
     name: "Memento Mori",
@@ -204,7 +210,7 @@ export const skills: Record<string, Skill> = {
     name: "Unbroken",
     passive: true,
     description:
-      "When you are hit while Slowed, Weakened or Frozen, shake them off and gain Resistance I for a moment.",
+      "As soon as you are Slowed, Weakened or Frozen, shake them off and gain Resistance I for a moment. It needs to recharge after each cleanse.",
   },
   TANK_PULL: { name: "Tank Pull", description: "Pull the enemies in front of you towards you and slow them." },
   GROUND_SMASH: {
@@ -270,7 +276,8 @@ export const skills: Record<string, Skill> = {
   HEALING_ORB: { name: "Healing Orb", description: "Fire an orb that heals the player it hits." },
   BLESS: {
     name: "Bless",
-    description: "Remove Slowed and Weakened from you and the players right next to you.",
+    description:
+      "Instantly remove Slowed, Weakened and Frozen from you and every player near you, friend or foe, except the enemy you are fighting. Burnt, Silenced and potion effects stay.",
   },
   SMITE: { name: "Smite", description: "Call down a pillar of light that damages and Wounds everything around you." },
   CHALLENGE: {
@@ -286,12 +293,14 @@ export const skills: Record<string, Skill> = {
   CONSECRATION: {
     name: "Consecration",
     passive: true,
-    description: "Killing an enemy makes the ground around you heal nearby players for a while.",
+    description:
+      "Killing an enemy consecrates the ground around you for a while. You and every player near it, friend or foe, except the enemy you are fighting, heal at once and then every second.",
   },
   PURITY: {
     name: "Purity",
     passive: true,
-    description: "Regularly removes Slowed, Weakened, Burnt and Frozen from you.",
+    description:
+      "When you are Slowed, Weakened, Burnt, Frozen or on fire, removes them all and puts the fire out, unless you are standing in lava or fire. It needs to recharge after each cleanse.",
   },
   SHIELDING_ORB: {
     name: "Shielding Orb",
@@ -300,7 +309,7 @@ export const skills: Record<string, Skill> = {
   HAND_CURE: { name: "Hand Cure", description: "Lay hands on a player right next to you to heal them." },
   BLESSING_OF_SWIFTNESS: {
     name: "Blessing of Swiftness",
-    description: "Give a player right next to you Speed II.",
+    description: "Bless a player near you with Speed II.",
   },
   HEAL_AURA: { name: "Heal Aura", description: "Create an aura that heals you and the players around you." },
   RESTORATION: {
@@ -391,7 +400,7 @@ export const subclasses: Subclass[] = [
     type: "Martial",
     equipment: "Longbows, Light Armour",
     lore: "Lives off the wild and never misses twice.",
-    skills: ["STEADY_AIM", "HUNTERS_MARK", "FLEET_FOOTED", "EVASION", "FINISHER"],
+    skills: ["RECOVERY", "STEADY_AIM", "HUNTERS_MARK", "FLEET_FOOTED", "EVASION", "FINISHER"],
   },
   {
     id: "trapper",
@@ -401,7 +410,7 @@ export const subclasses: Subclass[] = [
     equipment: "Crossbows, Light Armour",
     magic: "Cerrith, Mitlan, Oseni, Seithr",
     lore: "Covers the ground with mines, poison and frost glyphs, then waits unseen.",
-    skills: ["POISON_ARROW", "ARCHER_STEP", "TOTEM_MINE", "SEITHR_GLYPH", "VENOM_TIPS", "CAMOUFLAGE"],
+    skills: ["RECOVERY", "POISON_ARROW", "ARCHER_STEP", "TOTEM_MINE", "SEITHR_GLYPH", "VENOM_TIPS", "CAMOUFLAGE"],
   },
   {
     id: "arcane_archer",
@@ -411,7 +420,7 @@ export const subclasses: Subclass[] = [
     equipment: "Shortbows, Light Armour",
     magic: "Seithr, Mitlan",
     lore: "Turns every shot into a spell: frozen arrows, volleys, marking shots and silencing shards.",
-    skills: ["ICE_SHARD", "SILENCING_SHARD", "FREEZING_SHOT", "HAWK_EYE", "ARROW_VOLLEY", "FROSTVEIL"],
+    skills: ["RECOVERY", "ICE_SHARD", "SILENCING_SHARD", "FREEZING_SHOT", "HAWK_EYE", "ARROW_VOLLEY", "FROSTVEIL"],
   },
   {
     id: "minstrel",
@@ -423,6 +432,7 @@ export const subclasses: Subclass[] = [
     lore: "A travelling musician whose songs heal, hasten and protect.",
     skills: [
       "FOE_SENSE",
+      "RECOVERY",
       "RHAPSODY",
       "SOUND_WAVE",
       "ANGELIC_SERENADE",
@@ -440,7 +450,7 @@ export const subclasses: Subclass[] = [
     equipment: "Lutes, Light Armour",
     magic: "Oseni, Seithr, Mitlan",
     lore: "Plays music that withers, freezes and tears a battlefield apart.",
-    skills: ["MEMENTO_MORI", "ICE_WAVE", "TELEPORT", "VIBRATIVE_STRIKE", "SYMPHONY_OF_DESTRUCTION"],
+    skills: ["RECOVERY", "MEMENTO_MORI", "ICE_WAVE", "TELEPORT", "VIBRATIVE_STRIKE", "SYMPHONY_OF_DESTRUCTION"],
   },
   {
     id: "siren",
@@ -450,7 +460,7 @@ export const subclasses: Subclass[] = [
     equipment: "Lutes, Light Armour",
     magic: "Mitlan",
     lore: "Sings with the voice of the water plane, luring enemies in and drowning them in waves.",
-    skills: ["TIDE_SHARD", "SOUND_WAVE", "SIRENS_CALL", "CRASHING_WAVE", "MITLAN_GLYPH", "MAELSTROM"],
+    skills: ["RECOVERY", "TIDE_SHARD", "SOUND_WAVE", "SIRENS_CALL", "CRASHING_WAVE", "MITLAN_GLYPH", "MAELSTROM"],
   },
   {
     id: "juggernaut",
@@ -459,7 +469,7 @@ export const subclasses: Subclass[] = [
     type: "Martial",
     equipment: "Warhammers, Battleaxes, Greataxes, Greathammers, Shields, Heavy Armour",
     lore: "A wall of iron that shrugs off blows, punishes attackers and refuses to fall.",
-    skills: ["BULWARK", "RETALIATION", "SECOND_WIND", "SHIELD_BASH", "UNBROKEN"],
+    skills: ["RECOVERY", "BULWARK", "RETALIATION", "SECOND_WIND", "SHIELD_BASH", "UNBROKEN"],
   },
   {
     id: "warden",
@@ -471,6 +481,7 @@ export const subclasses: Subclass[] = [
     lore: "Holds the line, pulling and pinning enemies with frost to protect the group.",
     skills: [
       "FOE_SENSE",
+      "RECOVERY",
       "TANK_PULL",
       "GROUND_SMASH",
       "SUBSTITUTE",
@@ -492,6 +503,7 @@ export const subclasses: Subclass[] = [
     lore: "Guards with frost runes instead of steel, shielding allies and locking enemies in ice.",
     skills: [
       "FOE_SENSE",
+      "RECOVERY",
       "SILENCING_SHARD",
       "MENDING",
       "ICE_SHIELD",
@@ -509,7 +521,16 @@ export const subclasses: Subclass[] = [
     type: "Martial",
     equipment: "Warhammers, Greathammers, Longswords, Shields, Battle Standards, Medium Armour",
     lore: "Carries faith on the edge of a blade, hitting harder and mending allies nearby.",
-    skills: ["FOE_SENSE", "ZEAL", "STEADFAST", "AURA_OF_VALOR", "RIGHTEOUS_FURY", "JUDGEMENT", "SPELLBREAKER"],
+    skills: [
+      "FOE_SENSE",
+      "RECOVERY",
+      "ZEAL",
+      "STEADFAST",
+      "AURA_OF_VALOR",
+      "RIGHTEOUS_FURY",
+      "JUDGEMENT",
+      "SPELLBREAKER",
+    ],
   },
   {
     id: "templar",
@@ -519,7 +540,17 @@ export const subclasses: Subclass[] = [
     equipment: "Swords, Warhammers, Spears, Polearms, Shields, Medium Armour",
     magic: "Cerrith",
     lore: "A sworn knight who fights at the front with holy strikes, blessings and protective oaths.",
-    skills: ["HEALING_STRIKE", "BLESS", "SMITE", "CHALLENGE", "DUEL_INSTINCT", "HOLY_WARD", "CONSECRATION", "PURITY"],
+    skills: [
+      "RECOVERY",
+      "HEALING_STRIKE",
+      "BLESS",
+      "SMITE",
+      "CHALLENGE",
+      "DUEL_INSTINCT",
+      "HOLY_WARD",
+      "CONSECRATION",
+      "PURITY",
+    ],
   },
   {
     id: "cleric",
@@ -531,6 +562,7 @@ export const subclasses: Subclass[] = [
     lore: "Sets down the sword to heal, shield and cleanse the group through the hardest fights.",
     skills: [
       "FOE_SENSE",
+      "RECOVERY",
       "HEALING_ORB",
       "SHIELDING_ORB",
       "HAND_CURE",
@@ -548,7 +580,7 @@ export const subclasses: Subclass[] = [
     type: "Martial",
     equipment: "Greataxes, Battleaxes, Greathammers, Shortswords, Medium Armour",
     lore: "Trades technique for fury and is most dangerous when nearly dead.",
-    skills: ["BLOODLUST", "CLEAVE", "FRENZY", "UNDYING_RAGE", "REND"],
+    skills: ["RECOVERY", "BLOODLUST", "CLEAVE", "FRENZY", "UNDYING_RAGE", "REND"],
   },
   {
     id: "warlord",
@@ -557,7 +589,7 @@ export const subclasses: Subclass[] = [
     type: "Martial",
     equipment: "Longswords, Swords, Spears, Polearms, Battleaxes, Battle Standards, Medium Armour",
     lore: "Leads from the front, driving allies forward with chants and rallying cries.",
-    skills: ["FOE_SENSE", "WAR_CHANT", "RALLY", "EARTHSHAKER", "HOLD_THE_LINE", "INTIMIDATE"],
+    skills: ["FOE_SENSE", "RECOVERY", "WAR_CHANT", "RALLY", "EARTHSHAKER", "HOLD_THE_LINE", "INTIMIDATE"],
   },
   {
     id: "spellblade",
@@ -568,6 +600,7 @@ export const subclasses: Subclass[] = [
     magic: "Oseni",
     lore: "Channels fire through steel, mixing blade techniques with fire spells.",
     skills: [
+      "RECOVERY",
       "FIRE_SHARD",
       "WARRIOR_DASH",
       "WARRIOR_LUNGE",
@@ -599,7 +632,7 @@ export const attributes: AttributeInfo[] = [
   {
     name: "Charisma",
     perPoint:
-      "Guns aim tighter and reload faster. More magic damage, the kind class spells deal, and a higher critical strike chance.",
+      "Guns aim tighter and reload faster. More magic damage, the kind class spells deal, and a higher critical strike chance. The extra magic damage also makes your spell heals and shields stronger.",
   },
 ];
 
