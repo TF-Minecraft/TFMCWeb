@@ -59,15 +59,17 @@ def test_wardrobe_payload_is_byte_for_byte_the_same():
         "VALUES (%s, 'c-ana', 'base', 'wardrobe/x/base.png', 'v', 's', 'classic', NULL, true, "
         "'2026-01-02T03:04:05.678901Z')", (OWNER,))
     slot = {"slot": "base", "unlocked": True, "filled": True, "model": "classic", "display_name": "Base",
-            "custom_name": False, "apply_pending": True, "has_signature": True, "signed": True,
-            "updated_at": "2026-01-02T03:04:05Z", "texture_url": "/characters/c-ana/wardrobe/base/texture"}
+            "custom_name": False, "description": None, "apply_pending": True, "has_signature": True,
+            "signed": True, "updated_at": "2026-01-02T03:04:05Z",
+            "texture_url": "/characters/c-ana/wardrobe/base/texture"}
 
     def empty(name, label, unlocked):
         return {"slot": name, "unlocked": unlocked, "filled": False, "model": None, "display_name": label,
-                "custom_name": False, "apply_pending": False, "has_signature": False, "signed": False,
-                "updated_at": None, "texture_url": None}
+                "custom_name": False, "description": None, "apply_pending": False, "has_signature": False,
+                "signed": False, "updated_at": None, "texture_url": None}
 
     expected = {"character_id": "c-ana", "player_uuid": OWNER, "active_slot": "base", "swappable_slots": 1,
+                "descriptions": True,
                 "slots": [slot, empty("extra_1", "Skin 2", False), empty("extra_2", "Skin 3", False),
                           empty("extra_3", "Skin 4", False), empty("extra_4", "Skin 5", False),
                           empty("masked", "Masked", True)]}

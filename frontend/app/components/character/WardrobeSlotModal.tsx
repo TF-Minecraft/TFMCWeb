@@ -31,6 +31,12 @@ type Props = {
   initialDisplayName: string;
   /** Placeholder when field empty (defaults to slot default label) */
   namePlaceholder: string;
+  /** Offer the "description while worn" field (accepted characters, not Base). */
+  canDescribe?: boolean;
+  /** The skin's saved description, "" when it uses the character description. */
+  initialDescription?: string;
+  /** Goes up each time the editor saved the picked file; clears the picker. */
+  fileSavedCount?: number;
   saving: boolean;
   error: string | null;
   onClose: () => void;
@@ -38,6 +44,9 @@ type Props = {
     file: File | null;
     equip: boolean;
     displayName: string | null;
+    nameChanged: boolean;
+    /** Set only when changed: the new text, or null to use the character description again. */
+    description?: string | null;
     createMasked: boolean;
     armModel: ArmModel;
   }) => void;
@@ -60,6 +69,9 @@ export default function WardrobeSlotModal({
   existingTextureSrc,
   initialDisplayName,
   namePlaceholder,
+  canDescribe = false,
+  initialDescription = "",
+  fileSavedCount = 0,
   saving,
   error,
   onClose,
@@ -80,6 +92,19 @@ export default function WardrobeSlotModal({
   const [maskedPreviewUrl, setMaskedPreviewUrl] = useState<string | null>(null);
   const [maskedPreviewBusy, setMaskedPreviewBusy] = useState(false);
   const [displayName, setDisplayName] = useState(initialDisplayName);
+  const [description, setDescription] = useState(initialDescription);
+  // Until the player edits the box it shows (and saves as unchanged) the current saved text,
+  // so a refresh while the dialog is open can't make a name-only save clear it.
+  const [descriptionTouched, setDescriptionTouched] = useState(false);
+  const shownDescription = descriptionTouched ? description : initialDescription;
+  // The editor saved the picked file (a later step failed): a retry must not upload it again.
+  // Cleared during render, so it lands in the same update as the error and Save never sees
+  // the stale file.
+  const [seenFileSavedCount, setSeenFileSavedCount] = useState(fileSavedCount);
+  if (fileSavedCount !== seenFileSavedCount) {
+    setSeenFileSavedCount(fileSavedCount);
+    setFile(null);
+  }
 
   useEffect(() => {
     if (!open) return;
@@ -93,9 +118,14 @@ export default function WardrobeSlotModal({
     setMaskedPreviewUrl(null);
     setMaskedPreviewBusy(false);
     setDisplayName(initialDisplayName);
+    setDescription(initialDescription);
+    setDescriptionTouched(false);
     const t = window.setTimeout(() => inputRef.current?.focus(), 20);
     return () => window.clearTimeout(t);
-  }, [open, defaultEquipOnSave, defaultCreateMasked, defaultArmModel, slotId, initialDisplayName]);
+    // Reset only when the dialog opens or shows another skin. A save step or the pending-skin
+    // poll refreshes the saved values while it is open; unsaved fields must survive that.
+    // oxlint-disable-next-line react/exhaustive-deps
+  }, [open, slotId]);
 
   useEffect(() => {
     if (!file) {
@@ -171,7 +201,13 @@ export default function WardrobeSlotModal({
       : previewUrl || existingTextureSrc;
   const trimmedName = displayName.trim();
   const nameChanged = trimmedName !== String(initialDisplayName || "").trim();
-  const canSave = !localErr && !saving && (Boolean(file) || (filled && (nameChanged || armModel !== defaultArmModel)));
+  const trimmedDescription = shownDescription.trim();
+  const descriptionChanged =
+    canDescribe && descriptionTouched && trimmedDescription !== String(initialDescription || "").trim();
+  const canSave =
+    !localErr &&
+    !saving &&
+    (Boolean(file) || (filled && (nameChanged || descriptionChanged || armModel !== defaultArmModel)));
 
   async function onPick(f: File | null) {
     setLocalErr(null);
@@ -319,6 +355,29 @@ export default function WardrobeSlotModal({
           />
         </label>
 
+        {canDescribe ? (
+          <label className="mt-4 flex flex-col gap-1.5 text-sm text-[var(--tfmc-cream)]">
+            <span>
+              Description while worn <span className="font-normal text-[var(--tfmc-stone)]">(optional)</span>
+            </span>
+            <textarea
+              rows={3}
+              value={shownDescription}
+              disabled={saving}
+              placeholder="Leave empty to use your character description."
+              className="resize-y rounded-sm border border-[color-mix(in_srgb,var(--tfmc-cream)_18%,transparent)] bg-[color-mix(in_srgb,var(--tfmc-forest)_70%,black)] px-3 py-2 text-sm text-[var(--tfmc-cream)] placeholder:text-[var(--tfmc-stone)]"
+              // One line; the site checks the length (in characters, like the game) on save.
+              onChange={(e) => {
+                setDescriptionTouched(true);
+                setDescription(e.target.value.replace(/[\r\n\x85\u2028\u2029]+/g, " "));
+              }}
+            />
+            <span className="text-xs text-[var(--tfmc-mist)]">
+              Others read this instead of your character description while you wear this skin.
+            </span>
+          </label>
+        ) : null}
+
         <label className="mt-4 flex flex-col gap-1.5 text-sm text-[var(--tfmc-cream)]">
           Skin file
           <input
@@ -398,6 +457,8 @@ export default function WardrobeSlotModal({
                 file,
                 equip: Boolean(file) && canEquip && equipOnSave,
                 displayName: name,
+                nameChanged,
+                ...(descriptionChanged ? { description: trimmedDescription || null } : {}),
                 createMasked: Boolean(file) && canCreateMasked && createMasked,
                 armModel,
               });

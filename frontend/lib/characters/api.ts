@@ -731,6 +731,8 @@ export type WardrobeSlot = {
   model?: string | null;
   display_name?: string | null;
   custom_name?: boolean;
+  /** What others read while this skin is worn; null uses the character description. */
+  description?: string | null;
   apply_pending?: boolean;
   has_signature?: boolean;
   signed?: boolean;
@@ -744,6 +746,8 @@ export type WardrobeResponse = {
   active_slot: WardrobeSlotId | string | null;
   swappable_slots: number;
   slots: WardrobeSlot[];
+  /** True when skins can carry a description (accepted characters only). */
+  descriptions?: boolean;
   uploaded_slot?: string;
   signed?: boolean;
 };
@@ -803,6 +807,7 @@ export async function getWardrobe(sessionToken: string, characterId: string): Pr
     active_slot: body.active_slot ?? null,
     swappable_slots: Math.max(1, Number(body.swappable_slots) || 1),
     slots: Array.isArray(body.slots) ? body.slots : [],
+    ...(body.descriptions === true ? { descriptions: true } : {}),
   };
 }
 
@@ -858,6 +863,29 @@ export async function renameWardrobeSlot(
   const data = await parseJson(res);
   if (!res.ok) {
     throw new CharactersApiError(detailMessage(data, `Rename failed (${res.status})`), res.status);
+  }
+  return data as WardrobeResponse;
+}
+
+export async function setWardrobeSlotDescription(
+  sessionToken: string,
+  characterId: string,
+  slot: string,
+  description: string | null,
+): Promise<WardrobeResponse> {
+  const id = encodeURIComponent(characterId.trim());
+  const s = encodeURIComponent(slot.trim());
+  const res = await apiFetch(`${getApiBase()}/characters/${id}/wardrobe/${s}/description`, {
+    method: "PATCH",
+    headers: {
+      ...authHeaders(sessionToken),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ description }),
+  });
+  const data = await parseJson(res);
+  if (!res.ok) {
+    throw new CharactersApiError(detailMessage(data, `Saving the description failed (${res.status})`), res.status);
   }
   return data as WardrobeResponse;
 }

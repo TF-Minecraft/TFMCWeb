@@ -12,6 +12,11 @@ vi.mock("../../../lib/characters/api", async (original) => ({
   setWardrobeActive: vi.fn(),
   uploadWardrobeSlot: vi.fn(),
   renameWardrobeSlot: vi.fn(),
+  setWardrobeSlotDescription: vi.fn(),
+}));
+vi.mock("../../../lib/characters/wardrobeSkin", () => ({
+  assertWardrobeSkinPng: vi.fn().mockResolvedValue(undefined),
+  WARDROBE_INVALID_PNG_MESSAGE: "Invalid PNG",
 }));
 vi.mock("./SkinMannequinPreview", () => ({
   default: ({ armModel, source, decorative }: { armModel: string; source: string; decorative?: boolean }) => (
@@ -306,4 +311,135 @@ it("keeps a model-only change in the creation draft", async () => {
   fireEvent.click(screen.getByRole("switch", { name: "Slim arms" }));
   fireEvent.click(screen.getByRole("button", { name: "Save" }));
   expect(onDraftModelsChange).toHaveBeenCalledWith({ base: "slim" });
+});
+
+const described: api.WardrobeResponse = {
+  ...wardrobe,
+  swappable_slots: 2,
+  descriptions: true,
+  slots: [
+    ...wardrobe.slots,
+    { slot: "extra_1", display_name: "Cloak", custom_name: true, filled: true, unlocked: true, model: "classic" },
+  ],
+};
+
+it("saves only the description when only the description changes", async () => {
+  vi.mocked(api.getWardrobe).mockResolvedValue(described);
+  const saved = {
+    ...described,
+    slots: [described.slots[0], { ...described.slots[1], description: "A hooded figure in a travelling cloak." }],
+  };
+  vi.mocked(api.setWardrobeSlotDescription).mockResolvedValue(saved);
+  render(<WardrobeEditor mode="live" characterId="character" sessionToken="token" />);
+  fireEvent.click(await screen.findByRole("button", { name: "Cloak - edit" }));
+  const box = await screen.findByRole("textbox", { name: /Description while worn/ });
+  fireEvent.change(box, { target: { value: "  A hooded figure in a travelling cloak.  " } });
+  fireEvent.click(screen.getByRole("button", { name: "Save" }));
+  await waitFor(() =>
+    expect(api.setWardrobeSlotDescription).toHaveBeenCalledWith(
+      "token",
+      "character",
+      "extra_1",
+      "A hooded figure in a travelling cloak.",
+    ),
+  );
+  expect(api.renameWardrobeSlot).not.toHaveBeenCalled();
+  expect(api.uploadWardrobeSlot).not.toHaveBeenCalled();
+  await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+
+  fireEvent.click(screen.getByRole("button", { name: "Cloak - edit" }));
+  const reopened = await screen.findByRole("textbox", { name: /Description while worn/ });
+  expect((reopened as HTMLTextAreaElement).value).toBe("A hooded figure in a travelling cloak.");
+  fireEvent.change(reopened, { target: { value: "   " } });
+  fireEvent.click(screen.getByRole("button", { name: "Save" }));
+  await waitFor(() =>
+    expect(api.setWardrobeSlotDescription).toHaveBeenLastCalledWith("token", "character", "extra_1", null),
+  );
+});
+
+it("offers no description box on Base or before the site supports it", async () => {
+  vi.mocked(api.getWardrobe).mockResolvedValue(described);
+  const { unmount } = render(<WardrobeEditor mode="live" characterId="character" sessionToken="token" />);
+  await screen.findByRole("button", { name: "Cloak - edit" });
+  fireEvent.click(screen.getAllByRole("button").find((b) => b.getAttribute("aria-label")?.startsWith("Base"))!);
+  await screen.findByRole("dialog");
+  expect(screen.queryByRole("textbox", { name: /Description while worn/ })).toBeNull();
+  unmount();
+
+  vi.mocked(api.getWardrobe).mockResolvedValue({ ...described, descriptions: undefined });
+  render(<WardrobeEditor mode="live" characterId="character" sessionToken="token" />);
+  fireEvent.click(await screen.findByRole("button", { name: "Cloak - edit" }));
+  await screen.findByRole("dialog");
+  expect(screen.queryByRole("textbox", { name: /Description while worn/ })).toBeNull();
+});
+
+it("keeps a saved description and the unsaved name when the rename fails", async () => {
+  const text = "A hooded figure in a travelling cloak.";
+  const saved = { ...described, slots: [described.slots[0], { ...described.slots[1], description: text }] };
+  vi.mocked(api.getWardrobe).mockResolvedValue(described);
+  vi.mocked(api.setWardrobeSlotDescription).mockResolvedValue(saved);
+  vi.mocked(api.renameWardrobeSlot).mockRejectedValueOnce(new api.CharactersApiError("Name taken", 400));
+  render(<WardrobeEditor mode="live" characterId="character" sessionToken="token" />);
+  fireEvent.click(await screen.findByRole("button", { name: "Cloak - edit" }));
+  fireEvent.change(await screen.findByRole("textbox", { name: /Description while worn/ }), { target: { value: text } });
+  fireEvent.change(screen.getByRole("textbox", { name: /^Name/ }), { target: { value: "Grey Cloak" } });
+  fireEvent.click(screen.getByRole("button", { name: "Save" }));
+  expect((await screen.findByRole("alert")).textContent).toBe("Saved the description, but not the name: Name taken");
+  expect((screen.getByRole("textbox", { name: /^Name/ }) as HTMLInputElement).value).toBe("Grey Cloak");
+  expect((screen.getByRole("textbox", { name: /Description while worn/ }) as HTMLTextAreaElement).value).toBe(text);
+
+  vi.mocked(api.renameWardrobeSlot).mockResolvedValue(saved);
+  fireEvent.click(screen.getByRole("button", { name: "Save" }));
+  await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  expect(api.setWardrobeSlotDescription).toHaveBeenCalledTimes(1);
+  expect(api.renameWardrobeSlot).toHaveBeenCalledTimes(2);
+  expect(api.renameWardrobeSlot).toHaveBeenLastCalledWith("token", "character", "extra_1", "Grey Cloak");
+});
+
+it("keeps the typed description and does not upload again when only the description fails", async () => {
+  vi.stubGlobal(
+    "URL",
+    class extends URL {
+      static createObjectURL = vi.fn(() => "blob:new-skin");
+      static revokeObjectURL = vi.fn();
+    },
+  );
+  const text = "A figure in a black hood, face in shadow.";
+  const empty: api.WardrobeResponse = {
+    ...described,
+    swappable_slots: 3,
+    slots: [...described.slots, { slot: "extra_2", filled: false, unlocked: true }],
+  };
+  // Like the site, the saved skin keeps the arm model the upload sent (the picker may detect either).
+  let uploaded: api.WardrobeResponse = empty;
+  vi.mocked(api.getWardrobe).mockResolvedValue(empty);
+  vi.mocked(api.uploadWardrobeSlot).mockImplementation(async (_token, _id, _slot, _file, _name, opts) => {
+    uploaded = {
+      ...empty,
+      slots: [...described.slots, { slot: "extra_2", filled: true, unlocked: true, model: opts?.model ?? "classic" }],
+    };
+    return uploaded;
+  });
+  vi.mocked(api.setWardrobeSlotDescription).mockRejectedValueOnce(
+    new api.CharactersApiError("Description must be at least 32 characters", 400),
+  );
+  render(<WardrobeEditor mode="live" characterId="character" sessionToken="token" />);
+  fireEvent.click(await screen.findByRole("button", { name: "Skin 3 empty - edit" }));
+  fireEvent.change(await screen.findByLabelText("Skin file"), {
+    target: { files: [new File(["png"], "skin.png", { type: "image/png" })] },
+  });
+  fireEvent.change(screen.getByRole("textbox", { name: /Description while worn/ }), { target: { value: text } });
+  await waitFor(() => expect((screen.getByRole("button", { name: "Save" }) as HTMLButtonElement).disabled).toBe(false));
+  fireEvent.click(screen.getByRole("button", { name: "Save" }));
+  expect((await screen.findByRole("alert")).textContent).toBe(
+    "Saved the skin, but not the description: Description must be at least 32 characters",
+  );
+  expect((screen.getByRole("textbox", { name: /Description while worn/ }) as HTMLTextAreaElement).value).toBe(text);
+
+  vi.mocked(api.setWardrobeSlotDescription).mockImplementation(async () => uploaded);
+  fireEvent.click(screen.getByRole("button", { name: "Save" }));
+  await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  expect(api.uploadWardrobeSlot).toHaveBeenCalledTimes(1);
+  expect(api.setWardrobeSlotDescription).toHaveBeenCalledTimes(2);
+  expect(api.setWardrobeSlotDescription).toHaveBeenLastCalledWith("token", "character", "extra_2", text);
 });

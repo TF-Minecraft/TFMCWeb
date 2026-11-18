@@ -126,3 +126,35 @@ it.each<ArmModel>(["default", "slim"])(
     expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ file, armModel: chosen }));
   },
 );
+
+it("shows a description refreshed while open and saves a name-only change without it", () => {
+  const onSave = vi.fn();
+  const props = {
+    open: true,
+    slotLabel: "Cloak",
+    slotId: "extra_1",
+    filled: true,
+    canEquip: false,
+    defaultEquipOnSave: false,
+    existingTextureSrc: null,
+    initialDisplayName: "Cloak",
+    namePlaceholder: "Skin 2",
+    canDescribe: true,
+    saving: false,
+    error: null,
+    onClose: vi.fn(),
+    onSave,
+  };
+  const { rerender } = render(<WardrobeSlotModal {...props} initialDescription="" />);
+  rerender(<WardrobeSlotModal {...props} initialDescription="Set in game while the dialog was open." />);
+  const box = screen.getByRole("textbox", { name: /Description while worn/ }) as HTMLTextAreaElement;
+  expect(box.value).toBe("Set in game while the dialog was open.");
+  fireEvent.change(screen.getByRole("textbox", { name: /^Name/ }), { target: { value: "Grey Cloak" } });
+  fireEvent.click(screen.getByRole("button", { name: "Save" }));
+  expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ displayName: "Grey Cloak", nameChanged: true }));
+  expect(onSave.mock.calls[0][0]).not.toHaveProperty("description");
+
+  fireEvent.change(box, { target: { value: "   " } });
+  fireEvent.click(screen.getByRole("button", { name: "Save" }));
+  expect(onSave.mock.calls[1][0]).toHaveProperty("description", null);
+});
