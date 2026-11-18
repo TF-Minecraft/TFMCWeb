@@ -16,7 +16,7 @@ const body = "text-sm text-[var(--tfmc-mist)]";
 export default function MagicPage() {
   return (
     <WikiPage
-      lastModified="2026-10-23"
+      lastModified="2026-11-18"
       title="Magic"
       width="lg"
       intro={
@@ -87,8 +87,9 @@ export default function MagicPage() {
           needs Cerrith II. You carry I.&quot;
         </li>
         <li>
-          Low Resonance makes a school&apos;s spells cost more mana, deal less damage and take longer to recharge. High
-          Resonance does the opposite. Hover a school in /resonance to see how it affects you right now.
+          Low Resonance makes a school&apos;s spells cost more mana, recharge slower and hit weaker, heals and shields
+          included. High Resonance makes them cheaper and quicker to recharge, but never stronger than normal. Hover a
+          school in /resonance to see how it affects you right now.
         </li>
         <li>Resonance slowly fades while you are online. Time spent offline does not count.</li>
       </ul>

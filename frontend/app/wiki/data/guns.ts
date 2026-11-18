@@ -248,7 +248,7 @@ export const gunParts: GunPart[] = [
     kind: "Stock",
     for: "Rifle, Shotgun",
     cost: "2 refined wood + 2 feathers",
-    note: "Soaks the kick so you fire again sooner. Better feathers make it quicker still. Slower to draw.",
+    note: "Soaks the kick so you fire again sooner. On a gun that holds one shot, it shortens the reload a little instead. Better feathers make it quicker still. Slower to draw.",
   },
   {
     part: "Standard Grip",

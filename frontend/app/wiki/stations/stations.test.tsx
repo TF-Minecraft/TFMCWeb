@@ -65,7 +65,7 @@ describe("station registry and source coverage", () => {
       "medicine-station": 42,
       dockyard: 6,
       "research-station": 36,
-      "tool-station": 59,
+      "tool-station": 58,
     };
     for (const [slug, count] of Object.entries(expectedCounts)) {
       const station = stations.find((candidate) => candidate.slug === slug)!;

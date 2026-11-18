@@ -1,6 +1,28 @@
 import Link from "next/link";
-import { Callout, CommandTable, SeeAlso, StationLink, WikiPage, WikiSectionHeading } from "@/app/components/wiki";
+import {
+  Callout,
+  CommandTable,
+  DataTable,
+  SeeAlso,
+  StationLink,
+  WikiItemLink,
+  WikiPage,
+  WikiSectionHeading,
+} from "@/app/components/wiki";
 import { infestationsCommands } from "../data/infestations";
+
+/** Drops from every infestation, inside or outside a permadeath zone (Main's `Infestations/rewards.yml`). */
+const lootAnywhere = [
+  "Ignitium",
+  "Iron Ingot",
+  "Tin",
+  "Abyssalite Fragment",
+  "Enchanted Dust",
+  "Coins",
+  "Unknown Key",
+  "Pouch of Basic Gemstones",
+  "Pouch of Polished Gemstones",
+];
 
 const link = "text-[var(--tfmc-accent)] hover:underline";
 const body = "text-sm text-[var(--tfmc-mist)]";
@@ -9,7 +31,7 @@ const code = "text-[var(--tfmc-accent)]";
 export default function InfestationsPage() {
   return (
     <WikiPage
-      lastModified="2026-10-24"
+      lastModified="2026-11-18"
       title="Infestations"
       intro={
         <>
@@ -38,11 +60,41 @@ export default function InfestationsPage() {
         While you are in an infested province, monsters keep spawning around you, a little way off rather than right
         next to you. The worse the infestation, the more of them and the faster they come. They don&apos;t spawn below Y
         56. You get ghouls, rats, slime cubes and skeletons, and bug-like creatures that burst into parasitic worms when
-        they die. The worms bite through armour and poison you. Infestation monsters sometimes drop{" "}
-        <Link href="/wiki/materials" className={link}>
-          materials
+        they die. The worms bite through armour and poison you.
+      </p>
+
+      <WikiSectionHeading id="loot">Loot</WikiSectionHeading>
+      <p className={body}>Every infestation monster you kill can drop loot. The worms from a dying bug drop nothing.</p>
+      <p className={`mt-3 ${body}`}>
+        Where you fight decides how much you get. Inside a{" "}
+        <Link href="/wiki/characters#injuries-graves" className={link}>
+          permadeath zone
         </Link>
-        .
+        , the worse the infestation, the more it pays. Outside one, every level pays the same, and less than Mild does
+        inside a zone.
+      </p>
+      <DataTable
+        className="mt-4"
+        columns={[{ header: "Drop" }, { header: "Where it drops" }]}
+        rows={[
+          ...lootAnywhere.map((name) => [<WikiItemLink key={name} name={name} />, "Any infestation"]),
+          ["Pouch of Radiant Gemstones", "Worrying and worse, inside a permadeath zone"],
+          ["Pouch of Mythical Gemstones", "Severe and Extreme, inside a permadeath zone"],
+        ]}
+      />
+      <p className={`mt-3 ${body}`}>
+        Right-click a gemstone pouch to get one random gemstone of its kind. An Unknown Key gets you into the{" "}
+        <Link href="/wiki/trial-rooms" className={link}>
+          Trial Rooms
+        </Link>
+        . Ordinary kills only give you so many keys in an hour.
+      </p>
+      <p className={`mt-3 ${body}`}>
+        Winning a Lure fight gives each fighter a reward of their own. To get yours you must have joined, made at least
+        3 kills in the fight, and be alive and online when it ends. It drops as items that only you can pick up. The
+        more of the Lure&apos;s monsters you killed, the bigger it is, and each of those kills pays more than an
+        ordinary one. Unknown Keys come on top, more for a worse infestation, and they don&apos;t count toward the
+        hourly limit. A Lure won outside a permadeath zone pays only a small part of this.
       </p>
 
       <WikiSectionHeading id="lure">Clearing a province with a Lure</WikiSectionHeading>
@@ -79,6 +131,10 @@ export default function InfestationsPage() {
           <li>
             If you joined and then leave the province, you lose a heart every second until you come back or give up with{" "}
             <code className={code}>/lure leave</code>.
+          </li>
+          <li>
+            If you die in the fight or give up with <code className={code}>/lure leave</code>, you can&apos;t join that
+            Lure again, not even on another character.
           </li>
           <li>
             If you joined and log out or switch to another character, you have 5 minutes to come back as the same

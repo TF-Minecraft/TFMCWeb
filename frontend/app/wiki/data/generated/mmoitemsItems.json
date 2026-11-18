@@ -846,22 +846,6 @@
     "sourceModel": "tfmc_pack/resourcepack/assets/minecraft/models/item/instruments/flute.json",
     "sourceTexture": "tfmc_pack/resourcepack/assets/minecraft/textures/item/instruments/flute.png"
   },
-  "FOREARM_CRUTCH": {
-    "name": "Forearm Crutch",
-    "material": "STICK",
-    "customModelData": 77,
-    "texture": "mmoitems/forearm_crutch.png",
-    "sourceModel": "tfmc_pack/resourcepack/assets/minecraft/models/item/props/forearm_crutch.json",
-    "sourceTexture": "tfmc_pack/resourcepack/assets/minecraft/textures/item/props/forearm_crutch.png"
-  },
-  "FOREARM_CRUTCH_SLIM": {
-    "name": "Slim Forearm Crutch",
-    "material": "STICK",
-    "customModelData": 78,
-    "texture": "mmoitems/forearm_crutch_slim.png",
-    "sourceModel": "tfmc_pack/resourcepack/assets/minecraft/models/item/props/forearm_crutch_slim.json",
-    "sourceTexture": "tfmc_pack/resourcepack/assets/minecraft/textures/item/props/forearm_crutch.png"
-  },
   "FORGING_BRANDING_TOOL": {
     "name": "Forging Branding Tool",
     "material": "BREEZE_ROD",
@@ -2425,6 +2409,14 @@
     "texture": "mmoitems/viral_serum.png",
     "sourceModel": "tfmc_pack/resourcepack/assets/minecraft/models/item/potions/potion_7.json",
     "sourceTexture": "tfmc_pack/resourcepack/assets/minecraft/textures/item/potions/potion_7.png"
+  },
+  "WALKING_CANE": {
+    "name": "Walking Cane",
+    "material": "STICK",
+    "customModelData": 55,
+    "texture": "mmoitems/walking_cane.png",
+    "sourceModel": "tfmc_pack/resourcepack/assets/minecraft/models/item/medicine/walking_cane.json",
+    "sourceTexture": "tfmc_pack/resourcepack/assets/minecraft/textures/item/medicine/walking_cane.png"
   },
   "WHITTLING_TOOL": {
     "name": "Whittling Tool",

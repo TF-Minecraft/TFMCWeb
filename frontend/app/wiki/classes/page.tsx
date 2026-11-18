@@ -40,7 +40,7 @@ const statuses: [string, string][] = [
 export default function ClassesPage() {
   return (
     <WikiPage
-      lastModified="2026-11-12"
+      lastModified="2026-11-18"
       title="Classes & Professions"
       intro="Your class decides what equipment you can use and which skills you get. Professions are levelled separately, through gathering and crafting."
       width="lg"
@@ -146,7 +146,11 @@ export default function ClassesPage() {
       <p className={`mt-3 ${body}`}>
         Skills unlock at class level 2 and can be upgraded to skill level 4. Subclasses get 2 skill points at levels 7,
         12 and 17, and each upgrade costs 1 point. Picking a subclass above those levels still gives you their slots and
-        points. Foe Sense and Duel Instinct are always on and need no slot.
+        points. Recovery, Foe Sense and Duel Instinct are always on and need no slot.
+      </p>
+      <p className={`mt-3 ${body}`}>
+        Every character heals slowly on its own during a fight, and faster once out of combat. Being Wounded halves this
+        healing.
       </p>
       <p className={`mt-3 ${body}`}>
         To take your skill points back, craft a <WikiItemLink name="Skill Retraining Manual" /> at the{" "}

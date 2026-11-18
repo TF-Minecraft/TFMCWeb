@@ -15,11 +15,12 @@ import { charactersCommands } from "../data/characters";
 const code = "text-[var(--tfmc-accent)]";
 const link = "text-[var(--tfmc-accent)] hover:underline";
 const body = "text-sm text-[var(--tfmc-mist)]";
+const subheading = "mt-6 text-sm font-semibold uppercase tracking-wide text-[var(--tfmc-mist)]";
 
 export default function CharactersPage() {
   return (
     <WikiPage
-      lastModified="2026-11-12"
+      lastModified="2026-11-18"
       title="Characters"
       intro={
         <>
@@ -61,8 +62,9 @@ export default function CharactersPage() {
       <p className={`mt-3 ${body}`}>
         Switching to a different character has a cooldown that depends on your rank. It counts from the last time you
         switched, and it also applies to creating a new character while you have a living one. You can always go back to
-        the character you were last playing. You cannot switch at all during an evil RP session, or while a player who
-        knocked you out is still deciding your fate.
+        the character you were last playing. When playing a character would start the cooldown, the selection screen
+        asks you to confirm first. You cannot switch at all during an evil RP session, or while a player who knocked you
+        out is still deciding your fate.
       </p>
       <p className={`mt-3 ${body}`}>
         If your rank drops and you have more living characters than it allows, you are frozen until you end one in{" "}
@@ -154,6 +156,12 @@ export default function CharactersPage() {
         </Link>{" "}
         and choose New character. Skins are optional. Upload them on the website under your character&apos;s Wardrobe,
         then swap between them in game with <code className={code}>/rpcharacter wardrobe</code>.
+      </p>
+      <p className={`mt-3 ${body}`}>
+        Each skin can carry its own description, which others read while you wear it. Shift-click the skin in{" "}
+        <code className={code}>/rpcharacter wardrobe</code> and type it in chat, or fill in{" "}
+        <strong>Description while worn</strong> on the website&apos;s Wardrobe page. The base skin uses your character
+        description.
       </p>
       <p className={`mt-3 ${body}`}>
         After creation, <code className={code}>/rpcharacter edit</code> reopens your choices, and the editor shows how
@@ -278,6 +286,32 @@ export default function CharactersPage() {
         injury, Half Blind or Blind. When a full body part takes a permanent injury, it replaces that part&apos;s
         healing injury instead of adding a new one, so Half Blind becomes Blind.
       </p>
+      <h3 id="blind" className={subheading}>
+        Getting around while Blind
+      </h3>
+      <p className={`mt-1 ${body}`}>Any Blind character gets two kinds of help:</p>
+      <ul className={`mt-2 list-disc space-y-2 pl-5 ${body}`}>
+        <li>
+          You can hear creatures moving near you. They glow for you alone, as long as nothing stands between you and
+          them. Anything standing still, sneaking or invisible stays hidden.
+        </li>
+        <li>Chat warns you when the ground falls away ahead, or when something dangerous is just ahead.</li>
+      </ul>
+      <p className={`mt-3 ${body}`}>
+        A <WikiItemLink name="Walking Cane" /> adds two more while you hold it. Make one at the{" "}
+        <StationLink name="Tool Station" />.
+      </p>
+      <ul className={`mt-2 list-disc space-y-2 pl-5 ${body}`}>
+        <li>
+          With the cane in either hand, hold sprint while walking forward to stride. It is faster than walking but
+          slower than a sprint. It uses hunger like sprinting, so you need enough food, and it doesn&apos;t work while
+          you sneak, swim or ride.
+        </li>
+        <li>
+          Right-click with the cane to tap. For a moment it outlines the hazards, ledges you could fall from, doors,
+          gates and walls around you. Only you see the outlines, and there is a short wait between taps.
+        </li>
+      </ul>
       <p className={`mt-3 ${body}`}>
         To roleplay an injury with someone&apos;s agreement, run{" "}
         <code className={code}>/rpcharacter injure &lt;player&gt;</code> within 10 blocks of them and pick the injury

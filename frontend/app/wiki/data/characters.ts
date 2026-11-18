@@ -42,6 +42,12 @@ export const charactersCommands: WikiCommandSet = {
       notes: "How many skins you can wear depends on your rank.",
     },
     {
+      command: "/rpcharacter wardrobe describe <skin> [text|clear]",
+      description:
+        "Sets the description others read while you wear that skin, or clears it. With no text, you type it in chat.",
+      notes: "32 to 256 characters. The base skin uses your character description.",
+    },
+    {
       command: "/rpcharacter party create <name> | invite <player> | join | leave | kick <player> | info",
       description:
         "RP party chat groups. Members stay in when they log out, and the party ends when its leader leaves.",

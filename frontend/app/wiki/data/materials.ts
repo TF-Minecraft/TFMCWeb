@@ -7,7 +7,7 @@ const guns = { href: "/wiki/guns", label: "Guns & Gunsmithing" };
 
 // ---------- Materials ----------
 //
-// Sources, checked against Main on 2026-10-23: `TFMCCore/drops.yml` (profession
+// Sources, checked against Main on 2026-11-18: `TFMCCore/drops.yml` (profession
 // perk drops), `Dowsing/production_methods.yml` (node focuses), the active
 // detector list in `geiger_counter/config.yml`, `TrialRooms/loot-tables.yml`,
 // `CustomFishing` loot, `Cooking/husbandry.yml` and the MMOItems station
@@ -39,7 +39,7 @@ const detector: MaterialAcquisition = {
 };
 const fishing: MaterialAcquisition = {
   method: "Fishing",
-  detail: "Fishing in water can bring it up as treasure.",
+  detail: "Fishing in ocean, river or beach water can bring it up.",
 };
 const trialRooms: MaterialAcquisition = {
   method: "Trial Rooms",
@@ -70,9 +70,13 @@ const infestationMonsters: MaterialAcquisition = {
   method: "Infestations",
   detail: "Monsters from an infestation can drop it.",
 };
-const actFishing = (rod: string): MaterialAcquisition => ({
+const actFishing: MaterialAcquisition = {
   method: "Fishing",
-  detail: `Fishing in water with ${rod} can bring it up as treasure.`,
+  detail: "Fishing in ocean, river or beach water with an Iron, Steel or Abyssalite Rod can bring it up.",
+};
+const battles = (detail: string): MaterialAcquisition => ({
+  method: "Faction battles",
+  detail,
 });
 const laterAct: MaterialAcquisition = {
   method: "A later act",
@@ -256,10 +260,7 @@ export const dropOnlyMaterials: CatalogMaterial[] = [
       activity,
       referrals,
       infestationMonsters,
-      {
-        method: "Faction battles",
-        detail: "Some faction battles reward their fighters with it.",
-      },
+      battles("Fighters still in a battle when it ends get it."),
     ],
     usedFor: "A crystal catalyst at the Forging Station.",
   },
@@ -273,10 +274,11 @@ export const dropOnlyMaterials: CatalogMaterial[] = [
       luckyMiner,
       treeGatherer("IV"),
       detector,
-      actFishing("an Abyssalite Rod"),
+      actFishing,
       activity,
       referrals,
       infestationMonsters,
+      battles("Fighters still in a battle when it ends sometimes get it."),
     ],
     usedFor: "A crystal catalyst at the Forging Station.",
   },
@@ -289,10 +291,11 @@ export const dropOnlyMaterials: CatalogMaterial[] = [
       luckyMiner,
       treeGatherer("IV"),
       detector,
-      actFishing("an Abyssalite Rod"),
+      actFishing,
       activity,
       referrals,
       infestationMonsters,
+      battles("Fighters still in a battle when it ends sometimes get it."),
     ],
     usedFor: "A catalyst at the Forging Station.",
   },
@@ -388,6 +391,7 @@ export const dropOnlyMaterials: CatalogMaterial[] = [
         detail: `Break ${LOG_LIST}. No perk is needed. The Herborist perk Tree Gatherer IV gives more.`,
       },
       node("Bark Forestry", "Forestry"),
+      fishing,
     ],
   },
   ...(["Valewood", "Runebark", "Amberpine", "Goldmaple", "Silk"] as const).map((name): CatalogMaterial => ({
@@ -413,6 +417,7 @@ export const dropOnlyMaterials: CatalogMaterial[] = [
       },
       luckyMiner,
       node("Stone Quarry", "Quarry"),
+      fishing,
     ],
   },
   {
@@ -420,21 +425,21 @@ export const dropOnlyMaterials: CatalogMaterial[] = [
     group: "Block cores",
     texture: T("materials/wood_core.png"),
     lore: "The essence of a tree. The Forester Station turns it into stacks of logs and wood blocks.",
-    acquisition: [treeGatherer("I"), node("Log Forestry", "Forestry")],
+    acquisition: [treeGatherer("I"), node("Log Forestry", "Forestry"), fishing],
   },
   {
     name: "Flower Core",
     group: "Block cores",
     texture: T("materials/flower_core.png"),
     lore: "The essence of a plant. The Forester Station turns it into flowers, grass, moss and other plants.",
-    acquisition: [treeGatherer("II")],
+    acquisition: [treeGatherer("II"), fishing],
   },
   {
     name: "Niter",
     group: "Alchemy and explosives",
     texture: T("materials/niter.png"),
     lore: "A mineral that burns hot. The base of Dynamite and vehicle munitions.",
-    acquisition: [luckyMiner, node("Rare Ore Mine", "Ore Mine")],
+    acquisition: [luckyMiner, treeGatherer("IV"), node("Rare Ore Mine", "Ore Mine"), fishing],
   },
   {
     name: "Enchanted Dust",
@@ -443,7 +448,10 @@ export const dropOnlyMaterials: CatalogMaterial[] = [
     lore: "Magical powder used in mage weapons, runes, charges and many recipes.",
     acquisition: [
       luckyMiner,
+      treeGatherer("IV"),
       node("Dust Mine", "Magical Mine"),
+      fishing,
+      infestationMonsters,
       {
         method: "Recycling",
         detail: "Runes, artifacts and mage weapons give some Enchanted Dust back at a Recycling Station.",
@@ -455,7 +463,7 @@ export const dropOnlyMaterials: CatalogMaterial[] = [
     group: "Magic",
     texture: T("materials/arcane_crystal.png"),
     lore: "Found deep below the earth, and not of this Plane.",
-    acquisition: [luckyMiner, node("Rare Ore Mine", "Ore Mine"), trialRooms],
+    acquisition: [luckyMiner, treeGatherer("IV"), node("Rare Ore Mine", "Ore Mine"), fishing, trialRooms],
     usedFor: "Building cars, planes and airships, and upgrading resource nodes.",
   },
   // Every herb an Alchemist Collector can gather on Main.

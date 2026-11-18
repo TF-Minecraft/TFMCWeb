@@ -9,7 +9,7 @@ const link = "text-[var(--tfmc-accent)] hover:underline";
 export default function ArcaneTraceDetectorPage() {
   return (
     <WikiPage
-      lastModified="2026-10-24"
+      lastModified="2026-11-18"
       title="Arcane Trace Detector"
       width="lg"
       intro="An Arcane Trace Detector leads you to an Arcane Cache buried somewhere far away. Each character has their own cache, and nobody else can see or open it."
@@ -63,6 +63,11 @@ export default function ArcaneTraceDetectorPage() {
         feet if your inventory is full. Chat says <em>You found the arcane source! Your detector is spent.</em> and the
         detector turns back into an Unpowered Trace Detector, ready for another fuel. Your next cache is buried the next
         time you hold a powered detector.
+      </p>
+      <p className={`mt-3 ${body}`}>
+        A cache can hold <WikiItemLink name="Ignitium" /> with Iron Ingots, repair kits, raw gold blocks,{" "}
+        <WikiItemLink name="Tin" /> or <WikiItemLink name="Abyssalite Fragment">Abyssalite Fragments</WikiItemLink>, or
+        a <WikiItemLink name="Lost Knowledge Fragment" />.
       </p>
       <p className={`mt-3 ${body}`}>
         Now and then a cache holds an <strong>Unknown Key</strong>. Keep it, because it opens the way into the{" "}

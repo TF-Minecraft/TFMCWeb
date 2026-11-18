@@ -198,8 +198,7 @@
     "Choose its name in chat."
   ],
   "mmoitem:PETS:PET_SPHYNX_EGG": ["Right-click to hatch your companion.", "Choose its name in chat."],
-  "mmoitem:PROPS:FOREARM_CRUTCH": ["Made for wide arms"],
-  "mmoitem:PROPS:FOREARM_CRUTCH_SLIM": ["Made for slim arms"],
+  "mmoitem:PROPS:WALKING_CANE": ["A cane to feel the way ahead"],
   "mmoitem:RESEARCH:SCRIBE_PAPER": [
     "Used to create various Research",
     "Papers in a Cartography Table.",

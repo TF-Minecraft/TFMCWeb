@@ -875,7 +875,7 @@ export const generatedStationRecipes: Recipe[] = [
     ],
     output: {
       name: "Iron Shot",
-      qty: 32,
+      qty: 64,
       sourceId: "mmoitem:UTILS:IRONSHOT",
       texture: "/wiki/textures/mmoitems/ironshot.png",
     },
@@ -896,7 +896,7 @@ export const generatedStationRecipes: Recipe[] = [
     ],
     output: {
       name: "Steel Shot",
-      qty: 16,
+      qty: 32,
       sourceId: "mmoitem:UTILS:STEELSHOT",
       texture: "/wiki/textures/mmoitems/steelshot.png",
     },
@@ -917,7 +917,7 @@ export const generatedStationRecipes: Recipe[] = [
     ],
     output: {
       name: "Bronze Shot",
-      qty: 8,
+      qty: 16,
       sourceId: "mmoitem:UTILS:BRONZESHOT",
       texture: "/wiki/textures/mmoitems/bronzeshot.png",
     },
@@ -938,7 +938,7 @@ export const generatedStationRecipes: Recipe[] = [
     ],
     output: {
       name: "Mythril Shot",
-      qty: 4,
+      qty: 8,
       sourceId: "mmoitem:UTILS:MYTHRILSHOT",
       texture: "/wiki/textures/mmoitems/mythrilshot.png",
     },
@@ -954,7 +954,7 @@ export const generatedStationRecipes: Recipe[] = [
     ],
     output: {
       name: "Iron Spreadshot",
-      qty: 16,
+      qty: 32,
       sourceId: "mmoitem:UTILS:IRONSPREADSHOT",
       texture: "/wiki/textures/mmoitems/ironspreadshot.png",
     },
@@ -975,7 +975,7 @@ export const generatedStationRecipes: Recipe[] = [
     ],
     output: {
       name: "Steel Spreadshot",
-      qty: 8,
+      qty: 16,
       sourceId: "mmoitem:UTILS:STEELSPREADSHOT",
       texture: "/wiki/textures/mmoitems/steelspreadshot.png",
     },
@@ -996,7 +996,7 @@ export const generatedStationRecipes: Recipe[] = [
     ],
     output: {
       name: "Bronze Spreadshot",
-      qty: 4,
+      qty: 8,
       sourceId: "mmoitem:UTILS:BRONZESPREADSHOT",
       texture: "/wiki/textures/mmoitems/bronzespreadshot.png",
     },
@@ -1017,7 +1017,7 @@ export const generatedStationRecipes: Recipe[] = [
     ],
     output: {
       name: "Mythril Spreadshot",
-      qty: 2,
+      qty: 4,
       sourceId: "mmoitem:UTILS:MYTHRILSPREADSHOT",
       texture: "/wiki/textures/mmoitems/mythrilspreadshot.png",
     },
@@ -1033,7 +1033,7 @@ export const generatedStationRecipes: Recipe[] = [
     ],
     output: {
       name: "Iron Rocket",
-      qty: 4,
+      qty: 8,
       sourceId: "mmoitem:UTILS:IRONROCKET",
       texture: "/wiki/textures/mmoitems/ironrocket.png",
     },
@@ -1054,7 +1054,7 @@ export const generatedStationRecipes: Recipe[] = [
     ],
     output: {
       name: "Steel Rocket",
-      qty: 2,
+      qty: 4,
       sourceId: "mmoitem:UTILS:STEELROCKET",
       texture: "/wiki/textures/mmoitems/steelrocket.png",
     },
@@ -1075,7 +1075,7 @@ export const generatedStationRecipes: Recipe[] = [
     ],
     output: {
       name: "Bronze Rocket",
-      qty: 1,
+      qty: 2,
       sourceId: "mmoitem:UTILS:BRONZEROCKET",
       texture: "/wiki/textures/mmoitems/bronzerocket.png",
     },
@@ -1089,7 +1089,7 @@ export const generatedStationRecipes: Recipe[] = [
     ingredients: [
       {
         name: "Mythril Ingot",
-        qty: 2,
+        qty: 1,
         sourceId: "mmoitem:MATERIALS:MYTHRIL_INGOT",
         texture: "/wiki/textures/mmoitems/mythril_ingot.png",
       },
@@ -1113,7 +1113,7 @@ export const generatedStationRecipes: Recipe[] = [
     ],
     output: {
       name: "Powered Iron Shot",
-      qty: 16,
+      qty: 32,
       sourceId: "mmoitem:UTILS:IRONSHOT_POWERED",
       texture: "/wiki/textures/mmoitems/ironshot_powered.png",
     },
@@ -1135,7 +1135,7 @@ export const generatedStationRecipes: Recipe[] = [
     ],
     output: {
       name: "Powered Steel Shot",
-      qty: 8,
+      qty: 16,
       sourceId: "mmoitem:UTILS:STEELSHOT_POWERED",
       texture: "/wiki/textures/mmoitems/steelshot_powered.png",
     },
@@ -1157,7 +1157,7 @@ export const generatedStationRecipes: Recipe[] = [
     ],
     output: {
       name: "Powered Bronze Shot",
-      qty: 4,
+      qty: 8,
       sourceId: "mmoitem:UTILS:BRONZESHOT_POWERED",
       texture: "/wiki/textures/mmoitems/bronzeshot_powered.png",
     },
@@ -1179,7 +1179,7 @@ export const generatedStationRecipes: Recipe[] = [
     ],
     output: {
       name: "Powered Mythril Shot",
-      qty: 2,
+      qty: 4,
       sourceId: "mmoitem:UTILS:MYTHRILSHOT_POWERED",
       texture: "/wiki/textures/mmoitems/mythrilshot_powered.png",
     },
@@ -1196,7 +1196,7 @@ export const generatedStationRecipes: Recipe[] = [
     ],
     output: {
       name: "Powered Iron Spreadshot",
-      qty: 8,
+      qty: 16,
       sourceId: "mmoitem:UTILS:IRONSPREADSHOT_POWERED",
       texture: "/wiki/textures/mmoitems/ironspreadshot_powered.png",
     },
@@ -1218,7 +1218,7 @@ export const generatedStationRecipes: Recipe[] = [
     ],
     output: {
       name: "Powered Steel Spreadshot",
-      qty: 4,
+      qty: 8,
       sourceId: "mmoitem:UTILS:STEELSPREADSHOT_POWERED",
       texture: "/wiki/textures/mmoitems/steelspreadshot_powered.png",
     },
@@ -1240,7 +1240,7 @@ export const generatedStationRecipes: Recipe[] = [
     ],
     output: {
       name: "Powered Bronze Spreadshot",
-      qty: 2,
+      qty: 4,
       sourceId: "mmoitem:UTILS:BRONZESPREADSHOT_POWERED",
       texture: "/wiki/textures/mmoitems/bronzespreadshot_powered.png",
     },
@@ -1262,7 +1262,7 @@ export const generatedStationRecipes: Recipe[] = [
     ],
     output: {
       name: "Powered Mythril Spreadshot",
-      qty: 1,
+      qty: 2,
       sourceId: "mmoitem:UTILS:MYTHRILSPREADSHOT_POWERED",
       texture: "/wiki/textures/mmoitems/mythrilspreadshot_powered.png",
     },
@@ -1279,7 +1279,7 @@ export const generatedStationRecipes: Recipe[] = [
     ],
     output: {
       name: "Powered Iron Rocket",
-      qty: 2,
+      qty: 4,
       sourceId: "mmoitem:UTILS:IRONROCKET_POWERED",
       texture: "/wiki/textures/mmoitems/ironrocket_powered.png",
     },
@@ -1301,7 +1301,7 @@ export const generatedStationRecipes: Recipe[] = [
     ],
     output: {
       name: "Powered Steel Rocket",
-      qty: 1,
+      qty: 2,
       sourceId: "mmoitem:UTILS:STEELROCKET_POWERED",
       texture: "/wiki/textures/mmoitems/steelrocket_powered.png",
     },
@@ -1315,11 +1315,11 @@ export const generatedStationRecipes: Recipe[] = [
     ingredients: [
       {
         name: "Bronze Ingot",
-        qty: 2,
+        qty: 1,
         sourceId: "mmoitem:MATERIALS:BRONZE_INGOT",
         texture: "/wiki/textures/mmoitems/bronze_ingot.png",
       },
-      { name: "Gunpowder", qty: 2, sourceId: "vanilla:gunpowder", texture: "/wiki/textures/vanilla/gunpowder.png" },
+      { name: "Gunpowder", qty: 1, sourceId: "vanilla:gunpowder", texture: "/wiki/textures/vanilla/gunpowder.png" },
     ],
     output: {
       name: "Powered Bronze Rocket",
@@ -1337,11 +1337,11 @@ export const generatedStationRecipes: Recipe[] = [
     ingredients: [
       {
         name: "Mythril Ingot",
-        qty: 4,
+        qty: 2,
         sourceId: "mmoitem:MATERIALS:MYTHRIL_INGOT",
         texture: "/wiki/textures/mmoitems/mythril_ingot.png",
       },
-      { name: "Gunpowder", qty: 4, sourceId: "vanilla:gunpowder", texture: "/wiki/textures/vanilla/gunpowder.png" },
+      { name: "Gunpowder", qty: 2, sourceId: "vanilla:gunpowder", texture: "/wiki/textures/vanilla/gunpowder.png" },
     ],
     output: {
       name: "Powered Mythril Rocket",
@@ -16371,8 +16371,8 @@ export const generatedStationRecipes: Recipe[] = [
     },
   },
   {
-    key: "gen-tool-station-forearm-crutch",
-    title: "Forearm Crutch",
+    key: "gen-tool-station-walking-cane",
+    title: "Walking Cane",
     station: "Tool Station",
     time: 5,
     category: "Other",
@@ -16381,27 +16381,10 @@ export const generatedStationRecipes: Recipe[] = [
       { name: "Leather", qty: 1, sourceId: "mmoitem:MATERIALS:LEATHER", texture: "/wiki/textures/vanilla/leather.png" },
     ],
     output: {
-      name: "Forearm Crutch",
+      name: "Walking Cane",
       qty: 1,
-      sourceId: "mmoitem:PROPS:FOREARM_CRUTCH",
-      texture: "/wiki/textures/mmoitems/forearm_crutch.png",
-    },
-  },
-  {
-    key: "gen-tool-station-forearm-crutch-slim",
-    title: "Slim Forearm Crutch",
-    station: "Tool Station",
-    time: 5,
-    category: "Other",
-    ingredients: [
-      { name: "Stick", qty: 3, sourceId: "vanilla:stick", texture: "/wiki/textures/vanilla/stick.png" },
-      { name: "Leather", qty: 1, sourceId: "mmoitem:MATERIALS:LEATHER", texture: "/wiki/textures/vanilla/leather.png" },
-    ],
-    output: {
-      name: "Slim Forearm Crutch",
-      qty: 1,
-      sourceId: "mmoitem:PROPS:FOREARM_CRUTCH_SLIM",
-      texture: "/wiki/textures/mmoitems/forearm_crutch_slim.png",
+      sourceId: "mmoitem:PROPS:WALKING_CANE",
+      texture: "/wiki/textures/mmoitems/walking_cane.png",
     },
   },
   {

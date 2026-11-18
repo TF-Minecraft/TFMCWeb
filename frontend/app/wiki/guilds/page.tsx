@@ -9,7 +9,7 @@ const code = "text-[var(--tfmc-accent)]";
 export default function GuildsPage() {
   return (
     <WikiPage
-      lastModified="2026-10-24"
+      lastModified="2026-11-18"
       title="Guilds & Trade"
       intro={
         <>

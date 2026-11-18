@@ -9,7 +9,7 @@ const code = "text-[var(--tfmc-accent)]";
 export default function FactionsPage() {
   return (
     <WikiPage
-      lastModified="2026-11-12"
+      lastModified="2026-11-18"
       title="Factions"
       intro={
         <>
@@ -136,6 +136,10 @@ export default function FactionsPage() {
         when the laws allow them.
       </p>
       <p className={`mt-3 ${body}`}>
+        On an appointed council, the faction leader can right-click an occupied seat to vacate it. This costs nothing,
+        and the member who held it is told. No seat can change while a council session is being held.
+      </p>
+      <p className={`mt-3 ${body}`}>
         Government shows whether the ruler is Legitimate, Contested or Illegitimate. A doubtful claim to rule, the Weak
         State penalty, a Community government holding more land than it can manage, civil war, declining an ally&apos;s
         call to arms and bankruptcy all lower stability. Low stability reduces administrative power, tax income and
@@ -154,6 +158,10 @@ export default function FactionsPage() {
         trade agreements and non-aggression pacts, place embargoes, and take smaller factions as subjects. Agreements
         that need both sides are answered by the other leader with <code className={code}>/faction accept</code> while
         online.
+      </p>
+      <p className={`mt-3 ${body}`}>
+        Ending a non-aggression pact takes 14 days&apos; notice. Until the notice runs out, the pact still holds and
+        still blocks war. Picking the pact again withdraws your notice.
       </p>
 
       <p className={`mt-3 ${body}`}>
