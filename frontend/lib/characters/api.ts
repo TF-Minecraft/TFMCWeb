@@ -807,6 +807,7 @@ export async function getWardrobe(sessionToken: string, characterId: string): Pr
     active_slot: body.active_slot ?? null,
     swappable_slots: Math.max(1, Number(body.swappable_slots) || 1),
     slots: Array.isArray(body.slots) ? body.slots : [],
+    ...(body.descriptions === true ? { descriptions: true } : {}),
   };
 }
 
