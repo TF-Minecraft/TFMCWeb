@@ -46,6 +46,8 @@ DESCRIPTION_MAX_DEFAULT = 256
 # The plugin checks colour-code descriptions by their visible text, so allow room for codes.
 PLUGIN_DESCRIPTION_MAX = 1024
 _PLUGIN_CONTROL_RE = re.compile(r"[\x00-\x1f\x7f]")
+# Descriptions are one line on both paths, including Unicode line and paragraph separators.
+_LINE_BREAK_RE = re.compile(r"[\r\n\x85\u2028\u2029]")
 MAX_TEMPLATE_BYTES = 2 * 1024 * 1024
 PNG_MAGIC = b"\x89PNG\r\n\x1a\n"
 
@@ -708,9 +710,11 @@ def _normalize_description(raw: str | None, *, from_plugin: bool) -> str | None:
     `/rpcharacter description`, so it is kept as typed: one line, no controls, bounded size."""
     if raw is None or not str(raw).strip():
         return None
+    if _LINE_BREAK_RE.search(str(raw).strip()):
+        raise WardrobeError("Description cannot contain line breaks", status_code=400)
     if from_plugin:
         text = str(raw).strip()
-        if "\n" in text or "\r" in text or _PLUGIN_CONTROL_RE.search(text):
+        if _PLUGIN_CONTROL_RE.search(text):
             raise WardrobeError("Description contains invalid control characters", status_code=400)
         if len(text) > PLUGIN_DESCRIPTION_MAX:
             raise WardrobeError(

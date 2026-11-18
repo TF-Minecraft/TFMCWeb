@@ -35,6 +35,8 @@ type Props = {
   canDescribe?: boolean;
   /** The skin's saved description, "" when it uses the character description. */
   initialDescription?: string;
+  /** Goes up each time the editor saved the picked file; clears the picker. */
+  fileSavedCount?: number;
   saving: boolean;
   error: string | null;
   onClose: () => void;
@@ -52,7 +54,6 @@ type Props = {
 };
 
 const NAME_MAX = 24;
-const DESCRIPTION_MAX = 256;
 
 export default function WardrobeSlotModal({
   open,
@@ -70,6 +71,7 @@ export default function WardrobeSlotModal({
   namePlaceholder,
   canDescribe = false,
   initialDescription = "",
+  fileSavedCount = 0,
   saving,
   error,
   onClose,
@@ -107,7 +109,15 @@ export default function WardrobeSlotModal({
     setDescription(initialDescription);
     const t = window.setTimeout(() => inputRef.current?.focus(), 20);
     return () => window.clearTimeout(t);
-  }, [open, defaultEquipOnSave, defaultCreateMasked, defaultArmModel, slotId, initialDisplayName, initialDescription]);
+    // Reset only when the dialog opens or shows another skin. A save step or the pending-skin
+    // poll refreshes the saved values while it is open; unsaved fields must survive that.
+    // oxlint-disable-next-line react/exhaustive-deps
+  }, [open, slotId]);
+
+  useEffect(() => {
+    // The editor saved the picked file (a later step failed): a retry must not upload it again.
+    if (fileSavedCount > 0) setFile(null);
+  }, [fileSavedCount]);
 
   useEffect(() => {
     if (!file) {
@@ -184,8 +194,6 @@ export default function WardrobeSlotModal({
   const trimmedName = displayName.trim();
   const nameChanged = trimmedName !== String(initialDisplayName || "").trim();
   const trimmedDescription = description.trim();
-  // Text set in game may be longer (colour codes); never cut it while editing.
-  const descriptionMax = Math.max(DESCRIPTION_MAX, initialDescription.length);
   const descriptionChanged = canDescribe && trimmedDescription !== String(initialDescription || "").trim();
   const canSave =
     !localErr &&
@@ -345,12 +353,12 @@ export default function WardrobeSlotModal({
             </span>
             <textarea
               rows={3}
-              maxLength={descriptionMax}
               value={description}
               disabled={saving}
               placeholder="Leave empty to use your character description."
               className="resize-y rounded-sm border border-[color-mix(in_srgb,var(--tfmc-cream)_18%,transparent)] bg-[color-mix(in_srgb,var(--tfmc-forest)_70%,black)] px-3 py-2 text-sm text-[var(--tfmc-cream)] placeholder:text-[var(--tfmc-stone)]"
-              onChange={(e) => setDescription(e.target.value.replace(/[\r\n]+/g, " ").slice(0, descriptionMax))}
+              // One line; the site checks the length (in characters, like the game) on save.
+              onChange={(e) => setDescription(e.target.value.replace(/[\r\n\u2028\u2029]+/g, " "))}
             />
             <span className="text-xs text-[var(--tfmc-mist)]">
               Others read this instead of your character description while you wear this skin.

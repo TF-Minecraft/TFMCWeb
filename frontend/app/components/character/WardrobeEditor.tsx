@@ -184,6 +184,7 @@ export default function WardrobeEditor(props: WardrobeEditorProps) {
   const [modalSlot, setModalSlot] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [modalError, setModalError] = useState<string | null>(null);
+  const [fileSavedCount, setFileSavedCount] = useState(0);
   const [equipping, setEquipping] = useState<string | null>(null);
 
   const revokeTextures = useCallback((map: Record<string, string>) => {
@@ -478,6 +479,9 @@ export default function WardrobeEditor(props: WardrobeEditorProps) {
     }
     setSaving(true);
     setModalError(null);
+    // Which parts reached the site, and which one was being saved, for a partial failure.
+    const savedParts: string[] = [];
+    let part = "the skin";
     try {
       let uploadFile = input.file;
       if (!uploadFile && input.armModel !== wardrobeSlotToArmModel(modalData?.model)) {
@@ -491,37 +495,45 @@ export default function WardrobeEditor(props: WardrobeEditorProps) {
           URL.revokeObjectURL(url);
         }
       }
-      let w: WardrobeResponse | null = null;
+      // Each step's result is shown at once, so the dialog's saved values follow what the site
+      // holds and a retry sends only what is still unsaved (the dialog keeps unsaved fields).
       // On a saved skin the description goes first: if the site refuses it, nothing else
-      // changed and the dialog keeps the typed text. A new skin needs its upload first.
+      // changed. A new skin needs its upload first.
       const describeFirst = input.description !== undefined && Boolean(modalData?.filled);
       if (describeFirst) {
-        w = await setWardrobeSlotDescription(sessionToken, characterId, modalSlot, input.description ?? null);
+        part = "the description";
+        setWardrobe(await setWardrobeSlotDescription(sessionToken, characterId, modalSlot, input.description ?? null));
+        savedParts.push(part);
       }
       if (uploadFile) {
-        w = await uploadWardrobeSlot(sessionToken, characterId, modalSlot, uploadFile, input.displayName, {
+        part = "the skin";
+        let w = await uploadWardrobeSlot(sessionToken, characterId, modalSlot, uploadFile, input.displayName, {
           createMasked: input.createMasked,
           model: armModelToWardrobeModel(input.armModel),
         });
+        setWardrobe(w);
+        setFileSavedCount((n) => n + 1);
+        savedParts.push(part);
         if (input.equip && modalSlot !== "masked") {
+          part = "equipping it";
           w = await setWardrobeActive(sessionToken, characterId, modalSlot);
+          setWardrobe(w);
         }
-      } else if (input.nameChanged) {
-        w = await renameWardrobeSlot(sessionToken, characterId, modalSlot, input.displayName);
-      }
-      if (w) setWardrobe(w);
-      if (uploadFile && w) {
         await loadTextures(sessionToken, characterId, w);
+      } else if (input.nameChanged) {
+        part = "the name";
+        setWardrobe(await renameWardrobeSlot(sessionToken, characterId, modalSlot, input.displayName));
+        savedParts.push(part);
       }
       if (input.description !== undefined && !describeFirst) {
-        w = await setWardrobeSlotDescription(sessionToken, characterId, modalSlot, input.description);
-        setWardrobe(w);
+        part = "the description";
+        setWardrobe(await setWardrobeSlotDescription(sessionToken, characterId, modalSlot, input.description));
       }
       setModalSlot(null);
     } catch (err) {
-      setModalError(
-        err instanceof CharactersApiError ? err.message : err instanceof Error ? err.message : "Upload failed",
-      );
+      const message =
+        err instanceof CharactersApiError ? err.message : err instanceof Error ? err.message : "Upload failed";
+      setModalError(savedParts.length ? `Saved ${savedParts.join(" and ")}, but not ${part}: ${message}` : message);
     } finally {
       setSaving(false);
     }
@@ -705,6 +717,7 @@ export default function WardrobeEditor(props: WardrobeEditorProps) {
         namePlaceholder={modalSlot ? WARDROBE_DEFAULT_LABELS[modalSlot] || "Skin" : "Skin"}
         canDescribe={!isDraft && Boolean(liveWardrobe?.descriptions) && modalSlot !== "base"}
         initialDescription={modalData?.description ? String(modalData.description) : ""}
+        fileSavedCount={fileSavedCount}
         saving={saving}
         error={modalError}
         onClose={() => {
