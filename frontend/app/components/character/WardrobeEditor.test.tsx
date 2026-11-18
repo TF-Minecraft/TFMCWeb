@@ -409,12 +409,16 @@ it("keeps the typed description and does not upload again when only the descript
     swappable_slots: 3,
     slots: [...described.slots, { slot: "extra_2", filled: false, unlocked: true }],
   };
-  const uploaded = {
-    ...empty,
-    slots: [...described.slots, { slot: "extra_2", filled: true, unlocked: true, model: "classic" }],
-  };
+  // Like the site, the saved skin keeps the arm model the upload sent (the picker may detect either).
+  let uploaded: api.WardrobeResponse = empty;
   vi.mocked(api.getWardrobe).mockResolvedValue(empty);
-  vi.mocked(api.uploadWardrobeSlot).mockResolvedValue(uploaded);
+  vi.mocked(api.uploadWardrobeSlot).mockImplementation(async (_token, _id, _slot, _file, _name, opts) => {
+    uploaded = {
+      ...empty,
+      slots: [...described.slots, { slot: "extra_2", filled: true, unlocked: true, model: opts?.model ?? "classic" }],
+    };
+    return uploaded;
+  });
   vi.mocked(api.setWardrobeSlotDescription).mockRejectedValueOnce(
     new api.CharactersApiError("Description must be at least 32 characters", 400),
   );
@@ -431,7 +435,7 @@ it("keeps the typed description and does not upload again when only the descript
   );
   expect((screen.getByRole("textbox", { name: /Description while worn/ }) as HTMLTextAreaElement).value).toBe(text);
 
-  vi.mocked(api.setWardrobeSlotDescription).mockResolvedValue(uploaded);
+  vi.mocked(api.setWardrobeSlotDescription).mockImplementation(async () => uploaded);
   fireEvent.click(screen.getByRole("button", { name: "Save" }));
   await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
   expect(api.uploadWardrobeSlot).toHaveBeenCalledTimes(1);
