@@ -85,7 +85,7 @@ export const skills: Record<string, Skill> = {
   RECOVERY: {
     name: "Recovery",
     always: true,
-    description: "Out of combat, you heal every second on top of your normal regeneration. Wounded halves it.",
+    description: "Out of combat, you heal every second on top of your normal regeneration. Wounded weakens it.",
   },
   // Archer
   STEADY_AIM: { name: "Steady Aim", passive: true, description: "Your arrows deal extra damage." },

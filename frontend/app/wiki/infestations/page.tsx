@@ -90,11 +90,11 @@ export default function InfestationsPage() {
         . Ordinary kills only give you so many keys in an hour.
       </p>
       <p className={`mt-3 ${body}`}>
-        Winning a Lure fight gives each fighter a reward of their own. To get yours you must have joined, made at least
-        3 kills in the fight, and be alive and online when it ends. It drops as items that only you can pick up. The
-        more of the Lure&apos;s monsters you killed, the bigger it is, and each of those kills pays more than an
-        ordinary one. Unknown Keys come on top, more for a worse infestation, and they don&apos;t count toward the
-        hourly limit. A Lure won outside a permadeath zone pays only a small part of this.
+        Winning a Lure fight gives each fighter a reward of their own. To get yours you must have joined, made a few
+        kills in the fight, and be alive and online when it ends. It drops as items that only you can pick up. The more
+        of the Lure&apos;s monsters you killed, the bigger it is, and each of those kills pays more than an ordinary
+        one. Unknown Keys come on top, more for a worse infestation, and they don&apos;t count toward the hourly limit.
+        A Lure won outside a permadeath zone pays only a small part of this.
       </p>
 
       <WikiSectionHeading id="lure">Clearing a province with a Lure</WikiSectionHeading>

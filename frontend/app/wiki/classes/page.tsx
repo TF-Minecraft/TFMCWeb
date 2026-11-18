@@ -149,8 +149,8 @@ export default function ClassesPage() {
         points. Recovery, Foe Sense and Duel Instinct are always on and need no slot.
       </p>
       <p className={`mt-3 ${body}`}>
-        Every character heals slowly on its own during a fight, and faster once out of combat. Being Wounded halves this
-        healing.
+        Every character heals slowly on its own during a fight, and faster once out of combat. Being Wounded weakens
+        this healing.
       </p>
       <p className={`mt-3 ${body}`}>
         To take your skill points back, craft a <WikiItemLink name="Skill Retraining Manual" /> at the{" "}

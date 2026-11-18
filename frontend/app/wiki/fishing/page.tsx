@@ -45,10 +45,10 @@ export default function FishingPage() {
     >
       <WikiSectionHeading id="catching">Catching something</WikiSectionHeading>
       <p className={body}>
-        Fish, ore fragments and music discs go straight to you. Treasure, animal materials, Bark, pottery sherds and the
-        Stone, Wood and Flower Cores start a minigame when they bite. Win it to land the catch. If you lose, it gets
-        away. The minigame is harder with a better rod: Easy on an Iron Rod, then Normal, Hard and Very hard on a
-        Mythril Rod.
+        Fish, ore and disc fragments and music discs go straight to you. Treasure, animal materials, coal, Bark, pottery
+        sherds and the Stone, Wood and Flower Cores start a minigame when they bite. Win it to land the catch. If you
+        lose, it gets away. The minigame is harder with a better rod: Easy on an Iron Rod, then Normal, Hard and Very
+        hard on a Mythril Rod.
       </p>
       <p className={`mt-3 ${body}`}>
         Fishing levels the{" "}

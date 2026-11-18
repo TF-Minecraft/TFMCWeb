@@ -295,7 +295,10 @@ export default function CharactersPage() {
           You can hear creatures moving near you. They glow for you alone, as long as nothing stands between you and
           them. Anything standing still, sneaking or invisible stays hidden.
         </li>
-        <li>Chat warns you when the ground falls away ahead, or when something dangerous is just ahead.</li>
+        <li>
+          A sound and a line above your hotbar warn you when the ground falls away ahead, or when something dangerous is
+          just ahead.
+        </li>
       </ul>
       <p className={`mt-3 ${body}`}>
         A <WikiItemLink name="Walking Cane" /> adds two more while you hold it. Make one at the{" "}
