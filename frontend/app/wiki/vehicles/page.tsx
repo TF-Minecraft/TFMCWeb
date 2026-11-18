@@ -212,8 +212,8 @@ export default function VehiclesPage() {
         can&apos;t pay, the vehicle goes unpaid like any other and the leader is told.
       </p>
       <p className="mt-3 text-sm text-[var(--tfmc-mist)]">
-        An upkeep-only vehicle can&apos;t be used in battles. To fight with it, the leader moves it to the faction pool
-        or berths it at an installation.
+        An upkeep-only vehicle can&apos;t be used in battles. To fight with it, the faction leader moves it to the
+        faction pool or berths it at an installation, so a guild leader has to ask them.
       </p>
       <p className="mt-3 text-sm text-[var(--tfmc-mist)]">
         A faction can have three upkeep-only vehicles for each member of its realm, and a guild three for each of its

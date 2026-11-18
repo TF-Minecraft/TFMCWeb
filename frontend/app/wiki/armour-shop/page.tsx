@@ -17,7 +17,7 @@ const code = "text-[var(--tfmc-accent)]";
 export default function ArmourShopPage() {
   return (
     <WikiPage
-      lastModified="2026-10-24"
+      lastModified="2026-11-18"
       title="Armour Shop"
       intro={
         <>
@@ -59,8 +59,8 @@ export default function ArmourShopPage() {
       </WikiSectionHeading>
       <ItemGallery centeredSelectors selectorColumns={2} widePreview items={skinScrolls} />
       <p className={`mt-4 ${body}`}>
-        You earn scrolls from the higher weekly activity rewards, from the daily reward ranked players get for revealing
-        all their daily tasks, and from{" "}
+        You earn scrolls from the higher weekly activity rewards, from the daily reward ranked players get once they
+        click that day&apos;s Voting card in <code className={code}>/activity</code>, and from{" "}
         <Link href="/wiki/trial-rooms" className={link}>
           Trial Room
         </Link>{" "}
