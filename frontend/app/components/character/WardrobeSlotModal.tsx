@@ -358,7 +358,7 @@ export default function WardrobeSlotModal({
               placeholder="Leave empty to use your character description."
               className="resize-y rounded-sm border border-[color-mix(in_srgb,var(--tfmc-cream)_18%,transparent)] bg-[color-mix(in_srgb,var(--tfmc-forest)_70%,black)] px-3 py-2 text-sm text-[var(--tfmc-cream)] placeholder:text-[var(--tfmc-stone)]"
               // One line; the site checks the length (in characters, like the game) on save.
-              onChange={(e) => setDescription(e.target.value.replace(/[\r\n\u2028\u2029]+/g, " "))}
+              onChange={(e) => setDescription(e.target.value.replace(/[\r\n\x85\u2028\u2029]+/g, " "))}
             />
             <span className="text-xs text-[var(--tfmc-mist)]">
               Others read this instead of your character description while you wear this skin.

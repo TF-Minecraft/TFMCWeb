@@ -514,12 +514,11 @@ export default function WardrobeEditor(props: WardrobeEditorProps) {
         setWardrobe(w);
         setFileSavedCount((n) => n + 1);
         savedParts.push(part);
+        await loadTextures(sessionToken, characterId, w);
         if (input.equip && modalSlot !== "masked") {
           part = "equipping it";
-          w = await setWardrobeActive(sessionToken, characterId, modalSlot);
-          setWardrobe(w);
+          setWardrobe(await setWardrobeActive(sessionToken, characterId, modalSlot));
         }
-        await loadTextures(sessionToken, characterId, w);
       } else if (input.nameChanged) {
         part = "the name";
         setWardrobe(await renameWardrobeSlot(sessionToken, characterId, modalSlot, input.displayName));
