@@ -403,6 +403,16 @@ it("keeps the typed description and does not upload again when only the descript
       static revokeObjectURL = vi.fn();
     },
   );
+  // The picker's arm-model detection loads the image; on CI that load can land after the
+  // first save and change the arm model, which a retry then re-signs. Keep it from loading.
+  vi.stubGlobal(
+    "Image",
+    class {
+      onload: (() => void) | null = null;
+      onerror: (() => void) | null = null;
+      src = "";
+    },
+  );
   const text = "A figure in a black hood, face in shadow.";
   const empty: api.WardrobeResponse = {
     ...described,
