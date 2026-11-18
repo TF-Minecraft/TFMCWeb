@@ -710,7 +710,8 @@ def _normalize_description(raw: str | None, *, from_plugin: bool) -> str | None:
     `/rpcharacter description`, so it is kept as typed: one line, no controls, bounded size."""
     if raw is None or not str(raw).strip():
         return None
-    if _LINE_BREAK_RE.search(str(raw).strip()):
+    # Checked before trimming, so a leading or trailing separator is refused too.
+    if _LINE_BREAK_RE.search(str(raw)):
         raise WardrobeError("Description cannot contain line breaks", status_code=400)
     if from_plugin:
         text = str(raw).strip()

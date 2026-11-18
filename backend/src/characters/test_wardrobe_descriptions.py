@@ -103,6 +103,10 @@ def test_site_text_follows_the_catalogue_limits_and_refuses_colour_codes(monkeyp
             wardrobe.set_slot_description(OWNER, LIVE, "extra_1", f"A red{brk}cloak")
         with pytest.raises(wardrobe.WardrobeError, match="line breaks"):
             wardrobe.set_slot_description_for_plugin(OWNER, LIVE, "extra_1", f"A red{brk}cloak")
+        with pytest.raises(wardrobe.WardrobeError, match="line breaks"):
+            wardrobe.set_slot_description_for_plugin(OWNER, LIVE, "extra_1", f"A red cloak{brk}")
+        with pytest.raises(wardrobe.WardrobeError, match="line breaks"):
+            wardrobe.set_slot_description(OWNER, LIVE, "extra_1", f"{brk}A red cloak that is long enough to pass")
     monkeypatch.setattr(wardrobe, "get_catalog", lambda: {})
     with pytest.raises(wardrobe.WardrobeError, match="at least 32"):
         wardrobe.set_slot_description(OWNER, LIVE, "extra_1", "A short cloak line")

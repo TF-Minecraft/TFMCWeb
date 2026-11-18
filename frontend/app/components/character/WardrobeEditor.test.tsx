@@ -392,6 +392,7 @@ it("keeps a saved description and the unsaved name when the rename fails", async
   fireEvent.click(screen.getByRole("button", { name: "Save" }));
   await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
   expect(api.setWardrobeSlotDescription).toHaveBeenCalledTimes(1);
+  expect(api.renameWardrobeSlot).toHaveBeenCalledTimes(2);
   expect(api.renameWardrobeSlot).toHaveBeenLastCalledWith("token", "character", "extra_1", "Grey Cloak");
 });
 
@@ -439,5 +440,6 @@ it("keeps the typed description and does not upload again when only the descript
   fireEvent.click(screen.getByRole("button", { name: "Save" }));
   await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
   expect(api.uploadWardrobeSlot).toHaveBeenCalledTimes(1);
+  expect(api.setWardrobeSlotDescription).toHaveBeenCalledTimes(2);
   expect(api.setWardrobeSlotDescription).toHaveBeenLastCalledWith("token", "character", "extra_2", text);
 });

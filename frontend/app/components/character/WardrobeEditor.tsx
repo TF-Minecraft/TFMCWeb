@@ -514,7 +514,8 @@ export default function WardrobeEditor(props: WardrobeEditorProps) {
         setWardrobe(w);
         setFileSavedCount((n) => n + 1);
         savedParts.push(part);
-        await loadTextures(sessionToken, characterId, w);
+        // Refresh previews in the background; the remaining saves don't wait for them.
+        void loadTextures(sessionToken, characterId, w);
         if (input.equip && modalSlot !== "masked") {
           part = "equipping it";
           setWardrobe(await setWardrobeActive(sessionToken, characterId, modalSlot));
@@ -532,7 +533,11 @@ export default function WardrobeEditor(props: WardrobeEditorProps) {
     } catch (err) {
       const message =
         err instanceof CharactersApiError ? err.message : err instanceof Error ? err.message : "Upload failed";
-      setModalError(savedParts.length ? `Saved ${savedParts.join(" and ")}, but not ${part}: ${message}` : message);
+      setModalError(
+        savedParts.length
+          ? `Saved ${savedParts.join(" and ")}, but not ${part}: ${message}`
+          : `Could not save ${part}: ${message}`,
+      );
     } finally {
       setSaving(false);
     }
