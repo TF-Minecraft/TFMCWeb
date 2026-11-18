@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import io
 import logging
+import re
 import struct
 from datetime import datetime, timezone
 from pathlib import Path
@@ -23,7 +24,8 @@ from src.characters.times import api_time
 from src.characters.web_entitlements import MAX_WARDROBE_SKIN_SLOTS
 from src.skins.db import DATA_DIR, WARDROBE_DIR
 from src.skins.storage import StorageError, validate_png
-from src.text_validation import TextValidationError, assert_optional_display_name
+from src.characters.creation_catalog import get_catalog
+from src.text_validation import TextValidationError, assert_optional_display_name, assert_prose
 
 # Most swappable skins a character can hold (RPCharacters WardrobeSlots matches it).
 MAX_SWAPPABLE_SLOTS = MAX_WARDROBE_SKIN_SLOTS
@@ -37,6 +39,13 @@ DEFAULT_SLOT_NAMES = {
     "masked": "Masked",
 }
 DISPLAY_NAME_MAX = 24
+# Outfit descriptions follow the character description limits from the creation catalogue
+# (RPCharacters `character.description` lengths); these are the plugin's defaults.
+DESCRIPTION_MIN_DEFAULT = 32
+DESCRIPTION_MAX_DEFAULT = 256
+# The plugin checks colour-code descriptions by their visible text, so allow room for codes.
+PLUGIN_DESCRIPTION_MAX = 1024
+_PLUGIN_CONTROL_RE = re.compile(r"[\x00-\x1f\x7f]")
 MAX_TEMPLATE_BYTES = 2 * 1024 * 1024
 PNG_MAGIC = b"\x89PNG\r\n\x1a\n"
 
@@ -334,7 +343,9 @@ def _upsert_live_slot(
     texture_signature: str,
     model: str,
     display_name: str | None,
+    description: str | None = None,
 ) -> None:
+    """Write a skin. ``description`` is only used for a new row: a replaced skin keeps its text."""
     now = _iso_now()
     with assets.asset_transaction() as conn:
         rel = _write_png(uuid, cid, slot_key, png_bytes)
@@ -343,8 +354,8 @@ def _upsert_live_slot(
             INSERT INTO character_wardrobe_slots (
                 player_uuid, character_id, slot, png_relpath,
                 texture_value, texture_signature, model,
-                display_name, apply_pending, updated_at
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, true, %s)
+                display_name, description, apply_pending, updated_at
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, true, %s)
             ON CONFLICT(player_uuid, character_id, slot) DO UPDATE SET
                 png_relpath = excluded.png_relpath,
                 texture_value = excluded.texture_value,
@@ -363,6 +374,7 @@ def _upsert_live_slot(
                 texture_signature,
                 model,
                 display_name,
+                description,
                 now,
             ),
         )
@@ -544,6 +556,8 @@ def _compact_swappable_slots(
             display_name=(
                 str(entry.get("display_name") or "").strip() or None
             ),
+            # Kept as stored even on Base (not shown there) so a later move loses nothing.
+            description=str(entry.get("description") or "").strip() or None,
         )
 
     if active_new:
@@ -664,6 +678,52 @@ def _effective_display_name(slot: str, row: dict[str, Any] | None) -> str:
     return default_slot_label(slot)
 
 
+def _stored_description(row: dict[str, Any] | None, slot: str) -> str | None:
+    """A skin's own description; Base never has one (it wears the character description)."""
+    if not row or slot == "base":
+        return None
+    return str(row.get("description") or "").strip() or None
+
+
+def _description_limits() -> tuple[int, int]:
+    validation = get_catalog().get("validation")
+    section = validation.get("description") if isinstance(validation, dict) else None
+    section = section if isinstance(section, dict) else {}
+
+    def _int(key: str, fallback: int) -> int:
+        try:
+            value = int(section.get(key))
+        except (TypeError, ValueError):
+            return fallback
+        return value if value > 0 else fallback
+
+    low = _int("min_length", DESCRIPTION_MIN_DEFAULT)
+    high = _int("max_length", DESCRIPTION_MAX_DEFAULT)
+    return low, max(low, high)
+
+
+def _normalize_description(raw: str | None, *, from_plugin: bool) -> str | None:
+    """None or blank clears. Players on the site get the catalogue limits and the prose rules
+    (no colour codes). In-game text was already checked by RPCharacters like
+    `/rpcharacter description`, so it is kept as typed: one line, no controls, bounded size."""
+    if raw is None or not str(raw).strip():
+        return None
+    if from_plugin:
+        text = str(raw).strip()
+        if "\n" in text or "\r" in text or _PLUGIN_CONTROL_RE.search(text):
+            raise WardrobeError("Description contains invalid control characters", status_code=400)
+        if len(text) > PLUGIN_DESCRIPTION_MAX:
+            raise WardrobeError(
+                f"Description must be at most {PLUGIN_DESCRIPTION_MAX} characters", status_code=400
+            )
+        return text
+    low, high = _description_limits()
+    try:
+        return assert_prose(raw, min_len=low, max_len=high, field="description")
+    except TextValidationError as e:
+        raise WardrobeError(str(e), status_code=400) from e
+
+
 def _load_slots(
     player_uuid: str, character_id: str
 ) -> dict[str, dict[str, Any]]:
@@ -671,7 +731,7 @@ def _load_slots(
         rows = conn.execute(
             """
             SELECT slot, png_relpath, texture_value, texture_signature,
-                   model, display_name, apply_pending, updated_at
+                   model, display_name, description, apply_pending, updated_at
             FROM character_wardrobe_slots
             WHERE player_uuid = %s AND character_id = %s
             """,
@@ -778,6 +838,7 @@ def _build_wardrobe_payload(
             "custom_name": bool(
                 row and str(row.get("display_name") or "").strip()
             ),
+            "description": _stored_description(row, slot) if filled else None,
             "apply_pending": bool(row and row.get("apply_pending")),
             "has_signature": has_sig,
             "signed": has_sig,
@@ -795,6 +856,8 @@ def _build_wardrobe_payload(
         "player_uuid": uuid,
         "active_slot": active,
         "swappable_slots": swappable,
+        # Tells RPCharacters and the site that skins can carry a description.
+        "descriptions": True,
         "slots": slot_list,
     }
 
@@ -1224,6 +1287,74 @@ def set_slot_display_name(
             (name, _iso_now(), uuid, cid, slot_key),
         )
     return get_wardrobe(uuid, cid)
+
+
+def set_slot_description(
+    player_uuid: str,
+    character_id: str,
+    slot: str,
+    description: str | None,
+) -> dict[str, Any]:
+    """Set or clear (None/blank) the description others read while this skin is worn."""
+    _set_slot_description(player_uuid, character_id, slot, description, from_plugin=False)
+    return get_wardrobe(player_uuid, character_id)
+
+
+def set_slot_description_for_plugin(
+    player_uuid: str,
+    character_id: str,
+    slot: str,
+    description: str | None,
+) -> dict[str, Any]:
+    _set_slot_description(player_uuid, character_id, slot, description, from_plugin=True)
+    return get_wardrobe_for_plugin(player_uuid, character_id)
+
+
+@assets.guarded
+def _set_slot_description(
+    player_uuid: str,
+    character_id: str,
+    slot: str,
+    description: str | None,
+    *,
+    from_plugin: bool,
+) -> None:
+    """Does not re-sign or set apply_pending; RPCharacters reads it on its next pull."""
+    if not from_plugin:
+        access = _resolve_player_wardrobe_access(player_uuid, character_id, living=True)
+        if access["kind"] == "pending":
+            raise WardrobeError(
+                "Skin descriptions can be set once the character is accepted",
+                status_code=409,
+            )
+    roster = _require_owned_character(player_uuid, character_id)
+    uuid = str(roster["player_uuid"])
+    cid = str(roster["character_id"])
+    slot_key = _normalize_slot(slot)
+    if slot_key == "base":
+        raise WardrobeError(
+            "Base uses your character description",
+            status_code=400,
+        )
+    swappable = enforce_wardrobe_slot_limits(uuid, cid)
+    if not _slot_unlocked(slot_key, swappable):
+        raise WardrobeError(
+            "Slot locked for your rank",
+            status_code=403,
+        )
+    row = _load_slots(uuid, cid).get(slot_key)
+    if not row or not row.get("png_relpath"):
+        raise WardrobeError("Wardrobe slot is empty", status_code=404)
+    text = _normalize_description(description, from_plugin=from_plugin)
+    with database.connect() as conn:
+        conn.execute(
+            """
+            UPDATE character_wardrobe_slots
+            SET description = %s, updated_at = %s
+            WHERE player_uuid = %s AND character_id = %s AND slot = %s
+            """,
+            (text, _iso_now(), uuid, cid, slot_key),
+        )
 
 
 @assets.guarded

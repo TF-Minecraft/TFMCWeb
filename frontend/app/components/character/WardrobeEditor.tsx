@@ -9,6 +9,7 @@ import {
   getWardrobe,
   renameWardrobeSlot,
   setWardrobeActive,
+  setWardrobeSlotDescription,
   uploadWardrobeSlot,
   wardrobeFillOrderError,
   wardrobeSlotLabel,
@@ -400,6 +401,8 @@ export default function WardrobeEditor(props: WardrobeEditorProps) {
     file: File | null;
     equip: boolean;
     displayName: string | null;
+    nameChanged: boolean;
+    description?: string | null;
     createMasked: boolean;
     armModel: ArmModel;
   }) {
@@ -488,7 +491,7 @@ export default function WardrobeEditor(props: WardrobeEditorProps) {
           URL.revokeObjectURL(url);
         }
       }
-      let w: WardrobeResponse;
+      let w: WardrobeResponse | null = null;
       if (uploadFile) {
         w = await uploadWardrobeSlot(sessionToken, characterId, modalSlot, uploadFile, input.displayName, {
           createMasked: input.createMasked,
@@ -497,12 +500,16 @@ export default function WardrobeEditor(props: WardrobeEditorProps) {
         if (input.equip && modalSlot !== "masked") {
           w = await setWardrobeActive(sessionToken, characterId, modalSlot);
         }
-      } else {
+      } else if (input.nameChanged) {
         w = await renameWardrobeSlot(sessionToken, characterId, modalSlot, input.displayName);
       }
-      setWardrobe(w);
-      if (uploadFile) {
+      if (w) setWardrobe(w);
+      if (uploadFile && w) {
         await loadTextures(sessionToken, characterId, w);
+      }
+      if (input.description !== undefined) {
+        w = await setWardrobeSlotDescription(sessionToken, characterId, modalSlot, input.description);
+        setWardrobe(w);
       }
       setModalSlot(null);
     } catch (err) {
@@ -690,6 +697,8 @@ export default function WardrobeEditor(props: WardrobeEditorProps) {
               : ""
         }
         namePlaceholder={modalSlot ? WARDROBE_DEFAULT_LABELS[modalSlot] || "Skin" : "Skin"}
+        canDescribe={!isDraft && Boolean(liveWardrobe?.descriptions) && modalSlot !== "base"}
+        initialDescription={modalData?.description ? String(modalData.description) : ""}
         saving={saving}
         error={modalError}
         onClose={() => {

@@ -31,6 +31,10 @@ type Props = {
   initialDisplayName: string;
   /** Placeholder when field empty (defaults to slot default label) */
   namePlaceholder: string;
+  /** Offer the "description while worn" field (accepted characters, not Base). */
+  canDescribe?: boolean;
+  /** The skin's saved description, "" when it uses the character description. */
+  initialDescription?: string;
   saving: boolean;
   error: string | null;
   onClose: () => void;
@@ -38,6 +42,9 @@ type Props = {
     file: File | null;
     equip: boolean;
     displayName: string | null;
+    nameChanged: boolean;
+    /** Set only when changed: the new text, or null to use the character description again. */
+    description?: string | null;
     createMasked: boolean;
     armModel: ArmModel;
   }) => void;
@@ -45,6 +52,7 @@ type Props = {
 };
 
 const NAME_MAX = 24;
+const DESCRIPTION_MAX = 256;
 
 export default function WardrobeSlotModal({
   open,
@@ -60,6 +68,8 @@ export default function WardrobeSlotModal({
   existingTextureSrc,
   initialDisplayName,
   namePlaceholder,
+  canDescribe = false,
+  initialDescription = "",
   saving,
   error,
   onClose,
@@ -80,6 +90,7 @@ export default function WardrobeSlotModal({
   const [maskedPreviewUrl, setMaskedPreviewUrl] = useState<string | null>(null);
   const [maskedPreviewBusy, setMaskedPreviewBusy] = useState(false);
   const [displayName, setDisplayName] = useState(initialDisplayName);
+  const [description, setDescription] = useState(initialDescription);
 
   useEffect(() => {
     if (!open) return;
@@ -93,9 +104,10 @@ export default function WardrobeSlotModal({
     setMaskedPreviewUrl(null);
     setMaskedPreviewBusy(false);
     setDisplayName(initialDisplayName);
+    setDescription(initialDescription);
     const t = window.setTimeout(() => inputRef.current?.focus(), 20);
     return () => window.clearTimeout(t);
-  }, [open, defaultEquipOnSave, defaultCreateMasked, defaultArmModel, slotId, initialDisplayName]);
+  }, [open, defaultEquipOnSave, defaultCreateMasked, defaultArmModel, slotId, initialDisplayName, initialDescription]);
 
   useEffect(() => {
     if (!file) {
@@ -171,7 +183,12 @@ export default function WardrobeSlotModal({
       : previewUrl || existingTextureSrc;
   const trimmedName = displayName.trim();
   const nameChanged = trimmedName !== String(initialDisplayName || "").trim();
-  const canSave = !localErr && !saving && (Boolean(file) || (filled && (nameChanged || armModel !== defaultArmModel)));
+  const trimmedDescription = description.trim();
+  const descriptionChanged = canDescribe && trimmedDescription !== String(initialDescription || "").trim();
+  const canSave =
+    !localErr &&
+    !saving &&
+    (Boolean(file) || (filled && (nameChanged || descriptionChanged || armModel !== defaultArmModel)));
 
   async function onPick(f: File | null) {
     setLocalErr(null);
@@ -319,6 +336,26 @@ export default function WardrobeSlotModal({
           />
         </label>
 
+        {canDescribe ? (
+          <label className="mt-4 flex flex-col gap-1.5 text-sm text-[var(--tfmc-cream)]">
+            <span>
+              Description while worn <span className="font-normal text-[var(--tfmc-stone)]">(optional)</span>
+            </span>
+            <textarea
+              rows={3}
+              maxLength={DESCRIPTION_MAX}
+              value={description}
+              disabled={saving}
+              placeholder="Leave empty to use your character description."
+              className="resize-y rounded-sm border border-[color-mix(in_srgb,var(--tfmc-cream)_18%,transparent)] bg-[color-mix(in_srgb,var(--tfmc-forest)_70%,black)] px-3 py-2 text-sm text-[var(--tfmc-cream)] placeholder:text-[var(--tfmc-stone)]"
+              onChange={(e) => setDescription(e.target.value.replace(/[\r\n]+/g, " ").slice(0, DESCRIPTION_MAX))}
+            />
+            <span className="text-xs text-[var(--tfmc-mist)]">
+              Others read this instead of your character description while you wear this skin.
+            </span>
+          </label>
+        ) : null}
+
         <label className="mt-4 flex flex-col gap-1.5 text-sm text-[var(--tfmc-cream)]">
           Skin file
           <input
@@ -398,6 +435,8 @@ export default function WardrobeSlotModal({
                 file,
                 equip: Boolean(file) && canEquip && equipOnSave,
                 displayName: name,
+                nameChanged,
+                ...(descriptionChanged ? { description: trimmedDescription || null } : {}),
                 createMasked: Boolean(file) && canCreateMasked && createMasked,
                 armModel,
               });

@@ -69,6 +69,8 @@ from src.characters.wardrobe import (
     resolve_slot_texture_path,
     set_active_slot,
     set_active_slot_for_plugin,
+    set_slot_description,
+    set_slot_description_for_plugin,
     set_slot_display_name,
     store_masked_template,
     upload_pending_create_wardrobe,
@@ -129,6 +131,12 @@ class WardrobeNameBody(BaseModel):
     """PATCH body for wardrobe slot display name. null clears to default."""
 
     display_name: str | None = None
+
+
+class WardrobeDescriptionBody(BaseModel):
+    """Body for a wardrobe skin's description. null or blank clears it."""
+
+    description: str | None = Field(default=None, max_length=4096)
 
 
 class WardrobeAckBody(BaseModel):
@@ -806,6 +814,26 @@ def patch_character_wardrobe_slot_name(
         raise _wardrobe_http(e) from e
 
 
+@characters_router.patch("/{character_id}/wardrobe/{slot}/description")
+def patch_character_wardrobe_slot_description(
+    character_id: str,
+    slot: str,
+    body: WardrobeDescriptionBody,
+    authorization: str | None = Header(default=None),
+):
+    """Set or clear what others read while this skin is worn (no re-sign)."""
+    session = _profile_session_from_auth(authorization)
+    try:
+        return set_slot_description(
+            session["player_uuid"],
+            character_id,
+            slot,
+            body.description,
+        )
+    except WardrobeError as e:
+        raise _wardrobe_http(e) from e
+
+
 @characters_router.delete("/{character_id}/wardrobe/{slot}")
 def delete_character_wardrobe_slot(
     character_id: str,
@@ -1187,6 +1215,22 @@ def plugin_prepare_plushie(
         if result["status"] == "pending":
             background_tasks.add_task(generate_plushie, result["source"], png)
         return result
+    except WardrobeError as e:
+        raise _wardrobe_http(e) from e
+
+
+@characters_router.post("/plugin/wardrobe/{player_uuid}/{character_id}/slots/{slot}/description")
+def plugin_post_wardrobe_description(
+    player_uuid: str,
+    character_id: str,
+    slot: str,
+    body: WardrobeDescriptionBody,
+    x_plugin_key: str | None = Header(default=None, alias=HEADER_PLUGIN_KEY),
+):
+    """Set or clear a skin's description from the in-game wardrobe (already checked there)."""
+    _require_plugin(x_plugin_key)
+    try:
+        return set_slot_description_for_plugin(player_uuid, character_id, slot, body.description)
     except WardrobeError as e:
         raise _wardrobe_http(e) from e
 
