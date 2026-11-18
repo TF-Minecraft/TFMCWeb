@@ -492,6 +492,12 @@ export default function WardrobeEditor(props: WardrobeEditorProps) {
         }
       }
       let w: WardrobeResponse | null = null;
+      // On a saved skin the description goes first: if the site refuses it, nothing else
+      // changed and the dialog keeps the typed text. A new skin needs its upload first.
+      const describeFirst = input.description !== undefined && Boolean(modalData?.filled);
+      if (describeFirst) {
+        w = await setWardrobeSlotDescription(sessionToken, characterId, modalSlot, input.description ?? null);
+      }
       if (uploadFile) {
         w = await uploadWardrobeSlot(sessionToken, characterId, modalSlot, uploadFile, input.displayName, {
           createMasked: input.createMasked,
@@ -507,7 +513,7 @@ export default function WardrobeEditor(props: WardrobeEditorProps) {
       if (uploadFile && w) {
         await loadTextures(sessionToken, characterId, w);
       }
-      if (input.description !== undefined) {
+      if (input.description !== undefined && !describeFirst) {
         w = await setWardrobeSlotDescription(sessionToken, characterId, modalSlot, input.description);
         setWardrobe(w);
       }
