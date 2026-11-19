@@ -126,14 +126,19 @@ export function zoneOffsetMinutes(instant: number, timeZone: string): number {
   return Math.round((asUtc - Math.floor(instant / 1000) * 1000) / 60_000);
 }
 
-/** The instant (ISO, UTC) of wall-clock `time` (HH:MM) on `day` in `timeZone`. */
-export function zonedToIso(day: string, time: string, timeZone: string): string {
+/**
+ * The instant (ISO, UTC) of wall-clock `time` (HH:MM) on `day` in `timeZone`, or null when
+ * that time doesn't exist there (skipped when the clocks go forward).
+ */
+export function zonedToIso(day: string, time: string, timeZone: string): string | null {
   const [h, m] = time.split(":").map(Number);
   const wall = toUtc(day) + (h * 60 + m) * 60_000;
   let instant = wall - zoneOffsetMinutes(wall, timeZone) * 60_000;
   // A second pass settles times near a DST change.
   instant = wall - zoneOffsetMinutes(instant, timeZone) * 60_000;
-  return new Date(instant).toISOString().replace(".000Z", "Z");
+  const iso = new Date(instant).toISOString().replace(".000Z", "Z");
+  const back = isoToZoned(iso, timeZone);
+  return back.day === day && back.time === time ? iso : null;
 }
 
 /** The calendar day and HH:MM an instant falls on in `timeZone`. */

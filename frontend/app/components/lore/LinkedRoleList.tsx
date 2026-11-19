@@ -38,6 +38,7 @@ export default function LinkedRoleList({
   const locked = disabled || busy;
 
   async function send(links: RoleLink[]) {
+    if (busy) return;
     setBusy(true);
     setError("");
     try {
@@ -53,7 +54,7 @@ export default function LinkedRoleList({
   const current = (): RoleLink[] => items.map((item) => ({ id: item.id, role: item.role }));
 
   async function add(result: SearchResult) {
-    if (items.some((item) => item.id === result.id)) return;
+    if (busy || items.some((item) => item.id === result.id)) return;
     // Errors show in the picker itself.
     setError("");
     setBusy(true);
@@ -108,6 +109,7 @@ export default function LinkedRoleList({
           onPick={add}
           onCreate={onCreate}
           placeholder={placeholder}
+          disabled={busy}
         />
       )}
     </div>

@@ -45,8 +45,20 @@ export default function DayPanel({
   onSaved: () => void;
   onClose: () => void;
 }) {
-  const [status, setStatus] = useState<Availability | null>(mine?.source === "override" ? mine.status : null);
-  const [note, setNote] = useState(mine?.source === "override" ? mine.note : "");
+  const savedStatus = mine?.source === "override" ? mine.status : null;
+  const savedNote = mine?.source === "override" ? mine.note : "";
+  const [status, setStatus] = useState<Availability | null>(savedStatus);
+  const [note, setNote] = useState(savedNote);
+  // The saved day can change under the panel (a whole-week update, a save elsewhere).
+  // Follow it while the form is untouched; keep the user's edits otherwise.
+  const [base, setBase] = useState({ status: savedStatus, note: savedNote });
+  if (base.status !== savedStatus || base.note !== savedNote) {
+    setBase({ status: savedStatus, note: savedNote });
+    if (status === base.status && note === base.note) {
+      setStatus(savedStatus);
+      setNote(savedNote);
+    }
+  }
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 

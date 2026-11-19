@@ -48,12 +48,17 @@ function LoreMapWorkspace() {
   const [focus, setFocus] = useState<Focus | null>(null);
   const focusCount = useRef(0);
 
+  // Only the newest list request may land, so a slow older one can't undo a newer result.
+  const loads = useRef(0);
   const load = useCallback(async () => {
+    const request = ++loads.current;
     try {
-      setRows(await listEntities("location"));
+      const next = await listEntities("location");
+      if (request !== loads.current) return;
+      setRows(next);
       setLoadError("");
     } catch (err) {
-      setLoadError(loreErrorMessage(err));
+      if (request === loads.current) setLoadError(loreErrorMessage(err));
     }
   }, []);
   useEffect(() => {
@@ -96,12 +101,13 @@ function LoreMapWorkspace() {
     setPin(null);
   }
 
-  async function created(detail: LocationDetail) {
+  function created(detail: LocationDetail) {
     stopAdding();
-    await load();
+    // Select and centre it now; the list refresh only adds it to the list and markers.
     handled.current = detail.id;
     router.replace(`/lore/map?location=${detail.id}`, { scroll: false });
     if (detail.world === MAP_WORLD) centre(detail);
+    void load();
   }
 
   const markers = useMemo<MapMarker[]>(
@@ -137,12 +143,16 @@ function LoreMapWorkspace() {
         aria-label="Search locations"
         onChange={(e) => setQuery(e.target.value)}
       />
+      {/* A failed refresh keeps the rows already shown. */}
       {loadError ? (
         <p className={errorClass} role="alert">
           {loadError}
         </p>
-      ) : !rows ? (
-        <p className={mutedClass}>Loading…</p>
+      ) : null}
+      {!rows ? (
+        loadError ? null : (
+          <p className={mutedClass}>Loading…</p>
+        )
       ) : shown.length === 0 ? (
         <p className={mutedClass}>{rows.length ? "No locations match." : "No locations yet. Add the first one."}</p>
       ) : (
@@ -188,9 +198,7 @@ function LoreMapWorkspace() {
   );
 
   let inspector: React.ReactNode;
-  if (adding && pin)
-    inspector = <NewLocationForm pin={pin} onMove={setPin} onCreated={(d) => void created(d)} onCancel={stopAdding} />;
-  else if (adding) inspector = <p className={mutedClass}>Click the map where the new location is.</p>;
+  if (adding) inspector = <NewLocationForm pin={pin} onMove={setPin} onCreated={created} onCancel={stopAdding} />;
   else if (selectedId !== null)
     inspector = <LocationPanel key={selectedId} id={selectedId} onChanged={() => void load()} />;
   else inspector = <p className={mutedClass}>Pick a location on the map or in the list to see it here.</p>;

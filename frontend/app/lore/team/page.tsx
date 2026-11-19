@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import AdminColumn from "../../components/admin/AdminColumn";
 import {
@@ -259,17 +259,22 @@ export default function LoreTeamPage() {
   const [error, setError] = useState("");
   const [recent, setRecent] = useState<RecentEdit[] | null>(null);
 
+  // Each load is numbered; only the newest may land, so a slow older one can't undo a newer result.
+  const loads = useRef(0);
   const load = useCallback(() => {
+    const request = ++loads.current;
+    const current = () => request === loads.current;
     getTeam()
       .then((next) => {
+        if (!current()) return;
         setTeam(next);
         setError("");
       })
-      .catch((err) => setError(loreErrorMessage(err)));
+      .catch((err) => current() && setError(loreErrorMessage(err)));
     // The team has no history endpoint of its own: the overview's recent edits hold its latest changes.
     getOverview()
-      .then((overview) => setRecent(overview.recent.filter((entry) => entry.entity_kind === "team")))
-      .catch(() => setRecent([]));
+      .then((overview) => current() && setRecent(overview.recent.filter((entry) => entry.entity_kind === "team")))
+      .catch(() => current() && setRecent([]));
   }, []);
 
   useEffect(() => {

@@ -265,7 +265,8 @@ export function NewLocationForm({
   onCreated,
   onCancel,
 }: {
-  pin: MapPoint;
+  /** Where the map was clicked; null until then (coordinates can also be typed). */
+  pin: MapPoint | null;
   /** Typed coordinates move the pin. */
   onMove: (point: MapPoint) => void;
   onCreated: (detail: LocationDetail) => void;
@@ -274,17 +275,20 @@ export function NewLocationForm({
   const [name, setName] = useState("");
   const [kind, setKind] = useState<LocationKind>("settlement");
   const [world, setWorld] = useState(MAP_WORLD);
-  const [coords, setCoords] = useState({ x: String(pin.x), y: "", z: String(pin.z) });
+  const [coords, setCoords] = useState({ x: pin ? String(pin.x) : "", y: "", z: pin ? String(pin.z) : "" });
   const [summary, setSummary] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
   // A new click on the map moves the pin: take its X/Z, keep the rest.
+  const pinX = pin?.x;
+  const pinZ = pin?.z;
   useEffect(() => {
+    if (pinX === undefined || pinZ === undefined) return;
     setCoords((c) =>
-      parseCoord(c.x) === pin.x && parseCoord(c.z) === pin.z ? c : { ...c, x: String(pin.x), z: String(pin.z) },
+      parseCoord(c.x) === pinX && parseCoord(c.z) === pinZ ? c : { ...c, x: String(pinX), z: String(pinZ) },
     );
-  }, [pin.x, pin.z]);
+  }, [pinX, pinZ]);
 
   function setCoord(axis: Coord, text: string) {
     const next = { ...coords, [axis]: text };
@@ -320,7 +324,9 @@ export function NewLocationForm({
   return (
     <form className="mt-6 flex flex-col gap-3" onSubmit={submit}>
       <h2 className="font-[family-name:var(--font-fraunces)] text-2xl text-[var(--tfmc-cream)]">New location</h2>
-      <p className={mutedClass}>Click the map again to move the pin.</p>
+      <p className={mutedClass}>
+        {pin ? "Click the map again to move the pin." : "Click the map where it is, or type its coordinates."}
+      </p>
       <Field label="Name">
         <input
           className={inputClass}

@@ -4,7 +4,7 @@ import { use, useState } from "react";
 
 import {
   createEntity,
-  loreErrorMessage,
+  LoreApiError,
   setStorylineMembers,
   setStorylineOrder,
   STORYLINE_STATUSES,
@@ -15,7 +15,14 @@ import {
 } from "@/lib/lore/api";
 import { moveItem, sameOrder, sortByDate } from "@/lib/lore/eventPlan";
 import AdminColumn from "../../../components/admin/AdminColumn";
-import { chipClass, errorClass, inputClass, mutedClass, pagerClass } from "../../../components/admin/ui";
+import {
+  chipClass,
+  errorClass,
+  inputClass,
+  mutedClass,
+  pagerClass,
+  quietButtonClass,
+} from "../../../components/admin/ui";
 import { Backlinks, DetailHeader, Field, Notice, RefLink, Section } from "../../../components/lore/DetailParts";
 import EntityPicker from "../../../components/lore/EntityPicker";
 import EventList from "../../../components/lore/EventList";
@@ -25,6 +32,7 @@ import QuickCreate from "../../../components/lore/QuickCreate";
 import SaveBar from "../../../components/lore/SaveBar";
 import { statusLabel } from "../../../components/lore/StatusBadge";
 import { useEntityEditor } from "../../../components/lore/useEntityEditor";
+import { useLinkSaver, type LinkSaver } from "../../../components/lore/useLinkSaver";
 import { useLoreTimeZone } from "../../../components/lore/useLoreTimeZone";
 
 type MemberKind = "character" | "organisation" | "location";
@@ -56,6 +64,8 @@ export default function StorylinePage({ params }: { params: Promise<{ id: string
 function StorylineEditor({ id }: { id: number }) {
   const editor = useEntityEditor("storyline", id);
   const { detail } = editor;
+  // Members and event order share one saver, so their whole-record answers can't cross.
+  const links = useLinkSaver(editor.replace);
 
   if (!detail) {
     return (
@@ -127,9 +137,9 @@ function StorylineEditor({ id }: { id: number }) {
         </div>
       </Section>
 
-      <MembersSection detail={detail} locked={locked} onChange={editor.replace} />
+      <MembersSection detail={detail} locked={locked} links={links} />
 
-      <EventsSection detail={detail} locked={locked} onChange={editor.replace} onCreated={() => void editor.reload()} />
+      <EventsSection detail={detail} locked={locked} links={links} reload={editor.reload} />
 
       <Backlinks items={detail.backlinks} />
       <HistoryList kind="storyline" id={id} refreshKey={editor.historyKey} />
@@ -152,36 +162,28 @@ function StorylineEditor({ id }: { id: number }) {
 function MembersSection({
   detail,
   locked,
-  onChange,
+  links,
 }: {
   detail: StorylineDetail;
   locked: boolean;
-  onChange: (next: StorylineDetail) => void;
+  links: LinkSaver<StorylineDetail>;
 }) {
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
+  const { busy } = links;
+  const error = links.errorFor("members");
   const members = detail.members;
   const chosen = members.map((m) => `${m.kind}:${m.id}`);
 
   async function save(next: Ref[]) {
-    setBusy(true);
-    setError("");
-    try {
-      onChange(
-        await setStorylineMembers(
-          detail.id,
-          next.map((m) => ({ kind: m.kind, id: m.id })),
-        ),
-      );
-    } catch (err) {
-      setError(loreErrorMessage(err));
-    } finally {
-      setBusy(false);
-    }
+    await links.run("members", () =>
+      setStorylineMembers(
+        detail.id,
+        next.map((m) => ({ kind: m.kind, id: m.id })),
+      ),
+    );
   }
 
   async function add(result: SearchResult) {
-    if (chosen.includes(`${result.kind}:${result.id}`)) return;
+    if (busy || chosen.includes(`${result.kind}:${result.id}`)) return;
     await save([...members, { kind: result.kind, id: result.id, label: result.label }]);
   }
 
@@ -232,6 +234,7 @@ function MembersSection({
                     kinds={[group.kind as EntityKind]}
                     exclude={chosen}
                     placeholder={group.placeholder}
+                    disabled={busy}
                     onPick={add}
                     onCreate={creator(group.kind)}
                   />
@@ -257,32 +260,43 @@ function MembersSection({
 function EventsSection({
   detail,
   locked,
-  onChange,
-  onCreated,
+  links,
+  reload,
 }: {
   detail: StorylineDetail;
   locked: boolean;
-  onChange: (next: StorylineDetail) => void;
-  onCreated: () => void;
+  links: LinkSaver<StorylineDetail>;
+  /** Fetches the storyline again, keeping the draft; null when that failed. */
+  reload: () => Promise<StorylineDetail | null>;
 }) {
   const zone = useLoreTimeZone();
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
+  const { busy } = links;
+  const error = links.errorFor("events");
+  // An event was created but the storyline couldn't be fetched again to show it.
+  const [stale, setStale] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const events = detail.events;
   const ids = events.map((e) => e.id);
   const byDate = sortByDate(events);
 
   async function order(next: number[]) {
-    if (sameOrder(next, ids)) return;
-    setBusy(true);
-    setError("");
-    try {
-      onChange(await setStorylineOrder(detail.id, next));
-    } catch (err) {
-      setError(loreErrorMessage(err));
-    } finally {
-      setBusy(false);
-    }
+    if (busy || sameOrder(next, ids)) return;
+    await links.run(
+      "events",
+      () => setStorylineOrder(detail.id, next),
+      async (err) => {
+        // Someone added or removed an event since: fetch the current list so a retry can work.
+        if (!(err instanceof LoreApiError && err.code === "bad_order")) return;
+        if (await reload()) return "Someone changed the event list. It’s been refreshed; try again.";
+      },
+    );
+  }
+
+  async function refresh() {
+    setRefreshing(true);
+    const fresh = await reload();
+    setRefreshing(false);
+    setStale(!fresh);
   }
 
   return (
@@ -317,12 +331,20 @@ function EventsSection({
             {error}
           </p>
         ) : null}
+        {stale ? (
+          <p className={`${errorClass} flex flex-wrap items-center gap-3`} role="alert">
+            The event was added, but the list couldn’t be refreshed.
+            <button type="button" className={quietButtonClass} disabled={refreshing} onClick={() => void refresh()}>
+              {refreshing ? "Refreshing…" : "Refresh"}
+            </button>
+          </p>
+        ) : null}
         {!locked ? (
           <QuickCreate
             kind="event"
             extra={{ storyline_id: detail.id }}
             placeholder="Add an event to this storyline…"
-            onCreated={onCreated}
+            onCreated={() => void refresh()}
           />
         ) : null}
       </div>

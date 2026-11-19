@@ -72,12 +72,12 @@ export default function CharactersPage() {
             ))}
           </select>
         </div>
-        {loaded?.error ? (
+        {!loaded || (loading && (loaded.error || rows.length === 0)) ? (
+          <p className={mutedClass}>Loading…</p>
+        ) : loaded.error ? (
           <p className={errorClass} role="alert">
             {loaded.error}
           </p>
-        ) : !loaded ? (
-          <p className={mutedClass}>Loading…</p>
         ) : rows.length === 0 ? (
           <p className={mutedClass}>
             {q.trim() || status !== "all" ? "No characters match." : "No characters yet. Add the first above."}

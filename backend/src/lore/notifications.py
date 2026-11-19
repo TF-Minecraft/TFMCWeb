@@ -134,20 +134,22 @@ def _enqueue(
     day: date,
     people: list[dict],
     base: dict[str, Any],
-    *,
-    replace: bool = True,
 ) -> None:
+    """Queue `kind` for each person. A row already queued for the same key is replaced by a new
+    row with a new id, so a late ack of the old payload can't swallow the new one, and the bot,
+    which keys delivered rows by id, sends it."""
     if not people:
         return
-    conflict = (
-        "DO UPDATE SET payload = EXCLUDED.payload, created_at = now(), dispatched_at = NULL, acked_at = NULL"
-        if replace
-        else "DO NOTHING"
-    )
+    keys = [(event_id, kind, person["discord_user_id"], day) for person in people]
     with conn.cursor() as cur:
         cur.executemany(
+            "DELETE FROM lore_notifications WHERE event_id = %s AND kind = %s AND discord_user_id = %s "
+            "AND event_day = %s",
+            keys,
+        )
+        cur.executemany(
             "INSERT INTO lore_notifications (kind, event_id, discord_user_id, event_day, payload) "
-            f"VALUES (%s, %s, %s, %s, %s) ON CONFLICT (event_id, kind, discord_user_id, event_day) {conflict}",
+            "VALUES (%s, %s, %s, %s, %s)",
             [
                 (
                     kind,
@@ -223,7 +225,7 @@ def on_helpers_added(conn: database.Connection, event: dict, user_ids: set[int])
     ).fetchall()
     told = _told(conn, event["id"])
     people = [dict(row) for row in rows if row["discord_user_id"] and row["discord_user_id"] not in told]
-    _enqueue(conn, "event_scheduled", event["id"], day, people, _context(conn, event), replace=False)
+    _enqueue(conn, "event_scheduled", event["id"], day, people, _context(conn, event))
 
 
 # --------------------

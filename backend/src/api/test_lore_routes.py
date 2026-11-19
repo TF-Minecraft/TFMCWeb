@@ -219,6 +219,8 @@ def test_validation_errors(client):
         "bad_starts_at"
     )
     assert error(member.post("/locations", {"name": "L", "x": 10**9}), 400) == "bad_x"
+    assert error(member.post("/locations", {"name": "L", "world": "  "}), 400) == "bad_world"
+    assert ok(member.post("/locations", {"name": "L", "world": " TFMC_Map "}))["world"] == "TFMC_Map"
     assert member.get("/characters/0").status_code == 422
     assert error(member.get("/characters/12345"), 404) == "not_found"
 
@@ -624,6 +626,45 @@ def test_notifications_by_mode_reschedule_cancel(client):
     }
     assert {n["kind"] for n in cancelled} == {"event_cancelled"}
     assert cancelled[0]["payload"]["reason"] == "cancelled"
+
+
+def test_rescheduling_after_cancel_queues_fresh_rows(client):
+    lead = Person(client, "lead", member=True, lead=True)
+    helper = Person(client, "helper", member=True)
+    ok(lead.put("/me/settings", {"notify_mode": "all"}))
+    day = TODAY + timedelta(days=3)
+    event = ok(lead.post("/events", {"title": "Raid", "status": "scheduled", "scheduled_on": day.isoformat()}))
+    ok(lead.put(f"/events/{event['id']}/helpers", {"user_ids": [helper.user_id]}))
+    first = _poll(client)
+    assert {(n["kind"], n["discord_user_id"]) for n in first} == {
+        ("event_scheduled", lead.discord_id), ("event_scheduled", helper.discord_id)
+    }
+
+    # Cancelled, then back on for the same day: people hear again, under new ids.
+    ok(lead.patch(f"/events/{event['id']}", {"status": "cancelled", "version": 1}))
+    assert {n["kind"] for n in _poll(client)} == {"event_cancelled"}
+    ok(lead.put(f"/events/{event['id']}/helpers", {"user_ids": []}))
+    ok(lead.patch(f"/events/{event['id']}", {"status": "scheduled", "version": 2}))
+    assert [(n["kind"], n["discord_user_id"]) for n in _poll(client)] == [("event_scheduled", lead.discord_id)]
+    # The helper, told last round, is added back after the event is on again.
+    ok(lead.put(f"/events/{event['id']}/helpers", {"user_ids": [helper.user_id]}))
+    again = _poll(client)
+    assert [(n["kind"], n["discord_user_id"]) for n in again] == [("event_scheduled", helper.discord_id)]
+    assert not {n["id"] for n in again} & {n["id"] for n in first}
+
+    # A late ack of the first round doesn't swallow the second.
+    ok(client.post("/lore/staff/notifications/ack", headers=STAFF_KEY, json={"ids": [n["id"] for n in first]}))
+    with database.connect() as conn:
+        rows = conn.execute(
+            "SELECT count(*) AS n FROM lore_notifications WHERE id = ANY(%s) AND acked_at IS NULL",
+            ([n["id"] for n in again],),
+        ).fetchone()
+    assert rows["n"] == len(again)
+
+    # Removed and re-added as helper within the same round: not told twice.
+    ok(lead.put(f"/events/{event['id']}/helpers", {"user_ids": []}))
+    ok(lead.put(f"/events/{event['id']}/helpers", {"user_ids": [helper.user_id]}))
+    assert _poll(client) == []
 
 
 def test_marking_done_sends_nothing(client):

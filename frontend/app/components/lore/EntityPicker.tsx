@@ -11,7 +11,9 @@ type Option = { type: "result"; result: SearchResult } | { type: "create"; label
 
 /**
  * A search box over lore records. Picking a result calls `onPick`; when `onCreate`
- * is given and nothing matches exactly, a “Create …” option makes a new record.
+ * is given and a finished search finds no exact match, a “Create …” option makes a new
+ * record. If `onPick` then fails, the new record is kept and the next try picks it
+ * instead of creating another. `disabled` blocks picking while the caller is busy.
  */
 export default function EntityPicker({
   kinds,
@@ -20,6 +22,7 @@ export default function EntityPicker({
   exclude = [],
   placeholder,
   autoFocus = false,
+  disabled = false,
   className = "",
 }: {
   kinds: EntityKind[];
@@ -29,6 +32,7 @@ export default function EntityPicker({
   exclude?: string[];
   placeholder?: string;
   autoFocus?: boolean;
+  disabled?: boolean;
   className?: string;
 }) {
   const [query, setQuery] = useState("");
@@ -37,8 +41,10 @@ export default function EntityPicker({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
+  /** A record made by “Create …” whose onPick failed, reused on retry. */
+  const made = useRef<SearchResult | null>(null);
   const listId = useId();
-  const { results, loading } = useLoreSearch(query, kinds, open);
+  const { results, loading, settled } = useLoreSearch(query, kinds, open);
 
   const options = useMemo<Option[]>(() => {
     const shown: Option[] = results
@@ -46,18 +52,25 @@ export default function EntityPicker({
       .map((result) => ({ type: "result", result }));
     const label = query.trim();
     const exact = results.some((r) => r.label.trim().toLowerCase() === label.toLowerCase());
-    if (onCreate && label && !exact) shown.push({ type: "create", label });
+    if (onCreate && label && settled && !exact) shown.push({ type: "create", label });
     return shown;
-  }, [results, exclude, query, onCreate]);
+  }, [results, exclude, query, onCreate, settled]);
 
   async function choose(option: Option) {
+    if (disabled || busy) return;
     setError("");
     setBusy(true);
     try {
       if (option.type === "result") await onPick(option.result);
       else if (onCreate) {
-        const made = await onCreate(option.label);
-        if (made) await onPick(made);
+        const kept = made.current;
+        const record =
+          kept && kept.label.trim().toLowerCase() === option.label.toLowerCase() ? kept : await onCreate(option.label);
+        if (record) {
+          made.current = record;
+          await onPick(record);
+        }
+        made.current = null;
       }
       setQuery("");
       setOpen(false);
@@ -99,7 +112,7 @@ export default function EntityPicker({
         aria-controls={listId}
         aria-autocomplete="list"
         autoFocus={autoFocus}
-        disabled={busy}
+        disabled={busy || disabled}
         value={query}
         placeholder={placeholder ?? `Find a ${kindText}…`}
         className={`${inputClass} w-full`}

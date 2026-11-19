@@ -31,6 +31,7 @@ import LoreTextEditor from "../../../components/lore/LoreTextEditor";
 import SaveBar from "../../../components/lore/SaveBar";
 import { statusLabel } from "../../../components/lore/StatusBadge";
 import { useEntityEditor } from "../../../components/lore/useEntityEditor";
+import { useLinkSaver, type LinkSaver } from "../../../components/lore/useLinkSaver";
 import { useLoreTimeZone } from "../../../components/lore/useLoreTimeZone";
 
 export default function EventPage({ params }: { params: Promise<{ id: string }> }) {
@@ -50,8 +51,13 @@ function EventEditor({ id }: { id: number }) {
   const editor = useEntityEditor("event", id);
   const { detail } = editor;
   const zone = useLoreTimeZone();
+  // Characters and helpers share one saver: each write returns the whole event, so two in
+  // flight at once could land out of order and undo each other.
+  const links = useLinkSaver(editor.replace);
   // Labels of storylines and locations picked but not saved yet, by "kind:id".
   const [picked, setPicked] = useState<Record<string, string>>({});
+  // A date or time change refused because the start would fall in a skipped DST hour.
+  const [timeError, setTimeError] = useState("");
 
   if (!detail) {
     return (
@@ -86,22 +92,35 @@ function EventEditor({ id }: { id: number }) {
     editor.set("starts_at", same ? detail.starts_at : iso);
   }
 
+  function skipped(startDay: string, time: string) {
+    return `${time} doesn’t exist on ${formatDay(startDay, { year: true })} in ${zone}: the clocks go forward then. Pick another time.`;
+  }
+
   /** Moving the date moves the start by as many days, so a start past midnight stays past midnight. */
   function changeDay(next: string) {
     const nextDay = next || null;
-    editor.set("scheduled_on", nextDay);
-    if (!nextDay) setStart(null);
-    else if (startsAt) {
+    if (nextDay && startsAt) {
       const local = isoToZoned(startsAt, zone);
       const startDay = day ? addDays(local.day, dayOffset(day, nextDay)) : nextDay;
-      setStart(zonedToIso(startDay, local.time, zone));
-    }
+      const start = zonedToIso(startDay, local.time, zone);
+      if (!start) return setTimeError(skipped(startDay, local.time));
+      setStart(start);
+    } else if (!nextDay) setStart(null);
+    setTimeError("");
+    editor.set("scheduled_on", nextDay);
   }
 
   /** A new time keeps the start's own local day, which can be the day after the event's date. */
   function changeTime(next: string) {
-    if (!next || !day) setStart(null);
-    else setStart(zonedToIso(startsAt ? isoToZoned(startsAt, zone).day : day, next, zone));
+    if (!next || !day) {
+      setTimeError("");
+      return setStart(null);
+    }
+    const startDay = startsAt ? isoToZoned(startsAt, zone).day : day;
+    const start = zonedToIso(startDay, next, zone);
+    if (!start) return setTimeError(skipped(startDay, next));
+    setTimeError("");
+    setStart(start);
   }
 
   function save() {
@@ -249,6 +268,11 @@ function EventEditor({ id }: { id: number }) {
               />
             </Field>
           </div>
+          {timeError ? (
+            <p className={errorClass} role="alert">
+              {timeError}
+            </p>
+          ) : null}
           {startsAt ? (
             <p className="text-sm text-[var(--tfmc-cream)]">
               Starts {formatStartTimes(startsAt, zone, day).join(" · ")}
@@ -272,8 +296,8 @@ function EventEditor({ id }: { id: number }) {
         </div>
       </Section>
 
-      <CharactersSection detail={detail} locked={locked} onChange={editor.replace} />
-      <HelpersSection detail={detail} day={day} locked={locked} onChange={editor.replace} />
+      <CharactersSection detail={detail} locked={locked} links={links} />
+      <HelpersSection detail={detail} day={day} locked={locked} links={links} />
 
       <Section title="Write-up">
         <div className="flex flex-col gap-4">
@@ -327,42 +351,23 @@ function EventEditor({ id }: { id: number }) {
   );
 }
 
-/** Runs a link change and hands the fresh event back, keeping its own busy and error state. */
-function useLinkSaver(onChange: (next: EventDetail) => void) {
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
-
-  async function run(action: () => Promise<EventDetail>) {
-    setBusy(true);
-    setError("");
-    try {
-      onChange(await action());
-    } catch (err) {
-      setError(loreErrorMessage(err));
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  return { busy, error, run };
-}
-
 /** The characters who appear in the event, saved as soon as one is added or removed. */
 function CharactersSection({
   detail,
   locked,
-  onChange,
+  links,
 }: {
   detail: EventDetail;
   locked: boolean;
-  onChange: (next: EventDetail) => void;
+  links: LinkSaver<EventDetail>;
 }) {
-  const { busy, error, run } = useLinkSaver(onChange);
+  const { busy, run } = links;
+  const error = links.errorFor("characters");
   const ids = detail.characters.map((c) => c.id);
 
   async function add(result: SearchResult) {
-    if (ids.includes(result.id)) return;
-    await run(() => setEventCharacters(detail.id, [...ids, result.id]));
+    if (busy || ids.includes(result.id)) return;
+    await run("characters", () => setEventCharacters(detail.id, [...ids, result.id]));
   }
 
   async function createCharacter(label: string): Promise<SearchResult> {
@@ -387,7 +392,7 @@ function CharactersSection({
                     disabled={busy}
                     aria-label={`Remove ${item.label}`}
                     onClick={() =>
-                      void run(() =>
+                      void run("characters", () =>
                         setEventCharacters(
                           detail.id,
                           ids.filter((x) => x !== item.id),
@@ -407,6 +412,7 @@ function CharactersSection({
             kinds={["character"]}
             exclude={ids.map((x) => `character:${x}`)}
             placeholder="Add a character…"
+            disabled={busy}
             onPick={add}
             onCreate={createCharacter}
           />
@@ -431,14 +437,15 @@ function HelpersSection({
   detail,
   day,
   locked,
-  onChange,
+  links,
 }: {
   detail: EventDetail;
   day: string | null;
   locked: boolean;
-  onChange: (next: EventDetail) => void;
+  links: LinkSaver<EventDetail>;
 }) {
-  const { busy, error, run } = useLinkSaver(onChange);
+  const { busy, run } = links;
+  const error = links.errorFor("helpers");
   const [roster, setRoster] = useState<Roster | null>(null);
   // Without a date the roster is still needed to pick helpers; today's copy serves.
   const rosterDay = day ?? todayIn();
@@ -456,14 +463,20 @@ function HelpersSection({
     };
   }, [rosterDay]);
 
+  // Only the roster for the date shown is used; an older one would show the wrong day.
+  const shown = roster && roster.day === rosterDay ? roster : null;
+  const loaded = shown && !shown.error ? shown : null;
+  // Helpers are told about the saved date, so they wait until a new date is saved.
+  const dateUnsaved = day !== detail.scheduled_on;
   const helperIds = detail.helpers.map((h) => h.user_id);
-  const onRoster = new Set(roster?.people.map((p) => p.user_id) ?? []);
+  const onRoster = new Set(loaded?.people.map((p) => p.user_id) ?? []);
   // Helpers who have since left the roster can stay; they are only listed here.
-  const offRoster = roster ? detail.helpers.filter((h) => !onRoster.has(h.user_id)) : [];
+  const offRoster = loaded ? detail.helpers.filter((h) => !onRoster.has(h.user_id)) : [];
 
   function toggle(userId: number, helping: boolean) {
+    if (busy || dateUnsaved) return;
     const next = helping ? [...helperIds, userId] : helperIds.filter((x) => x !== userId);
-    void run(() => setEventHelpers(detail.id, next));
+    void run("helpers", () => setEventHelpers(detail.id, next));
   }
 
   return (
@@ -482,7 +495,7 @@ function HelpersSection({
                   <button
                     type="button"
                     className="ml-1 text-[var(--tfmc-stone)] hover:text-[var(--tfmc-cream)] disabled:opacity-50"
-                    disabled={busy}
+                    disabled={busy || dateUnsaved}
                     aria-label={`Remove ${h.name}`}
                     onClick={() => toggle(h.user_id, false)}
                   >
@@ -497,24 +510,27 @@ function HelpersSection({
           {day ? `Who is free on ${formatDay(day, { year: true })}` : "Lore team"}
         </h3>
         {!day ? <p className={mutedClass}>Pick a date to see who is available.</p> : null}
-        {roster?.error ? (
-          <p className={errorClass} role="alert">
-            {roster.error}
+        {dateUnsaved && !locked ? (
+          <p className={warnClass} role="status">
+            Save the new date before changing helpers.
           </p>
-        ) : !roster ? (
+        ) : null}
+        {!shown ? (
           <p className={mutedClass}>Loading…</p>
-        ) : roster.people.length === 0 ? (
+        ) : shown.error ? (
+          <p className={errorClass} role="alert">
+            {shown.error}
+          </p>
+        ) : shown.people.length === 0 ? (
           <p className={mutedClass}>Nobody is on the lore team roster yet.</p>
         ) : (
-          <div className={roster.day !== rosterDay ? "opacity-60" : ""} aria-busy={roster.day !== rosterDay}>
-            <DayAvailability
-              people={roster.people}
-              showStatus={Boolean(day)}
-              helperIds={helperIds}
-              disabled={busy}
-              onToggle={locked ? undefined : toggle}
-            />
-          </div>
+          <DayAvailability
+            people={shown.people}
+            showStatus={Boolean(day)}
+            helperIds={helperIds}
+            disabled={busy || dateUnsaved}
+            onToggle={locked ? undefined : toggle}
+          />
         )}
         {error ? (
           <p className={errorClass} role="alert">

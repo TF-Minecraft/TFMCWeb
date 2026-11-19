@@ -35,6 +35,7 @@ class Field:
     hi: int | None = None
     ref: str | None = None
     default: Any = None
+    required: bool = False  # text: blank is refused with bad_<name>
 
 
 @dataclass(frozen=True)
@@ -131,7 +132,7 @@ KINDS: dict[str, Kind] = {
         label="name",
         fields=(
             _text("name", 120),
-            Field("world", "text", max_len=64, default="TFMC_Map"),
+            Field("world", "text", max_len=64, default="TFMC_Map", required=True),
             Field("x", "int", lo=-COORD, hi=COORD, default=0),
             Field("y", "int", lo=-2048, hi=2048, nullable=True),
             Field("z", "int", lo=-COORD, hi=COORD, default=0),
@@ -197,6 +198,10 @@ def _clean_value(f: Field, value: Any) -> Any:
         if not isinstance(value, str):
             raise bad(f"bad_{f.name}")
         value = value.replace("\r\n", "\n")
+        if f.required:
+            value = value.strip()
+            if not value:
+                raise bad(f"bad_{f.name}")
         if len(value) > f.max_len:
             raise bad(f"too_long_{f.name}")
         return value

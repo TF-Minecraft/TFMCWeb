@@ -52,6 +52,14 @@ describe("time zones", () => {
     expect(isoToZoned("2026-11-21T00:00:00Z", "America/New_York")).toEqual({ day: "2026-11-20", time: "19:00" });
   });
 
+  it("refuses a wall time skipped when the clocks go forward", () => {
+    expect(zonedToIso("2026-03-29", "02:30", "Europe/Berlin")).toBeNull();
+    expect(zonedToIso("2026-03-08", "02:30", "America/New_York")).toBeNull();
+    expect(zonedToIso("2026-03-29", "03:00", "Europe/Berlin")).toBe("2026-03-29T01:00:00Z");
+    // A repeated hour (clocks going back) still has an answer.
+    expect(zonedToIso("2026-10-25", "02:30", "Europe/Berlin")).not.toBeNull();
+  });
+
   it("labels CET/CEST and EST/EDT", () => {
     expect(formatTimeIn("2026-11-20T18:00:00Z", "Europe/Berlin")).toBe("19:00 CET");
     expect(formatTimeIn("2026-07-01T17:00:00Z", "Europe/Berlin")).toBe("19:00 CEST");

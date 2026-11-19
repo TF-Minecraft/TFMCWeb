@@ -82,8 +82,10 @@ export default function LoreCalendarPage() {
   }
 
   function mergeSettings(saved: LoreSettings) {
+    // Show the saved settings now; the reload drops any read still in flight from before
+    // the save (its effect is cleaned up) and brings the grid in line with them.
     setLoaded((prev) => (prev ? { ...prev, me: { ...prev.me, settings: saved } } : prev));
-    if (saved.on_roster !== settings?.on_roster) reload();
+    reload();
   }
 
   return (
@@ -132,9 +134,11 @@ export default function LoreCalendarPage() {
                 onSelect={(day) => setSelected((prev) => (prev === day ? null : day))}
               />
             </div>
-            {selected ? (
+            {selected && !current ? (
+              <Notice>Loading…</Notice>
+            ) : selected ? (
               <DayPanel
-                key={`${selected}|${current ? "ready" : "loading"}`}
+                key={selected}
                 day={selected}
                 events={byDay[selected] ?? []}
                 grid={calendar?.availability ?? null}

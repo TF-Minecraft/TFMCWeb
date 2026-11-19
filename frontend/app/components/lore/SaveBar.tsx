@@ -38,6 +38,11 @@ export default function SaveBar({
             <p className={`${warnClass} flex-1`} role="alert">
               Someone else saved this while you were editing. The page now shows their version under your changes.
             </p>
+            {error ? (
+              <p className={`${errorClass} basis-full`} role="alert">
+                {error}
+              </p>
+            ) : null}
             <button type="button" className={buttonClass} disabled={saving} onClick={onKeepMine}>
               {saving ? "Saving…" : "Keep mine"}
             </button>
