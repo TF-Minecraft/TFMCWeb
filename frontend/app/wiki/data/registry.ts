@@ -16,6 +16,7 @@ import { equipmentSlotsSection } from "./equipment-slots";
 import { factionsSection, guildsSection, warSection } from "./factions";
 import { farmingSection } from "./farming";
 import { fishingSection } from "./fishing";
+import { gatheringSection } from "./gathering";
 import { furnitureSection } from "./furniture";
 import { woodworkingSection } from "./woodworking";
 import { gamesSection } from "./games";
@@ -62,6 +63,7 @@ export const wikiSections: readonly WikiSection[] = [
   furnitureSection,
   farmingSection,
   fishingSection,
+  gatheringSection,
   dowsingSection,
   cookingSection,
   animalHusbandrySection,

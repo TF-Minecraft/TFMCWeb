@@ -19,7 +19,6 @@ const waterTreasure: [string, string][] = [
   ["Ignitium", "Ignitium"],
   ["Tin", "Tin"],
   ["Abyssalite Fragment", "Abyssalite Fragments"],
-  ["Lost Knowledge Fragment", "Lost Knowledge Fragments"],
   ["Enchanted Dust", "Enchanted Dust"],
   ["Niter", "Niter"],
   ["Arcane Crystal", "Arcane Crystals"],
@@ -38,7 +37,7 @@ function itemList(items: [string, string][]) {
 export default function FishingPage() {
   return (
     <WikiPage
-      lastModified="2026-11-18"
+      lastModified="2026-11-19"
       title="Fishing"
       width="lg"
       intro="Cast into water and wait for a bite. What you can catch depends on the biome and on your rod, and the more valuable catches make you win a short minigame first."

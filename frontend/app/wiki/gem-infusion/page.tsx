@@ -9,7 +9,7 @@ const subheading = "mt-6 text-sm font-semibold uppercase tracking-wide text-[var
 export default function GemInfusionPage() {
   return (
     <WikiPage
-      lastModified="2026-11-18"
+      lastModified="2026-11-19"
       title="Gems & Goldsmithing"
       width="lg"
       intro="Blank gemstones are infused with a stat at an Enchanting Table. Infused gems go into the sockets of forged gear, or a goldsmith can set one in a piece of gold jewellery."
@@ -30,12 +30,21 @@ export default function GemInfusionPage() {
         <Link href="/wiki/infestations" className={link}>
           infestation
         </Link>{" "}
-        monsters and from{" "}
+        monsters, from{" "}
         <Link href="/wiki/trial-rooms" className={link}>
           Trial Room
         </Link>{" "}
-        chests. Right-click a Pouch of Basic, Polished, Radiant or Mythical Gemstones to get one random gemstone of that
-        kind.
+        chests and from{" "}
+        <Link href="/wiki/arcane-trace-detector" className={link}>
+          Arcane Caches
+        </Link>
+        .{" "}
+        <Link href="/wiki/gathering" className={link}>
+          Gathering
+        </Link>{" "}
+        gives blank gemstones straight from gemstone spots, and its treasure can be a Pouch of Basic or Polished
+        Gemstones. Right-click a Pouch of Basic, Polished, Radiant or Mythical Gemstones to get one random gemstone of
+        that kind.
       </p>
       <ol className={`mt-3 list-decimal space-y-2 pl-5 ${body}`}>
         <li>Right-click the table with a blank gem to put it in. A batch holds up to 10.</li>

@@ -7,12 +7,12 @@ const guns = { href: "/wiki/guns", label: "Guns & Gunsmithing" };
 
 // ---------- Materials ----------
 //
-// Sources, checked against Main on 2026-11-18: `TFMCCore/drops.yml` (profession
+// Sources, checked against Main on 2026-11-19: `TFMCCore/drops.yml` (profession
 // perk drops), `Dowsing/production_methods.yml` (node focuses), the active
 // detector list in `geiger_counter/config.yml`, `TrialRooms/loot-tables.yml`,
-// `CustomFishing` loot, `Cooking/husbandry.yml` and the MMOItems station
-// configs; referral rewards from `activity/referral.yml` (2026-10-24). Drop
-// chances stay off the wiki.
+// `CustomFishing` loot, `Gathering/categories.yml` (gathering treasure),
+// `Cooking/husbandry.yml` and the MMOItems station configs; referral rewards
+// from `activity/referral.yml` (2026-10-24). Drop chances stay off the wiki.
 //
 // Recipes are not written here: every station recipe comes from
 // `generated/stationRecipes.ts`, and `catalog.ts` attaches the ones that make
@@ -40,6 +40,10 @@ const detector: MaterialAcquisition = {
 const fishing: MaterialAcquisition = {
   method: "Fishing",
   detail: "Fishing in ocean, river or beach water can bring it up.",
+};
+const gathering: MaterialAcquisition = {
+  method: "Gathering",
+  detail: "Part of the treasure in the gathering spots you find with /gather.",
 };
 const trialRooms: MaterialAcquisition = {
   method: "Trial Rooms",
@@ -439,7 +443,7 @@ export const dropOnlyMaterials: CatalogMaterial[] = [
     group: "Alchemy and explosives",
     texture: T("materials/niter.png"),
     lore: "A mineral that burns hot. The base of Dynamite and vehicle munitions.",
-    acquisition: [luckyMiner, treeGatherer("IV"), node("Rare Ore Mine", "Ore Mine"), fishing],
+    acquisition: [luckyMiner, treeGatherer("IV"), node("Rare Ore Mine", "Ore Mine"), detector, fishing],
   },
   {
     name: "Enchanted Dust",
@@ -450,7 +454,9 @@ export const dropOnlyMaterials: CatalogMaterial[] = [
       luckyMiner,
       treeGatherer("IV"),
       node("Dust Mine", "Magical Mine"),
+      detector,
       fishing,
+      gathering,
       infestationMonsters,
       {
         method: "Recycling",
@@ -463,7 +469,7 @@ export const dropOnlyMaterials: CatalogMaterial[] = [
     group: "Magic",
     texture: T("materials/arcane_crystal.png"),
     lore: "Found deep below the earth, and not of this Plane.",
-    acquisition: [luckyMiner, treeGatherer("IV"), node("Rare Ore Mine", "Ore Mine"), fishing, trialRooms],
+    acquisition: [luckyMiner, treeGatherer("IV"), node("Rare Ore Mine", "Ore Mine"), detector, fishing, trialRooms],
     usedFor: "Building cars, planes and airships, and upgrading resource nodes.",
   },
   // Every herb an Alchemist Collector can gather on Main.

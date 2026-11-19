@@ -7,7 +7,7 @@ const body = "text-sm text-[var(--tfmc-mist)]";
 export default function ResearchPage() {
   return (
     <WikiPage
-      lastModified="2026-11-18"
+      lastModified="2026-11-19"
       title="Research"
       width="lg"
       intro="Research is a guessing game played at a Lectern. Every project hides a few aspects, such as Metal or Magic. You test items to find out which aspects they are and fill each one up, and a finished project gives you its result."
@@ -41,16 +41,11 @@ export default function ResearchPage() {
         they survive restarts.
       </p>
       <p className={`mt-3 ${body}`}>
-        Lost Knowledge Fragments come from mining ore with the Crafter perk Lucky Miner I, chopping logs with the
-        Herborist perk Tree Gatherer IV,{" "}
-        <Link href="/wiki/fishing" className={link}>
-          fishing
-        </Link>{" "}
-        and{" "}
-        <Link href="/wiki/arcane-trace-detector" className={link}>
-          Arcane Caches
+        Lost Knowledge Fragments only come from{" "}
+        <Link href="/wiki/gathering" className={link}>
+          gathering spots
         </Link>
-        .
+        , which you find with <code className="text-[var(--tfmc-accent)]">/gather</code>.
       </p>
 
       <WikiSectionHeading id="experiments" intro="Right-click your lectern to open the project.">

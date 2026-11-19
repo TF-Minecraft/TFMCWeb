@@ -26,7 +26,7 @@ export default function MaterialsPage() {
 
   return (
     <WikiPage
-      lastModified="2026-11-06"
+      lastModified="2026-11-19"
       title="Materials"
       width="lg"
       intro="The custom materials you craft with. Open one to see where to find it and everything it makes."
