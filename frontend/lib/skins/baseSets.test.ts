@@ -38,9 +38,9 @@ describe("base sets from shared/skins/base_sets.json", () => {
     expect(kindsForBaseSet("battle standards")).toEqual(["item_3d"]);
   });
 
-  it("keeps crutches 3D only", () => {
+  it("keeps canes (base set crutches) 3D only", () => {
     expect(kindsForBaseSet("crutches")).toEqual(["item_3d"]);
-    expect(baseSetLabel("crutches")).toBe("Crutches");
+    expect(baseSetLabel("crutches")).toBe("Canes");
   });
 
   it("gives every bow a 3D style", () => {
