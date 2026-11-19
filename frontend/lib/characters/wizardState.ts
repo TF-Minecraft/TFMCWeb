@@ -68,7 +68,7 @@ const DEFAULT_ALIAS_CHARS = "abcdefghijklmnopqrstuvwxyz.,-'' áéíóú";
 export function aliasMeansRealName(alias: string, name: string, catalog: CreationCatalog): boolean {
   const text = alias.trim().replace(/\s+/g, " ").toLowerCase();
   const same = (catalog.validation?.alias?.same_word || "same").toLowerCase();
-  return text !== "" && (text === name.trim().toLowerCase() || text === same);
+  return text !== "" && (text === name.trim().replace(/\s+/g, " ").toLowerCase() || text === same);
 }
 
 /** Why the alias breaks RPCharacters' /char alias rules, or null. Letters match either case. */

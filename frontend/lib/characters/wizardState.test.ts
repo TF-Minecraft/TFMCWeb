@@ -4,6 +4,7 @@ import type { CatalogStage, CreationCatalog } from "./api";
 import { characterNameError } from "../textValidation";
 import {
   aliasError,
+  aliasMeansRealName,
   clueContinueBlockReason,
   dependencyMet,
   interactiveProgress,
@@ -104,6 +105,7 @@ describe("alias step", () => {
     expect(stageCanContinue(aliasStage, { ...draft, alias_same: true }, cat)).toBe(true);
     expect(stageCanContinue(aliasStage, { ...draft, name: "Zoë", alias: "zoë" }, cat)).toBe(true);
     expect(stageCanContinue(aliasStage, { ...draft, alias: "SAME" }, cat)).toBe(true);
+    expect(aliasMeansRealName("Aria Vale", "Aria  Vale", cat)).toBe(true);
     expect(aliasError("José, the Tall", cat)).toBeNull();
     expect(aliasError("Lia 2", cat)).toBe("Alias contains disallowed character: 2");
     expect(aliasError("Al", cat)).toBe("Alias must be at least 3 characters.");
