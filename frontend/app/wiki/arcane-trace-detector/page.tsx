@@ -9,7 +9,7 @@ const link = "text-[var(--tfmc-accent)] hover:underline";
 export default function ArcaneTraceDetectorPage() {
   return (
     <WikiPage
-      lastModified="2026-11-18"
+      lastModified="2026-11-19"
       title="Arcane Trace Detector"
       width="lg"
       intro="An Arcane Trace Detector leads you to an Arcane Cache buried somewhere far away. Each character has their own cache, and nobody else can see or open it."
@@ -65,9 +65,14 @@ export default function ArcaneTraceDetectorPage() {
         time you hold a powered detector.
       </p>
       <p className={`mt-3 ${body}`}>
-        A cache can hold <WikiItemLink name="Ignitium" /> with Iron Ingots, repair kits, raw gold blocks,{" "}
-        <WikiItemLink name="Tin" /> or <WikiItemLink name="Abyssalite Fragment">Abyssalite Fragments</WikiItemLink>, or
-        a <WikiItemLink name="Lost Knowledge Fragment" />.
+        Every cache holds <WikiItemLink name="Ignitium" /> and Iron Ingots. It also holds one of these: repair kits,{" "}
+        <WikiItemLink name="Tin" />, <WikiItemLink name="Abyssalite Fragment">Abyssalite Fragments</WikiItemLink>,{" "}
+        <Link href="/wiki/gem-infusion" className={link}>
+          gemstone pouches
+        </Link>
+        , or <WikiItemLink name="Enchanted Dust" /> with <WikiItemLink name="Niter" /> and{" "}
+        <WikiItemLink name="Arcane Crystal">Arcane Crystals</WikiItemLink>. The dust comes with a few gemstone pouches
+        as well.
       </p>
       <p className={`mt-3 ${body}`}>
         Now and then a cache holds an <strong>Unknown Key</strong>. Keep it, because it opens the way into the{" "}

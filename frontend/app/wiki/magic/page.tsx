@@ -16,7 +16,7 @@ const body = "text-sm text-[var(--tfmc-mist)]";
 export default function MagicPage() {
   return (
     <WikiPage
-      lastModified="2026-11-18"
+      lastModified="2026-11-19"
       title="Magic"
       width="lg"
       intro={
@@ -189,7 +189,12 @@ export default function MagicPage() {
           <Link href="/wiki/research" className={link}>
             Research
           </Link>{" "}
-          experiment. Both draw from the same pool.
+          experiment.{" "}
+          <Link href="/wiki/gathering" className={link}>
+            Gathering mode
+          </Link>{" "}
+          (<code className="text-[var(--tfmc-accent)]">/gather</code>) uses them too while it is on. All three draw from
+          the same pool.
         </li>
         <li>
           They refill a little every hour, even while you are offline. Wisdom and Intelligence make them refill faster.

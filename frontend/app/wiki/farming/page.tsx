@@ -57,7 +57,7 @@ const cropGalleryItems = crops.map(([name, perk, stages, regrows]) => {
 export default function FarmingPage() {
   return (
     <WikiPage
-      lastModified="2026-10-22"
+      lastModified="2026-11-19"
       title="Farming"
       width="lg"
       intro={
@@ -187,6 +187,13 @@ export default function FarmingPage() {
           ["Sweet Spice Plantation", "Cinnamon, Nutmeg, Vanilla"],
         ]}
       />
+      <p className={`mt-3 ${body}`}>
+        Seeds also come from{" "}
+        <Link href="/wiki/gathering" className={link}>
+          gathering spots
+        </Link>
+        , which you find with <code className={code}>/gather</code>.
+      </p>
 
       <SeeAlso hrefs={["/wiki/cooking", "/wiki/dowsing", "/wiki/animal-husbandry", "/wiki/classes"]} />
     </WikiPage>

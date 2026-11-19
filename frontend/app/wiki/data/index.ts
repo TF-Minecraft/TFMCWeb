@@ -31,6 +31,7 @@ export * from "./equipment-slots";
 export * from "./factions";
 export * from "./farming";
 export * from "./fishing";
+export * from "./gathering";
 export * from "./furniture";
 export * from "./games";
 export * from "./gem-infusion";
