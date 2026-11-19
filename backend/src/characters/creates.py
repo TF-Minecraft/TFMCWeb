@@ -437,13 +437,15 @@ def _validate_and_normalize(
 
 
 def _normalize_alias(raw: Any, name: str, validation: dict[str, Any]) -> str | None:
-    """The alias others will see, or None to show the real name (blank or the name again)."""
+    """The alias others will see, or None to show the real name (blank, "same" or the name again)."""
     if raw is None:
         return None
     if not isinstance(raw, str):
         raise CreateError("alias must be text")
     alias = " ".join(raw.split())
-    if not alias or alias.lower() == name.lower():
+    rules = validation.get("alias")
+    same_word = str(rules.get("same_word") or "same") if isinstance(rules, dict) else "same"
+    if not alias or alias.lower() in (name.lower(), same_word.lower()):
         return None
     error = alias_error(alias, validation)
     if error:

@@ -268,7 +268,7 @@ class CreateCheckTests(unittest.TestCase):
 
         out = _validate_and_normalize("player-uuid", self._body(alias="  Hooded   Stranger "), realm_id="main")
         self.assertEqual(out["alias"], "Hooded Stranger")
-        for same in (None, "", "   ", "aria"):
+        for same in (None, "", "   ", "aria", " SAME "):
             out = _validate_and_normalize("player-uuid", self._body(alias=same), realm_id="main")
             self.assertNotIn("alias", out, repr(same))
         out = _validate_and_normalize("player-uuid", self._body(), realm_id="main")

@@ -102,6 +102,8 @@ describe("alias step", () => {
     expect(stageCanContinue(aliasStage, { ...draft, alias: "Lia Thorn" }, cat)).toBe(true);
     expect(stageCanContinue(aliasStage, { ...draft, alias: "Lia 2" }, cat)).toBe(false);
     expect(stageCanContinue(aliasStage, { ...draft, alias_same: true }, cat)).toBe(true);
+    expect(stageCanContinue(aliasStage, { ...draft, name: "Zoë", alias: "zoë" }, cat)).toBe(true);
+    expect(stageCanContinue(aliasStage, { ...draft, alias: "SAME" }, cat)).toBe(true);
     expect(aliasError("José, the Tall", cat)).toBeNull();
     expect(aliasError("Lia 2", cat)).toBe("Alias contains disallowed character: 2");
     expect(aliasError("Al", cat)).toBe("Alias must be at least 3 characters.");
@@ -122,6 +124,7 @@ describe("alias step", () => {
     expect(toCreateBody({ ...draft, alias_same: true }, { catalog: cat }).alias).toBeUndefined();
     expect(toCreateBody({ ...draft, alias: "thalia" }, { catalog: cat }).alias).toBeUndefined();
     expect(toCreateBody({ ...draft, alias: "" }, { catalog: cat }).alias).toBeUndefined();
+    expect(toCreateBody({ ...draft, alias: " Same " }, { catalog: cat }).alias).toBeUndefined();
   });
 });
 

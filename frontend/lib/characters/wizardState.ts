@@ -64,6 +64,13 @@ export function newDraft(catalog: CreationCatalog): WizardDraft {
 
 const DEFAULT_ALIAS_CHARS = "abcdefghijklmnopqrstuvwxyz.,-'' áéíóú";
 
+/** True when the typed alias means "show my real name": the real name again or the game's "same" word. */
+export function aliasMeansRealName(alias: string, name: string, catalog: CreationCatalog): boolean {
+  const text = alias.trim().replace(/\s+/g, " ").toLowerCase();
+  const same = (catalog.validation?.alias?.same_word || "same").toLowerCase();
+  return text !== "" && (text === name.trim().toLowerCase() || text === same);
+}
+
 /** Why the alias breaks RPCharacters' /char alias rules, or null. Letters match either case. */
 export function aliasError(alias: string, catalog: CreationCatalog): string | null {
   const rules = catalog.validation?.alias;
@@ -857,7 +864,7 @@ export function stageCanContinue(stage: CatalogStage, draft: WizardDraft, catalo
       return characterNameError(draft.name, { minLen: min, maxLen: max }) === null;
     }
     if (target === "alias") {
-      return draft.alias_same || aliasError(draft.alias, catalog) === null;
+      return draft.alias_same || aliasMeansRealName(draft.alias, draft.name, catalog) || aliasError(draft.alias, catalog) === null;
     }
     if (target === "age") {
       const age = Number(draft.age);
@@ -957,7 +964,7 @@ export function toCreateBody(
     body.eighteen = draft.eighteen;
   }
   const alias = draft.alias.trim().replace(/\s+/g, " ");
-  if (!draft.alias_same && alias && alias.toLowerCase() !== body.name.toLowerCase()) {
+  if (!draft.alias_same && alias && !(opts?.catalog ? aliasMeansRealName(alias, body.name, opts.catalog) : alias.toLowerCase() === body.name.toLowerCase())) {
     body.alias = alias;
   }
   const cap = Math.max(0, Math.min(8, Number(opts?.nameColourStops) || 0));

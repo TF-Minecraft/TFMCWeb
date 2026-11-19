@@ -32,6 +32,7 @@ import {
 } from "../../../lib/characters/fantasyCalendar";
 import {
   aliasError,
+  aliasMeansRealName,
   clueContinueBlockReason,
   clueLengthBounds,
   cluesRequired,
@@ -237,7 +238,10 @@ function StageBody({
 
   if (type === "setter" && target === "alias") {
     const realName = draft.name.trim() || "your character";
-    const aliasErr = !draft.alias_same && draft.alias.trim().length > 0 ? aliasError(draft.alias, catalog) : null;
+    const aliasErr =
+      !draft.alias_same && draft.alias.trim().length > 0 && !aliasMeansRealName(draft.alias, draft.name, catalog)
+        ? aliasError(draft.alias, catalog)
+        : null;
     return (
       <div className="flex flex-col gap-4">
         <p className="text-base leading-relaxed text-[var(--tfmc-mist)]">
