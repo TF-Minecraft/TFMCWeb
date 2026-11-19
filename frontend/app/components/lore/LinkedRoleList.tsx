@@ -12,7 +12,9 @@ export type RoleLink = { id: number; role: string };
 /**
  * Linked records, each with a free-text role: a character's factions or a faction's
  * members. Every change sends the whole list through `onSave` (the server replaces
- * the list). Picking a record in the box adds it straight away with no role.
+ * the list). Picking a record in the box adds it straight away with no role. While the
+ * picker is creating or adding a record the rest of the list is held, so the list it
+ * extends can't change underneath it.
  */
 export default function LinkedRoleList({
   items,
@@ -34,8 +36,9 @@ export default function LinkedRoleList({
   placeholder?: string;
 }) {
   const [busy, setBusy] = useState(false);
+  const [picking, setPicking] = useState(false);
   const [error, setError] = useState("");
-  const locked = disabled || busy;
+  const locked = disabled || busy || picking;
 
   async function send(links: RoleLink[]) {
     if (busy) return;
@@ -54,7 +57,8 @@ export default function LinkedRoleList({
   const current = (): RoleLink[] => items.map((item) => ({ id: item.id, role: item.role }));
 
   async function add(result: SearchResult) {
-    if (busy || items.some((item) => item.id === result.id)) return;
+    if (busy) return false;
+    if (items.some((item) => item.id === result.id)) return;
     // Errors show in the picker itself.
     setError("");
     setBusy(true);
@@ -110,6 +114,7 @@ export default function LinkedRoleList({
           onCreate={onCreate}
           placeholder={placeholder}
           disabled={busy}
+          onBusyChange={setPicking}
         />
       )}
     </div>
