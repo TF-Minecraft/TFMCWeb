@@ -20,6 +20,8 @@ vi.mock("@/lib/account/api", () => ({
         : null,
     ),
 }));
+let loreAccess: () => Promise<{ access: boolean }> = () => Promise.resolve({ access: false });
+vi.mock("@/lib/lore/api", () => ({ getLoreAccess: () => loreAccess() }));
 const leaveExpiredView = vi.fn();
 vi.mock("@/lib/account/viewAs", () => ({
   leaveView: () => leaveView(),
@@ -39,6 +41,7 @@ afterEach(() => {
   pathname = "/map";
   accountRole = null;
   viewingAs = null;
+  loreAccess = () => Promise.resolve({ access: false });
   leaveView.mockReset();
   leaveExpiredView.mockReset();
 });
@@ -114,6 +117,29 @@ it("marks the current section and adds the staff panel for staff accounts", asyn
   await waitFor(() => expect(menu.querySelector('a[href="/admin"]')).not.toBeNull());
   // Staff tools sit inside the panel, not in the site header.
   expect(menu.querySelector('a[href="/precedent"], a[href="/inspect"]')).toBeNull();
+});
+
+it("adds the lore panel for those with lore access", async () => {
+  accountRole = "player";
+  loreAccess = () => Promise.resolve({ access: true });
+  render(<SiteHeader />);
+  const { menu } = openMenu();
+  await waitFor(() => expect(menu.querySelector('a[href="/lore"]')).not.toBeNull());
+  expect(menu.querySelector('a[href="/admin"]')).toBeNull();
+});
+
+it.each([
+  ["without lore access", () => Promise.resolve({ access: false })],
+  ["when the access check fails", () => Promise.reject(new Error("offline"))],
+])("leaves the lore panel out %s", async (_, access) => {
+  loreAccess = access;
+  accountRole = "mod";
+  render(<SiteHeader />);
+  const { menu } = openMenu();
+  await waitFor(() => expect(menu.querySelector('a[href="/admin"]')).not.toBeNull());
+  // Let the lore check settle too before looking for its link.
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  expect(document.querySelector('a[href="/lore"]')).toBeNull();
 });
 
 it("shows a bar back to the admin's account while viewing as a player", async () => {

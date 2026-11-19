@@ -8,6 +8,7 @@ Dev-only shortcuts, bypasses, and fixture data for TFMCWeb. **Unset all dev flag
 |------|----------|--------------|-------------------|
 | `SKINS_DEV` | backend env | Relaxed skins dev helpers | **Unset** when `PS_PRODUCTION=1` |
 | `CHARACTER_UI_DEV` | backend env | `ui-dev-session` Bearer bypass for staff map/editor | **Unset** when `PS_PRODUCTION=1` |
+| `LORE_PANEL` | backend env | Unset: lore panel on (off when `PS_PRODUCTION=1`); `1`/`0` forces it | Leave unset on prod until the lore team signs off; see [lore/README.md](../lore/README.md) |
 | `PS_PRODUCTION` | backend env | Unset on staging/dev | Set `PS_PRODUCTION=1` on prod; requires `PLUGIN_KEY` + `STAFF_KEY` |
 | Committed map input | `backend/src/input/main/guilds.json`, `province_data.json` | Seed data for local regen | SF uploads replace them every 300 s on live |
 | Spoof generator | `scripts/tools/generate_spoof_province_data.py` | Regenerates fake data | Keep tool; stop using output on prod map |

@@ -7,6 +7,7 @@ import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { getAccount, type Account } from "@/lib/account/api";
 import { onViewSwitch } from "@/lib/account/viewAs";
 import { isStaffRole } from "@/lib/admin/api";
+import { getLoreAccess } from "@/lib/lore/api";
 import ViewingAsBar from "./ViewingAsBar";
 
 /** public/logo.png downscaled; the 1024 px original is 1 MB. */
@@ -22,6 +23,7 @@ const staticLinks = [
 ] as const;
 
 const adminLink = { href: "/admin", label: "Admin" } as const;
+const loreLink = { href: "/lore", label: "Lore" } as const;
 
 // Matches Tailwind's `lg` breakpoint, where the inline links replace the menu button.
 const DESKTOP_QUERY = "(min-width: 64rem)";
@@ -42,8 +44,9 @@ function viewingAs(account: Account | null): { name: string; expiresAt: string }
 export default function SiteHeader() {
   // Only a hint for showing the link: the panel and its API check the role.
   const [isAdmin, setIsAdmin] = useState(false);
+  const [showLore, setShowLore] = useState(false);
   const [viewing, setViewing] = useState<{ name: string; expiresAt: string } | null>(null);
-  const links = [...staticLinks, ...(isAdmin ? [adminLink] : [])];
+  const links = [...staticLinks, ...(showLore ? [loreLink] : []), ...(isAdmin ? [adminLink] : [])];
   const pathname = usePathname() ?? "";
   const [open, setOpen] = useState(false);
   const menuId = useId();
@@ -58,6 +61,12 @@ export default function SiteHeader() {
         if (!active) return;
         setIsAdmin(isStaffRole(account?.user.role));
         setViewing(viewingAs(account));
+      })
+      .catch(() => {});
+    // Staff and the Lore team get the lore panel's link; any failure leaves it out.
+    getLoreAccess()
+      .then((lore) => {
+        if (active) setShowLore(lore.access === true);
       })
       .catch(() => {});
     return () => {
