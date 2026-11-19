@@ -63,7 +63,7 @@ export default function MagicPage() {
             </>,
           ],
           ["Equilibrium", "Your balance between Corruption and Tranquility. Casting and meditating move it."],
-          ["Mental Points", "Your focus. Meditation and Research both use it up."],
+          ["Mental Points", "Your focus. Meditation, Research and gathering use it up."],
         ]}
       />
 

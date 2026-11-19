@@ -107,7 +107,8 @@ export default function GatheringPage() {
       </p>
       <p className={`mt-3 ${body}`}>
         Spots only appear on the main map, on the surface and in the hills. Caves deep down have none. A spot needs open
-        ground with room above it: grass in most biomes, stone in the peaks and moss in the windswept gravelly hills.
+        ground with room above it. Most spots sit on grass. Gemstone spots in the peaks sit on stone, and so do seed
+        spots in the Jagged Peaks. Seed spots in the Windswept Gravelly Hills sit on moss.
       </p>
       <p className={`mt-3 ${body}`}>
         Higher{" "}
@@ -127,8 +128,8 @@ export default function GatheringPage() {
         gatherer has walked away from it.
       </p>
       <p className={`mt-3 ${body}`}>
-        Every harvest makes new spots less likely in that area. It recovers over the next day or so. Move on and you
-        find more.
+        Every harvest makes new spots less likely in that area. It recovers over the next few days. Move on and you find
+        more.
       </p>
 
       <WikiSectionHeading id="finds">What you find</WikiSectionHeading>

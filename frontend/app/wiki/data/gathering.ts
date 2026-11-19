@@ -5,7 +5,7 @@ import type { WikiCommandSet, WikiSection } from "./types";
 // Checked against Main on 2026-11-19: `Gathering/config.yml` (Mental Point cost,
 // spot lifetime), `Gathering/spot-types.yml` and `Gathering/categories.yml`
 // (biomes, seeds, gemstones, treasure). Spawn chances, weights and drop counts stay
-// off the page, and so do the special spot types (fran 2026-11-19: nothing secret).
+// off the page.
 // Desert spot types need grass, so they never appear there and the page leaves the
 // Desert out. `/gathering` is staff-only.
 
