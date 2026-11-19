@@ -31,6 +31,11 @@ export function addDays(day: string, n: number): string {
   return fromUtc(toUtc(day) + n * DAY_MS);
 }
 
+/** Whole days from `from` to `to` (negative when `to` is earlier). */
+export function dayOffset(from: string, to: string): number {
+  return Math.round((toUtc(to) - toUtc(from)) / DAY_MS);
+}
+
 export function daysBetween(first: string, last: string): string[] {
   const out: string[] = [];
   for (let ms = toUtc(first); ms <= toUtc(last); ms += DAY_MS) out.push(fromUtc(ms));
@@ -164,11 +169,15 @@ export function formatTimeIn(iso: string, zone: string, onDay?: string): string 
   return `${time} ${zoneAbbreviation(instant, zone)}${hint}`;
 }
 
-/** The start time in the viewer's zone followed by CET and EST, skipping repeats. */
-export function formatStartTimes(iso: string, localZone: string): string[] {
-  const local = isoToZoned(iso, localZone);
+/**
+ * The start time in the viewer's zone followed by CET and EST, skipping repeats. Each gets a
+ * day hint when it falls on another day than `scheduledOn` (the event's day), or, without
+ * one, than the local time's day.
+ */
+export function formatStartTimes(iso: string, localZone: string, scheduledOn?: string | null): string[] {
+  const onDay = scheduledOn || isoToZoned(iso, localZone).day;
   const zones = [localZone, ...REFERENCE_ZONES.map((r) => r.zone).filter((z) => z !== localZone)];
-  return zones.map((zone, i) => formatTimeIn(iso, zone, i === 0 ? undefined : local.day));
+  return zones.map((zone) => formatTimeIn(iso, zone, onDay));
 }
 
 /** A stored instant (ISO), shown as "19 Nov 2026, 14:05" in the viewer's zone. */

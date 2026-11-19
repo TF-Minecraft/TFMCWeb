@@ -34,11 +34,13 @@ The `0012_lore_panel.sql` migration still runs everywhere, so production gets th
 | `/lore/characters`, `/[id]` | Profiles: status, summary, notes, a face (uploaded skin or linked Minecraft name), affiliations, relations, storylines, events, backlinks and history |
 | `/lore/organisations`, `/[id]` | Factions and organisations: kind, game faction, members with roles, relations, backlinks and history |
 | `/lore/storylines`, `/[id]` | Status, involved characters, organisations and locations, and the ordered event list with inline "add event" |
-| `/lore/events/[id]` | Date with each roster member's availability for that day, optional start time (local time, with CET and EST shown), or "waiting on"; location, characters, helpers, outcome and history |
+| `/lore/events/[id]` | Date with each roster member's availability for that day, optional start time (in my time zone, with CET and EST shown), or "waiting on"; location, characters, helpers, outcome and history |
 | `/lore/calendar` | Month grid with events and Full/Partial counts, a day panel, unscheduled events, my weekly defaults, day and week overrides, notification mode and time zone |
 | `/lore/map` | Lore locations on the main map. Clicking a pin copies `/tp x y z` (`~` when y is unset). Locations are added by clicking the map. |
 | `/lore/team` | Roster, leads, add and remove |
 | `/lore/deleted` | Restore soft-deleted records |
+
+Times are shown and entered in the time zone saved on the calendar page, else the browser's. The overview's "today" follows the same zone.
 
 Long-text fields (`summary`, `notes`, `outcome`) can hold links written as `[[kind:id|Label]]`; typing `[[` opens the picker. Each save rebuilds `lore_mentions`, which feeds the "Mentioned in" lists.
 

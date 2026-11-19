@@ -96,14 +96,15 @@ def _png(data: bytes | None) -> Response:
 
 def _access(request: Request) -> dict[str, Any]:
     if not flag.enabled():
-        return {"enabled": False, "access": False, "can_manage_team": False, "user": None}
+        return {"enabled": False, "signed_in": False, "access": False, "can_manage_team": False, "user": None}
     try:
         user = current_user(request, _config())
     except HTTPException:
-        return {"enabled": True, "access": False, "can_manage_team": False, "user": None}
+        return {"enabled": True, "signed_in": False, "access": False, "can_manage_team": False, "user": None}
     viewer = people.viewer(user)
     return {
         "enabled": True,
+        "signed_in": True,
         "access": viewer.access,
         "can_manage_team": viewer.access and viewer.can_manage_team,
         "user": viewer.public() if viewer.access else None,
@@ -122,8 +123,11 @@ async def get_access(request: Request, response: Response):
 
 
 @_gated.get("/overview")
-async def get_overview(viewer: people.Viewer = Depends(_reader)):
-    return await _call(overview.overview, viewer)
+async def get_overview(
+    today: str | None = Query(None, max_length=10),
+    viewer: people.Viewer = Depends(_reader),
+):
+    return await _call(overview.overview, viewer, None, today)
 
 
 @_gated.get("/search")

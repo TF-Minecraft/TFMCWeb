@@ -57,6 +57,8 @@ export type LoreUser = { user_id: number; name: string; is_staff: boolean; is_le
 
 export type LoreAccess = {
   enabled: boolean;
+  /** False also when the flag is off; check `enabled` first. */
+  signed_in: boolean;
   access: boolean;
   can_manage_team: boolean;
   user: LoreUser | null;
@@ -466,8 +468,9 @@ function qs(params: Record<string, string | number | boolean | null | undefined>
 export function getLoreAccess(): Promise<LoreAccess> {
   return loreRequest("/access");
 }
-export function getOverview(): Promise<Overview> {
-  return loreRequest("/overview");
+/** `today` is the browser's day; the server prefers the viewer's saved time zone. */
+export function getOverview(today?: string): Promise<Overview> {
+  return loreRequest(`/overview${qs({ today })}`);
 }
 export async function searchLore(q: string, kinds: EntityKind[] = [], limit = 12): Promise<SearchResult[]> {
   const data = await loreRequest<{ results: SearchResult[] }>(`/search${qs({ q, kinds: kinds.join(","), limit })}`);

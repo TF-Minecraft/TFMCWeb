@@ -21,7 +21,7 @@ MAX_DAYS = 62
 NOTE_MAX = 200
 
 
-def _day(value: Any, code: str = "bad_day") -> date:
+def parse_day(value: Any, code: str = "bad_day") -> date:
     if isinstance(value, date):
         return value
     if not isinstance(value, str):
@@ -34,7 +34,7 @@ def _day(value: Any, code: str = "bad_day") -> date:
 
 def day_range(start: Any, end: Any) -> tuple[date, date]:
     """A validated inclusive range of at most 62 days."""
-    first, last = _day(start, "bad_range"), _day(end, "bad_range")
+    first, last = parse_day(start, "bad_range"), parse_day(end, "bad_range")
     if first > last:
         raise bad("bad_range")
     if (last - first).days + 1 > MAX_DAYS:
@@ -130,6 +130,11 @@ def _settings(conn: database.Connection, user_id: int) -> dict[str, Any]:
     }
 
 
+def saved_timezone(viewer: Viewer) -> str | None:
+    with database.connect() as conn:
+        return _settings(conn, viewer.user_id)["timezone"]
+
+
 def _on_roster(conn: database.Connection, viewer: Viewer) -> bool:
     """Members are always on the roster; staff join it once they have a profile."""
     if viewer.is_member:
@@ -196,7 +201,7 @@ def set_days(viewer: Viewer, data: Any) -> dict[str, Any]:
     for entry in entries:
         if not isinstance(entry, dict):
             raise bad("bad_days")
-        wanted[_day(entry.get("day"))] = (_status(entry.get("status")), _note(entry.get("note")))
+        wanted[parse_day(entry.get("day"))] = (_status(entry.get("status")), _note(entry.get("note")))
     cleared = sorted(day for day, (status, _) in wanted.items() if status is None)
     rows = [(viewer.user_id, day, status, note) for day, (status, note) in sorted(wanted.items()) if status]
     with database.connect() as conn:
@@ -305,7 +310,7 @@ def _calendar_event(row: dict) -> dict:
 
 def roster_on(day: Any) -> list[dict]:
     """Every roster member's status on one day, for the event date picker."""
-    target = _day(day)
+    target = parse_day(day)
     with database.connect() as conn:
         people = roster(conn)
         weekly, overrides = _load(conn, [p["user_id"] for p in people], target, target)

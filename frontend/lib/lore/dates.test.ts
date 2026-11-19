@@ -66,4 +66,12 @@ describe("time zones", () => {
     ]);
     expect(formatStartTimes("2026-11-20T18:00:00Z", "Europe/Berlin")).toEqual(["19:00 CET", "13:00 EST"]);
   });
+
+  it("flags the local time too when it falls on another day than the event's", () => {
+    // Planned in New York for the evening of 20 Nov; seen from Berlin it is the next morning.
+    expect(formatStartTimes("2026-11-21T01:00:00Z", "Europe/Berlin", "2026-11-20")).toEqual([
+      "02:00 CET (Sat 21 Nov)",
+      "20:00 EST",
+    ]);
+  });
 });

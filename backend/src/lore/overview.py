@@ -1,8 +1,9 @@
 """The panel's front page: what is coming up, what still needs a date, recent changes, my week."""
 from __future__ import annotations
 
-from datetime import date, timedelta
+from datetime import UTC, date, datetime, timedelta
 from typing import Any
+from zoneinfo import ZoneInfo
 
 from src import database
 
@@ -15,8 +16,24 @@ UNSCHEDULED_LIMIT = 20
 RECENT_LIMIT = 25
 
 
-def overview(viewer: Viewer, today: date | None = None) -> dict[str, Any]:
-    today = today or date.today()
+def viewer_today(viewer: Viewer, browser_today: Any = None, now: datetime | None = None) -> date:
+    """Today for the viewer: in their saved time zone, else the browser's day, else UTC.
+
+    The browser's day is only trusted within a day of UTC, which every real zone is.
+    """
+    now = now or datetime.now(UTC)
+    zone = availability.saved_timezone(viewer)
+    if zone:
+        return now.astimezone(ZoneInfo(zone)).date()
+    if browser_today:
+        day = availability.parse_day(browser_today)
+        if abs((day - now.date()).days) <= 1:
+            return day
+    return now.date()
+
+
+def overview(viewer: Viewer, today: date | None = None, browser_today: Any = None) -> dict[str, Any]:
+    today = today or viewer_today(viewer, browser_today)
     calendar = availability.calendar(today, today + timedelta(days=UPCOMING_DAYS - 1))
     with database.connect() as conn:
         recent = [

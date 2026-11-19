@@ -125,7 +125,9 @@ export default function MonthGrid({
                 <ul className="hidden min-w-0 flex-col gap-0.5 sm:flex">
                   {dayEvents.map((event) => {
                     const time = shortStartTime(event.starts_at, zone, event.scheduled_on);
-                    const times = event.starts_at ? formatStartTimes(event.starts_at, zone).join(" · ") : "";
+                    const times = event.starts_at
+                      ? formatStartTimes(event.starts_at, zone, event.scheduled_on).join(" · ")
+                      : "";
                     return (
                       <li key={event.id} className="min-w-0">
                         <Link

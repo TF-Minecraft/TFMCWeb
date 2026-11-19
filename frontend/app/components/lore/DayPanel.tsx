@@ -113,7 +113,7 @@ export default function DayPanel({
                   </span>
                   {event.starts_at ? (
                     <span className="text-xs text-[var(--tfmc-cream)]">
-                      {formatStartTimes(event.starts_at, zone).join(" · ")}
+                      {formatStartTimes(event.starts_at, zone, event.scheduled_on).join(" · ")}
                     </span>
                   ) : (
                     <span className="text-xs text-[var(--tfmc-stone)]">No start time</span>

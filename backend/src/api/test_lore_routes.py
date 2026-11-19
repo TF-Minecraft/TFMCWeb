@@ -3,7 +3,8 @@ from __future__ import annotations
 
 import io
 import os
-from datetime import date, timedelta
+from datetime import UTC, date, datetime, timedelta
+from zoneinfo import ZoneInfo
 
 import pytest
 from fastapi import FastAPI
@@ -116,10 +117,11 @@ def skin_png(color=(200, 30, 30, 255)) -> bytes:
 
 def test_access_answers_everyone_without_401(client):
     client.cookies.clear()
-    assert ok(client.get("/lore/access")) == {"enabled": True, "access": False, "can_manage_team": False,
-                                                "user": None}
+    assert ok(client.get("/lore/access")) == {"enabled": True, "signed_in": False, "access": False,
+                                                "can_manage_team": False, "user": None}
     player = Person(client, "player")
-    assert ok(player.get("/access"))["access"] is False
+    body = ok(player.get("/access"))
+    assert body["signed_in"] is True and body["access"] is False and body["user"] is None
     member = Person(client, "helper", member=True)
     body = ok(member.get("/access"))
     assert body["access"] is True and body["can_manage_team"] is False
@@ -148,7 +150,8 @@ def test_flag_off_hides_everything(client, monkeypatch, env):
     member = Person(client, "helper", member=True)
     for name, value in env.items():
         monkeypatch.setenv(name, value)
-    assert ok(member.get("/access")) == {"enabled": False, "access": False, "can_manage_team": False, "user": None}
+    assert ok(member.get("/access")) == {"enabled": False, "signed_in": False, "access": False,
+                                         "can_manage_team": False, "user": None}
     assert member.get("/characters").status_code == 404
     assert member.get("/overview").status_code == 404
     assert client.get("/lore/staff/notifications", headers=STAFF_KEY).status_code == 404
@@ -466,6 +469,21 @@ def test_staff_join_roster_with_a_profile(client):
     ok(staff.put("/availability/me/weekly", {"weekly": [{"status": "full", "note": ""}] * 7}))
     grid = ok(member.get(f"/availability?from={TODAY}&to={TODAY}"))
     assert {p["user_id"] for p in grid["people"]} == {member.user_id, staff.user_id}
+
+
+def test_overview_today_follows_the_viewer(client):
+    member = Person(client, "helper", member=True)
+    utc_today = datetime.now(UTC).date()
+    tomorrow = (utc_today + timedelta(days=1)).isoformat()
+    assert ok(member.get("/overview"))["today"] == utc_today.isoformat()
+    assert ok(member.get(f"/overview?today={tomorrow}"))["today"] == tomorrow
+    far = (utc_today + timedelta(days=5)).isoformat()
+    assert ok(member.get(f"/overview?today={far}"))["today"] == utc_today.isoformat()
+    assert error(member.get("/overview?today=soon"), 400) == "bad_day"
+
+    ok(member.put("/me/settings", {"timezone": "Pacific/Kiritimati"}))
+    zoned = datetime.now(ZoneInfo("Pacific/Kiritimati")).date().isoformat()
+    assert ok(member.get(f"/overview?today={utc_today.isoformat()}"))["today"] == zoned
 
 
 def test_calendar_and_overview(client):

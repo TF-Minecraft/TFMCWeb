@@ -13,7 +13,6 @@ import {
   type SearchResult,
   type StorylineDetail,
 } from "@/lib/lore/api";
-import { browserTimeZone } from "@/lib/lore/dates";
 import { moveItem, sameOrder, sortByDate } from "@/lib/lore/eventPlan";
 import AdminColumn from "../../../components/admin/AdminColumn";
 import { chipClass, errorClass, inputClass, mutedClass, pagerClass } from "../../../components/admin/ui";
@@ -26,6 +25,7 @@ import QuickCreate from "../../../components/lore/QuickCreate";
 import SaveBar from "../../../components/lore/SaveBar";
 import { statusLabel } from "../../../components/lore/StatusBadge";
 import { useEntityEditor } from "../../../components/lore/useEntityEditor";
+import { useLoreTimeZone } from "../../../components/lore/useLoreTimeZone";
 
 type MemberKind = "character" | "organisation" | "location";
 
@@ -265,6 +265,7 @@ function EventsSection({
   onChange: (next: StorylineDetail) => void;
   onCreated: () => void;
 }) {
+  const zone = useLoreTimeZone();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const events = detail.events;
@@ -306,7 +307,7 @@ function EventsSection({
         ) : (
           <EventList
             events={events}
-            timeZone={browserTimeZone()}
+            timeZone={zone}
             disabled={busy}
             onMove={locked ? undefined : (index, delta) => void order(moveItem(ids, index, delta))}
           />

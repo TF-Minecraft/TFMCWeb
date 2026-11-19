@@ -17,7 +17,7 @@ import {
   type Overview,
   type RecentEdit,
 } from "@/lib/lore/api";
-import { browserTimeZone, formatDay, formatInstant, formatStartTimes } from "@/lib/lore/dates";
+import { browserTimeZone, formatDay, formatInstant, formatStartTimes, todayIn } from "@/lib/lore/dates";
 
 const ACTION_LABEL: Record<string, string> = {
   created: "created",
@@ -70,7 +70,7 @@ export default function LoreOverviewPage() {
 
   useEffect(() => {
     let live = true;
-    getOverview()
+    getOverview(todayIn())
       .then((overview) => live && setData(overview))
       .catch((err) => live && setError(loreErrorMessage(err)));
     return () => {
@@ -133,7 +133,7 @@ export default function LoreOverviewPage() {
                       <p className="text-sm font-semibold text-[var(--tfmc-cream)]">{formatDay(event.scheduled_on)}</p>
                       {event.starts_at ? (
                         <p className="text-xs text-[var(--tfmc-stone)]">
-                          {formatStartTimes(event.starts_at, zone).join(" · ")}
+                          {formatStartTimes(event.starts_at, zone, event.scheduled_on).join(" · ")}
                         </p>
                       ) : null}
                     </div>

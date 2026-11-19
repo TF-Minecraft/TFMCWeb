@@ -50,7 +50,7 @@ export default function LoreFrame({ children }: { children: React.ReactNode }) {
       </Notice>
     );
   else if (!access!.enabled) body = <Notice>The lore panel isn’t available here yet.</Notice>;
-  else if (!access!.user)
+  else if (!access!.signed_in)
     body = (
       <Notice>
         <a href={discordSignInUrl("/lore")} className="text-[var(--tfmc-accent)] underline-offset-2 hover:underline">

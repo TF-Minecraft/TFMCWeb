@@ -12,7 +12,7 @@ import {
   type EventDetail,
   type SearchResult,
 } from "@/lib/lore/api";
-import { browserTimeZone, formatDay, formatStartTimes, isoToZoned, todayIn, zonedToIso } from "@/lib/lore/dates";
+import { addDays, dayOffset, formatDay, formatStartTimes, isoToZoned, todayIn, zonedToIso } from "@/lib/lore/dates";
 import { eventProblem } from "@/lib/lore/eventPlan";
 import AdminColumn from "../../../components/admin/AdminColumn";
 import {
@@ -31,6 +31,7 @@ import LoreTextEditor from "../../../components/lore/LoreTextEditor";
 import SaveBar from "../../../components/lore/SaveBar";
 import { statusLabel } from "../../../components/lore/StatusBadge";
 import { useEntityEditor } from "../../../components/lore/useEntityEditor";
+import { useLoreTimeZone } from "../../../components/lore/useLoreTimeZone";
 
 export default function EventPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -48,6 +49,7 @@ export default function EventPage({ params }: { params: Promise<{ id: string }> 
 function EventEditor({ id }: { id: number }) {
   const editor = useEntityEditor("event", id);
   const { detail } = editor;
+  const zone = useLoreTimeZone();
   // Labels of storylines and locations picked but not saved yet, by "kind:id".
   const [picked, setPicked] = useState<Record<string, string>>({});
 
@@ -60,7 +62,6 @@ function EventEditor({ id }: { id: number }) {
   }
 
   const locked = Boolean(detail.deleted_at);
-  const zone = browserTimeZone();
   const status = editor.value("status");
   const day = editor.value("scheduled_on");
   const startsAt = editor.value("starts_at");
@@ -85,16 +86,22 @@ function EventEditor({ id }: { id: number }) {
     editor.set("starts_at", same ? detail.starts_at : iso);
   }
 
+  /** Moving the date moves the start by as many days, so a start past midnight stays past midnight. */
   function changeDay(next: string) {
     const nextDay = next || null;
     editor.set("scheduled_on", nextDay);
     if (!nextDay) setStart(null);
-    else if (startsAt) setStart(zonedToIso(nextDay, isoToZoned(startsAt, zone).time, zone));
+    else if (startsAt) {
+      const local = isoToZoned(startsAt, zone);
+      const startDay = day ? addDays(local.day, dayOffset(day, nextDay)) : nextDay;
+      setStart(zonedToIso(startDay, local.time, zone));
+    }
   }
 
+  /** A new time keeps the start's own local day, which can be the day after the event's date. */
   function changeTime(next: string) {
     if (!next || !day) setStart(null);
-    else setStart(zonedToIso(day, next, zone));
+    else setStart(zonedToIso(startsAt ? isoToZoned(startsAt, zone).day : day, next, zone));
   }
 
   function save() {
@@ -243,7 +250,9 @@ function EventEditor({ id }: { id: number }) {
             </Field>
           </div>
           {startsAt ? (
-            <p className="text-sm text-[var(--tfmc-cream)]">Starts {formatStartTimes(startsAt, zone).join(" · ")}</p>
+            <p className="text-sm text-[var(--tfmc-cream)]">
+              Starts {formatStartTimes(startsAt, zone, day).join(" · ")}
+            </p>
           ) : null}
           <Field label="Waiting on" hint={status === "waiting" ? "Needed while the event is waiting." : undefined}>
             <input
