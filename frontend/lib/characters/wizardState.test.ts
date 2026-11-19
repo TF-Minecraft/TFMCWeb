@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { CatalogStage, CreationCatalog } from "./api";
 import { characterNameError } from "../textValidation";
 import {
+  aliasError,
   clueContinueBlockReason,
   dependencyMet,
   interactiveProgress,
@@ -88,6 +89,39 @@ describe("toCreateBody", () => {
     draft.class_id = "warrior";
     const body = toCreateBody(draft, { catalog: cat });
     expect(body.traits).toEqual(["wooden_claw_arm", "blind"]);
+  });
+});
+
+describe("alias step", () => {
+  const aliasStage = { id: "creation_alias_set_stage", type: "setter", target: "alias" } as CatalogStage;
+
+  it("needs an alias that follows the /char alias rules, or the real-name box", () => {
+    const cat = catalog();
+    const draft = { ...newDraft(cat), name: "Thalia Hawthorn" };
+    expect(stageCanContinue(aliasStage, draft, cat)).toBe(false);
+    expect(stageCanContinue(aliasStage, { ...draft, alias: "Lia Thorn" }, cat)).toBe(true);
+    expect(stageCanContinue(aliasStage, { ...draft, alias: "Lia 2" }, cat)).toBe(false);
+    expect(stageCanContinue(aliasStage, { ...draft, alias_same: true }, cat)).toBe(true);
+    expect(aliasError("José, the Tall", cat)).toBeNull();
+    expect(aliasError("Lia 2", cat)).toBe("Alias contains disallowed character: 2");
+    expect(aliasError("Al", cat)).toBe("Alias must be at least 3 characters.");
+    expect(aliasError("   ", cat)).toBe("Type an alias, or tick the box to show your real name.");
+  });
+
+  it("uses the catalog's alias rules", () => {
+    const cat = { ...catalog(), validation: { alias: { min_length: 2, max_length: 4, allowed_chars: "ab" } } };
+    expect(aliasError("AB", cat)).toBeNull();
+    expect(aliasError("abc", cat)).toBe("Alias contains disallowed character: c");
+    expect(aliasError("ababa", cat)).toBe("Alias cannot exceed 4 characters.");
+  });
+
+  it("sends the alias only when it differs from the real name and the box is not ticked", () => {
+    const cat = catalog();
+    const draft = { ...newDraft(cat), name: "Thalia", age: "20", alias: "  Lia   Thorn " };
+    expect(toCreateBody(draft, { catalog: cat }).alias).toBe("Lia Thorn");
+    expect(toCreateBody({ ...draft, alias_same: true }, { catalog: cat }).alias).toBeUndefined();
+    expect(toCreateBody({ ...draft, alias: "thalia" }, { catalog: cat }).alias).toBeUndefined();
+    expect(toCreateBody({ ...draft, alias: "" }, { catalog: cat }).alias).toBeUndefined();
   });
 });
 

@@ -28,6 +28,10 @@ export type WizardDraft = {
   clues: string[];
   /** Separate from name; hex/§ tokens for persona NameColour. */
   name_colours: string[];
+  /** The name other players see (TAB, chat, faction list); the real name stays private. */
+  alias: string;
+  /** Ticked: no alias, other players see the real name. */
+  alias_same: boolean;
 };
 
 export type StageCopy = {
@@ -53,7 +57,29 @@ export function newDraft(catalog: CreationCatalog): WizardDraft {
     traitIds: [],
     clues: [],
     name_colours: [],
+    alias: "",
+    alias_same: false,
   };
+}
+
+const DEFAULT_ALIAS_CHARS = "abcdefghijklmnopqrstuvwxyz.,-'' áéíóú";
+
+/** Why the alias breaks RPCharacters' /char alias rules, or null. Letters match either case. */
+export function aliasError(alias: string, catalog: CreationCatalog): string | null {
+  const rules = catalog.validation?.alias;
+  const min = Number(rules?.min_length ?? 3) || 3;
+  const max = Number(rules?.max_length ?? 24) || 24;
+  const allowed = new Set(
+    Array.from(rules?.allowed_chars || DEFAULT_ALIAS_CHARS, (ch) => (/\p{L}/u.test(ch) ? ch.toLowerCase() : ch)),
+  );
+  const text = alias.trim().replace(/\s+/g, " ");
+  if (!text) return "Type an alias, or tick the box to show your real name.";
+  if (text.length < min) return `Alias must be at least ${min} characters.`;
+  if (text.length > max) return `Alias cannot exceed ${max} characters.`;
+  for (const ch of text) {
+    if (!allowed.has(/\p{L}/u.test(ch) ? ch.toLowerCase() : ch)) return `Alias contains disallowed character: ${ch}`;
+  }
+  return null;
 }
 
 export function isRealAgeStage(stage: CatalogStage): boolean {
@@ -830,6 +856,9 @@ export function stageCanContinue(stage: CatalogStage, draft: WizardDraft, catalo
       const max = catalog.validation?.name?.max_length ?? 32;
       return characterNameError(draft.name, { minLen: min, maxLen: max }) === null;
     }
+    if (target === "alias") {
+      return draft.alias_same || aliasError(draft.alias, catalog) === null;
+    }
     if (target === "age") {
       const age = Number(draft.age);
       const min = catalog.validation?.age?.minimum ?? 1;
@@ -926,6 +955,10 @@ export function toCreateBody(
   }
   if (draft.eighteen === true || draft.eighteen === false) {
     body.eighteen = draft.eighteen;
+  }
+  const alias = draft.alias.trim().replace(/\s+/g, " ");
+  if (!draft.alias_same && alias && alias.toLowerCase() !== body.name.toLowerCase()) {
+    body.alias = alias;
   }
   const cap = Math.max(0, Math.min(8, Number(opts?.nameColourStops) || 0));
   if (cap > 0 && draft.name_colours.length > 0) {

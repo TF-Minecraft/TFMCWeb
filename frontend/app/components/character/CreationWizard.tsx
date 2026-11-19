@@ -31,6 +31,7 @@ import {
   resolveCalendarConfig,
 } from "../../../lib/characters/fantasyCalendar";
 import {
+  aliasError,
   clueContinueBlockReason,
   clueLengthBounds,
   cluesRequired,
@@ -230,6 +231,39 @@ function StageBody({
           maxStops={colourCap}
           lockedMessage="Only for donators"
         />
+      </div>
+    );
+  }
+
+  if (type === "setter" && target === "alias") {
+    const realName = draft.name.trim() || "your character";
+    const aliasErr = !draft.alias_same && draft.alias.trim().length > 0 ? aliasError(draft.alias, catalog) : null;
+    return (
+      <div className="flex flex-col gap-4">
+        <p className="text-base leading-relaxed text-[var(--tfmc-mist)]">
+          Your alias is the name other players see: in TAB, chat and the faction list. {realName} stays your
+          character&apos;s real name, which others only learn through roleplay.
+        </p>
+        <label className="flex flex-col gap-2">
+          <span className="text-sm text-[var(--tfmc-stone)]">Alias</span>
+          <input
+            value={draft.alias}
+            disabled={draft.alias_same}
+            onChange={(e) => setDraft({ ...draft, alias: e.target.value })}
+            placeholder="A nickname or title, e.g. Hooded Stranger"
+            className="rounded-sm border border-[color-mix(in_srgb,var(--tfmc-cream)_25%,transparent)] bg-[color-mix(in_srgb,var(--tfmc-forest)_40%,transparent)] px-3 py-2.5 text-[var(--tfmc-cream)] outline-none focus:border-[var(--tfmc-accent)] disabled:opacity-50"
+          />
+          {aliasErr ? <span className="text-xs text-[#e8a0a0]">{aliasErr}</span> : null}
+        </label>
+        <label className="flex items-center gap-2 text-sm text-[var(--tfmc-mist)]">
+          <input
+            type="checkbox"
+            checked={draft.alias_same}
+            onChange={(e) => setDraft({ ...draft, alias_same: e.target.checked })}
+          />
+          Show my real name instead
+        </label>
+        <p className="text-xs text-[var(--tfmc-stone)]">You can change it later in game with /char alias.</p>
       </div>
     );
   }
@@ -524,6 +558,13 @@ function StageBody({
           value={draft.name_colours.join(", ") || "Default"}
           onEdit={() => onJump("name")}
         />
+        {draft.alias_same || draft.alias.trim() ? (
+          <SummaryLine
+            label="Alias"
+            value={draft.alias_same ? "Same as the real name" : draft.alias.trim()}
+            onEdit={() => onJump("alias")}
+          />
+        ) : null}
         {!skipRealAge ? (
           <SummaryLine
             label="18+"
@@ -686,7 +727,7 @@ export default function CreationWizard({
     const i = stages.findIndex((s) => {
       const t = String(s.type || "").toLowerCase();
       const target = String(s.target || "").toLowerCase();
-      if (k === "name" || k === "age" || k === "description" || k === "real_age") {
+      if (k === "name" || k === "alias" || k === "age" || k === "description" || k === "real_age") {
         return t === "setter" && target === k;
       }
       if (k === "race" || k === "class") {

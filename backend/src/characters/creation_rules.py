@@ -21,6 +21,32 @@ def is_character_name(name: str) -> bool:
     )
 
 
+DEFAULT_ALIAS_CHARS = "abcdefghijklmnopqrstuvwxyz.,-'' áéíóú"
+
+
+def alias_error(alias: str, validation: dict[str, Any] | None = None) -> str | None:
+    """Why the alias breaks RPCharacters' /char alias rules, or None. Letters match either case."""
+    section = validation.get("alias") if isinstance(validation, dict) else None
+    section = section if isinstance(section, dict) else {}
+    try:
+        min_len = int(section.get("min_length", 3))
+        max_len = int(section.get("max_length", 24))
+    except (TypeError, ValueError):
+        min_len, max_len = 3, 24
+    allowed = section.get("allowed_chars")
+    if not isinstance(allowed, str) or not allowed:
+        allowed = DEFAULT_ALIAS_CHARS
+    if len(alias) < min_len:
+        return f"alias must be at least {min_len} characters"
+    if len(alias) > max_len:
+        return f"alias cannot exceed {max_len} characters"
+    allowed_set = {ch.lower() if ch.isalpha() else ch for ch in allowed}
+    for ch in alias:
+        if (ch.lower() if ch.isalpha() else ch) not in allowed_set:
+            return f"alias contains disallowed character: {ch}"
+    return None
+
+
 def dependency_met(
     dependency: Any,
     trait_ids: Iterable[str],

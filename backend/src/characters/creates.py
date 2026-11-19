@@ -15,7 +15,7 @@ from src.characters.creation_catalog import (
     require_synced_creation_catalog,
 )
 from src.characters.times import api_time, utcnow
-from src.characters.creation_rules import is_character_name, traits_error
+from src.characters.creation_rules import alias_error, is_character_name, traits_error
 from src.characters.roster import (
     count_alive,
     get_max_alive,
@@ -163,6 +163,7 @@ def _validate_and_normalize(
         raise CreateError(
             "name may only use letters, spaces, apostrophes, hyphens and full stops"
         )
+    alias = _normalize_alias(body.get("alias"), name, validation)
 
     from src.skins.codes import CodeError, normalize_realm_id
 
@@ -430,7 +431,24 @@ def _validate_and_normalize(
     }
     if name_colours:
         out["name_colours"] = name_colours
+    if alias:
+        out["alias"] = alias
     return out
+
+
+def _normalize_alias(raw: Any, name: str, validation: dict[str, Any]) -> str | None:
+    """The alias others will see, or None to show the real name (blank or the name again)."""
+    if raw is None:
+        return None
+    if not isinstance(raw, str):
+        raise CreateError("alias must be text")
+    alias = " ".join(raw.split())
+    if not alias or alias.lower() == name.lower():
+        return None
+    error = alias_error(alias, validation)
+    if error:
+        raise CreateError(error)
+    return alias
 
 
 def account_age_seconds(meta: dict[str, Any]) -> int:
@@ -620,7 +638,7 @@ def _pending_character_list_item(
         "create_id": data["id"],
         "realm_id": realm,
     }
-    for key in ("age", "birthday", "gender", "description", "clues"):
+    for key in ("alias", "age", "birthday", "gender", "description", "clues"):
         if key in payload and payload[key] is not None:
             item[key] = payload[key]
     item.update(enrich_pending_list_item(payload, catalog))
