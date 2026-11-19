@@ -22,6 +22,7 @@ This section is the product and technical reference for **TFMCWeb**. Technical d
    - [integrations/rail.md](integrations/rail.md) - staff rail network
    - [integrations/servers.md](integrations/servers.md) - staff plugin versions on Main and Dev
    - [integrations/luckperms.md](integrations/luckperms.md) - staff permission policy and plugin protocol
+   - [lore/README.md](lore/README.md) - staff lore panel: characters, storylines, events, availability, lore map
 3. [flows/journeys.md](flows/journeys.md) - end-to-end player and staff journeys
 4. [ops/local-dev.md](ops/local-dev.md) - run the site locally
 5. [ops/sheet-render.md](ops/sheet-render.md) - 3D review-sheet renderer (prod deploy + smoke)
