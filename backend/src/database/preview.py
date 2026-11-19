@@ -36,14 +36,15 @@ def tag(slug: str) -> str:
     return "provincesystem-preview:" + slug
 
 
-# Made by the preview's own migrations and never copied: the war notification outbox's identity
-# (copying Dev's row would clash with the preview's own, and the bot would take the preview for Dev).
-NOT_COPIED = ("schema_migrations", "war_notification_outbox")
+# Made by the preview's own migrations and never copied: the war and lore notification outboxes'
+# identities (copying Dev's row would clash with the preview's own, and the bot would take the
+# preview for Dev).
+NOT_COPIED = ("schema_migrations", "war_notification_outbox", "lore_notification_outbox")
 
 
 def site_tables(url: str) -> list[str]:
     """Dev's tables that a preview copies: all but Precedent, patch notes, the migration history
-    and the war notification outbox's identity."""
+    and the notification outboxes' identities."""
     with psycopg.connect(url) as conn:
         names = [row[0] for row in conn.execute(
             "SELECT tablename FROM pg_tables WHERE schemaname = 'public' ORDER BY tablename")]
