@@ -864,7 +864,11 @@ export function stageCanContinue(stage: CatalogStage, draft: WizardDraft, catalo
       return characterNameError(draft.name, { minLen: min, maxLen: max }) === null;
     }
     if (target === "alias") {
-      return draft.alias_same || aliasMeansRealName(draft.alias, draft.name, catalog) || aliasError(draft.alias, catalog) === null;
+      return (
+        draft.alias_same ||
+        aliasMeansRealName(draft.alias, draft.name, catalog) ||
+        aliasError(draft.alias, catalog) === null
+      );
     }
     if (target === "age") {
       const age = Number(draft.age);
@@ -964,7 +968,13 @@ export function toCreateBody(
     body.eighteen = draft.eighteen;
   }
   const alias = draft.alias.trim().replace(/\s+/g, " ");
-  if (!draft.alias_same && alias && !(opts?.catalog ? aliasMeansRealName(alias, body.name, opts.catalog) : alias.toLowerCase() === body.name.toLowerCase())) {
+  if (
+    !draft.alias_same &&
+    alias &&
+    !(opts?.catalog
+      ? aliasMeansRealName(alias, body.name, opts.catalog)
+      : alias.toLowerCase() === body.name.toLowerCase())
+  ) {
     body.alias = alias;
   }
   const cap = Math.max(0, Math.min(8, Number(opts?.nameColourStops) || 0));
