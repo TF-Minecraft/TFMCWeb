@@ -12,8 +12,10 @@ type Option = { type: "result"; result: SearchResult } | { type: "create"; label
 /**
  * A search box over lore records. Picking a result calls `onPick`; when `onCreate`
  * is given and a finished search finds no exact match, a “Create …” option makes a new
- * record. If `onPick` then fails, the new record is kept and the next try picks it
- * instead of creating another. `disabled` blocks picking while the caller is busy.
+ * record. If `onPick` then fails (throws, or returns false after showing its own error),
+ * the new record is kept and the next try picks it instead of creating another.
+ * `disabled` blocks picking while the caller is busy; `onBusyChange` tells the caller
+ * while a pick or create runs, so it can hold other edits to the list `onPick` extends.
  */
 export default function EntityPicker({
   kinds,
@@ -23,16 +25,18 @@ export default function EntityPicker({
   placeholder,
   autoFocus = false,
   disabled = false,
+  onBusyChange,
   className = "",
 }: {
   kinds: EntityKind[];
-  onPick: (result: SearchResult) => void | Promise<void>;
+  onPick: (result: SearchResult) => void | boolean | Promise<void | boolean>;
   onCreate?: (label: string) => Promise<SearchResult | void>;
   /** Keys ("kind:id") already chosen, hidden from the list. */
   exclude?: string[];
   placeholder?: string;
   autoFocus?: boolean;
   disabled?: boolean;
+  onBusyChange?: (busy: boolean) => void;
   className?: string;
 }) {
   const [query, setQuery] = useState("");
@@ -60,15 +64,17 @@ export default function EntityPicker({
     if (disabled || busy) return;
     setError("");
     setBusy(true);
+    onBusyChange?.(true);
     try {
-      if (option.type === "result") await onPick(option.result);
-      else if (onCreate) {
+      if (option.type === "result") {
+        if ((await onPick(option.result)) === false) return;
+      } else if (onCreate) {
         const kept = made.current;
         const record =
           kept && kept.label.trim().toLowerCase() === option.label.toLowerCase() ? kept : await onCreate(option.label);
         if (record) {
           made.current = record;
-          await onPick(record);
+          if ((await onPick(record)) === false) return;
         }
         made.current = null;
       }
@@ -79,6 +85,7 @@ export default function EntityPicker({
       setError(loreErrorMessage(err));
     } finally {
       setBusy(false);
+      onBusyChange?.(false);
       inputRef.current?.focus();
     }
   }

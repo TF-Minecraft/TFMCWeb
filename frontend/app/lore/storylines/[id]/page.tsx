@@ -169,12 +169,15 @@ function MembersSection({
   links: LinkSaver<StorylineDetail>;
 }) {
   const { busy } = links;
+  // While a picker creates or adds a record, the list it extends is held.
+  const [picking, setPicking] = useState(false);
+  const held = busy || picking;
   const error = links.errorFor("members");
   const members = detail.members;
   const chosen = members.map((m) => `${m.kind}:${m.id}`);
 
   async function save(next: Ref[]) {
-    await links.run("members", () =>
+    return links.run("members", () =>
       setStorylineMembers(
         detail.id,
         next.map((m) => ({ kind: m.kind, id: m.id })),
@@ -183,8 +186,9 @@ function MembersSection({
   }
 
   async function add(result: SearchResult) {
-    if (busy || chosen.includes(`${result.kind}:${result.id}`)) return;
-    await save([...members, { kind: result.kind, id: result.id, label: result.label }]);
+    if (busy) return false;
+    if (chosen.includes(`${result.kind}:${result.id}`)) return;
+    return save([...members, { kind: result.kind, id: result.id, label: result.label }]);
   }
 
   function creator(kind: MemberKind) {
@@ -217,7 +221,7 @@ function MembersSection({
                         <button
                           type="button"
                           className="ml-1 text-[var(--tfmc-stone)] hover:text-[var(--tfmc-cream)] disabled:opacity-50"
-                          disabled={busy}
+                          disabled={held}
                           aria-label={`Remove ${item.label}`}
                           onClick={() => void save(members.filter((m) => !(m.kind === item.kind && m.id === item.id)))}
                         >
@@ -234,7 +238,8 @@ function MembersSection({
                     kinds={[group.kind as EntityKind]}
                     exclude={chosen}
                     placeholder={group.placeholder}
-                    disabled={busy}
+                    disabled={held}
+                    onBusyChange={setPicking}
                     onPick={add}
                     onCreate={creator(group.kind)}
                   />

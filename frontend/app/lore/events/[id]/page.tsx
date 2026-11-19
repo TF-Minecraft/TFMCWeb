@@ -362,12 +362,15 @@ function CharactersSection({
   links: LinkSaver<EventDetail>;
 }) {
   const { busy, run } = links;
+  // While the picker creates or adds a character, the list it extends is held.
+  const [picking, setPicking] = useState(false);
   const error = links.errorFor("characters");
   const ids = detail.characters.map((c) => c.id);
 
   async function add(result: SearchResult) {
-    if (busy || ids.includes(result.id)) return;
-    await run("characters", () => setEventCharacters(detail.id, [...ids, result.id]));
+    if (busy) return false;
+    if (ids.includes(result.id)) return;
+    return run("characters", () => setEventCharacters(detail.id, [...ids, result.id]));
   }
 
   async function createCharacter(label: string): Promise<SearchResult> {
@@ -389,7 +392,7 @@ function CharactersSection({
                   <button
                     type="button"
                     className="ml-1 text-[var(--tfmc-stone)] hover:text-[var(--tfmc-cream)] disabled:opacity-50"
-                    disabled={busy}
+                    disabled={busy || picking}
                     aria-label={`Remove ${item.label}`}
                     onClick={() =>
                       void run("characters", () =>
@@ -413,6 +416,7 @@ function CharactersSection({
             exclude={ids.map((x) => `character:${x}`)}
             placeholder="Add a character…"
             disabled={busy}
+            onBusyChange={setPicking}
             onPick={add}
             onCreate={createCharacter}
           />
