@@ -253,6 +253,7 @@ function StageBody({
           <input
             value={draft.alias}
             disabled={draft.alias_same}
+            aria-invalid={Boolean(aliasErr)}
             onChange={(e) => setDraft({ ...draft, alias: e.target.value })}
             placeholder="A nickname or title, e.g. Hooded Stranger"
             className="rounded-sm border border-[color-mix(in_srgb,var(--tfmc-cream)_25%,transparent)] bg-[color-mix(in_srgb,var(--tfmc-forest)_40%,transparent)] px-3 py-2.5 text-[var(--tfmc-cream)] outline-none focus:border-[var(--tfmc-accent)] disabled:opacity-50"
@@ -565,7 +566,11 @@ function StageBody({
         {draft.alias_same || draft.alias.trim() ? (
           <SummaryLine
             label="Alias"
-            value={draft.alias_same ? "Same as the real name" : draft.alias.trim()}
+            value={
+              draft.alias_same || aliasMeansRealName(draft.alias, draft.name, catalog)
+                ? "Same as the real name"
+                : draft.alias.trim().replace(/\s+/g, " ")
+            }
             onEdit={() => onJump("alias")}
           />
         ) : null}
