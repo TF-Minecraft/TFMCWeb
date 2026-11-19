@@ -15,6 +15,7 @@ if str(_BACKEND) not in sys.path:
     sys.path.insert(0, str(_BACKEND))
 
 from src.characters.creation_rules import (  # noqa: E402
+    alias_error,
     dependency_met,
     is_character_name,
     passes_account_age_gate,
@@ -106,6 +107,22 @@ class NameTests(unittest.TestCase):
     def test_digits_underscores_and_leading_punctuation_fail(self) -> None:
         for name in ("Ar1a", "Ar_ia", "-Aria", "'Aria", "", "Aria!"):
             self.assertFalse(is_character_name(name), name)
+
+
+class AliasTests(unittest.TestCase):
+    def test_aliases_follow_the_char_alias_rules(self) -> None:
+        self.assertIsNone(alias_error("Hooded Stranger"))
+        self.assertIsNone(alias_error("José, the Tall"))
+        self.assertEqual(alias_error("Hooded 2"), "alias contains disallowed character: 2")
+        self.assertEqual(alias_error("Al"), "alias must be at least 3 characters")
+        self.assertEqual(alias_error("a" * 25), "alias cannot exceed 24 characters")
+
+    def test_catalog_rules_win_over_the_defaults(self) -> None:
+        validation = {"alias": {"min_length": 2, "max_length": 5, "allowed_chars": "ab "}}
+        self.assertIsNone(alias_error("AB", validation))
+        self.assertEqual(alias_error("abc", validation), "alias contains disallowed character: c")
+        self.assertEqual(alias_error("ababab", validation), "alias cannot exceed 5 characters")
+        self.assertIsNone(alias_error("Lia", {"alias": "broken"}))
 
 
 class DependencyTests(unittest.TestCase):
@@ -245,6 +262,19 @@ class CreateCheckTests(unittest.TestCase):
 
         out = _validate_and_normalize("player-uuid", self._body(), realm_id="main")
         self.assertEqual(out["all_traits"], ["strong", "str1"])
+
+    def test_alias_is_kept_unless_blank_or_the_real_name(self) -> None:
+        from src.characters.creates import _validate_and_normalize
+
+        out = _validate_and_normalize("player-uuid", self._body(alias="  Hooded   Stranger "), realm_id="main")
+        self.assertEqual(out["alias"], "Hooded Stranger")
+        for same in (None, "", "   ", "aria", " SAME "):
+            out = _validate_and_normalize("player-uuid", self._body(alias=same), realm_id="main")
+            self.assertNotIn("alias", out, repr(same))
+        out = _validate_and_normalize("player-uuid", self._body(), realm_id="main")
+        self.assertNotIn("alias", out, "older clients send no alias")
+        self.assertEqual(self._rejection(alias="Hooded 2"), "alias contains disallowed character: 2")
+        self.assertEqual(self._rejection(alias=7), "alias must be text")
 
     def test_rejections_match_the_plugin_rules(self) -> None:
         self.assertIn("letters, spaces, apostrophes", self._rejection(name="Ar1a"))

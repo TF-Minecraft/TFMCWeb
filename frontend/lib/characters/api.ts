@@ -196,6 +196,8 @@ export type CatalogTrait = {
 
 export type CatalogValidation = {
   name?: { min_length?: number; max_length?: number };
+  /** RPCharacters' /char alias rules; same_word is what the game takes for "show my real name". */
+  alias?: { min_length?: number; max_length?: number; allowed_chars?: string; same_word?: string };
   age?: { minimum?: number };
   calendar?: { year_offset?: number; era_suffix?: string };
   description?: { min_length?: number; max_length?: number };
@@ -386,6 +388,8 @@ export async function listCharacters(sessionToken: string): Promise<CharacterLis
 export type CreateCharacterBody = {
   client_request_id?: string;
   name: string;
+  /** The name other players see; omitted to show the real name. */
+  alias?: string;
   age: number;
   /** Fantasy ISO birthday (YYYY-MM-DD); salted from client_request_id + age. */
   birthday?: string;
