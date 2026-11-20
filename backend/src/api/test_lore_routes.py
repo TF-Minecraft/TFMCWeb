@@ -411,6 +411,119 @@ def test_link_player(client):
     assert detail["player_name"] is None and detail["has_face"] is False
 
 
+def roster_character(player_uuid, character_id, name, *, status="ALIVE", realm="main"):
+    with database.connect() as conn:
+        conn.execute(
+            "INSERT INTO character_roster (player_uuid, realm_id, character_id, name, status, updated_at) "
+            "VALUES (%s, %s, %s, %s, %s, now())",
+            (player_uuid, realm, character_id, name, status),
+        )
+
+
+def player_uuid_of(minecraft):
+    with database.connect() as conn:
+        return conn.execute(
+            "SELECT player_uuid FROM discord_links WHERE minecraft_name = %s", (minecraft,)
+        ).fetchone()["player_uuid"]
+
+
+def test_search_finds_player_characters_only_when_asked(client):
+    member = Person(client, "helper", member=True)
+    Person(client, "linked", minecraft="Tamsin")
+    uuid = player_uuid_of("Tamsin")
+    roster_character(uuid, "c1", "Brannoc Vale")
+    roster_character(uuid, "c2", "Brannoc the Dead", status="DEAD")
+    roster_character(uuid, "c3", "Brannoc Elsewhere", realm="tutorial")
+    ok(member.post("/characters", {"name": "Brannoc"}))
+
+    plain = ok(member.get("/search?q=brannoc&kinds=character"))["results"]
+    assert [r["label"] for r in plain] == ["Brannoc"]
+
+    found = ok(member.get("/search?q=brannoc&kinds=character&players=true"))["results"]
+    assert [(r["label"], r["id"] > 0) for r in found] == [
+        ("Brannoc", True), ("Brannoc the Dead", False), ("Brannoc Vale", False),
+    ]
+    dead, vale = found[1], found[2]
+    assert dead["status"] == "dead" and dead["sublabel"] == "Tamsin"
+    assert vale == {"kind": "character", "id": 0, "label": "Brannoc Vale", "sublabel": "Tamsin",
+                    "status": "active", "player": {"uuid": uuid, "character_id": "c1"}}
+
+    # Not without a query, nor when characters aren't wanted.
+    assert all("player" not in r for r in ok(member.get("/search?players=true"))["results"])
+    assert ok(member.get("/search?q=brannoc&kinds=organisation&players=true"))["results"] == []
+
+
+def test_adopt_player_character(client):
+    member = Person(client, "helper", member=True)
+    Person(client, "linked", minecraft="Tamsin")
+    uuid = player_uuid_of("Tamsin")
+    roster_character(uuid, "c1", "Brannoc Vale", status="DEAD")
+
+    made = ok(member.post("/player-characters", {"player_uuid": uuid, "character_id": "c1"}))
+    assert made["created"] is True and made["label"] == "Brannoc Vale" and made["status"] == "dead"
+    assert made["sublabel"] == "Tamsin" and made["id"] > 0
+    again = ok(member.post("/player-characters", {"player_uuid": uuid, "character_id": "c1"}))
+    assert again["created"] is False and again["id"] == made["id"]
+
+    # Now a lore character, it stands in for the roster entry in search.
+    found = ok(member.get("/search?q=brannoc&kinds=character&players=true"))["results"]
+    assert [(r["id"], "player" in r) for r in found] == [(made["id"], False)]
+
+    detail = ok(member.get(f"/characters/{made['id']}"))
+    assert detail["player_name"] == "Tamsin" and detail["rpc_character_id"] == "c1"
+    assert detail["player_character"]["name"] == "Brannoc Vale" and detail["player_character"]["status"] == "DEAD"
+    assert detail["has_face"] is True
+    history = ok(member.get(f"/characters/{made['id']}/history"))
+    assert history["history"][-1]["action"] == "created"
+
+    # The roster fixes the player.
+    assert error(member.put(f"/characters/{made['id']}/player", {"name": None}), 409) == "player_character_linked"
+
+    # Usable as any character, e.g. in a storyline.
+    storyline = ok(member.post("/storylines", {"title": "The Vale"}))
+    ok(member.put(f"/storylines/{storyline['id']}/members",
+                  {"members": [{"kind": "character", "id": made["id"]}]}))
+
+    # A deleted one is restored, not made again.
+    ok(member.delete(f"/characters/{made['id']}"))
+    assert error(member.post("/player-characters", {"player_uuid": uuid, "character_id": "c1"}), 409) == (
+        "player_character_deleted"
+    )
+    assert ok(member.get("/search?q=brannoc&kinds=character&players=true"))["results"][0]["player"] == {
+        "uuid": uuid, "character_id": "c1",
+    }
+
+    assert error(member.post("/player-characters", {"player_uuid": uuid, "character_id": "nope"}), 400) == (
+        "unknown_player_character"
+    )
+    assert error(member.post("/player-characters", {"player_uuid": uuid}), 400) == "bad_player_character"
+    outsider = Person(client, "outsider")
+    assert outsider.post("/player-characters", {"player_uuid": uuid, "character_id": "c1"}).status_code in (
+        401, 403,
+    )
+
+
+def test_player_character_face_is_its_worn_skin(client, monkeypatch):
+    from src.lore import links
+
+    member = Person(client, "helper", member=True)
+    Person(client, "linked", minecraft="Tamsin")
+    uuid = player_uuid_of("Tamsin")
+    roster_character(uuid, "c1", "Brannoc Vale")
+    made = ok(member.post("/player-characters", {"player_uuid": uuid, "character_id": "c1"}))
+    face = Image.new("RGBA", (8, 8), (20, 90, 200, 255))
+    buf = io.BytesIO()
+    face.save(buf, format="PNG")
+    seen = []
+    monkeypatch.setattr(links, "active_face_png",
+                        lambda player, character, realm_id=None: seen.append((player, character, realm_id))
+                        or buf.getvalue())
+    response = member.get(f"/characters/{made['id']}/face.png")
+    assert response.status_code == 200 and seen == [(uuid, "c1", "main")]
+    image = Image.open(io.BytesIO(response.content))
+    assert image.size == (64, 64) and image.convert("RGBA").getpixel((5, 5)) == (20, 90, 200, 255)
+
+
 # --------------------
 # Availability and calendar
 # --------------------

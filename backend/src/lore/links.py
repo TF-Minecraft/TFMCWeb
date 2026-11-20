@@ -13,7 +13,7 @@ from typing import Any
 from PIL import Image
 
 from src import database
-from src.characters.wardrobe import skin_face_png
+from src.characters.wardrobe import active_face_png, skin_face_png
 
 from . import history, notifications
 from .entities import KINDS, _detail, _usable, exists, labels, touch
@@ -458,6 +458,9 @@ def set_player(character_id: int, data: Any, actor: Viewer) -> dict:
         raise bad("bad_player")
     with database.connect() as conn:
         row = _usable(conn, KINDS["character"], character_id)
+        if row["rpc_character_id"]:
+            # A player's character: the roster fixes the player.
+            raise LoreError(409, "player_character_linked")
         if name is None:
             uuid, player_name = None, None
         else:
@@ -488,18 +491,28 @@ def _upscale(face_png: bytes) -> bytes | None:
 
 
 def face(character_id: int) -> bytes | None:
-    """The character's face as a 64x64 PNG: the uploaded skin's face, else its player's head."""
+    """The character's face as a 64x64 PNG: the uploaded skin's face, else the skin its roster
+    character wears, else its player's head."""
     from src.auth import account_overview
 
     with database.connect() as conn:
         row = conn.execute(
-            "SELECT face_png, player_uuid FROM lore_characters WHERE id = %s AND deleted_at IS NULL",
+            "SELECT face_png, player_uuid, rpc_realm_id, rpc_character_id FROM lore_characters "
+            "WHERE id = %s AND deleted_at IS NULL",
             (character_id,),
         ).fetchone()
     if row is None:
         return None
     if row["face_png"] is not None:
         return _upscale(bytes(row["face_png"]))
+    if row["rpc_character_id"]:
+        # A player's character wears its wardrobe skin; fall back to the player's head without one.
+        try:
+            worn = active_face_png(row["player_uuid"], row["rpc_character_id"], realm_id=row["rpc_realm_id"])
+        except Exception:
+            worn = None
+        if worn and (png := _upscale(worn)):
+            return png
     if row["player_uuid"]:
         return account_overview.head(row["player_uuid"])
     return None

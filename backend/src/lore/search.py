@@ -5,6 +5,7 @@ from typing import Any
 
 from src import database
 
+from . import player_characters
 from .entities import KINDS, _like
 from .errors import bad
 
@@ -21,8 +22,14 @@ _SUBLABEL = {
 }
 
 
-def search(q: str = "", kinds: str | list[str] | None = None, limit: int = DEFAULT_LIMIT) -> list[dict[str, Any]]:
-    """Non-deleted items whose label contains `q`, prefix matches first; recently updated when `q` is empty."""
+def search(
+    q: str = "", kinds: str | list[str] | None = None, limit: int = DEFAULT_LIMIT, *, players: bool = False
+) -> list[dict[str, Any]]:
+    """Non-deleted items whose label contains `q`, prefix matches first; recently updated when `q` is empty.
+
+    With `players`, a character search also finds players' roster characters that no lore character
+    stands for yet: those come back with `id` 0 (no lore record has it) and a `player` key to adopt them by
+    (player_characters.adopt)."""
     if isinstance(kinds, str):
         kinds = [k for k in (part.strip() for part in kinds.split(",")) if k]
     wanted = list(kinds or KINDS)
@@ -39,12 +46,32 @@ def search(q: str = "", kinds: str | list[str] | None = None, limit: int = DEFAU
             f"(SELECT '{name}'::text AS kind, t.id, t.{kind.label} AS label, {_SUBLABEL[name]} AS sublabel, "
             f"{status} AS status, t.updated_at, "
             + (f"lower(t.{kind.label}) LIKE lower(%(prefix)s)" if q else "false")
-            + f" AS prefix FROM {kind.table} t WHERE {where} "
+            + " AS prefix, NULL::text AS player_uuid, NULL::text AS player_character_id"
+            + f" FROM {kind.table} t WHERE {where} "
             + (f"ORDER BY prefix DESC, lower(t.{kind.label}), t.id " if q else "ORDER BY t.updated_at DESC, t.id ")
             + "LIMIT %(limit)s)"
         )
-    order = "prefix DESC, lower(label), kind, id" if q else "updated_at DESC, kind, id"
-    sql = f"SELECT kind, id, label, sublabel, status FROM ({' UNION ALL '.join(parts)}) found ORDER BY {order} LIMIT %(limit)s"
+    if players and q and "character" in wanted:
+        parts.append(player_characters.search_sql(q))
+    # Lore records before players' characters of the same name.
+    order = (
+        "prefix DESC, lower(label), kind, id IS NULL, id, player_uuid, player_character_id"
+        if q
+        else "updated_at DESC, kind, id"
+    )
+    sql = (
+        "SELECT kind, id, label, sublabel, status, player_uuid, player_character_id "
+        f"FROM ({' UNION ALL '.join(parts)}) found ORDER BY {order} LIMIT %(limit)s"
+    )
     with database.connect() as conn:
         rows = conn.execute(sql, {"q": _like(q), "prefix": _like(q)[1:], "limit": limit}).fetchall()
-    return [dict(row) for row in rows]
+    return [_result(row) for row in rows]
+
+
+def _result(row: dict) -> dict[str, Any]:
+    item = dict(row)
+    player_uuid, character_id = item.pop("player_uuid"), item.pop("player_character_id")
+    if character_id is not None:
+        item["id"] = 0
+        item["player"] = {"uuid": player_uuid, "character_id": character_id}
+    return item

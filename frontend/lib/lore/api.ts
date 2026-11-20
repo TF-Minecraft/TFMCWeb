@@ -109,6 +109,11 @@ export type CharacterDetail = Common & {
   has_face: boolean;
   /** An uploaded skin, as opposed to only a linked player's head. */
   has_skin: boolean;
+  /** Set when the character was adopted from a player's RPCharacters character; the player is then fixed. */
+  rpc_realm_id: string | null;
+  rpc_character_id: string | null;
+  /** The roster's current view of that character; null if not linked or gone from the roster. */
+  player_character: PlayerCharacter | null;
   affiliations: (Ref & { role: string })[];
   relations: { outgoing: Relation[]; incoming: Relation[] };
   storylines: Ref[];
@@ -230,7 +235,26 @@ export type HistoryEntry = {
   changes: Record<string, [unknown, unknown]>;
 };
 
-export type SearchResult = { kind: EntityKind; id: number; label: string; sublabel: string; status: string | null };
+export type PlayerCharacter = {
+  name: string;
+  status: string;
+  race: string | null;
+  class: string | null;
+  died_at: string | null;
+};
+
+/** A roster character from RPCharacters with no lore character yet; picking it adopts it. */
+export type PlayerCharacterRef = { uuid: string; character_id: string };
+
+/** `player` is set (and `id` is 0) for a player's character not yet in the lore records. */
+export type SearchResult = {
+  kind: EntityKind;
+  id: number;
+  label: string;
+  sublabel: string;
+  status: string | null;
+  player?: PlayerCharacterRef;
+};
 
 export type DayStatus = { status: Availability | null; note: string; source: "override" | "weekly" | null };
 
@@ -415,6 +439,10 @@ const ERROR_MESSAGES: Record<string, string> = {
   bad_x: "X must be a whole number within the world.",
   bad_y: "Y must be a whole number between -2048 and 2048, or empty.",
   bad_z: "Z must be a whole number within the world.",
+  bad_player_character: "That player character couldn’t be found.",
+  unknown_player_character: "That player character no longer exists in RPCharacters.",
+  player_character_deleted: "That player character’s lore record was deleted. Restore it from Deleted first.",
+  player_character_linked: "This character comes from a player’s RPCharacters character, so its player can’t change.",
 };
 
 const FIELD_LABELS: Record<string, string> = {
@@ -472,9 +500,21 @@ export function getLoreAccess(): Promise<LoreAccess> {
 export function getOverview(today?: string): Promise<Overview> {
   return loreRequest(`/overview${qs({ today })}`);
 }
-export async function searchLore(q: string, kinds: EntityKind[] = [], limit = 12): Promise<SearchResult[]> {
-  const data = await loreRequest<{ results: SearchResult[] }>(`/search${qs({ q, kinds: kinds.join(","), limit })}`);
+/** With `players`, a query also finds players' RPCharacters characters not yet in the lore records. */
+export async function searchLore(
+  q: string,
+  kinds: EntityKind[] = [],
+  limit = 12,
+  players = false,
+): Promise<SearchResult[]> {
+  const data = await loreRequest<{ results: SearchResult[] }>(
+    `/search${qs({ q, kinds: kinds.join(","), limit, players })}`,
+  );
   return data.results;
+}
+/** The lore character for a player's RPCharacters character, created on first use. */
+export function adoptPlayerCharacter(player: PlayerCharacterRef): Promise<SearchResult & { created: boolean }> {
+  return send("POST", "/player-characters", { player_uuid: player.uuid, character_id: player.character_id });
 }
 export async function getDeleted(): Promise<DeletedItem[]> {
   return (await loreRequest<{ items: DeletedItem[] }>("/deleted")).items;
