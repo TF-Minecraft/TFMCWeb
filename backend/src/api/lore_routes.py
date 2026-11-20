@@ -16,7 +16,19 @@ from starlette.concurrency import run_in_threadpool
 
 from src.api.auth_routes import _config, _no_store, current_user, require_same_origin
 from src.api.request_body import read_json_body
-from src.lore import availability, entities, flag, history, links, notifications, overview, people, search, team
+from src.lore import (
+    availability,
+    entities,
+    flag,
+    history,
+    links,
+    notifications,
+    overview,
+    people,
+    player_characters,
+    search,
+    team,
+)
 from src.lore.entities import Kind
 from src.lore.errors import LoreError
 from src.skins.auth import HEADER_STAFF_KEY, AuthError, require_staff_key
@@ -135,9 +147,10 @@ async def get_search(
     q: str = Query(default="", max_length=120),
     kinds: str = Query(default="", max_length=200),
     limit: int = Query(default=search.DEFAULT_LIMIT, ge=1, le=search.MAX_LIMIT),
+    players: bool = Query(default=False),
     viewer: people.Viewer = Depends(_reader),
 ):
-    return {"results": await _call(search.search, q, kinds or None, limit)}
+    return {"results": await _call(lambda: search.search(q, kinds or None, limit, players=players))}
 
 
 @_gated.get("/deleted")
@@ -248,6 +261,12 @@ async def get_team_head(user_id: int = ID(), viewer: people.Viewer = Depends(_re
 @_gated.post("/relations")
 async def post_relation(request: Request, viewer: people.Viewer = Depends(_writer)):
     return await _call(links.create_relation, await _json(request), viewer)
+
+
+@_gated.post("/player-characters")
+async def post_player_character(request: Request, viewer: people.Viewer = Depends(_writer)):
+    """The lore character for a player's roster character, created on first pick."""
+    return await _call(player_characters.adopt, await _json(request), viewer)
 
 
 @_gated.patch("/relations/{relation_id}")

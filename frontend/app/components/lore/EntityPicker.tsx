@@ -2,7 +2,7 @@
 
 import { useId, useMemo, useRef, useState } from "react";
 
-import { KIND_LABEL, loreErrorMessage, type EntityKind, type SearchResult } from "@/lib/lore/api";
+import { KIND_LABEL, adoptPlayerCharacter, loreErrorMessage, type EntityKind, type SearchResult } from "@/lib/lore/api";
 import { errorClass, inputClass } from "../admin/ui";
 import StatusBadge from "./StatusBadge";
 import { useLoreSearch } from "./useLoreSearch";
@@ -16,6 +16,9 @@ type Option = { type: "result"; result: SearchResult } | { type: "create"; label
  * the new record is kept and the next try picks it instead of creating another.
  * `disabled` blocks picking while the caller is busy; `onBusyChange` tells the caller
  * while a pick or create runs, so it can hold other edits to the list `onPick` extends.
+ * When `kinds` include characters, a search also offers players' RPCharacters characters
+ * (unless `players` is false); picking one first adopts it as a lore character, so
+ * `onPick` always gets a lore record.
  */
 export default function EntityPicker({
   kinds,
@@ -26,6 +29,7 @@ export default function EntityPicker({
   autoFocus = false,
   disabled = false,
   onBusyChange,
+  players,
   className = "",
 }: {
   kinds: EntityKind[];
@@ -37,6 +41,8 @@ export default function EntityPicker({
   autoFocus?: boolean;
   disabled?: boolean;
   onBusyChange?: (busy: boolean) => void;
+  /** Offer players' RPCharacters characters too; defaults to on when `kinds` include characters. */
+  players?: boolean;
   className?: string;
 }) {
   const [query, setQuery] = useState("");
@@ -48,11 +54,11 @@ export default function EntityPicker({
   /** A record made by “Create …” whose onPick failed, reused on retry. */
   const made = useRef<SearchResult | null>(null);
   const listId = useId();
-  const { results, loading, settled } = useLoreSearch(query, kinds, open);
+  const { results, loading, settled } = useLoreSearch(query, kinds, open, players ?? kinds.includes("character"));
 
   const options = useMemo<Option[]>(() => {
     const shown: Option[] = results
-      .filter((r) => !exclude.includes(`${r.kind}:${r.id}`))
+      .filter((r) => r.player || !exclude.includes(`${r.kind}:${r.id}`))
       .map((result) => ({ type: "result", result }));
     const label = query.trim();
     const exact = results.some((r) => r.label.trim().toLowerCase() === label.toLowerCase());
@@ -67,7 +73,12 @@ export default function EntityPicker({
     onBusyChange?.(true);
     try {
       if (option.type === "result") {
-        if ((await onPick(option.result)) === false) return;
+        const { player } = option.result;
+        const record = player ? await adoptPlayerCharacter(player) : option.result;
+        // An adopted character may already be on the list, picked earlier under its lore record.
+        if (!(player && exclude.includes(`${record.kind}:${record.id}`))) {
+          if ((await onPick(record)) === false) return;
+        }
       } else if (onCreate) {
         const kept = made.current;
         const record =
@@ -140,7 +151,7 @@ export default function EntityPicker({
         >
           {options.map((option, i) => (
             <li
-              key={option.type === "result" ? `${option.result.kind}:${option.result.id}` : "create"}
+              key={option.type === "result" ? resultKey(option.result) : "create"}
               role="option"
               aria-selected={i === active}
               className={`flex cursor-pointer items-center gap-2 px-3 py-1.5 text-sm ${
@@ -157,6 +168,14 @@ export default function EntityPicker({
                   <span className="min-w-0 flex-1 truncate text-[var(--tfmc-cream)]">{option.result.label}</span>
                   {option.result.sublabel ? (
                     <span className="truncate text-xs text-[var(--tfmc-stone)]">{option.result.sublabel}</span>
+                  ) : null}
+                  {option.result.player ? (
+                    <span
+                      className="text-[10px] uppercase tracking-wider text-[var(--tfmc-accent)]"
+                      title="A player's character from RPCharacters, added to the lore records when picked"
+                    >
+                      Player
+                    </span>
                   ) : null}
                   <StatusBadge status={option.result.status} />
                   {kinds.length !== 1 ? (
@@ -180,4 +199,8 @@ export default function EntityPicker({
       {error ? <p className={`${errorClass} mt-1`}>{error}</p> : null}
     </div>
   );
+}
+
+function resultKey(result: SearchResult): string {
+  return result.player ? `player:${result.player.uuid}:${result.player.character_id}` : `${result.kind}:${result.id}`;
 }

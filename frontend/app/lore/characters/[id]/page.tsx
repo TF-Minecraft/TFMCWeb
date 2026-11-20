@@ -12,6 +12,7 @@ import {
   setPlayer,
   uploadSkin,
   type CharacterDetail,
+  type PlayerCharacter,
   type SearchResult,
 } from "@/lib/lore/api";
 import { formatDay } from "@/lib/lore/dates";
@@ -206,7 +207,8 @@ function CharacterEditor({ id }: { id: number }) {
   );
 }
 
-/** The character's face: an uploaded skin, or the head of a linked Minecraft player. */
+/** The character's face: an uploaded skin, or the head of a linked Minecraft player (for one adopted
+ * from RPCharacters, the skin that character wears). Such a character's player is fixed. */
 function FaceSection({
   detail,
   locked,
@@ -221,6 +223,8 @@ function FaceSection({
   const [error, setError] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
   const disabled = locked || busy;
+  const fromRoster = Boolean(detail.rpc_character_id);
+  const roster = detail.player_character;
 
   async function run(action: () => Promise<CharacterDetail>) {
     setBusy(true);
@@ -268,7 +272,19 @@ function FaceSection({
             <span className="text-xs font-semibold uppercase tracking-wider text-[var(--tfmc-stone)]">
               Minecraft player
             </span>
-            {detail.player_name ? (
+            {fromRoster ? (
+              <>
+                <p className="text-sm text-[var(--tfmc-cream)]">
+                  {detail.player_name ? `Played by ${detail.player_name}` : "A player’s character"}
+                  {roster ? ` as ${roster.name}` : ""}
+                </p>
+                <p className="text-xs text-[var(--tfmc-stone)]">
+                  {roster
+                    ? `From RPCharacters${rosterFacts(roster)}. The player stays linked to this character.`
+                    : "From RPCharacters, but no longer on the roster."}
+                </p>
+              </>
+            ) : detail.player_name ? (
               <p className="flex flex-wrap items-center gap-3 text-sm text-[var(--tfmc-cream)]">
                 Played by {detail.player_name}
                 {locked ? null : (
@@ -285,7 +301,7 @@ function FaceSection({
             ) : (
               <p className={mutedClass}>No player linked.</p>
             )}
-            {locked ? null : (
+            {locked || fromRoster ? null : (
               <form onSubmit={link} className="flex gap-2">
                 <input
                   className={`${inputClass} min-w-0 flex-1 sm:max-w-64`}
@@ -329,7 +345,9 @@ function FaceSection({
                 ) : null}
               </div>
               <p className="text-xs text-[var(--tfmc-stone)]">
-                An uploaded skin’s face is shown before the linked player’s head.
+                {fromRoster
+                  ? "An uploaded skin’s face is shown before the skin the character wears in game."
+                  : "An uploaded skin’s face is shown before the linked player’s head."}
               </p>
             </div>
           )}
@@ -342,4 +360,9 @@ function FaceSection({
       </div>
     </Section>
   );
+}
+
+function rosterFacts(roster: PlayerCharacter): string {
+  const facts = [roster.race, roster.class, roster.status === "DEAD" ? "dead" : null].filter(Boolean);
+  return facts.length ? ` (${facts.join(", ")})` : "";
 }

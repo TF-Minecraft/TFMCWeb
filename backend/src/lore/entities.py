@@ -15,7 +15,7 @@ from fastapi.encoders import jsonable_encoder
 
 from src import database
 
-from . import history, mentions, notifications
+from . import history, mentions, notifications, player_characters
 from .errors import LoreError, bad, not_found
 from .people import NAME_SQL, PERSON_JOINS, Viewer
 
@@ -420,6 +420,7 @@ def _detail(conn: database.Connection, kind: Kind, entity_id: int) -> dict:
     if kind.name == "character":
         item["has_skin"] = item.pop("face_png") is not None
         item["has_face"] = item["has_skin"] or bool(item.get("player_uuid"))
+        item["player_character"] = player_characters.roster_entry(conn, item)
         affiliations = conn.execute(
             "SELECT a.organisation_id AS id, o.name AS label, a.role FROM lore_character_affiliations a "
             "JOIN lore_organisations o ON o.id = a.organisation_id AND o.deleted_at IS NULL "

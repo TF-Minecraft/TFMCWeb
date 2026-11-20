@@ -2,10 +2,11 @@
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const api = vi.hoisted(() => ({ searchLore: vi.fn() }));
+const api = vi.hoisted(() => ({ searchLore: vi.fn(), adoptPlayerCharacter: vi.fn() }));
 vi.mock("@/lib/lore/api", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/lore/api")>()),
   searchLore: api.searchLore,
+  adoptPlayerCharacter: api.adoptPlayerCharacter,
 }));
 
 import type { SearchResult } from "@/lib/lore/api";
@@ -33,6 +34,7 @@ async function typeAndCreate(label: string) {
 beforeEach(() => {
   vi.useFakeTimers({ shouldAdvanceTime: true });
   api.searchLore.mockReset().mockResolvedValue([]);
+  api.adoptPlayerCharacter.mockReset();
 });
 afterEach(() => {
   cleanup();
@@ -74,5 +76,35 @@ describe("EntityPicker", () => {
     expect(onCreate).toHaveBeenCalledTimes(1);
     expect(onPick).toHaveBeenCalledTimes(2);
     expect(screen.getByRole("combobox")).toHaveProperty("value", "");
+  });
+
+  it("adopts a player's character before picking it, and asks for players only with characters", async () => {
+    const player = { uuid: "u-1", character_id: "c-1" };
+    api.searchLore.mockResolvedValue([
+      { kind: "character", id: 0, label: "Aldric", sublabel: "Steve", status: "active", player },
+    ]);
+    const adopted = { kind: "character", id: 12, label: "Aldric", sublabel: "Steve", status: "active" };
+    api.adoptPlayerCharacter.mockResolvedValue({ ...adopted, created: true });
+    const onPick = vi.fn();
+    render(<EntityPicker kinds={["character", "organisation"]} onPick={onPick} />);
+
+    fireEvent.change(screen.getByRole("combobox"), { target: { value: "Ald" } });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(200);
+    });
+    expect(api.searchLore).toHaveBeenLastCalledWith("Ald", ["character", "organisation"], 12, true);
+    expect(screen.getByText("Player")).toBeTruthy();
+    fireEvent.mouseDown(screen.getByText("Aldric"));
+    await act(async () => {});
+    expect(api.adoptPlayerCharacter).toHaveBeenCalledWith(player);
+    expect(onPick).toHaveBeenCalledWith({ ...adopted, created: true });
+
+    cleanup();
+    render(<EntityPicker kinds={["organisation"]} onPick={onPick} />);
+    fireEvent.change(screen.getByRole("combobox"), { target: { value: "Ald" } });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(200);
+    });
+    expect(api.searchLore).toHaveBeenLastCalledWith("Ald", ["organisation"], 12, false);
   });
 });

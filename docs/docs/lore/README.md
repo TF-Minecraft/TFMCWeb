@@ -31,7 +31,7 @@ The `0012_lore_panel.sql` migration still runs everywhere, so production gets th
 | Path | What it does |
 |------|--------------|
 | `/lore` | Upcoming events (14 days), ideas and "waiting on" events, recent edits, and a quick-set for my next 7 days |
-| `/lore/characters`, `/[id]` | Profiles: status, summary, notes, a face (uploaded skin or linked Minecraft name), affiliations, relations, storylines, events, backlinks and history |
+| `/lore/characters`, `/[id]` | Profiles: status, summary, notes, a face (uploaded skin, linked Minecraft name, or a player character's worn skin), affiliations, relations, storylines, events, backlinks and history |
 | `/lore/organisations`, `/[id]` | Factions and organisations: kind, game faction, members with roles, relations, backlinks and history |
 | `/lore/storylines`, `/[id]` | Status, involved characters, organisations and locations, and the ordered event list with inline "add event" |
 | `/lore/events/[id]` | Date with each roster member's availability for that day, optional start time (in my time zone, with CET and EST shown), or "waiting on"; location, characters, helpers, outcome and history |
@@ -42,11 +42,21 @@ The `0012_lore_panel.sql` migration still runs everywhere, so production gets th
 
 Times are shown and entered in the time zone saved on the calendar page, else the browser's. The overview's "today" follows the same zone.
 
+## Player characters
+
+Pickers that link characters (storylines, events, affiliations, relations) also list players' RPCharacters characters from `character_roster` (realm `main`) once something is typed. They're tagged **Player** and come from `GET /lore/search?players=true`, with `id: 0` and `player: {uuid, character_id}`. Picking one calls `POST /lore/player-characters`, which creates the lore character linked to it (or reuses the existing one), so every link still points at a lore character.
+
+- The new character takes the roster name, its status (`DEAD` → `dead`, else `active`) and the player. After that the lore team edits it like any other character; roster changes don't overwrite it.
+- Its player can't be changed or unlinked (409 `player_character_linked`). Its page shows the roster's current name, race, class and status.
+- Its face is an uploaded skin, else the skin the character wears in game, else the player's head.
+- If its lore character was deleted, adopting returns 409 `player_character_deleted`; restore it from Deleted instead.
+- Search hides roster characters that already have a live lore character, since that one shows as a normal result.
+
 Long-text fields (`summary`, `notes`, `outcome`) can hold links written as `[[kind:id|Label]]`; typing `[[` opens the picker. Each save rebuilds `lore_mentions`, which feeds the "Mentioned in" lists.
 
 ## Data
 
-Migration `backend/src/database/migrations/0012_lore_panel.sql`.
+Migrations `backend/src/database/migrations/0012_lore_panel.sql` and `0013_lore_player_characters.sql` (`rpc_realm_id`, `rpc_character_id` on `lore_characters`, unique per player and roster character).
 
 | Table | Holds |
 |-------|-------|
