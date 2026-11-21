@@ -99,14 +99,14 @@ export default function InfestationsPage() {
         <Link href="/wiki/trial-rooms" className={link}>
           Trial Rooms
         </Link>
-        . There is an hourly limit on the keys you can get from ordinary kills.
+        .
       </p>
       <p className={`mt-3 ${body}`}>
         Winning a Lure fight gives each fighter a reward of their own. To get yours you must have joined, made a few
         kills in the fight and be alive and online when it ends. It drops as items that only you can pick up. The more
         of the Lure&apos;s monsters you killed, the bigger it is, and each of those kills pays more than an ordinary
-        one. Unknown Keys come on top, more for a worse infestation, and they don&apos;t count towards the hourly limit.
-        A Lure won outside a permadeath zone pays only a small part of this.
+        one. You also get extra Unknown Keys on top of the reward, more for a worse infestation. A Lure won outside a
+        permadeath zone pays only a small part of this.
       </p>
 
       <WikiSectionHeading id="lure">Clearing a province with a Lure</WikiSectionHeading>

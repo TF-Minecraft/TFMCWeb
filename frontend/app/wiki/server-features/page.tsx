@@ -22,10 +22,6 @@ export default function ServerFeaturesPage() {
         <code className={code}>/linkdiscord &lt;code&gt;</code> in the TFMC Discord server. The game confirms the link
         within a second or so. <code className={code}>/unlinkdiscord</code> removes it again.
       </p>
-      <p className={`mt-3 ${body}`}>
-        If you leave the Discord server, you have 1 hour to rejoin. After that your account is unlinked and you cannot
-        play on the main server until you link again.
-      </p>
 
       <WikiSectionHeading id="profile">Your website profile</WikiSectionHeading>
       <p className={body}>

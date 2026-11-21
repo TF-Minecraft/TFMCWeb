@@ -271,8 +271,9 @@ export default function VehiclesPage() {
         upkeep that is charged with it.
       </p>
       <p className="mt-3 text-sm text-[var(--tfmc-mist)]">
-        While upkeep is unpaid, the vehicle&apos;s parts wear down every hour and it can&apos;t be repaired. A floating
-        ship never sinks from this and a balloon never loses lift. To pay 1 day, run{" "}
+        Each hour that upkeep stays unpaid, every part of the vehicle loses more of its condition. Parts never wear away
+        completely, but the vehicle can&apos;t be repaired until the upkeep is paid. A floating ship never sinks from
+        this and a balloon never loses lift. To pay 1 day, run{" "}
         <code className="text-[var(--tfmc-accent)]">/faction vehicle maintenance pay bank</code>, then right-click the
         vehicle. Upkeep isn&apos;t charged while a dead owner&apos;s estate is pending.
       </p>

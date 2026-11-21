@@ -55,9 +55,12 @@ export default function ThieveryPage() {
         Before stealing, a Thief or Bandit picks which kinds of items they know how to spot with{" "}
         <code className={code}>/thievery loadout</code>. Each kind costs points, and you have 10 at most. Adding a kind
         spends points, and spent points refill at 1 an hour. Removing a kind does not refund its points. Your loadout is
-        shared by all the characters on your account. When you steal, items of kinds you didn&apos;t pick show as{" "}
-        <em>HIDDEN!</em> and can&apos;t be taken. Each theft has a limit on the total value you can take, so an
-        expensive item may be too much to take at all.
+        shared by all the characters on your account.
+      </p>
+      <p className={`mt-3 ${body}`}>
+        Picking a container, pickpocketing or robbing someone opens a menu of what is inside or what they carry. Click
+        an item to take it. Items of kinds you didn&apos;t pick show as <em>HIDDEN!</em> and can&apos;t be taken. The
+        menu shows how much you can still take.
       </p>
 
       <WikiSectionHeading id="lockpicks">Lockpicks</WikiSectionHeading>

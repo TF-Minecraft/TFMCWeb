@@ -122,9 +122,12 @@ export default function GettingStartedPage() {
         as playing.
       </p>
       <p className={`mt-3 ${body}`}>
-        Finished tasks give points, and points fill your weekly bar. Each time the bar reaches a reward, claim it in the
-        same menu. The bar starts again every Monday. The <strong>Daily Activity</strong> bar shows the points you have
-        earned today, and the menu tells you once it is full.
+        Finished tasks give points, and points fill your weekly bar. The bar holds 50 points and gives a reward at 10,
+        20, 30, 40 and 50. Claim each reward in the same menu. The bar starts again every Monday.
+      </p>
+      <p className={`mt-3 ${body}`}>
+        At most 10 points a day count towards the weekly bar. The <strong>Daily Activity</strong> bar shows the points
+        you have earned today, and the menu tells you once you have reached today&apos;s 10.
       </p>
       <p className={`mt-3 ${body}`}>
         Voting is the one task you have to click. Vote on the sites that <code className={code}>/vote</code> lists, then

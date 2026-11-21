@@ -193,8 +193,9 @@ export default function WarPage() {
       </p>
       <ul className={`mt-3 list-disc space-y-2 pl-5 ${body}`}>
         <li>
-          While enough attackers stand in the area and outnumber the defenders there, the timer runs down. While the
-          defenders hold the area, it runs back up. Otherwise it stays where it is.
+          The timer starts at 3 minutes. It runs down while at least 3 attackers stand in the area and outnumber the
+          defenders there. It runs back up, but never above 3 minutes, while at least 3 defenders stand in the area and
+          the attackers don&apos;t outnumber them. Otherwise it stays where it is.
         </li>
         <li>Players in vehicles don&apos;t count. Everyone inside the area sees the timer and who is holding.</li>
         <li>The attackers win when the timer reaches zero. Either side wins if the other runs out of lives.</li>

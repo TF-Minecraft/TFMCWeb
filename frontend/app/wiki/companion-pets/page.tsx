@@ -134,6 +134,13 @@ export default function CompanionPetsPage() {
         warning above your hotbar when one of your pet&apos;s needs runs low.
       </p>
       <p className={`mt-3 ${body}`}>
+        Pets have little habits of their own. They greet you when you come back, and sniff or chase other pets they
+        meet. Sometimes one digs up a small gift: a stick, a bone, a rabbit or leather boots. When you pet it, it may
+        roll over for a belly rub. A frog only greets you and sniffs other pets. Now and then a pet barks at something
+        nearby and settles down again. Two Territorial pets that don&apos;t know each other may bark at each other. To
+        calm yours, right-click it 2 times with an empty hand.
+      </p>
+      <p className={`mt-3 ${body}`}>
         Meals, treats, the Pet Brush and the crafted toys are made at the Animal Station.
       </p>
       <DataTable
