@@ -55,7 +55,7 @@ export default function CharacterPage({ params }: { params: Promise<{ id: string
 
 function CharacterEditor({ id }: { id: number }) {
   const editor = useEntityEditor("character", id);
-  const [editing, setEditing] = useEditMode();
+  const edit = useEditMode();
   const { detail } = editor;
 
   if (!detail) {
@@ -66,15 +66,13 @@ function CharacterEditor({ id }: { id: number }) {
     );
   }
 
-  const locked = !editing || Boolean(detail.deleted_at);
+  const locked = !edit.editing || edit.finishing || Boolean(detail.deleted_at);
 
   async function refresh() {
     editor.replace(await getEntity("character", id));
   }
 
-  async function done() {
-    if (await editor.save()) setEditing(false);
-  }
+  const done = () => edit.finish(editor.save);
 
   async function createOrganisation(label: string): Promise<SearchResult> {
     const made = await createEntity("organisation", { name: label });
@@ -92,7 +90,12 @@ function CharacterEditor({ id }: { id: number }) {
         deletedAt={detail.deleted_at}
         onDelete={editor.remove}
         onRestore={editor.restore}
-        edit={{ editing, onEdit: () => setEditing(true), onDone: () => void done(), saving: editor.saving }}
+        edit={{
+          editing: edit.editing,
+          onEdit: () => edit.setEditing(true),
+          onDone: () => void done(),
+          saving: edit.finishing || editor.saving,
+        }}
       />
 
       <Section title="Details">

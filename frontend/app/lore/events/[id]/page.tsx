@@ -60,7 +60,7 @@ export default function EventPage({ params }: { params: Promise<{ id: string }> 
 
 function EventEditor({ id }: { id: number }) {
   const editor = useEntityEditor("event", id);
-  const [editing, setEditing] = useEditMode();
+  const edit = useEditMode();
   const { detail } = editor;
   const zone = useLoreTimeZone();
   // Characters and helpers share one saver: each write returns the whole event, so two in
@@ -79,7 +79,7 @@ function EventEditor({ id }: { id: number }) {
     );
   }
 
-  const locked = !editing || Boolean(detail.deleted_at);
+  const locked = !edit.editing || edit.finishing || Boolean(detail.deleted_at);
   const status = editor.value("status");
   const day = editor.value("scheduled_on");
   const startsAt = editor.value("starts_at");
@@ -140,13 +140,13 @@ function EventEditor({ id }: { id: number }) {
     else void editor.save();
   }
 
-  async function done() {
-    if (editor.dirty && problem) return editor.setError(problem);
-    if (await editor.save()) {
-      setTimeError("");
-      setEditing(false);
-    }
-  }
+  const done = () =>
+    edit.finish(async () => {
+      if (editor.dirty && problem) return editor.setError(problem);
+      const saved = await editor.save();
+      if (saved) setTimeError("");
+      return saved;
+    });
 
   const storylineLabel =
     storylineId === null
@@ -169,7 +169,12 @@ function EventEditor({ id }: { id: number }) {
         deletedAt={detail.deleted_at}
         onDelete={editor.remove}
         onRestore={editor.restore}
-        edit={{ editing, onEdit: () => setEditing(true), onDone: () => void done(), saving: editor.saving }}
+        edit={{
+          editing: edit.editing,
+          onEdit: () => edit.setEditing(true),
+          onDone: () => void done(),
+          saving: edit.finishing || editor.saving,
+        }}
       >
         {detail.storyline ? (
           <p className="text-sm text-[var(--tfmc-mist)]">

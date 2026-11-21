@@ -1,5 +1,5 @@
 /** @vitest-environment jsdom */
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, renderHook, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("next/link", () => ({
@@ -10,10 +10,13 @@ vi.mock("next/link", () => ({
   ),
 }));
 
+vi.mock("next/navigation", () => ({ useSearchParams: () => new URLSearchParams("edit=1") }));
+
 import type { Relation } from "@/lib/lore/api";
 import { DetailHeader } from "./DetailParts";
 import LinkedRoleList from "./LinkedRoleList";
 import RelationsEditor from "./RelationsEditor";
+import { useEditMode } from "./useEditMode";
 
 afterEach(cleanup);
 
@@ -112,5 +115,32 @@ describe("read-only lists", () => {
     );
     expect(screen.getByRole("button", { name: "Remove" })).toBeTruthy();
     expect(screen.getByLabelText("Relation with Brann")).toBeTruthy();
+  });
+});
+
+describe("useEditMode finish", () => {
+  it("locks while Done saves and goes back to reading only once saved", async () => {
+    const { result } = renderHook(() => useEditMode());
+    expect(result.current.editing).toBe(true);
+    let resolve!: (saved: boolean) => void;
+    let finished!: Promise<void>;
+    act(() => {
+      finished = result.current.finish(() => new Promise<boolean>((r) => (resolve = r)));
+    });
+    expect(result.current.finishing).toBe(true);
+    expect(result.current.editing).toBe(true);
+    await act(async () => {
+      resolve(true);
+      await finished;
+    });
+    expect(result.current.finishing).toBe(false);
+    expect(result.current.editing).toBe(false);
+  });
+
+  it("stays editing when the save fails", async () => {
+    const { result } = renderHook(() => useEditMode());
+    await act(() => result.current.finish(async () => false));
+    expect(result.current.finishing).toBe(false);
+    expect(result.current.editing).toBe(true);
   });
 });

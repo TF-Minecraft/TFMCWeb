@@ -28,7 +28,8 @@ TODAY = date.today()
 
 @pytest.fixture
 def client(monkeypatch):
-    for name in ("PLUGIN_KEY", "STAFF_KEY", "PS_PRODUCTION", "SIGN_IN_SITE", "LORE_PANEL", "PUBLIC_SITE_URL"):
+    for name in ("PLUGIN_KEY", "STAFF_KEY", "PS_PRODUCTION", "SIGN_IN_SITE", "LORE_PANEL", "PUBLIC_SITE_URL",
+                 "PROFILE_REALM_ID"):
         monkeypatch.delenv(name, raising=False)
     monkeypatch.setenv("DISCORD_AUTH_ENABLED", "1")
     monkeypatch.setenv("DISCORD_CLIENT_ID", "client-id")

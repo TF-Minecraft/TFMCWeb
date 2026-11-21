@@ -73,7 +73,7 @@ export default function StorylinePage({ params }: { params: Promise<{ id: string
 
 function StorylineEditor({ id }: { id: number }) {
   const editor = useEntityEditor("storyline", id);
-  const [editing, setEditing] = useEditMode();
+  const edit = useEditMode();
   const { detail } = editor;
   // Members and event order share one saver, so their whole-record answers can't cross.
   const links = useLinkSaver(editor.replace);
@@ -86,11 +86,9 @@ function StorylineEditor({ id }: { id: number }) {
     );
   }
 
-  const locked = !editing || Boolean(detail.deleted_at);
+  const locked = !edit.editing || edit.finishing || Boolean(detail.deleted_at);
 
-  async function done() {
-    if (await editor.save()) setEditing(false);
-  }
+  const done = () => edit.finish(editor.save);
 
   return (
     <AdminColumn>
@@ -103,7 +101,12 @@ function StorylineEditor({ id }: { id: number }) {
         deletedAt={detail.deleted_at}
         onDelete={editor.remove}
         onRestore={editor.restore}
-        edit={{ editing, onEdit: () => setEditing(true), onDone: () => void done(), saving: editor.saving }}
+        edit={{
+          editing: edit.editing,
+          onEdit: () => edit.setEditing(true),
+          onDone: () => void done(),
+          saving: edit.finishing || editor.saving,
+        }}
       />
 
       <Section title="Details">
