@@ -180,9 +180,9 @@ export default function ArchaeologyPage() {
         ]}
       />
       <p className={`mt-4 ${body}`}>
-        Each camp has a limited number of cuts per Minecraft day. When they run out you get &quot;The excavation work
-        day is over.&quot; They refill when a new Minecraft day starts. Planting the camp, brushing, cleaning, drawing
-        and classifying use no cuts.
+        Each camp has a limited number of cuts per Minecraft day. The cuts belong to the camp, so everyone working the
+        dig shares them. When they run out you get &quot;The excavation work day is over.&quot; They refill when a new
+        Minecraft day starts. Planting the camp, brushing, cleaning, drawing and classifying use no cuts.
       </p>
       <p className={`mt-3 ${body}`}>The tool decides how much 1 cut removes. Tools wear with each block.</p>
       <DataTable

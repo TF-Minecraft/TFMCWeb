@@ -173,7 +173,7 @@ export const skills: Record<string, Skill> = {
   },
   VIBRATIVE_STRIKE: {
     name: "Vibrative Strike",
-    description: "Send three waves forward that damage and immobilise everyone they hit.",
+    description: "Send three waves forward that damage and stun everyone they hit.",
   },
   SYMPHONY_OF_DESTRUCTION: {
     name: "Symphony of Destruction",
@@ -386,8 +386,7 @@ export type Subclass = {
   id: string;
   name: string;
   base: string;
-  /** Mage paths have no type. */
-  type?: PathType;
+  type: PathType;
   equipment: string;
   /** Only the four public schools: Cerrith, Mitlan, Oseni, Seithr. */
   magic?: string;
@@ -619,6 +618,7 @@ export const subclasses: Subclass[] = [
     id: "invoker",
     name: "Invoker",
     base: "mage",
+    type: "Full caster",
     equipment: "Mage Staffs, Mage Armour",
     lore: "Stands back with the great staff and its 4 runes and breaks whole lines. Has the widest choice of spells any Mage can hold at once.",
     skills: ["RECOVERY"],
@@ -627,6 +627,7 @@ export const subclasses: Subclass[] = [
     id: "conjurer",
     name: "Conjurer",
     base: "mage",
+    type: "Full caster",
     equipment: "Mage Wands, Mage Armour",
     lore: "Carries a wand with fewer runes than a staff, but calls them up again sooner than any other Mage.",
     skills: ["RECOVERY"],
@@ -635,6 +636,7 @@ export const subclasses: Subclass[] = [
     id: "battlemage",
     name: "Battlemage",
     base: "mage",
+    type: "Full caster",
     equipment: "Mage Blades, Mage Armour",
     lore: "Fights in the front line with a blade, hardier than other Mages, and casts runes between strokes.",
     skills: ["RECOVERY"],

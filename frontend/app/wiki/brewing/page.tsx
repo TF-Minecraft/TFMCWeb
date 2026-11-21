@@ -23,6 +23,11 @@ export default function BrewingPage() {
       intro="Brew drinks in a cauldron, then distil and age them when the recipe calls for it. Supporters (Noble rank and above) can also design their own drink on the website."
     >
       <WikiSectionHeading id="loop">Brewing a drink</WikiSectionHeading>
+      <p className={body}>
+        There is no recipe list in game. You find recipes by experimenting and by asking other brewers. While a brew
+        cooks, the cauldron names what it is turning into, which hints at the recipe. If you designed a drink yourself,
+        its recipe is on the Drinks tab of your website profile.
+      </p>
       <ol className={`mt-4 list-decimal space-y-2 pl-5 ${body}`}>
         <li>
           <strong>Cook.</strong> Place a cauldron over fire, soul fire, lava, a magma block, a lit campfire or a lit

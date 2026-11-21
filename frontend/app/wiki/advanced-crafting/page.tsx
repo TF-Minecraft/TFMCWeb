@@ -302,41 +302,52 @@ export default function AdvancedCraftingPage() {
         alloy. The item is named after the material you used most, shown here as{" "}
         <span className="italic text-[var(--tfmc-accent)]">Material</span>. Durability also comes from the materials.
       </p>
+      <p className={`mt-3 ${body}`}>
+        Each forged piece can only be used by the{" "}
+        <Link href="/wiki/classes#classes" className={link}>
+          classes
+        </Link>{" "}
+        listed for it. Its tooltip shows them too.
+      </p>
 
       <h3 className={subheading}>Armour</h3>
       <DataTable
         columns={[
-          { header: "Class", nowrap: true },
+          { header: "Armour", nowrap: true },
           { header: "Item" },
           { header: "Ingredients" },
           { header: "Socket", nowrap: true },
+          { header: "Classes" },
         ]}
         rows={armorRecipeTemplates.map((recipe) => [
           recipe.group,
           <TemplateName key={recipe.id} name={recipe.name} />,
           <IngredientTypeList key={recipe.id} ingredients={recipe.ingredients} />,
           socketTrackLabel[recipe.socketGroup],
+          recipe.classes.join(", "),
         ])}
         rowKey={(_row, index) => armorRecipeTemplates[index].id}
-        minWidth="40rem"
+        minWidth="52rem"
       />
 
       <h3 className={subheading}>Weapons</h3>
       <DataTable
-        columns={[{ header: "Item" }, { header: "Ingredients" }]}
+        columns={[{ header: "Item" }, { header: "Ingredients" }, { header: "Classes" }]}
         rows={weaponRecipeTemplates.map((recipe) => [
           <TemplateName key={recipe.id} name={recipe.name} />,
           <IngredientTypeList key={recipe.id} ingredients={recipe.ingredients} />,
+          recipe.classes.join(", "),
         ])}
         rowKey={(_row, index) => weaponRecipeTemplates[index].id}
       />
 
       <h3 className={subheading}>Bows</h3>
       <DataTable
-        columns={[{ header: "Item" }, { header: "Ingredients" }]}
+        columns={[{ header: "Item" }, { header: "Ingredients" }, { header: "Classes" }]}
         rows={bowRecipeTemplates.map((recipe) => [
           <TemplateName key={recipe.id} name={recipe.name} />,
           <IngredientTypeList key={recipe.id} ingredients={recipe.ingredients} />,
+          recipe.classes.join(", "),
         ])}
         rowKey={(_row, index) => bowRecipeTemplates[index].id}
       />

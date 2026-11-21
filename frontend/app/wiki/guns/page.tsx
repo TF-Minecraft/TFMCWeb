@@ -173,7 +173,7 @@ export default function GunsPage() {
         <Link href="#parts" className={link}>
           parts table
         </Link>{" "}
-        says what that is. Plain leather is ordinary Leather, and plain wool has to be White Wool.
+        says what that is. Plain leather is the Leather that animals drop, and plain wool has to be White Wool.
       </p>
 
       <WikiSectionHeading id="firing">Loading and firing</WikiSectionHeading>

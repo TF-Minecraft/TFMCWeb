@@ -30,7 +30,7 @@ const statuses: [string, string][] = [
   ["Burnt", "You take damage every second."],
   ["Bleeding", "You take damage every second for a few seconds. Rend causes it."],
   ["Frozen", "You cannot move or jump."],
-  ["Stunned", "You cannot move or jump for a moment. Ground Smash and Warrior Lunge cause it."],
+  ["Stunned", "You cannot move or jump for a moment. Ground Smash, Warrior Lunge and Vibrative Strike cause it."],
   ["Silenced", "You cannot cast spells."],
   [
     "Wounded",
@@ -108,9 +108,10 @@ export default function ClassesPage() {
 
       <WikiSectionHeading id="classes">Classes and subclasses</WikiSectionHeading>
       <p className={body}>
-        Apart from the Mage paths, every subclass is one of 3 types. <strong>Martial</strong> subclasses have only
-        passive skills. <strong>Semi-casters</strong> have spells and passives. <strong>Full casters</strong> have only
-        spells. Spells cost mana and are cast from your skill bar. The magic schools listed for a subclass are the{" "}
+        Every subclass is one of 3 types. <strong>Martial</strong> subclasses have only passive skills.{" "}
+        <strong>Semi-casters</strong> have spells and passives. <strong>Full casters</strong> have only spells. Spells
+        cost mana and are cast from your skill bar. The Mage paths are full casters too, but their spells come from the
+        weapon they carry (see below). The magic schools listed for a subclass are the{" "}
         <Link href="/wiki/magic#basics" className={link}>
           schools
         </Link>{" "}
@@ -138,7 +139,7 @@ export default function ClassesPage() {
                 <a key={path.id} href={`#path-${path.id}`} className={link}>
                   {path.name}
                 </a>,
-                path.type ?? "N/A",
+                path.type,
                 <WikiItemText key={`${path.id}-equipment`} text={path.equipment} />,
               ])}
             />
@@ -258,10 +259,7 @@ export default function ClassesPage() {
             {path.name}
           </h3>
           <p className={`mt-1 ${body}`}>
-            {path.type
-              ? `${path.type} ${baseClasses.find((b) => b.id === path.base)?.name} subclass.`
-              : `${baseClasses.find((b) => b.id === path.base)?.name} path.`}{" "}
-            {path.lore}
+            {`${path.type} ${baseClasses.find((b) => b.id === path.base)?.name} subclass.`} {path.lore}
             {path.magic ? ` Magic: ${path.magic}.` : ""}
           </p>
           <DataTable

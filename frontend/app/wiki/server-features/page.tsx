@@ -80,6 +80,10 @@ export default function ServerFeaturesPage() {
         Gilded and Ascended ranks follow your Patreon tier. <code className={code}>/tfmc patreon</code> shows the
         Patreon page.
       </p>
+      <p className={`mt-3 ${body}`}>
+        Supporter ranks get priority in the queue to join the main server. <RankName rank="Noble" /> rank and above can
+        also use emotes and images in chat.
+      </p>
 
       <WikiSectionHeading id="commands">Commands</WikiSectionHeading>
       <CommandTable commands={serverFeaturesCommands.commands} showAliases={false} />
