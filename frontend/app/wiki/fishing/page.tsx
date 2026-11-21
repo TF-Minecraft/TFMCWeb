@@ -100,9 +100,9 @@ export default function FishingPage() {
         ]}
       />
       <p className={`mt-3 ${body}`}>
-        All 3 rods catch the same treasure. Ignitium, Tin and Abyssalite Fragments sometimes come up several at once,
-        and an Abyssalite Rod brings up bigger piles of coins. Right-click a gemstone pouch to get 1 random gemstone of
-        its kind.
+        The Iron, Steel and Abyssalite Rods catch the same treasure. Ignitium, Tin and Abyssalite Fragments sometimes
+        come up several at once, and an Abyssalite Rod brings up bigger piles of coins. Right-click a gemstone pouch to
+        get 1 random gemstone of its kind.
       </p>
       <p className={`mt-3 ${body}`}>
         <strong>Water in land biomes</strong>, such as a forest pond or a swamp, gives that biome&apos;s blocks, mob
