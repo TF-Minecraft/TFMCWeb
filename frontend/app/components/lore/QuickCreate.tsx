@@ -8,7 +8,8 @@ import { buttonClass, errorClass, inputClass } from "../admin/ui";
 
 /**
  * One box and a button: makes a record from just its name (or title) and opens it,
- * so adding something takes one step and the rest is filled in on its page.
+ * so adding something takes one step and the rest is filled in on its page (opened
+ * ready to edit).
  */
 export default function QuickCreate({
   kind,
@@ -39,7 +40,7 @@ export default function QuickCreate({
       const made = await createEntity(kind, { ...extra, [field]: text });
       setLabel("");
       if (onCreated) onCreated(made.id);
-      else router.push(entityHref(kind, made.id));
+      else router.push(`${entityHref(kind, made.id)}?edit=1`);
     } catch (err) {
       setError(loreErrorMessage(err));
     } finally {

@@ -24,12 +24,23 @@ import {
   warnClass,
 } from "../../../components/admin/ui";
 import DayAvailability, { type DayPerson } from "../../../components/lore/DayAvailability";
-import { Backlinks, DetailHeader, Field, Notice, RefLink, Section } from "../../../components/lore/DetailParts";
+import {
+  Backlinks,
+  DetailHeader,
+  Field,
+  Notice,
+  ReadField,
+  ReadValue,
+  RefLink,
+  Section,
+} from "../../../components/lore/DetailParts";
 import EntityPicker from "../../../components/lore/EntityPicker";
 import HistoryList from "../../../components/lore/HistoryList";
+import LoreText from "../../../components/lore/LoreText";
 import LoreTextEditor from "../../../components/lore/LoreTextEditor";
 import SaveBar from "../../../components/lore/SaveBar";
 import { statusLabel } from "../../../components/lore/StatusBadge";
+import { useEditMode } from "../../../components/lore/useEditMode";
 import { useEntityEditor } from "../../../components/lore/useEntityEditor";
 import { useLinkSaver, type LinkSaver } from "../../../components/lore/useLinkSaver";
 import { useLoreTimeZone } from "../../../components/lore/useLoreTimeZone";
@@ -49,6 +60,7 @@ export default function EventPage({ params }: { params: Promise<{ id: string }> 
 
 function EventEditor({ id }: { id: number }) {
   const editor = useEntityEditor("event", id);
+  const edit = useEditMode();
   const { detail } = editor;
   const zone = useLoreTimeZone();
   // Characters and helpers share one saver: each write returns the whole event, so two in
@@ -67,7 +79,7 @@ function EventEditor({ id }: { id: number }) {
     );
   }
 
-  const locked = Boolean(detail.deleted_at);
+  const locked = !edit.editing || edit.finishing || Boolean(detail.deleted_at);
   const status = editor.value("status");
   const day = editor.value("scheduled_on");
   const startsAt = editor.value("starts_at");
@@ -128,6 +140,14 @@ function EventEditor({ id }: { id: number }) {
     else void editor.save();
   }
 
+  const done = () =>
+    edit.finish(async () => {
+      if (editor.dirty && problem) return editor.setError(problem);
+      const saved = await editor.save();
+      if (saved) setTimeError("");
+      return saved;
+    });
+
   const storylineLabel =
     storylineId === null
       ? ""
@@ -149,6 +169,12 @@ function EventEditor({ id }: { id: number }) {
         deletedAt={detail.deleted_at}
         onDelete={editor.remove}
         onRestore={editor.restore}
+        edit={{
+          editing: edit.editing,
+          onEdit: () => edit.setEditing(true),
+          onDone: () => void done(),
+          saving: edit.finishing || editor.saving,
+        }}
       >
         {detail.storyline ? (
           <p className="text-sm text-[var(--tfmc-mist)]">
@@ -159,31 +185,27 @@ function EventEditor({ id }: { id: number }) {
 
       <Section title="Event">
         <div className="flex flex-col gap-4">
-          <div className="grid gap-4 sm:grid-cols-[1fr_12rem]">
-            <Field label="Title">
-              <input
-                className={inputClass}
-                value={editor.value("title")}
-                maxLength={120}
-                disabled={locked}
-                onChange={(e) => editor.set("title", e.target.value)}
-              />
-            </Field>
-            <Field label="Status">
-              <select
-                className={inputClass}
-                value={status}
-                disabled={locked}
-                onChange={(e) => editor.set("status", e.target.value)}
-              >
-                {EVENT_STATUSES.map((s) => (
-                  <option key={s} value={s}>
-                    {statusLabel(s)}
-                  </option>
-                ))}
-              </select>
-            </Field>
-          </div>
+          {locked ? null : (
+            <div className="grid gap-4 sm:grid-cols-[1fr_12rem]">
+              <Field label="Title">
+                <input
+                  className={inputClass}
+                  value={editor.value("title")}
+                  maxLength={120}
+                  onChange={(e) => editor.set("title", e.target.value)}
+                />
+              </Field>
+              <Field label="Status">
+                <select className={inputClass} value={status} onChange={(e) => editor.set("status", e.target.value)}>
+                  {EVENT_STATUSES.map((s) => (
+                    <option key={s} value={s}>
+                      {statusLabel(s)}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+            </div>
+          )}
 
           <div className="flex flex-col gap-1">
             <span className="text-xs font-semibold uppercase tracking-wider text-[var(--tfmc-stone)]">Storyline</span>
@@ -247,87 +269,114 @@ function EventEditor({ id }: { id: number }) {
       </Section>
 
       <Section title="When">
-        <div className="flex flex-col gap-4">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Date" hint={status === "scheduled" ? "Needed for a scheduled event." : undefined}>
-              <input
-                type="date"
-                className={inputClass}
-                value={day ?? ""}
-                disabled={locked}
-                onChange={(e) => changeDay(e.target.value)}
-              />
-            </Field>
-            <Field label="Start time" hint={day ? `Optional, in your time zone (${zone}).` : "Pick a date first."}>
-              <input
-                type="time"
-                className={inputClass}
-                value={startsAt ? isoToZoned(startsAt, zone).time : ""}
-                disabled={locked || !day}
-                onChange={(e) => changeTime(e.target.value)}
-              />
-            </Field>
+        {locked ? (
+          <div className="flex flex-col gap-4">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <ReadField label="Date">
+                <ReadValue text={day ? formatDay(day, { year: true }) : ""} />
+              </ReadField>
+              <ReadField label="Start time">
+                <ReadValue text={startsAt ? formatStartTimes(startsAt, zone, day).join(" · ") : ""} />
+              </ReadField>
+            </div>
+            {waitingOn || status === "waiting" ? (
+              <ReadField label="Waiting on">
+                <ReadValue text={waitingOn} />
+              </ReadField>
+            ) : null}
           </div>
-          {timeError ? (
-            <p className={errorClass} role="alert">
-              {timeError}
-            </p>
-          ) : null}
-          {startsAt ? (
-            <p className="text-sm text-[var(--tfmc-cream)]">
-              Starts {formatStartTimes(startsAt, zone, day).join(" · ")}
-            </p>
-          ) : null}
-          <Field label="Waiting on" hint={status === "waiting" ? "Needed while the event is waiting." : undefined}>
-            <input
-              className={inputClass}
-              value={waitingOn}
-              maxLength={300}
-              disabled={locked}
-              placeholder="What has to happen before this can be scheduled"
-              onChange={(e) => editor.set("waiting_on", e.target.value)}
-            />
-          </Field>
-          {problem ? (
-            <p className={warnClass} role="status">
-              {problem}
-            </p>
-          ) : null}
-        </div>
+        ) : (
+          <div className="flex flex-col gap-4">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="Date" hint={status === "scheduled" ? "Needed for a scheduled event." : undefined}>
+                <input
+                  type="date"
+                  className={inputClass}
+                  value={day ?? ""}
+                  onChange={(e) => changeDay(e.target.value)}
+                />
+              </Field>
+              <Field label="Start time" hint={day ? `Optional, in your time zone (${zone}).` : "Pick a date first."}>
+                <input
+                  type="time"
+                  className={inputClass}
+                  value={startsAt ? isoToZoned(startsAt, zone).time : ""}
+                  disabled={!day}
+                  onChange={(e) => changeTime(e.target.value)}
+                />
+              </Field>
+            </div>
+            {timeError ? (
+              <p className={errorClass} role="alert">
+                {timeError}
+              </p>
+            ) : null}
+            {startsAt ? (
+              <p className="text-sm text-[var(--tfmc-cream)]">
+                Starts {formatStartTimes(startsAt, zone, day).join(" · ")}
+              </p>
+            ) : null}
+            <Field label="Waiting on" hint={status === "waiting" ? "Needed while the event is waiting." : undefined}>
+              <input
+                className={inputClass}
+                value={waitingOn}
+                maxLength={300}
+                placeholder="What has to happen before this can be scheduled"
+                onChange={(e) => editor.set("waiting_on", e.target.value)}
+              />
+            </Field>
+            {problem ? (
+              <p className={warnClass} role="status">
+                {problem}
+              </p>
+            ) : null}
+          </div>
+        )}
       </Section>
 
       <CharactersSection detail={detail} locked={locked} links={links} />
       <HelpersSection detail={detail} day={day} locked={locked} links={links} />
 
       <Section title="Write-up">
-        <div className="flex flex-col gap-4">
-          <LoreTextEditor
-            label="Summary"
-            value={editor.value("summary")}
-            onChange={(v) => editor.set("summary", v)}
-            rows={3}
-            maxLength={2000}
-            placeholder="What happens, in a line or two."
-            disabled={locked}
-          />
-          <LoreTextEditor
-            label="Notes"
-            value={editor.value("notes")}
-            onChange={(v) => editor.set("notes", v)}
-            rows={8}
-            maxLength={20000}
-            disabled={locked}
-          />
-          <LoreTextEditor
-            label="Outcome"
-            value={editor.value("outcome")}
-            onChange={(v) => editor.set("outcome", v)}
-            rows={5}
-            maxLength={20000}
-            placeholder="What came of it, once it has run."
-            disabled={locked}
-          />
-        </div>
+        {locked ? (
+          <div className="flex flex-col gap-4">
+            <ReadField label="Summary">
+              <LoreText text={editor.value("summary")} />
+            </ReadField>
+            <ReadField label="Notes">
+              <LoreText text={editor.value("notes")} />
+            </ReadField>
+            <ReadField label="Outcome">
+              <LoreText text={editor.value("outcome")} />
+            </ReadField>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-4">
+            <LoreTextEditor
+              label="Summary"
+              value={editor.value("summary")}
+              onChange={(v) => editor.set("summary", v)}
+              rows={3}
+              maxLength={2000}
+              placeholder="What happens, in a line or two."
+            />
+            <LoreTextEditor
+              label="Notes"
+              value={editor.value("notes")}
+              onChange={(v) => editor.set("notes", v)}
+              rows={8}
+              maxLength={20000}
+            />
+            <LoreTextEditor
+              label="Outcome"
+              value={editor.value("outcome")}
+              onChange={(v) => editor.set("outcome", v)}
+              rows={5}
+              maxLength={20000}
+              placeholder="What came of it, once it has run."
+            />
+          </div>
+        )}
       </Section>
 
       <Section title="Notifications">

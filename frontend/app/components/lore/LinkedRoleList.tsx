@@ -14,7 +14,8 @@ export type RoleLink = { id: number; role: string };
  * members. Every change sends the whole list through `onSave` (the server replaces
  * the list). Picking a record in the box adds it straight away with no role. While the
  * picker is creating or adding a record the rest of the list is held, so the list it
- * extends can't change underneath it.
+ * extends can't change underneath it. When `disabled` the list is read-only: roles
+ * show as text and nothing can be added or removed.
  */
 export default function LinkedRoleList({
   items,
@@ -80,23 +81,31 @@ export default function LinkedRoleList({
               <span className="min-w-0 flex-1">
                 <RefLink item={item} />
               </span>
-              <RoleInput
-                key={`${item.id}:${item.role}`}
-                role={item.role}
-                label={item.label}
-                disabled={locked}
-                onCommit={(role) =>
-                  send(current().map((link) => (link.id === item.id ? { ...link, role } : link))).catch(() => {})
-                }
-              />
-              <button
-                type="button"
-                className={quietButtonClass}
-                disabled={locked}
-                onClick={() => void send(current().filter((link) => link.id !== item.id)).catch(() => {})}
-              >
-                Remove
-              </button>
+              {disabled ? (
+                item.role ? (
+                  <span className="text-sm text-[var(--tfmc-mist)]">{item.role}</span>
+                ) : null
+              ) : (
+                <>
+                  <RoleInput
+                    key={`${item.id}:${item.role}`}
+                    role={item.role}
+                    label={item.label}
+                    disabled={locked}
+                    onCommit={(role) =>
+                      send(current().map((link) => (link.id === item.id ? { ...link, role } : link))).catch(() => {})
+                    }
+                  />
+                  <button
+                    type="button"
+                    className={quietButtonClass}
+                    disabled={locked}
+                    onClick={() => void send(current().filter((link) => link.id !== item.id)).catch(() => {})}
+                  >
+                    Remove
+                  </button>
+                </>
+              )}
             </li>
           ))}
         </ul>

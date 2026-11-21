@@ -28,7 +28,8 @@ TODAY = date.today()
 
 @pytest.fixture
 def client(monkeypatch):
-    for name in ("PLUGIN_KEY", "STAFF_KEY", "PS_PRODUCTION", "SIGN_IN_SITE", "LORE_PANEL", "PUBLIC_SITE_URL"):
+    for name in ("PLUGIN_KEY", "STAFF_KEY", "PS_PRODUCTION", "SIGN_IN_SITE", "LORE_PANEL", "PUBLIC_SITE_URL",
+                 "PROFILE_REALM_ID"):
         monkeypatch.delenv(name, raising=False)
     monkeypatch.setenv("DISCORD_AUTH_ENABLED", "1")
     monkeypatch.setenv("DISCORD_CLIENT_ID", "client-id")
@@ -448,9 +449,44 @@ def test_search_finds_player_characters_only_when_asked(client):
     assert vale == {"kind": "character", "id": 0, "label": "Brannoc Vale", "sublabel": "Tamsin",
                     "status": "active", "player": {"uuid": uuid, "character_id": "c1"}}
 
-    # Not without a query, nor when characters aren't wanted.
-    assert all("player" not in r for r in ok(member.get("/search?players=true"))["results"])
+    # Not when characters aren't wanted.
     assert ok(member.get("/search?q=brannoc&kinds=organisation&players=true"))["results"] == []
+
+
+def test_empty_search_lists_player_characters_after_lore_records(client):
+    member = Person(client, "helper", member=True)
+    Person(client, "linked", minecraft="Tamsin")
+    uuid = player_uuid_of("Tamsin")
+    roster_character(uuid, "c1", "Brannoc the Dead", status="DEAD")
+    roster_character(uuid, "c2", "Brannoc Vale")
+    roster_character(uuid, "c3", "Brannoc Elsewhere", realm="tutorial")
+    ok(member.post("/characters", {"name": "Aldric"}))
+    ok(member.post("/organisations", {"name": "Iron Guild"}))
+
+    listed = ok(member.get("/search?kinds=character,organisation&players=true"))["results"]
+    assert [r["label"] for r in listed] == ["Iron Guild", "Aldric", "Brannoc Vale", "Brannoc the Dead"]
+    assert ok(member.get("/search?kinds=character,organisation&players=true&limit=2"))["results"] == listed[:2]
+
+    # Only when asked.
+    assert all("player" not in r for r in ok(member.get("/search?kinds=character"))["results"])
+
+
+def test_player_characters_come_from_the_sites_realm(client, monkeypatch):
+    member = Person(client, "helper", member=True)
+    Person(client, "linked", minecraft="Tamsin")
+    uuid = player_uuid_of("Tamsin")
+    roster_character(uuid, "c1", "Brannoc Main")
+    roster_character(uuid, "c2", "Brannoc Dev", realm="dev")
+    monkeypatch.setenv("PROFILE_REALM_ID", "dev")
+
+    found = ok(member.get("/search?q=brannoc&kinds=character&players=true"))["results"]
+    assert [r["label"] for r in found] == ["Brannoc Dev"]
+    assert error(member.post("/player-characters", {"player_uuid": uuid, "character_id": "c1"}), 400) == (
+        "unknown_player_character"
+    )
+    made = ok(member.post("/player-characters", {"player_uuid": uuid, "character_id": "c2"}))
+    detail = ok(member.get(f"/characters/{made['id']}"))
+    assert detail["rpc_realm_id"] == "dev" and detail["player_character"]["name"] == "Brannoc Dev"
 
 
 def test_adopt_player_character(client):

@@ -60,9 +60,47 @@ export function Section({
   );
 }
 
+/** A labelled read-only value, the view-mode twin of `Field`. */
+export function ReadField({
+  label,
+  children,
+  className = "",
+}: {
+  label: string;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={`flex flex-col gap-1 ${className}`}>
+      <span className="text-xs font-semibold uppercase tracking-wider text-[var(--tfmc-stone)]">{label}</span>
+      {children}
+    </div>
+  );
+}
+
+/** A short plain value, or "Not set." when it is empty. */
+export function ReadValue({ text }: { text: string | null | undefined }) {
+  return text?.trim() ? (
+    <p className="break-words text-sm text-[var(--tfmc-cream)]">{text}</p>
+  ) : (
+    <p className="text-sm italic text-[var(--tfmc-stone)]">Not set.</p>
+  );
+}
+
+/** How a record page switches between reading and editing. */
+export type EditControls = {
+  editing: boolean;
+  onEdit: () => void;
+  /** Saves any changes, then goes back to reading. */
+  onDone: () => void;
+  saving?: boolean;
+};
+
 /**
  * The top of a record page: back link, title, status, who last edited it, and
  * delete (with a confirm). A deleted record shows a banner with Restore instead.
+ * With `edit`, the page opens to read: Edit switches to the form, Done saves and
+ * goes back, and Delete is only offered while editing.
  */
 export function DetailHeader({
   kind,
@@ -73,6 +111,7 @@ export function DetailHeader({
   deletedAt,
   onDelete,
   onRestore,
+  edit,
   children,
 }: {
   kind: EntityKind;
@@ -83,6 +122,7 @@ export function DetailHeader({
   deletedAt?: string | null;
   onDelete: () => Promise<void>;
   onRestore: () => Promise<void>;
+  edit?: EditControls;
   children?: React.ReactNode;
 }) {
   const [confirming, setConfirming] = useState(false);
@@ -136,28 +176,39 @@ export function DetailHeader({
         <h2 className="min-w-0 break-words font-[family-name:var(--font-fraunces)] text-2xl text-[var(--tfmc-cream)] sm:text-3xl">
           {title || "Untitled"}
         </h2>
-        {!deletedAt ? (
-          confirming ? (
-            <span className="flex items-center gap-3">
-              <span className="text-sm text-[var(--tfmc-mist)]">Delete this {KIND_LABEL[kind].toLowerCase()}?</span>
-              <button
-                type="button"
-                className="rounded-sm bg-[#8a3b3b] px-3 py-1.5 text-sm font-semibold text-[var(--tfmc-cream)] disabled:opacity-50"
-                disabled={busy}
-                onClick={() => run(onDelete)}
-              >
+        {deletedAt ? null : edit && !edit.editing ? (
+          <button type="button" className={buttonClass} onClick={edit.onEdit}>
+            Edit
+          </button>
+        ) : (
+          <span className="flex flex-wrap items-center gap-3">
+            {confirming ? (
+              <>
+                <span className="text-sm text-[var(--tfmc-mist)]">Delete this {KIND_LABEL[kind].toLowerCase()}?</span>
+                <button
+                  type="button"
+                  className="rounded-sm bg-[#8a3b3b] px-3 py-1.5 text-sm font-semibold text-[var(--tfmc-cream)] disabled:opacity-50"
+                  disabled={busy}
+                  onClick={() => run(onDelete)}
+                >
+                  Delete
+                </button>
+                <button type="button" className={quietButtonClass} onClick={() => setConfirming(false)}>
+                  Cancel
+                </button>
+              </>
+            ) : (
+              <button type="button" className={quietButtonClass} onClick={() => setConfirming(true)}>
                 Delete
               </button>
-              <button type="button" className={quietButtonClass} onClick={() => setConfirming(false)}>
-                Cancel
+            )}
+            {edit ? (
+              <button type="button" className={buttonClass} disabled={edit.saving} onClick={edit.onDone}>
+                {edit.saving ? "Saving…" : "Done"}
               </button>
-            </span>
-          ) : (
-            <button type="button" className={quietButtonClass} onClick={() => setConfirming(true)}>
-              Delete
-            </button>
-          )
-        ) : null}
+            ) : null}
+          </span>
+        )}
       </div>
       {updatedAt ? (
         <p className="text-xs text-[var(--tfmc-stone)]">

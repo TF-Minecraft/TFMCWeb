@@ -19,13 +19,23 @@ import { formatDay } from "@/lib/lore/dates";
 import AdminColumn from "../../../components/admin/AdminColumn";
 import { buttonClass, errorClass, inputClass, mutedClass, quietButtonClass } from "../../../components/admin/ui";
 import CharacterFace from "../../../components/lore/CharacterFace";
-import { Backlinks, DetailHeader, Field, Notice, RefLink, Section } from "../../../components/lore/DetailParts";
+import {
+  Backlinks,
+  DetailHeader,
+  Field,
+  Notice,
+  ReadField,
+  RefLink,
+  Section,
+} from "../../../components/lore/DetailParts";
 import HistoryList from "../../../components/lore/HistoryList";
 import LinkedRoleList from "../../../components/lore/LinkedRoleList";
+import LoreText from "../../../components/lore/LoreText";
 import LoreTextEditor from "../../../components/lore/LoreTextEditor";
 import RelationsEditor from "../../../components/lore/RelationsEditor";
 import SaveBar from "../../../components/lore/SaveBar";
 import { statusLabel } from "../../../components/lore/StatusBadge";
+import { useEditMode } from "../../../components/lore/useEditMode";
 import { useEntityEditor } from "../../../components/lore/useEntityEditor";
 
 const MAX_SKIN_BYTES = 64 * 1024;
@@ -45,6 +55,7 @@ export default function CharacterPage({ params }: { params: Promise<{ id: string
 
 function CharacterEditor({ id }: { id: number }) {
   const editor = useEntityEditor("character", id);
+  const edit = useEditMode();
   const { detail } = editor;
 
   if (!detail) {
@@ -55,11 +66,13 @@ function CharacterEditor({ id }: { id: number }) {
     );
   }
 
-  const locked = Boolean(detail.deleted_at);
+  const locked = !edit.editing || edit.finishing || Boolean(detail.deleted_at);
 
   async function refresh() {
     editor.replace(await getEntity("character", id));
   }
+
+  const done = () => edit.finish(editor.save);
 
   async function createOrganisation(label: string): Promise<SearchResult> {
     const made = await createEntity("organisation", { name: label });
@@ -77,53 +90,66 @@ function CharacterEditor({ id }: { id: number }) {
         deletedAt={detail.deleted_at}
         onDelete={editor.remove}
         onRestore={editor.restore}
+        edit={{
+          editing: edit.editing,
+          onEdit: () => edit.setEditing(true),
+          onDone: () => void done(),
+          saving: edit.finishing || editor.saving,
+        }}
       />
 
       <Section title="Details">
-        <div className="flex flex-col gap-4">
-          <div className="grid gap-4 sm:grid-cols-[1fr_12rem]">
-            <Field label="Name">
-              <input
-                className={inputClass}
-                value={editor.value("name")}
-                maxLength={120}
-                disabled={locked}
-                onChange={(e) => editor.set("name", e.target.value)}
-              />
-            </Field>
-            <Field label="Status">
-              <select
-                className={inputClass}
-                value={editor.value("status")}
-                disabled={locked}
-                onChange={(e) => editor.set("status", e.target.value)}
-              >
-                {CHARACTER_STATUSES.map((s) => (
-                  <option key={s} value={s}>
-                    {statusLabel(s)}
-                  </option>
-                ))}
-              </select>
-            </Field>
+        {locked ? (
+          <div className="flex flex-col gap-4">
+            <ReadField label="Summary">
+              <LoreText text={editor.value("summary")} />
+            </ReadField>
+            <ReadField label="Notes">
+              <LoreText text={editor.value("notes")} />
+            </ReadField>
           </div>
-          <LoreTextEditor
-            label="Summary"
-            value={editor.value("summary")}
-            onChange={(v) => editor.set("summary", v)}
-            rows={3}
-            maxLength={2000}
-            placeholder="Who they are, in a line or two."
-            disabled={locked}
-          />
-          <LoreTextEditor
-            label="Notes"
-            value={editor.value("notes")}
-            onChange={(v) => editor.set("notes", v)}
-            rows={8}
-            maxLength={20000}
-            disabled={locked}
-          />
-        </div>
+        ) : (
+          <div className="flex flex-col gap-4">
+            <div className="grid gap-4 sm:grid-cols-[1fr_12rem]">
+              <Field label="Name">
+                <input
+                  className={inputClass}
+                  value={editor.value("name")}
+                  maxLength={120}
+                  onChange={(e) => editor.set("name", e.target.value)}
+                />
+              </Field>
+              <Field label="Status">
+                <select
+                  className={inputClass}
+                  value={editor.value("status")}
+                  onChange={(e) => editor.set("status", e.target.value)}
+                >
+                  {CHARACTER_STATUSES.map((s) => (
+                    <option key={s} value={s}>
+                      {statusLabel(s)}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+            </div>
+            <LoreTextEditor
+              label="Summary"
+              value={editor.value("summary")}
+              onChange={(v) => editor.set("summary", v)}
+              rows={3}
+              maxLength={2000}
+              placeholder="Who they are, in a line or two."
+            />
+            <LoreTextEditor
+              label="Notes"
+              value={editor.value("notes")}
+              onChange={(v) => editor.set("notes", v)}
+              rows={8}
+              maxLength={20000}
+            />
+          </div>
+        )}
       </Section>
 
       <FaceSection detail={detail} locked={locked} onChange={editor.replace} />

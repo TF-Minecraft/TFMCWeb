@@ -33,7 +33,8 @@ const selectClass = `${inputClass} py-1`;
 /**
  * A character's or faction's relations. Outgoing ones (made here) can be added,
  * changed and removed; incoming ones (made on the other record) are shown read-only.
- * Each change is saved at once, then `onChanged` reloads the record.
+ * Each change is saved at once, then `onChanged` reloads the record. When `disabled`
+ * every relation is shown read-only.
  */
 export default function RelationsEditor({
   sourceKind,
@@ -98,37 +99,46 @@ export default function RelationsEditor({
               <span className="min-w-0 flex-1">
                 <RefLink item={relation.other} showKind />
               </span>
-              <select
-                className={selectClass}
-                value={relation.type}
-                aria-label={`Relation with ${relation.other.label}`}
-                disabled={locked}
-                onChange={(e) => {
-                  const next = e.target.value as RelationType;
-                  void run(() => updateRelation(relation.id, { type: next }));
-                }}
-              >
-                {RELATION_TYPES.map((t) => (
-                  <option key={t} value={t}>
-                    {RELATION_LABEL[t]}
-                  </option>
-                ))}
-              </select>
-              <NoteInput
-                key={`${relation.id}:${relation.note}`}
-                note={relation.note}
-                label={relation.other.label}
-                disabled={locked}
-                onCommit={(next) => run(() => updateRelation(relation.id, { note: next }))}
-              />
-              <button
-                type="button"
-                className={quietButtonClass}
-                disabled={locked}
-                onClick={() => void run(() => deleteRelation(relation.id))}
-              >
-                Remove
-              </button>
+              {disabled ? (
+                <>
+                  <RelationBadge type={relation.type} />
+                  {relation.note ? <span className="text-sm text-[var(--tfmc-mist)]">{relation.note}</span> : null}
+                </>
+              ) : (
+                <>
+                  <select
+                    className={selectClass}
+                    value={relation.type}
+                    aria-label={`Relation with ${relation.other.label}`}
+                    disabled={locked}
+                    onChange={(e) => {
+                      const next = e.target.value as RelationType;
+                      void run(() => updateRelation(relation.id, { type: next }));
+                    }}
+                  >
+                    {RELATION_TYPES.map((t) => (
+                      <option key={t} value={t}>
+                        {RELATION_LABEL[t]}
+                      </option>
+                    ))}
+                  </select>
+                  <NoteInput
+                    key={`${relation.id}:${relation.note}`}
+                    note={relation.note}
+                    label={relation.other.label}
+                    disabled={locked}
+                    onCommit={(next) => run(() => updateRelation(relation.id, { note: next }))}
+                  />
+                  <button
+                    type="button"
+                    className={quietButtonClass}
+                    disabled={locked}
+                    onClick={() => void run(() => deleteRelation(relation.id))}
+                  >
+                    Remove
+                  </button>
+                </>
+              )}
             </li>
           ))}
         </ul>
@@ -178,11 +188,7 @@ export default function RelationsEditor({
             {relations.incoming.map((relation) => (
               <li key={relation.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2">
                 <RefLink item={relation.other} showKind />
-                <span
-                  className={`${badgeClass} bg-[color-mix(in_srgb,var(--tfmc-cream)_12%,transparent)] text-[var(--tfmc-mist)]`}
-                >
-                  {RELATION_LABEL[relation.type] ?? relation.type}
-                </span>
+                <RelationBadge type={relation.type} />
                 {relation.note ? <span className="text-sm text-[var(--tfmc-mist)]">{relation.note}</span> : null}
               </li>
             ))}
@@ -190,6 +196,14 @@ export default function RelationsEditor({
         </div>
       ) : null}
     </div>
+  );
+}
+
+function RelationBadge({ type }: { type: RelationType }) {
+  return (
+    <span className={`${badgeClass} bg-[color-mix(in_srgb,var(--tfmc-cream)_12%,transparent)] text-[var(--tfmc-mist)]`}>
+      {RELATION_LABEL[type] ?? type}
+    </span>
   );
 }
 
