@@ -24,9 +24,9 @@ export default function BrewingPage() {
     >
       <WikiSectionHeading id="loop">Brewing a drink</WikiSectionHeading>
       <p className={body}>
-        There is no recipe list in game. You find recipes by experimenting and by asking other brewers. While a brew
-        cooks, the cauldron names what it is turning into, which hints at the recipe. If you designed a drink yourself,
-        its recipe is on the Drinks tab of your website profile.
+        There is no recipe list in game. You find recipes by experimenting and by asking other brewers. The bottle you
+        fill is named after what went into the cauldron, which helps you work a recipe out. If you designed a drink
+        yourself, its recipe is on the Drinks tab of your website profile.
       </p>
       <ol className={`mt-4 list-decimal space-y-2 pl-5 ${body}`}>
         <li>

@@ -166,8 +166,8 @@ export default function GatheringPage() {
         rows={biomes.map((row) => [...row])}
       />
       <p className={`mt-4 ${body}`}>
-        A few rarer spots turn up as well. They can give gold ingots or gold blocks, Enchanted Dust, a Lost Knowledge
-        Fragment or an Unknown Key.
+        A few rarer spots turn up as well. They can give gold ingots, raw gold blocks or gold blocks, Enchanted Dust or
+        a Lost Knowledge Fragment.
       </p>
 
       <WikiSectionHeading id="treasure">Treasure</WikiSectionHeading>
