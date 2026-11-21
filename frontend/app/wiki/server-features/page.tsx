@@ -10,20 +10,21 @@ const body = "text-sm text-[var(--tfmc-mist)]";
 export default function ServerFeaturesPage() {
   return (
     <WikiPage
-      lastModified="2026-11-04"
+      lastModified="2026-11-21"
       title="Account & Website"
-      intro="Your Minecraft account, your Discord account and the TFMC website work together once they are linked."
+      intro="Link your Minecraft account to Discord, sign in to the website and see what supporter ranks unlock."
     >
       <WikiSectionHeading id="website-link">Linking Discord</WikiSectionHeading>
       <p className={body}>
-        You cannot play in Survival until your Discord account is linked; until then you are held in place. Type{" "}
+        You cannot play on the main server until your Discord account is linked. Until then you stay on the character
+        screen, which has a <strong>Link Discord to play</strong> button. Type{" "}
         <code className={code}>/linkdiscord</code> in game to get a code you can click to copy, then run{" "}
         <code className={code}>/linkdiscord &lt;code&gt;</code> in the TFMC Discord server. The game confirms the link
         within a second or so. <code className={code}>/unlinkdiscord</code> removes it again.
       </p>
       <p className={`mt-3 ${body}`}>
         If you leave the Discord server, you have 1 hour to rejoin. After that your account is unlinked and you cannot
-        play in Survival until you link again.
+        play on the main server until you link again.
       </p>
 
       <WikiSectionHeading id="profile">Your website profile</WikiSectionHeading>
@@ -33,8 +34,8 @@ export default function ServerFeaturesPage() {
           profile
         </Link>{" "}
         and choose <strong>Sign in with Discord</strong>, or use a one-time code from{" "}
-        <code className={code}>/token create profile</code> in game. There you can create characters, change their
-        wills, manage wardrobes and kits, and see your custom skins and drinks and your linked accounts.
+        <code className={code}>/token create profile</code> in game. There you can create characters, change their wills
+        and manage wardrobes and kits. It also shows the skins and drinks you designed and your linked accounts.
       </p>
       <p className={`mt-3 ${body}`}>
         Once you are signed in with Discord, you can link your Minecraft account on the profile, either by signing in
@@ -45,7 +46,7 @@ export default function ServerFeaturesPage() {
       <WikiSectionHeading id="uploads">Skin and drink codes</WikiSectionHeading>
       <p className={body}>
         <code className={code}>/token create skin</code> and <code className={code}>/token create drink</code> give you
-        a code for uploading a custom{" "}
+        a code for uploading your own{" "}
         <Link href="/wiki/armour-shop" className={link}>
           skin
         </Link>{" "}
@@ -53,7 +54,8 @@ export default function ServerFeaturesPage() {
         <Link href="/wiki/brewing#custom-drinks" className={link}>
           drink
         </Link>{" "}
-        on the website. They are a supporter perk, and both share one cooldown that depends on your rank.
+        on the website. They are for <RankName rank="Noble" /> rank and above, and both share one cooldown that depends
+        on your rank.
       </p>
       <div className="mt-4">
         <DataTable
@@ -73,9 +75,10 @@ export default function ServerFeaturesPage() {
 
       <WikiSectionHeading id="patreon">Supporting the server</WikiSectionHeading>
       <p className={body}>
-        Supporter ranks come from Patreon. Run <code className={code}>/patreon</code> to link your Patreon account and
-        see your status, and <code className={code}>/patreon unlink</code> to remove the link. The Noble, Gilded and
-        Ascended ranks follow your Patreon tier. <code className={code}>/tfmc patreon</code> shows the Patreon page.
+        You get a supporter rank through Patreon. Run <code className={code}>/patreon</code> to link your Patreon
+        account and see your status, and <code className={code}>/patreon unlink</code> to remove the link. The Noble,
+        Gilded and Ascended ranks follow your Patreon tier. <code className={code}>/tfmc patreon</code> shows the
+        Patreon page.
       </p>
 
       <WikiSectionHeading id="commands">Commands</WikiSectionHeading>

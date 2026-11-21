@@ -24,9 +24,9 @@ const lockStates = [
 export default function LocksPage() {
   return (
     <WikiPage
-      lastModified="2026-10-24"
+      lastModified="2026-11-21"
       title="Locks & Keys"
-      intro="Lock your doors with a key and choose who can open your chests. You need to be playing a character for any of it."
+      intro="Lock your doors with a key and choose who can open your chests. You must be playing a character for any of it."
     >
       <WikiSectionHeading id="doors">Locking a door</WikiSectionHeading>
       <p className={body}>
@@ -41,8 +41,9 @@ export default function LocksPage() {
         <li>Hold the key, sneak and right-click a door, trapdoor or fence gate to lock it. Do it again to unlock.</li>
         <li>Iron doors and iron trapdoors are the only ones that can&apos;t be locked.</li>
         <li>
-          A locked door only opens for its key or a copy, though anyone can close a locked door or gate. Only someone
-          holding the original key, a Copper Key copy, or a key chain with either can break it, or the block under it.
+          A locked door only opens for its key or a copy, though anyone can close a locked door or gate. To break a
+          locked door, or the block under it, you must hold the original key, a Copper Key copy or a Key Chain with one
+          of them on it.
         </li>
         <li>
           A <WikiItemLink name="Key Chain" /> (Tool Station, 2 Iron Ingots) holds up to 5 keys and opens their doors,
@@ -53,7 +54,8 @@ export default function LocksPage() {
 
       <WikiSectionHeading id="copies">Copying a key</WikiSectionHeading>
       <p className={body}>
-        Pick up the first item in your inventory and click it onto the second. No station is needed.
+        In your inventory, pick up the item in the first column of the table and click it onto the item in the second.
+        No station is needed.
       </p>
       <div className="mt-4">
         <DataTable

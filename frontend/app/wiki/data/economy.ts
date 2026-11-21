@@ -16,7 +16,7 @@ export const denarCoins: DenarCoin[] = [
   { name: "Silver Denar", value: "0.01 d", image: "silver-denar" },
 ].map((coin) => ({ ...coin, image: `/wiki/textures/currency/${coin.image}.png` }));
 
-/** DenarEconomy 0.7.1. `give`, `reload`, `legacy`, `account`, `move` and `history <player>` are staff only. */
+/** DenarEconomy 0.8.0. `give`, `reload`, `legacy`, `account`, `move` and `history <player>` are staff only. */
 export const denarCommands: WikiCommandSet = {
   system: "Money",
   href: "/wiki/economy",
@@ -28,21 +28,23 @@ export const denarCommands: WikiCommandSet = {
     {
       command: "/pouch",
       description: "Shows how much money you carry, coins included, above your head for 5 seconds.",
-      notes: "Players near you can read it too.",
+      notes: "Players near you can read it too. You can use it once every 5 seconds.",
     },
     {
       command: "/deco toitem <amount> [coin]",
-      description: "Turns pouch money into coins in your inventory. With a coin name, the amount counts coin items.",
-      notes: "/deco toitem 5 gold_pouch makes five 100 d pouches and takes 500 d.",
+      description:
+        "Turns pouch money into coins in your inventory. If you add a coin name, the amount is the number of those coins.",
+      notes: "/deco toitem 5 gold_pouch makes 5 pouches of 100 d and takes 500 d.",
     },
     {
       command: "/deco topouch",
-      description:
-        "Puts eligible coins in your hand into your pouch. If stored coins are refused, drop them and pick them up yourself.",
+      description: "Puts the coins in your hand into your pouch.",
+      notes:
+        "Coins that dropped from mining, chopping, harvesting or a PvP death and went through a hopper into a chest are refused. Drop those and pick them up instead.",
     },
     {
       command: "/deco pay <amount>",
-      description: "Tosses that much from your pouch forward from eye level as coins.",
+      description: "Throws that amount from your pouch in front of you as coins.",
     },
     {
       command: "/deco deposit <amount>",
@@ -83,7 +85,7 @@ export const marketBlockRecipe: Recipe = {
     empty,
     { name: "Oak Planks", qty: 1, texture: V("oak_planks.png") },
   ],
-  note: "Synthetic Ink can replace the Ink Sac. Use one Oak Plank in each of the five plank slots.",
+  note: "Synthetic Ink can replace the Ink Sac. Use 1 Oak Planks in each of the 5 plank slots.",
   output: {
     name: "Market Block",
     qty: 1,
@@ -105,7 +107,7 @@ export const marketBlockRecipe: Recipe = {
 export type MarketGood = { category: string; goods: string; bundle: number; price: string };
 
 /**
- * Main's `MarketBlock/trades.yml` (MarketBlock 0.2.1): what the market buys, the bundle it takes
+ * Main's `MarketBlock/trades.yml` (MarketBlock 0.2.2): what the market buys, the bundle it takes
  * and its resting price. MarketBlock has no player command; `/marketblock` is staff only.
  */
 export const marketGoods: MarketGood[] = [

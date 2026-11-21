@@ -17,7 +17,7 @@ const code = "text-[var(--tfmc-accent)]";
 export default function WarPage() {
   return (
     <WikiPage
-      lastModified="2026-11-18"
+      lastModified="2026-11-21"
       title="War & Mercenaries"
       intro={
         <>
@@ -41,7 +41,7 @@ export default function WarPage() {
         <li>No truce can stand between you. A truce lasts 10 days after a war ends.</li>
         <li>You need regiments that can attack, and a war code that staff create for you in Discord.</li>
         <li>
-          Choose what you are fighting for in the Declare War menu, such as taking land, making them your subject, or
+          Choose what you are fighting for in the Declare War menu, such as taking land, making them your subject or
           pillaging. Confirming asks you to type the war code in chat. Defenders can set a counter-demand.
         </li>
       </ul>
@@ -82,7 +82,13 @@ export default function WarPage() {
           vehicle construction pause.
         </li>
         <li>Nothing new of those can be started.</li>
-        <li>No vehicle can be added to the faction pool or berthed.</li>
+        <li>
+          No vehicle can be added to the faction pool or{" "}
+          <Link href="/wiki/vehicles#faction-vehicles" className={link}>
+            berthed
+          </Link>{" "}
+          (parked at one of your faction&apos;s installations).
+        </li>
       </ul>
       <p className={`mt-3 ${body}`}>
         Gear, trade and the rest of the economy carry on. You still get the slots your laws give, upkeep and wages are
@@ -105,7 +111,7 @@ export default function WarPage() {
         columns={[{ header: "When", nowrap: true }, { header: "What happens" }]}
         rows={[
           [
-            "21:00, two days before",
+            "21:00, 2 days before",
             "The date becomes a battle day if at least 3 players of each side can come at the same start time. If a side has fewer than 3 active players, all of them must be able to come. If not, that date has no battle.",
           ],
           ["21:00, the day before", "The start time is fixed to the hour most of both sides can make."],
@@ -114,8 +120,8 @@ export default function WarPage() {
       <ul className={`mt-3 list-disc space-y-2 pl-5 ${body}`}>
         <li>Battles can fall on back-to-back days.</li>
         <li>
-          After three dates in a row without a battle, the third becomes a battle day anyway. If one side marked nothing
-          for it, the battle is decided automatically.
+          After 3 dates in a row without a battle, the third becomes a battle day anyway. If one side marked nothing for
+          it, the battle is decided automatically.
         </li>
       </ul>
       <p className={`mt-3 ${body}`}>
@@ -124,13 +130,13 @@ export default function WarPage() {
       </p>
 
       <WikiSectionHeading id="battles">Battle days</WikiSectionHeading>
-      <p className={body}>Battles are fought along the route toward the enemy. A battle day goes like this:</p>
+      <p className={body}>Battles are fought along the route towards the enemy. A battle day goes like this:</p>
       <DataTable
         columns={[{ header: "Time", nowrap: true }, { header: "What happens" }]}
         rows={[
           [
             "16:00",
-            "The battle is set on its province. Installations must be committed by then, and faction leaders get warnings in game before the choices lock.",
+            "The battle is set on its province. Leaders must have committed their installations by then (chosen which of their ports, airports and train stations support the battle, which decides the vehicles their side can use). Only installations in provinces their side still controls can be chosen. The choices lock at this time, and leaders get warnings in game beforehand.",
           ],
           [
             "19:00 to 21:00",
@@ -156,31 +162,44 @@ export default function WarPage() {
         a loss for that side.
       </p>
       <p className={`mt-3 ${body}`}>
-        The faction that loses the war, and its subjects, pay the winner a quarter of their guilds&apos; trade income
-        for 10 days.
+        The faction that loses the war, and its subjects, pay the winner 25% of their guilds&apos; trade income for 10
+        days.
       </p>
 
       <WikiSectionHeading id="campaign">Managing the campaign</WikiSectionHeading>
       <p className={body}>
         Open <code className={code}>/war list</code> and select the war to see its campaign menu. Leaders commit
-        installations to the next battle from this menu. In a naval battle slot, the attacking side loses automatically
-        if it has no ship berthed at a committed port. After winning a battle, choose Push to advance or Hold to stay
-        put. Leaders can offer white peace or surrender to end the war, concede a battle slot, or ask for an automatic
-        result instead of fighting it. For an agreed automatic result, the other leader must answer with{" "}
+        installations to the next battle from this menu. In a naval battle, the attacking side loses automatically if it
+        has no ship berthed at a committed port. After winning a battle, choose Push to advance or Hold to stay put.
+        Leaders can offer white peace or surrender to end the war, concede a battle or ask for an automatic result
+        instead of fighting it. For an agreed automatic result, the other leader must answer with{" "}
         <code className={code}>/faction accept</code> within 60 seconds.
       </p>
 
       <WikiSectionHeading id="in-battle">In battle</WikiSectionHeading>
       <p className={body}>
         You keep your inventory when you die, and your gear wears much more slowly. Friendly fire is on, so take care
-        around your own side. Field battles use capture points and shared lives. Sieges use a contest timer.
+        around your own side.
       </p>
       <p className={`mt-3 ${body}`}>
-        A field battle is lost by running out of lives or retreating, and it can also be won by control. While your side
-        holds more capture points than the enemy, it gains control, faster the more points it holds. Holding every point
-        is four times faster again. The first side to 1000 control wins. A point counts once it is at least half
-        captured. Your side&apos;s control and the enemy&apos;s show on the capture point scoreboard.
+        In a field battle, each side has a shared pool of lives and fights over capture points. The battle is lost by
+        running out of lives or retreating, and it can also be won by control. While your side holds more capture points
+        than the enemy, it gains control, faster the more points it holds. Holding every point is 4 times faster again.
+        The first side to 1000 control wins. A point counts once it is at least half captured. Your side&apos;s control
+        and the enemy&apos;s show on the capture point scoreboard.
       </p>
+      <p className={`mt-3 ${body}`}>
+        A siege is fought at an enemy fort on the route, around a marked contest area. A siege timer decides it:
+      </p>
+      <ul className={`mt-3 list-disc space-y-2 pl-5 ${body}`}>
+        <li>
+          While enough attackers stand in the area and outnumber the defenders there, the timer runs down. While the
+          defenders hold the area, it runs back up. Otherwise it stays where it is.
+        </li>
+        <li>Players in vehicles don&apos;t count. Everyone inside the area sees the timer and who is holding.</li>
+        <li>The attackers win when the timer reaches zero. Either side wins if the other runs out of lives.</li>
+        <li>A siege has no time limit, but a side with nobody online for a while loses.</li>
+      </ul>
       <p className={`mt-3 ${body}`}>
         In a campaign battle, you can only use faction pool vehicles from your side, or vehicles berthed at an
         installation on your side that was committed to that battle. Signed-up players cannot use vehicles before the
@@ -244,13 +263,15 @@ export default function WarPage() {
         can&apos;t pay, regiments shrink.
       </p>
       <p className={`mt-3 ${body}`}>
-        Each side&apos;s lives in a battle come from its regiments, plus the levies of its subjects and the hired
-        mercenaries on its roster. A subject defending its own province brings its whole militia.
+        Each side&apos;s lives in a battle come from its regiments, its levies (soldiers its subjects send to its
+        battles, with no upkeep) and the hired mercenaries on its roster. A subject defending its own province brings
+        its whole militia.
       </p>
       <p className={`mt-3 ${body}`}>
-        Deaths in a field battle or siege don&apos;t shrink your regiments. They become wounds on the forces that
-        fought, split by the lives each one brought. Slots your Military law gives you for free are full again after
-        every battle. Wounded paid slots can&apos;t fight and cost no upkeep, and you lose them when the war ends.
+        Deaths in a field battle or siege wound your forces instead of shrinking them. The wounds are shared between
+        your regiments, levies and mercenaries according to how many lives each brought. Slots your Military law gives
+        you for free are full again after every battle. Wounded paid slots can&apos;t fight and cost no upkeep, and you
+        lose them when the war ends.
       </p>
 
       <WikiSectionHeading id="mercenaries" intro="Guilds can run a mercenary company and fight for other factions.">
@@ -275,10 +296,10 @@ export default function WarPage() {
 
       <p className={`mt-3 ${body}`}>
         Contracts charge a day price and a battle price for each place hired. Battle days cost both. The minimum prices
-        are 10 d per day and 50 d per battle, and a contract lasts at most 14 days. Read the absence and breach refund
-        terms before signing. Missing mercenaries trigger absence refunds. Dropping below the number of places promised
-        triggers the breach refund. Absences and breaches harm the company&apos;s reputation. Days already served still
-        have to be paid.
+        are 10 d per day and 50 d per battle, and a contract lasts at most 14 days. Before signing, read the
+        contract&apos;s two refund terms. The absence refund is paid back when hired mercenaries miss a battle. The
+        breach refund is paid back if the company drops below the number of places it promised. Both also hurt the
+        company&apos;s reputation. Days already served still have to be paid.
       </p>
       <p className={`mt-3 ${body}`}>
         While a contract runs, hired mercenaries mark the{" "}
@@ -290,8 +311,8 @@ export default function WarPage() {
       </p>
       <p className={`mt-3 ${body}`}>
         Company upgrades are Hardened Bodies for health, Warding Sigils for mana and Steady Focus for mana recovery.
-        Each costs 10 d per day per level from the host guild and goes up to level 10. Their benefits apply only while
-        fighting as hired mercenaries.
+        Each costs 10 d per day per level from the company&apos;s guild and goes up to level 10. Their benefits apply
+        only while fighting as hired mercenaries.
       </p>
 
       <Callout variant="note">

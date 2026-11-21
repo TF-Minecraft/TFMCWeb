@@ -21,7 +21,7 @@ const piece = (name: string) => (
 export default function CookingPage() {
   return (
     <WikiPage
-      lastModified="2026-11-18"
+      lastModified="2026-11-21"
       title="Cooking"
       width="lg"
       intro="You cook on furniture placed in the world, not in a menu. Food keeps track of how fresh it is, how it was cooked and how it was seasoned, and has a quality from 1 to 5 stars."
@@ -67,13 +67,14 @@ export default function CookingPage() {
           When the water boils, add the cut carrot and mash it with the Masher. The pot won&apos;t take anything else
           until you do. Then add the cut potato and mash that too.
         </li>
-        <li>Right-click the pot with the Ladle to take a serving. One pot gives 3.</li>
+        <li>Right-click the pot with the Ladle to take a serving. A pot gives 3 servings.</li>
         <li>
           Place the Bowl, right-click it with the full ladle, then right-click the bowl with an empty hand to eat.
         </li>
       </ol>
       <p className={`mt-3 ${body}`}>
-        Once mashed, a soup takes one salt, one pepper, one garnish and one spice to season it.
+        Once mashed, a soup can be seasoned with up to one salt, one pepper, one garnish and one spice. Seasoning is
+        optional.
       </p>
       <figure className="mt-6">
         <a href="/wiki/guides/soup-pot-chart.png" target="_blank" rel="noopener noreferrer">
@@ -103,7 +104,7 @@ export default function CookingPage() {
             piece("Frying Pan"),
             <WikiItemText
               key="pan"
-              text="Add Butter first. Without it, everything in a hot pan burns within 10 seconds. One Butter lasts 30 seconds. Fries raw meat, sausages, eggs, seafood and cut vegetables."
+              text="Add Butter first. Without it, everything in a hot pan burns within 10 seconds. Each Butter lasts 30 seconds. Fries raw meat, sausages, eggs, seafood and cut vegetables."
             />,
           ],
           [
@@ -147,7 +148,7 @@ export default function CookingPage() {
             piece("Bread Tray"),
             <WikiItemText
               key="bread"
-              text="Fill the moulds with dough before putting the tray in the Oven Top over a lit Oven Bottom. Each mould bakes 2 bread. Take it out before it burns. Let the dough rise first. Its description shows Unrisen, Rising or Risen."
+              text="Fill the moulds with dough. Dough rises by itself in about a minute, and its description shows Unrisen, then Rising, then Risen. Once it has risen, put the tray in the Oven Top over a lit Oven Bottom. Each mould bakes 2 bread. Take the tray out before it burns. Unrisen or Rising dough still bakes, but the bread gets fewer stars."
             />,
           ],
           [
@@ -186,7 +187,7 @@ export default function CookingPage() {
 
       <WikiSectionHeading
         id="carving"
-        intro="Each hit with the Cutting Knife on the Meat Hook takes off one piece, in this order."
+        intro="Each hit with the Cutting Knife on the Meat Hook takes off 1 piece, in this order."
       >
         Carving
       </WikiSectionHeading>
@@ -225,6 +226,10 @@ export default function CookingPage() {
       <p className={`mt-3 ${body}`}>
         Once food is cooked, boiled or burnt, it stays fresh for only a few days, however long its ingredients would
         have kept, so cook close to when you plan to eat. Cooking never makes food fresher.
+      </p>
+      <p className={`mt-3 ${body}`}>
+        Freshly cooked food is Hot for 30 minutes, then Warm until 2 hours 30 minutes after cooking. Eating it Hot or
+        Warm fills you more and nourishes you more.
       </p>
 
       <SeeAlso

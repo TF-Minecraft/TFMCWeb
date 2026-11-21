@@ -82,7 +82,7 @@ export function getInstrumentBySlug(slug: string): InstrumentInfo | undefined {
 }
 
 /**
- * MusicalInstruments 3.4.1 on Main. Every player command below defaults to true
+ * MusicalInstruments 3.4.2 on Main. Every player command below defaults to true
  * (`instruments.use`, `instruments.record`, `instruments.copy`). `/music studio`,
  * `/instruments give` and `/instruments reload` are staff only.
  */
@@ -97,7 +97,7 @@ export const instrumentCommands: WikiCommandSet = {
     },
     {
       command: "/instruments keybinds",
-      description: "Lists the notes and chords on each hotbar key for the instrument in your off-hand.",
+      description: "Lists the notes and chords on each hotbar key for the instrument in your off hand.",
     },
     {
       command: "/instruments list",
@@ -106,7 +106,7 @@ export const instrumentCommands: WikiCommandSet = {
     {
       command: "/music help",
       aliases: ["/recording help"],
-      description: "Lists the recording commands. They do the same as the buttons in the studio.",
+      description: "Lists the recording commands. They do the same as the buttons in the Music Station.",
     },
     {
       command: "/music new <title>",
@@ -153,7 +153,7 @@ export const instrumentCommands: WikiCommandSet = {
     },
     {
       command: "/music copy",
-      description: "Copies the recorded disc in your off-hand onto the blank disc in your main hand.",
+      description: "Copies the recorded disc in your off hand onto the blank disc in your main hand.",
     },
     {
       command: "/music reset confirm",
@@ -167,7 +167,7 @@ export const instrumentsSection: WikiSection = {
     href: "/wiki/musical-instruments",
     label: "Musical Instruments",
     category: "social",
-    blurb: "Play nine instruments from your hotbar or an on-screen keyboard, and record songs onto music discs.",
+    blurb: "Play 9 instruments from your hotbar or an on-screen keyboard, and record songs onto music discs.",
   },
   // `instrumentRecipes` are server recipes registered by `stationsSection`;
   // listing them again here would put them in the recipe index twice.

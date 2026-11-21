@@ -109,7 +109,7 @@ describe("vehicle page rendering", () => {
   it("renders one selected model and all vehicle selectors on the index", () => {
     const html = renderToStaticMarkup(VehiclesPage());
 
-    expect(html.match(/Loading /g) ?? []).toHaveLength(1);
+    expect(html.match(/Loading [^"<]*…/g) ?? []).toHaveLength(1);
     expect(html.match(/aria-pressed=/g) ?? []).toHaveLength(vehicles.length);
     expect(html).toContain(`href="/wiki/vehicles/${vehicles[0].slug}"`);
     for (const vehicle of vehicles) {
@@ -129,15 +129,17 @@ describe("vehicle page rendering", () => {
     const flatCar = await detail("flat-car");
     expect(flatCar).toContain("riders stand on its deck");
     expect(flatCar).toContain('href="/wiki/vehicles#cargo-docks"');
-    expect(flatCar).toContain("While whitelisting is on, whitelisted players and allowed groups can open it too");
+    expect(flatCar).toContain(
+      "While it is on, characters on the list and members of the switched-on groups can open the hold too",
+    );
     expect(flatCar).toContain('href="/wiki/vehicles#routes"');
-    expect(flatCar).not.toContain("passenger access and tickets");
-    expect(flatCar).not.toContain("select a seat");
+    expect(flatCar).not.toContain("only you and the characters and groups you allow can board");
+    expect(flatCar).not.toContain("pick a seat");
     expect(flatCar).not.toContain("mechanic seat");
     expect(flatCar).not.toContain("Only the captain steers");
 
     const coalCar = await detail("coal-car");
-    expect(coalCar).toContain("then right-click to select a seat");
+    expect(coalCar).toContain("Right-click it to pick a seat.");
     expect(coalCar).not.toContain("Only the captain steers");
     expect(coalCar).not.toContain("mechanic seat");
 
@@ -146,19 +148,19 @@ describe("vehicle page rendering", () => {
     const ironclad = await detail("ironclad");
     expect(ironclad).toContain("Only the captain steers");
     expect(ironclad).toContain("or from a mechanic seat");
-    expect(ironclad).toContain("passenger access and tickets");
+    expect(ironclad).toContain("only you and the characters and groups you allow can board");
     expect(ironclad).not.toContain('href="/wiki/vehicles#routes"');
 
     // Civilian vehicles: no rank, no upkeep, no weapons; the Karve sails and the balloon burns Arcane Fuel.
     const karve = await detail("karve");
-    expect(karve).toContain("Its sails use wind.");
-    expect(karve).toContain("Shift reopens seat selection.");
+    expect(karve).toContain("Its sails use the wind.");
+    expect(karve).toContain("Sneak to open the seat menu again.");
     expect(karve).not.toContain('id="fuel"');
     const windrider = await detail("windrider");
     expect(windrider).toContain('id="fuel"');
-    expect(windrider).toContain("Land before refuelling.");
-    expect(windrider).not.toContain("reload bomb bays");
-    expect(windrider).toContain("in flight, Shift alone descends");
+    expect(windrider).toContain("Land before you refuel.");
+    expect(windrider).not.toContain("Bomb bays");
+    expect(windrider).toContain("sneak alone makes a flying airship go down");
     expect(windrider).toContain("Cargo Hold, 27 slots");
     for (const slug of ["scout", "windrider", "karve"]) {
       const vehicle = getVehicleBySlug(slug)!;

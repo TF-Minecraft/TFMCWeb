@@ -17,11 +17,11 @@ const code = "text-[var(--tfmc-accent)]";
 export default function ThieveryPage() {
   return (
     <WikiPage
-      lastModified="2026-10-24"
+      lastModified="2026-11-21"
       title="Thievery"
       intro={
         <>
-          Thieves pick locks and pockets, and bandits rob people and loot the graves of those they kill. To protect your
+          Thieves pick locks and pockets, and Bandits rob people and loot the graves of those they kill. To protect your
           own things, see{" "}
           <Link href="/wiki/locks" className={link}>
             Locks &amp; Keys
@@ -54,9 +54,10 @@ export default function ThieveryPage() {
       <p className={body}>
         Before stealing, a Thief or Bandit picks which kinds of items they know how to spot with{" "}
         <code className={code}>/thievery loadout</code>. Each kind costs points, and you have 10 at most. Adding a kind
-        uses points that come back at 1 an hour; removing one gives nothing back. Your loadout is shared by all the
-        characters on your account. When you steal, items of kinds you didn&apos;t pick show as <em>HIDDEN!</em> and
-        can&apos;t be taken. You can only carry off so much each time, so pricey items may not fit at all.
+        spends points, and spent points refill at 1 an hour. Removing a kind does not refund its points. Your loadout is
+        shared by all the characters on your account. When you steal, items of kinds you didn&apos;t pick show as{" "}
+        <em>HIDDEN!</em> and can&apos;t be taken. Each theft has a limit on the total value you can take, so an
+        expensive item may be too much to take at all.
       </p>
 
       <WikiSectionHeading id="lockpicks">Lockpicks</WikiSectionHeading>
@@ -64,12 +65,13 @@ export default function ThieveryPage() {
         The <WikiItemLink name="Basic Lockpick" /> (1 Steel Ingot) and the stronger{" "}
         <WikiItemLink name="Strong Lockpick" /> (2 Steel Ingots) are made at the <StationLink name="Tool Station" />.
         Hold one and right-click what you want to open. When a lockpick breaks, only one from the stack is lost. After a
-        failed try, give it a minute before trying the same lock again.
+        failed try, you have to wait a minute before trying the same lock again.
       </p>
       <p className={`mt-3 ${body}`}>
-        Your Dexterity and your lockpick both matter. Higher Dexterity makes the lockpicking bar and the chest tumbler
-        ring move slower. A Strong Lockpick puts more green and less red on the bar. Both leave fewer seized pins in a
-        chest and make a clue less likely to name you.
+        Your Dexterity and your lockpick both matter (the bar, the ring and the pins are explained in the next two
+        sections). Higher Dexterity makes the lockpicking bar and the chest tumbler ring move slower. A Strong Lockpick
+        puts more green and less red on the bar. Both leave fewer seized pins in a chest and make a clue less likely to
+        name you.
       </p>
 
       <WikiSectionHeading id="doors">Doors</WikiSectionHeading>
@@ -87,13 +89,15 @@ export default function ThieveryPage() {
           Set all 4 to open the lock. One slip and it fails. Sneak to give up.
         </li>
         <li>
-          The container opens hidden. Click a slot to look at it. The first look is always safe, and each safe slot
-          shows how many seized pins are next to it. Right-click a slot to mark it as a pin. Clicking a pin snaps a
-          lockpick and ends the search, but you can still take what you found.
+          The container opens with every slot covered. Click a slot to look at it. The first look is always safe, and
+          each safe slot shows how many seized pins are next to it. Right-click a slot to mark it as a pin. Clicking a
+          pin snaps a lockpick and ends the search, but you can still take what you found.
         </li>
         <li>Take the items you uncovered that your loadout lets you see.</li>
       </ol>
-      <p className={`mt-3 ${body}`}>You or your guild can only pick the same container once every 3 days.</p>
+      <p className={`mt-3 ${body}`}>
+        The same container can only be picked once every 3 days by you or anyone in your guild.
+      </p>
 
       <WikiSectionHeading id="displays">Display furniture</WikiSectionHeading>
       <p className={body}>
@@ -120,9 +124,9 @@ export default function ThieveryPage() {
         </li>
       </ol>
       <p className={`mt-3 ${body}`}>
-        Each pocket you look through may let your mark hear something rummaging in their bag. A botched attempt always
-        gets noticed, and sometimes they see exactly who it was. You or your guild can only pickpocket the same person
-        once an hour.
+        Each pocket you look through may let your target hear something rummaging in their bag. A botched attempt always
+        gets noticed, and sometimes they see exactly who it was. The same person can only be pickpocketed once an hour
+        by you or anyone in your guild.
       </p>
 
       <WikiSectionHeading id="robbery">Robbery</WikiSectionHeading>
@@ -141,7 +145,7 @@ export default function ThieveryPage() {
           100.
         </li>
         <li>Closing the menu ends the robbery. If your victim logs out during it, everything they carry drops.</li>
-        <li>You or your guild can only rob the same person once every 3 days.</li>
+        <li>The same person can only be robbed once every 3 days by you or anyone in your guild.</li>
       </ul>
 
       <WikiSectionHeading id="clues">Clues</WikiSectionHeading>

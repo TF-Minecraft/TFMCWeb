@@ -18,7 +18,7 @@ export const mageWeaponsSection: WikiSection = {
     href: "/wiki/mage-weapons",
     label: "Mage Weapons",
     category: "magic",
-    blurb: "Build a staff, wand or blade, attune it with a charge, and fit spell runes.",
+    blurb: "Build a staff, wand or blade, attune it with a charge and fit spell runes.",
   },
   recipes: magicRecipes,
   commands: mageWeaponCommands,

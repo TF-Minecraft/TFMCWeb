@@ -21,7 +21,7 @@ export default function AnimalHusbandryPage() {
   return (
     <WikiPage
       title="Animal Husbandry"
-      lastModified="2026-10-24"
+      lastModified="2026-11-21"
       intro="Claim farm animals, keep them fed and clean, and breed them for better meat, milk, eggs and materials."
     >
       <WikiSectionHeading id="tools">What you need</WikiSectionHeading>
@@ -38,25 +38,25 @@ export default function AnimalHusbandryPage() {
         rows={[
           [
             <WikiItemLink key="ownership" name="Ownership Token" />,
-            "1 iron nugget",
+            "1 Iron Nugget",
             "Claiming or renaming an animal. Used up.",
           ],
           [
             <WikiItemLink key="co-ownership" name="Co-Ownership Token" />,
-            "1 iron nugget",
+            "1 Iron Nugget",
             "Sharing an animal with another player. Used up.",
           ],
           [<WikiItemLink key="glove" name="Glove" />, "2 Leather", "Cleaning a dirty animal. Not used up."],
           [
             <WikiItemLink key="neutering" name="Neutering Tool" />,
-            "2 iron ingots",
+            "2 Iron Ingots",
             "Stopping an animal from breeding. Used up.",
           ],
-          [<WikiItemLink key="trough" name="Trough" />, "1 oak plank", "Making Universal Feed."],
+          [<WikiItemLink key="trough" name="Trough" />, "1 Oak Planks", "Making Universal Feed."],
         ]}
       />
       <p className={`mt-4 ${body}`}>
-        <WikiItemText text="To make Universal Feed, place a Trough and right-click it with wheat or vegetables, 4 at a time, until all 4 spots are filled. Rotten food is refused. Then right-click the Trough with an empty hand to take 1 Universal Feed." />
+        <WikiItemText text="To make Universal Feed, place a Trough. The Trough has 4 slots. Right-click it holding wheat or a vegetable to fill one slot, which takes 4 of that item. When all 4 slots are full, right-click it with an empty hand to take 1 Universal Feed. Rotten food is refused." />
       </p>
 
       <WikiSectionHeading id="claiming">Claiming an animal</WikiSectionHeading>
@@ -74,59 +74,59 @@ export default function AnimalHusbandryPage() {
         Bees are not part of husbandry.
       </p>
       <Callout title="Unclaimed animals vanish" variant="warning" className="mt-4">
-        Livestock nobody owns is removed the next time its area loads, and it drops nothing if killed. Newborn cows,
-        pigs, sheep, goats, chickens and llamas count as unowned even when both parents are yours, so claim them before
-        you leave the pen. Wolves, cats and ocelots, tamed or not, are removed the same way and cannot be claimed.
-        Owning an animal does not protect it from players, mobs or fire.
+        Livestock nobody owns is removed the next time a player comes near it, and it drops nothing if killed. Newborn
+        cows, pigs, sheep, goats, chickens and llamas count as unowned even when both parents are yours, so claim them
+        before you leave the pen. Wolves, cats and ocelots, tamed or not, are removed the same way and cannot be
+        claimed. Owning an animal does not protect it from players, mobs or fire.
       </Callout>
 
       <WikiSectionHeading id="sharing">Sharing and renaming</WikiSectionHeading>
       <p className={`mt-4 ${body}`}>
-        Right-click your animal with a Co-Ownership Token to link the token to it, then right-click another player with
-        the token, or give it to them and let them right-click with it. Every owner can feed, clean, ride and breed the
-        animal, and it counts towards each owner&apos;s limit. To rename an animal, use another named Ownership Token on
-        it. The inspect menu also has a button to give up your ownership.
+        Right-click your animal with a Co-Ownership Token to link the token to it. Then right-click another player with
+        the token, or give it to them. They can right-click anything while holding it: the air, a block, the animal or a
+        player. The token is used up when the share works. Every owner can feed, clean, ride and breed the animal, and
+        it counts towards each owner&apos;s limit. To rename an animal, use another named Ownership Token on it. The
+        inspect menu also has a button to give up your ownership.
       </p>
 
       <WikiSectionHeading id="care" intro="An animal is happy when it is neither Hungry nor Dirty.">
         Feeding and cleaning
       </WikiSectionHeading>
       <p className={`mt-4 ${body}`}>
-        Every 4 to 8 hours that its area is loaded, an animal becomes Hungry or Dirty, shown next to its name. Feed a
+        Every 4 to 8 hours that a player is nearby, an animal becomes Hungry or Dirty, shown next to its name. Feed a
         hungry animal 1 Universal Feed and clean a dirty one with the Glove. Each time you do, you get a little Forager
-        experience.
+        EXP.
       </p>
       <DataTable
         className="mt-4"
         columns={[{ header: "Care" }, { header: "How it works" }]}
         rows={[
-          ["Gaining care", "A happy animal gains 1 care per minute while its area is loaded, up to 200."],
+          ["Gaining care", "A happy animal gains 1 care per minute while a player is nearby, up to 200."],
           [
             "While you are away",
-            "When the area unloads, a happy animal can still gain up to 8 hours' worth of care. After more than 8 hours unloaded, it is Hungry or Dirty when the area loads again.",
+            "With nobody nearby, a happy animal can still gain up to 8 hours' worth of care. If nobody comes near for more than 8 hours, it is Hungry or Dirty when someone does.",
           ],
           [
             "Losing care",
-            "If it stays Hungry or Dirty for more than 24 hours, it loses 1 care every 10 hours, even while unloaded.",
+            "If it stays Hungry or Dirty for more than 24 hours, it loses 1 care every 10 hours, even with nobody nearby.",
           ],
         ]}
       />
       <p className={`mt-4 ${body}`}>
-        Care counts whenever the area is loaded, by you or by anyone else. It does not matter whether the owner is
-        online.
+        Care counts whenever any player is nearby, not only you. It does not matter whether the owner is online.
       </p>
 
       <WikiSectionHeading id="breeding">Breeding and growth</WikiSectionHeading>
       <p className={`mt-4 ${body}`}>
-        Breeding most vanilla animals needs the Forager perk Breeder IV, bought in{" "}
-        <code className={code}>/profession</code>. Breeding gives Forager experience. Breed animals with their normal
-        Minecraft breeding food. Both parents must be grown, fed, clean and not neutered. If either parent is owned, you
-        must own both. Wild animals start with 0 to 20 genetics and 0 care.
+        Breeding most animals needs the Forager perk Breeder IV, bought in <code className={code}>/profession</code>.
+        Breeding gives Forager EXP. Breed animals with their normal Minecraft breeding food. Both parents must be grown,
+        fed, clean and not neutered. If either parent is owned, you must own both. Wild animals start with 0 to 20
+        genetics and 0 care.
       </p>
       <p className={`mt-3 ${body}`}>
         Babies inherit genetics from their parents, with a boost that improves when the parents are well cared for.
-        Raise both parents' care before breeding. Higher-star breeding food also helps; food with no stars gives the
-        same benefit as 5-star food. Genetics can reach 1,000 through breeding.
+        Raise both parents' care before breeding. Higher-star breeding food also helps. Plain food with no star rating
+        counts as 5-star. Genetics can reach 1,000 through breeding.
       </p>
       <p className={`mt-3 ${body}`}>
         Babies take 1 hour to grow up (chickens 45 minutes) and look like babies until then. They have to be grown
@@ -169,10 +169,7 @@ export default function AnimalHusbandryPage() {
       >
         Genetics, care and quality
       </WikiSectionHeading>
-      <p className={`mt-4 ${body}`}>
-        Genetics sets an animal's potential, and care affects how much of it you get. Well-bred animals kept fed and
-        clean give more meat and better food.
-      </p>
+      <p className={`mt-4 ${body}`}>Well-bred animals kept fed and clean give more meat and better food.</p>
       <DataTable
         className="mt-4"
         columns={[{ header: "Genetics" }, { header: "Star tier" }]}
@@ -185,8 +182,8 @@ export default function AnimalHusbandryPage() {
         ]}
       />
       <p className={`mt-4 ${body}`}>
-        Better genetics raise food quality, and high care makes that quality more consistent. Keep animals fed and clean
-        to get the best food from them. Raw genetics also unlocks rarer material drops at 3, 4 and 5 stars.
+        Better genetics raise food quality, and high care makes that quality more consistent. Genetics alone unlocks
+        rarer material drops at 3, 4 and 5 stars.
       </p>
 
       <WikiSectionHeading id="mounts">Mounts</WikiSectionHeading>
@@ -201,8 +198,8 @@ export default function AnimalHusbandryPage() {
       <p className="mt-4 text-sm text-[var(--tfmc-mist)]">
         Right-click an <StationLink name="Animal Station" /> to craft a <WikiItemLink name="Mount Whistle" />. Blow it
         with a right-click and every horse, donkey, mule, llama and trader llama within 64 blocks glows for 5 seconds,
-        so you can spot it through walls. It finds every such animal, not only yours, and chat tells you how many
-        answered. Camels do not answer. Other players can hear the whistle, and it has a 3-second cooldown.
+        so you can spot it through walls. It finds all of them, not only yours, and chat tells you how many answered.
+        Camels do not answer. Other players can hear the whistle, and it has a 3-second cooldown.
       </p>
 
       <SeeAlso hrefs={["/wiki/cooking", "/wiki/farming", "/wiki/companion-pets", "/wiki/materials"]} />

@@ -20,9 +20,9 @@ function Word({ children }: { children: string }) {
 export default function CardGamesPage() {
   return (
     <WikiPage
-      lastModified="2026-10-24"
+      lastModified="2026-11-21"
       title="Card Games"
-      intro="Set up a card table almost anywhere and play for real denars: Blackjack, Tenceur Hold'em, Five-Draw, or Free play with no rules at all."
+      intro="Set up a card table almost anywhere and play for real denars: Blackjack, Tenceur Hold'em, Five-Draw or Free play with no rules at all."
     >
       <WikiSectionHeading id="table">Setting up a table</WikiSectionHeading>
       <ol className={`mt-2 list-decimal space-y-2 pl-5 ${body}`}>
@@ -59,9 +59,9 @@ export default function CardGamesPage() {
           Bets are made with gold coins in your inventory, not your pouch or bank. Withdraw some first with{" "}
           <Word>/deco toitem</Word> (see{" "}
           <Link href="/wiki/economy" className={link}>
-            Denar Economy
+            Money &amp; Market Blocks
           </Link>
-          ). Right-click the felt holding coins. Each click puts one coin item down at its full value, so a{" "}
+          ). Right-click the felt while holding coins. Each click puts one coin item down at its full value, so a{" "}
           <WikiItemLink name="Pouch of Gold Denars" /> is 100. Gold Ingots are also accepted at 1 d each. Silver coins
           aren&apos;t accepted.
         </li>
@@ -79,24 +79,26 @@ export default function CardGamesPage() {
       </p>
 
       <p className={`mt-3 ${body}`}>
-        Use <Word>/wager</Word> without an argument to commit the coins you have put out for the current round. If that
-        is less than you need to match, you fold and get the coins back.
+        Type <Word>/wager</Word> on its own to commit the coins you have put out this round. If that is less than the
+        bet you have to match, you fold and get the coins back.
       </p>
 
       <WikiSectionHeading id="blackjack">Blackjack</WikiSectionHeading>
       <p className={body}>
-        Blackjack tables are run by guilds. Only a guild leader can place one, and the guild needs a free table from its{" "}
-        <strong>Auto Dealer Tables</strong> upgrade (see{" "}
+        Blackjack tables are run by guilds. Every guild has 1, and each level of its <strong>Auto Dealer Tables</strong>{" "}
+        upgrade adds 1 more (see{" "}
         <Link href="/wiki/guilds#guilds" className={link}>
           guilds
         </Link>
-        ). The house plays with the guild bank&apos;s money. If the bank can&apos;t cover the bets, the round is called
-        off and everyone gets their bet back.
+        ). Only a guild leader can place one, and only while the guild has a free table. Placing one opens its settings:
+        automatic dealer on or off, the smallest and largest bet, the number of boxes and how the deck is shuffled. The
+        house plays with the guild bank&apos;s money. If the bank can&apos;t cover the bets, the round is called off and
+        everyone gets their bet back.
       </p>
       <ul className={`mt-3 list-disc space-y-2 pl-5 ${body}`}>
         <li>
-          Right-click your box on the felt with coins to bet, and again to add more. The first bet gives everyone else
-          10 seconds to join in. Bets below the table minimum are given back.
+          Right-click your box on the felt with coins to bet, and again to add more. Once the first box reaches the
+          table minimum, everyone else has 10 seconds to join in. Bets below the table minimum are given back.
         </li>
         <li>
           On your turn, right-click the shoe for a card, or say <Word>hit</Word>, <Word>stand</Word>,{" "}
@@ -113,7 +115,7 @@ export default function CardGamesPage() {
       <WikiSectionHeading id="holdem">Tenceur Hold&apos;em</WikiSectionHeading>
       <ul className={`mt-2 list-disc space-y-2 pl-5 ${body}`}>
         <li>
-          Right-click the felt with coins to sit down. Once two players are seated, any of them can right-click the shoe
+          Right-click the felt with coins to sit down. Once 2 players are seated, any of them can right-click the shoe
           to deal.
         </li>
         <li>
@@ -132,15 +134,15 @@ export default function CardGamesPage() {
       </ul>
       <p className={`mt-3 ${body}`}>
         The table&apos;s owner can turn an empty table into a <strong>tournament</strong> with a buy-in, starting chips,
-        rebuys, an ante and a time after which the blinds double. Players play with chips, the buy-ins make up the
-        prize, and leaving after play starts forfeits your entry. See the <Word>/games poker</Word> commands below.
+        rebuys, an ante and how often the blinds double. Players play with chips, the buy-ins make up the prize, and
+        leaving after play starts forfeits your entry. See the <Word>/games poker</Word> commands below.
       </p>
 
       <WikiSectionHeading id="five-draw">Five-Draw</WikiSectionHeading>
       <p className={body}>
-        Five-Draw seats and bets like Hold&apos;em, but with no blinds. Everyone gets five hidden cards. On your draw
-        turn, right-click the cards you want to swap, then right-click the shoe to get that many new ones. To keep all
-        five, say <Word>draw</Word> instead. Then there is one more round of betting.
+        Five-Draw seats and bets like Hold&apos;em, but with no blinds. Everyone gets 5 hidden cards. On your draw turn,
+        right-click the cards you want to swap, then right-click the shoe to get that many new ones. To keep all 5, say{" "}
+        <Word>draw</Word> instead. Then there is one more round of betting.
       </p>
 
       <WikiSectionHeading id="free-play">Free play</WikiSectionHeading>
@@ -163,7 +165,7 @@ export default function CardGamesPage() {
         Then you have 10 seconds to click the felt with the item.
       </p>
 
-      <WikiSectionHeading id="cards" intro="A normal 52-card deck with four suits of its own.">
+      <WikiSectionHeading id="cards" intro="A normal 52-card deck with 4 suits of its own.">
         The cards
       </WikiSectionHeading>
       <div className="mt-4 flex items-center gap-3 rounded-md border border-[color-mix(in_srgb,var(--tfmc-cream)_12%,transparent)] bg-[color-mix(in_srgb,var(--tfmc-forest-deep)_45%,transparent)] p-3">

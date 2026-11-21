@@ -82,7 +82,7 @@ export const alloyForgeRecipe: Recipe = {
     { name: "Iron Ingot", qty: 1, texture: V("iron_ingot.png") },
   ],
   output: { name: "Alloy Forge", qty: 1, sourceId: "itemsadder:alloy_forge", model: alloyForgeModel },
-  note: "Right-click it with a Lava Bucket to forge; the bucket is emptied.",
+  note: "Right-click it with a Lava Bucket to forge. The bucket is emptied.",
 };
 
 export const advancedCraftingRecipes: Recipe[] = [weaponStationRecipe, ingredientConverterRecipe, alloyForgeRecipe];
@@ -96,7 +96,7 @@ export const advancedCraftingCommands: WikiCommandSet = {
     {
       command: "/alloy name <NewName>",
       description: "Names a new alloy you just forged. You have 60 seconds after forging it.",
-      notes: "Letters and underscores only; underscores show as spaces. The name must not already be taken.",
+      notes: "Letters and underscores only. Underscores show as spaces. The name must not already be taken.",
     },
     {
       command: "/alloy recipes",

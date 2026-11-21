@@ -16,14 +16,14 @@ const body = "text-sm text-[var(--tfmc-mist)]";
 export default function MagicPage() {
   return (
     <WikiPage
-      lastModified="2026-11-19"
+      lastModified="2026-11-21"
       title="Magic"
       width="lg"
       intro={
         <>
           Mages cast spells from runes set into a weapon they build themselves. Each spell belongs to a school of magic,
-          and it only works if both you and your weapon are strong enough in that school. This page covers the schools,
-          your own magical skill and how to raise it. Building, charging and using the weapon is on{" "}
+          and it only works if both you and your weapon are strong enough in that school. To build, charge and use the
+          weapon, see{" "}
           <Link href="/wiki/mage-weapons" className={link}>
             Mage Weapons
           </Link>
@@ -34,11 +34,15 @@ export default function MagicPage() {
       <WikiSectionHeading id="basics">The basics</WikiSectionHeading>
       <ul className={`mt-3 list-disc space-y-2 pl-5 ${body}`}>
         <li>
-          Only the <strong>Mage</strong> class can use Mage Staffs, Mage Wands, Mage Blades and Mage Armour. Mage gear
-          is expensive, so plan for the cost.
+          Each Mage{" "}
+          <Link href="/wiki/classes#class-mage" className={link}>
+            path
+          </Link>{" "}
+          uses its own weapon: Invokers use Mage Staffs, Conjurers use Mage Wands and Battlemages use Mage Blades. Mage
+          Armour fits all 3 paths. A Mage without a path can use none of them. Mage gear is very expensive.
         </li>
         <li>
-          There are four schools: <strong>Cerrith</strong>, <strong>Oseni</strong>, <strong>Seithr</strong> and{" "}
+          There are 4 schools: <strong>Cerrith</strong>, <strong>Oseni</strong>, <strong>Seithr</strong> and{" "}
           <strong>Mitlan</strong>. Each has its own spells, shrines and Resonance.
         </li>
         <li>
@@ -87,9 +91,9 @@ export default function MagicPage() {
           needs Cerrith II. You carry I.&quot;
         </li>
         <li>
-          Low Resonance makes a school&apos;s spells cost more mana, recharge slower and hit weaker, heals and shields
-          included. High Resonance makes them cheaper and quicker to recharge, but never stronger than normal. Hover a
-          school in /resonance to see how it affects you right now.
+          Low Resonance makes a school&apos;s spells cost more mana, recharge slower and work less well, heals and
+          shields included. High Resonance makes them cheaper and quicker to recharge, but never stronger than normal.
+          Hover a school in /resonance to see how it affects you right now.
         </li>
         <li>Resonance slowly fades while you are online. Time spent offline does not count.</li>
       </ul>
@@ -99,8 +103,9 @@ export default function MagicPage() {
       </WikiSectionHeading>
       <p className={body}>
         A shrine is a <WikiItemLink name="Pedestal" /> and everything within 4 blocks of it in every direction, above
-        and below included. Build that space with blocks that suit a school. A mix of different fitting blocks works
-        better than a lot of one kind. Each school is scored on its own, so one shrine can serve more than one.
+        and below included. Fill that space with blocks that suit a school. Which blocks suit which school is for you to
+        find out. Several different suitable blocks work better than many of one kind. Each school is scored on its own,
+        so one shrine can serve more than one.
       </p>
       <ul className={`mt-3 list-disc space-y-2 pl-5 ${body}`}>
         <li>Put an artifact or a charge on the pedestal and it slowly fills with aura.</li>
@@ -158,8 +163,8 @@ export default function MagicPage() {
           one you hit raises your Resonance and uses one Mental Point.
         </li>
         <li>
-          Blue orbs move your Equilibrium toward Tranquility and red orbs toward Corruption. Hitting a red orb makes you
-          lose focus, and only red orbs appear for a few seconds.
+          Blue orbs move your Equilibrium towards Tranquility and red orbs towards Corruption. Hitting a red orb makes
+          you lose focus, and only red orbs appear for a few seconds.
         </li>
         <li>Stand up to stop.</li>
       </ol>
@@ -208,18 +213,20 @@ export default function MagicPage() {
         Surge and Flow
       </WikiSectionHeading>
       <p className={body}>
-        Every spell you cast moves your Equilibrium: toward Corruption in <strong>Surge</strong> and toward Tranquility
-        in <strong>Flow</strong>. Both sides make your spells cheaper, stronger or quicker to recharge, and the effect
-        grows the further you go.
+        Every spell you cast moves your Equilibrium: towards Corruption in <strong>Surge</strong> and towards
+        Tranquility in <strong>Flow</strong>. The bonus your spells get depends on where your Equilibrium sits.
       </p>
       <ul className={`mt-3 list-disc space-y-2 pl-5 ${body}`}>
         <li>
-          <strong>Corruption</strong> pays off early. Once you have some, it keeps growing on its own, faster the deeper
-          you are, and its bonus weakens again near the extreme.
+          <strong>Corruption</strong> mostly makes your spells recharge faster and hit harder, with a small mana saving.
+          It pays off early: a little Corruption already gives most of the bonus, which peaks part-way and weakens near
+          the extreme. Once you have any, it keeps deepening on its own, faster the deeper you are.
         </li>
         <li>
-          <strong>Tranquility</strong> has to build up before it helps much, but its bonus ends up stronger. It slowly
-          fades back toward the middle if you stop.
+          <strong>Tranquility</strong> mostly makes your spells cheaper and stronger, heals and shields included, with
+          only a small cut to recharge. Its bonus grows steadily the further you go. At the far end it beats
+          Corruption&apos;s best on cost and power, but not on recharge. It slowly fades back towards the middle when
+          you stop.
         </li>
       </ul>
 

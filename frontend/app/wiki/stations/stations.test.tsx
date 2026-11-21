@@ -56,7 +56,7 @@ describe("station registry and source coverage", () => {
       "engineer-station": 18,
       "engineering-table": 19,
       "fishing-station": 27,
-      "forester-station": 117,
+      "forester-station": 133,
       "gunsmithing-station": 37,
       "ingot-station": 71,
       "instrument-station": 10,

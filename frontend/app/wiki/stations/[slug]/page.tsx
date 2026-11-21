@@ -65,7 +65,7 @@ export default async function StationDetailPage({ params }: { params: Promise<{ 
 
   return (
     <WikiPage
-      lastModified="2026-11-12"
+      lastModified="2026-11-21"
       title={station.name}
       beforeTitle={
         <Link href="/wiki/stations" className="text-xs text-[var(--tfmc-mist)] hover:text-[var(--tfmc-cream)]">
@@ -130,7 +130,7 @@ export default async function StationDetailPage({ params }: { params: Promise<{ 
         <>
           <WikiSectionHeading
             id="recipes"
-            intro="A recipe card shows the ingredients, how long the craft takes, and any profession perk or class it needs."
+            intro="A recipe card shows the ingredients, how long the craft takes and any profession perk or supporter rank it needs."
           >
             Recipes ({recipes.length})
           </WikiSectionHeading>

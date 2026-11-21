@@ -7,10 +7,10 @@ const body = "text-sm text-[var(--tfmc-mist)]";
 export default function ResearchPage() {
   return (
     <WikiPage
-      lastModified="2026-11-19"
+      lastModified="2026-11-21"
       title="Research"
       width="lg"
-      intro="Research is a guessing game played at a Lectern. Every project hides a few aspects, such as Metal or Magic. You test items to find out which aspects they are and fill each one up, and a finished project gives you its result."
+      intro="Research is a guessing game played at a lectern. Every project hides a few aspects, such as Metal or Magic. You test items to find out which aspects they are and fill each one up, and a finished project gives you a rune or a Completed Thesis."
     >
       <WikiSectionHeading id="start" intro="A project starts from a research paper or a blank runestone.">
         Starting a project
@@ -25,10 +25,10 @@ export default function ResearchPage() {
           subject item back. Papers you have no ingredients for stay hidden. A{" "}
           <WikiItemLink name="Lost Knowledge Fragment" /> instead makes an{" "}
           <WikiItemLink name="Unknown Research Paper" />, which studies a random topic. Every craft here also gives a
-          little Herborist experience.
+          little Herborist EXP.
         </li>
         <li>
-          Hold the paper and right-click a Lectern. The paper is used up and the project starts. A blank runestone from
+          Hold the paper and right-click a lectern. The paper is used up and the project starts. A blank runestone from
           the{" "}
           <Link href="/wiki/mage-weapons#rune-station" className={link}>
             Rune Station
@@ -99,8 +99,8 @@ export default function ResearchPage() {
         <Link href="/wiki/codex" className={link}>
           Codex
         </Link>{" "}
-        and earn experience. This uses up the thesis. If you already know that entry, you keep the thesis, so you can
-        sell or trade it.
+        and earn EXP. This uses up the thesis. If you already know that entry, you keep the thesis, so you can sell or
+        trade it.
       </p>
       <Callout variant="warning" title="Ways to lose a project">
         Breaking the lectern destroys the project. The <strong>Scrap</strong> button does too, after you confirm it, and

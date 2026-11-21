@@ -41,7 +41,7 @@ const smithMaterials = [
   {
     perk: "Steel Smith",
     metal: "Steel",
-    metalNote: "Every part works as designed.",
+    metalNote: "No change. Parts work as the parts table says.",
     wood: "Maplewood",
     woodNote: "Steadier on the move and mounted.",
   },
@@ -97,7 +97,7 @@ function AmmoYield({ recipe }: { recipe: Recipe }) {
 export default function GunsPage() {
   return (
     <WikiPage
-      lastModified="2026-11-18"
+      lastModified="2026-11-21"
       title="Guns & Gunsmithing"
       intro={
         <>
@@ -114,7 +114,7 @@ export default function GunsPage() {
       <WikiSectionHeading id="build">Building a gun</WikiSectionHeading>
       <ol className={`mt-2 list-decimal space-y-2 pl-5 ${body}`}>
         <li>
-          Craft the <StationLink name="Gunsmithing Station" /> on a crafting table and place it on the floor.
+          Craft the <StationLink name="Gunsmithing Station" /> at a crafting table and place it on the floor.
         </li>
         <li>Right-click it without sneaking. The Gun Assembly menu opens.</li>
         <li>
@@ -124,16 +124,18 @@ export default function GunsPage() {
         <li>
           Each part slot starts with a part you can make. Click a slot to pick a different one. Every part, metal and
           fitting shows what it would change on your gun, before and after, in green when it gets better and red when it
-          gets worse. A barrier means you can&apos;t make any part for that slot. A launcher always shows one where the
-          stock would go.
+          gets worse. A red barrier icon (&quot;No part available&quot;) means you can&apos;t make any part for that
+          slot. A launcher always shows one where the stock would go.
         </li>
         <li>
           Pick the metal to make the part from. Stocks and grips are made from wood instead, and each takes a fitting of
           leather, wool or feathers. Pick its quality: plain, Good, Great or Perfect.
         </li>
         <li>
-          The finished gun appears on the right with a sheet of its stats in plain units. Click it to take it. The
-          materials for every part come out of your inventory at once. If you are missing any, nothing is taken.
+          The finished gun appears on the right with a list of its stats, such as damage, armour pierce, spread, reload
+          and range, and the shots it takes. If your parts don&apos;t make a gun, a red barrier shows there instead and
+          says why, for example that no shot fits all of them. Click the gun to take it. The materials for every part
+          come out of your inventory at once. If you are missing any, nothing is taken.
         </li>
       </ol>
       <DataTable
@@ -258,13 +260,13 @@ export default function GunsPage() {
       <WikiSectionHeading id="ammo">Ammunition</WikiSectionHeading>
       <p className={body}>
         Ammunition is made at the <StationLink name="Alchemy Station" /> from ingots, with no perk needed. Add Gunpowder
-        to make the <strong>Powered</strong> version, which hits a little harder (for Spreadshot: one more pellet and a
+        to make the <strong>Powered</strong> version, which hits a little harder (for Spreadshot: 1 more pellet and a
         little more range). Better metal hits harder and gets more of each hit through armour (for Spreadshot: more
         pellets that fly further), but you get fewer rounds per ingot.
       </p>
       <p className={`mt-3 ${body}`}>
-        The table shows what one ingot makes, or one ingot and one Gunpowder for the powered version. The biggest
-        rockets take more, and the table says how much.
+        The table shows what 1 ingot makes, or 1 ingot and 1 Gunpowder for the powered version. The biggest rockets take
+        more, and the table says how much.
       </p>
       <DataTable
         className="mt-4"
@@ -284,8 +286,8 @@ export default function GunsPage() {
       />
       <p className={`mt-3 ${body}`}>
         The metal of the barrel decides which metals the gun can load, plain or powered. An iron barrel loads only iron.
-        A steel barrel adds steel, an abyssalite barrel adds bronze, and a mythril barrel loads all four. It works the
-        same for Shot, Spreadshot and Rockets. The Proof Chamber and the Steamlock narrow it further, as the{" "}
+        A steel barrel adds steel, an abyssalite barrel adds bronze and a mythril barrel loads all 4. It works the same
+        for Shot, Spreadshot and Rockets. The Proof Chamber and the Steamlock narrow it further, as the{" "}
         <Link href="#parts" className={link}>
           parts table
         </Link>{" "}
@@ -295,9 +297,9 @@ export default function GunsPage() {
       <WikiSectionHeading id="old-guns">Old guns</WikiSectionHeading>
       <p className={body}>
         Guns built before you could choose a material for each part are taken apart automatically. It happens when you
-        join with one, select it on your hotbar, click it in your inventory, or right-click the Gunsmithing Station
-        while holding it. You get back the materials it cost and any shots loaded in it. A gun that was free or given by
-        staff is removed with nothing back. An old gun in a chest stays as it is until someone takes it out.
+        join with one, select it on your hotbar, click it in your inventory or right-click the Gunsmithing Station while
+        holding it. You get back the materials it cost and any shots loaded in it. A gun that was free or given by staff
+        is removed with nothing back. An old gun in a chest stays as it is until someone takes it out.
       </p>
 
       <SeeAlso hrefs={["/wiki/classes", "/wiki/advanced-crafting", "/wiki/recycler", "/wiki/stations"]} />

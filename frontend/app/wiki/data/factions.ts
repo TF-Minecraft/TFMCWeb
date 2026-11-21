@@ -1,6 +1,6 @@
 import type { WikiCommandSet, WikiSection } from "./types";
 
-// SimpleFactions 4.36 with Main's configs. Staff commands (force*, admin, reload and so on),
+// SimpleFactions 4.38.0 with Main's configs. Staff commands (force*, admin, reload and so on),
 // coalitions (off on Main) and the Spymaster's private sabotage are left out.
 
 // ---------- Factions ----------
@@ -126,7 +126,7 @@ export const factionsCommands: WikiCommandSet = {
     {
       command: "/faction spymaster share <overlord|vassals|allies> <tier>",
       description:
-        "Lets that partner see your own military exactly, up to the quality you choose (rumours, broad, reliable or detailed). none stops sharing.",
+        "Shares your military with that partner. They see the exact figures for everything a report of the chosen quality (rumours, broad, reliable or detailed) would show. Choose none to stop sharing.",
       notes: "Spymaster.",
     },
     { command: "/ledger", description: "Shows your own money in and out each day: earnings, taxes and upkeep." },
@@ -252,7 +252,7 @@ export const guildsCommands: WikiCommandSet = {
     {
       command: "/faction vehicle transfer upkeep",
       description:
-        "Then right-click a vehicle to make it an upkeep-only faction vehicle. The faction pays its upkeep, and it can't be used in battles.",
+        "Run it, then right-click a vehicle owned by a member of the faction to make it an upkeep-only faction vehicle. The faction pays its upkeep, and it can't be used in battles.",
       notes: "Faction leader. Another owner's vehicle waits for that owner to be close by and accept.",
     },
     {
@@ -263,7 +263,8 @@ export const guildsCommands: WikiCommandSet = {
     },
     {
       command: "/guild vehicle transfer upkeep",
-      description: "Then right-click a vehicle to make it an upkeep-only guild vehicle, paid from the guild bank.",
+      description:
+        "Run it, then right-click a guild member's vehicle to make it an upkeep-only guild vehicle, paid from the guild bank.",
       notes: "Guild leader. Another owner's vehicle waits for that owner to be close by and accept.",
     },
     {
@@ -273,7 +274,7 @@ export const guildsCommands: WikiCommandSet = {
     },
     {
       command: "/guild vehicle disable",
-      description: "Stops a vehicle click you started with a /guild vehicle command.",
+      description: "Cancels a /guild vehicle command that is waiting for you to click a vehicle.",
     },
     {
       command: "/faction vehicle take",
@@ -287,19 +288,20 @@ export const guildsCommands: WikiCommandSet = {
     },
     {
       command: "/faction vehicle maintenance pay [bank]",
-      description: "Then right-click an unpaid vehicle to pay one day of its upkeep.",
+      description: "Run it, then right-click an unpaid vehicle to pay one day of its upkeep.",
       notes: "Anyone can use bank to pay from their own bank. Without bank, faction leaders pay from their pouch.",
     },
     {
       command: "/faction vehicle disable",
       aliases: ["/faction vehicle cancel"],
       description:
-        "Stops a vehicle click you started, for example after /faction vehicle transfer, take, give, handover or maintenance pay. Your next click on a vehicle then does nothing special.",
+        "Cancels a /faction vehicle command that is waiting for you to click a vehicle (transfer, take, give, handover or maintenance pay).",
     },
     {
-      command: "/faction findvehicles <installation id>",
-      description: "Lists the vehicles berthed at an installation and where they are.",
-      notes: "Faction leader.",
+      command: "/faction findvehicles <pool|personal|installation id>",
+      description:
+        "Lists vehicles and where they are: pool for the faction pool, personal for your own, or an installation id for the vehicles berthed there.",
+      notes: "Anyone can use personal. Pool and installation ids: faction leader.",
     },
   ],
 };
@@ -372,7 +374,7 @@ export const warCommands: WikiCommandSet = {
     {
       command: "/warband invite <player>",
       aliases: ["/warband kick <player>", "/warband setleader <player>", "/warband toggleopen"],
-      description: "Manages your warband: invites, removals, leader, and whether anyone can join.",
+      description: "Manages your warband: invites, removals, leader and whether anyone can join.",
       notes: "Warband leader.",
     },
     { command: "/warband delete <warband>", description: "Disbands your warband.", notes: "Warband leader." },
@@ -414,7 +416,8 @@ export const warCommands: WikiCommandSet = {
     { command: "/mercenaries list", description: "Lists mercenary companies, best reputation first." },
     {
       command: "/mercenaries hire <company>",
-      description: "Checks whether you can sign a contract with that company here.",
+      description:
+        "Checks whether you can sign that company's contract where you are standing. Contracts are signed in the province of the company's guild capital.",
     },
   ],
 };
@@ -424,7 +427,7 @@ export const warSection: WikiSection = {
     href: "/wiki/war",
     label: "War & Mercenaries",
     category: "social",
-    blurb: "Declare war, fight scheduled battles and raids, keep regiments, and hire or run a mercenary company.",
+    blurb: "Declare war, fight scheduled battles and raids, keep regiments and hire or run a mercenary company.",
   },
   commands: warCommands,
 };

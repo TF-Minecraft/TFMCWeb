@@ -24,7 +24,7 @@ const nextGuides = [
 export default function GettingStartedPage() {
   return (
     <WikiPage
-      lastModified="2026-11-18"
+      lastModified="2026-11-21"
       title={gettingStartedSection.nav.label}
       intro="How to get from the server address to your first day as a character. Each step links to the page with the details."
     >
@@ -72,8 +72,9 @@ export default function GettingStartedPage() {
       </p>
       <p className={`mt-3 ${body}`}>
         The character screen opens every time you join. With no character yet, it offers{" "}
-        <strong>Create character</strong>. The creator has several screens, from name, class and race to a short
-        description and clues, so set aside some time. When you finish, click <strong>Play</strong>.{" "}
+        <strong>Create character</strong>. The creator has several screens, from your character&apos;s real name and
+        alias (the name other players see) to class, race, a short description and clues, so set aside some time. When
+        you finish, click <strong>Play</strong>.{" "}
         <Link href="/wiki/characters#creating" className={link}>
           Creating a character
         </Link>
@@ -115,17 +116,23 @@ export default function GettingStartedPage() {
 
       <WikiSectionHeading id="activity">Daily tasks</WikiSectionHeading>
       <p className={body}>
-        <code className={code}>/activity</code> opens your activity menu. Each day it deals you a set of tasks, such as
-        cooking dishes or spending time playing, and some of them follow your character&apos;s professions. Tasks count
-        on their own as soon as they are dealt, so you don&apos;t have to open the menu first. Only Voting has to be
-        clicked. Click its card in <code className={code}>/activity</code>, and the votes you cast earlier that day are
-        paid then. Time spent idle does not count as playing. Points fill your weekly bar. Each time the bar reaches a
-        reward, claim it in the same menu. The bar starts again every Monday. <code className={code}>/vote</code> lists
-        the voting sites.
+        <code className={code}>/activity</code> opens your activity menu. Each day you get a set of tasks, such as
+        cooking dishes or spending time playing, and some follow your character&apos;s professions. Tasks track
+        themselves from the moment you get them, so you don&apos;t have to open the menu first. Idle time does not count
+        as playing.
+      </p>
+      <p className={`mt-3 ${body}`}>
+        Finished tasks give points, and points fill your weekly bar. Each time the bar reaches a reward, claim it in the
+        same menu. The bar starts again every Monday. The <strong>Daily Activity</strong> bar shows the points you have
+        earned today, and the menu tells you once it is full.
+      </p>
+      <p className={`mt-3 ${body}`}>
+        Voting is the one task you have to click. Vote on the sites that <code className={code}>/vote</code> lists, then
+        click the Voting card in <code className={code}>/activity</code> to be paid for that day&apos;s votes.
       </p>
 
       <p className={`mt-3 ${body}`}>
-        The rewards make daily tasks worth doing. The first ones each week give metals of the current act (
+        The first rewards each week give metals of the current act (
         <WikiItemLink name="Ignitium" />, <WikiItemLink name="Tin" /> or{" "}
         <WikiItemLink name="Abyssalite Fragment">Abyssalite Fragments</WikiItemLink>) along with other resources. The
         later ones give{" "}
@@ -136,10 +143,10 @@ export default function GettingStartedPage() {
         included.
       </p>
       <p className={`mt-3 ${body}`}>
-        <RankName rank="Noble" /> and above also get a daily Skin Scroll once they have clicked that day&apos;s Voting
-        card. <RankName rank="Ascended" /> and <RankName rank="Legacy" /> can reroll their daily tasks once a day, as
-        long as no task other than Voting and playtime has earned them points yet. A reroll only swaps the tasks they
-        haven&apos;t started, and they keep their points.
+        <RankName rank="Noble" /> rank and above also get a daily Skin Scroll once they have clicked that day&apos;s
+        Voting card. <RankName rank="Ascended" /> rank and above can reroll their daily tasks once a day, as long as no
+        task other than Voting and playtime has earned them points yet. A reroll only swaps the tasks they haven&apos;t
+        started, and they keep their points.
       </p>
 
       <WikiSectionHeading id="referrals">Referrals</WikiSectionHeading>
@@ -156,12 +163,12 @@ export default function GettingStartedPage() {
       </p>
       <p className={`mt-3 ${body}`}>
         Rewards unlock at 1, 4, 12 and 24 hours of the invited player&apos;s playtime, and both of you claim them in the
-        same menu. AFK time does not count. The invited player&apos;s first reward is steel tools, rations and denars,
+        same menu. Idle time does not count. The invited player&apos;s first reward is steel tools, rations and denars,
         and the later ones add metals of the current act and other resources. The inviter gets denars, act metals and
         other resources for each player they invited. Inviters also have a <strong>rare track</strong> that pays Tin and
-        Abyssalite Fragments: its first step opens once two of your invited players have reached 24 hours, and the next
-        ones at four, six, eight and ten players, where it ends. Claim each reward while playing a character, because it
-        goes to the character you are playing.
+        Abyssalite Fragments. Its first step opens once 2 of the players you invited have reached 24 hours, and the
+        later steps at 4, 6, 8 and 10 players. Claim each reward while playing a character, because it goes to the
+        character you are playing.
       </p>
 
       <WikiSectionHeading id="choose-path">Where to go next</WikiSectionHeading>

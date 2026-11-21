@@ -6,7 +6,9 @@ import type { WikiCommandSet, WikiSection } from "./types";
 export const codexCommands: WikiCommandSet = {
   system: "Codex",
   href: "/wiki/codex",
-  commands: [{ command: "/codex", description: "Opens your discovery journal.", notes: "Needs an active character." }],
+  commands: [
+    { command: "/codex", description: "Opens your discovery journal.", notes: "You must be playing a character." },
+  ],
 };
 export const codexSection: WikiSection = {
   nav: {

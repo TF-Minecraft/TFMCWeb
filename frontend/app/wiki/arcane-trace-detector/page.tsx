@@ -9,7 +9,7 @@ const link = "text-[var(--tfmc-accent)] hover:underline";
 export default function ArcaneTraceDetectorPage() {
   return (
     <WikiPage
-      lastModified="2026-11-19"
+      lastModified="2026-11-21"
       title="Arcane Trace Detector"
       width="lg"
       intro="An Arcane Trace Detector leads you to an Arcane Cache buried somewhere far away. Each character has their own cache, and nobody else can see or open it."
@@ -18,7 +18,7 @@ export default function ArcaneTraceDetectorPage() {
         id="craft"
         intro={
           <>
-            Everything is made at the <StationLink name="Engineer Station" />, and anyone can craft it.
+            Everything is made at the <StationLink name="Engineer Station" />, and no perk is needed.
           </>
         }
       >
@@ -43,12 +43,12 @@ export default function ArcaneTraceDetectorPage() {
           up.
         </li>
         <li>
-          Rings of particles appear around you, the detector clicks, and an <strong>Arcane Signal</strong> bar shows at
+          Rings of particles appear around you, the detector clicks and an <strong>Arcane Signal</strong> bar shows at
           the top of the screen. Only you can see and hear them.
         </li>
         <li>
-          Walk and watch the signal. The closer you get, the more rings you see, the more their colour turns from dark
-          purple to bright purple and then white, the faster the clicks and the fuller the bar.
+          Walk and watch the signal. As you get closer, more rings appear, they turn from dark purple to bright purple
+          and then white, the clicks speed up and the bar fills.
         </li>
         <li>
           When you are nearly there, the bar is renamed <em>Arcane Signal - dig close by</em> and starts again from
@@ -56,7 +56,10 @@ export default function ArcaneTraceDetectorPage() {
           become a steady stream right on top of the cache. The rings and colour only measure distance across the
           ground, while the clicks and the bar also count how deep the cache is.
         </li>
-        <li>Dig down. Once you are close, a chest only you can see appears. Click it to open the Arcane Cache.</li>
+        <li>
+          Dig down. Once you are close, with the detector still in your hand, a chest only you can see appears. Click it
+          to open the Arcane Cache.
+        </li>
       </ol>
       <p className={`mt-3 ${body}`}>
         Take your reward. Anything you leave in the cache goes into your inventory when you close it, or drops at your
@@ -69,8 +72,8 @@ export default function ArcaneTraceDetectorPage() {
         <WikiItemLink name="Tin" />, <WikiItemLink name="Abyssalite Fragment">Abyssalite Fragments</WikiItemLink>,{" "}
         <Link href="/wiki/gem-infusion" className={link}>
           gemstone pouches
-        </Link>
-        , or <WikiItemLink name="Enchanted Dust" /> with <WikiItemLink name="Niter" /> and{" "}
+        </Link>{" "}
+        or <WikiItemLink name="Enchanted Dust" /> with <WikiItemLink name="Niter" /> and{" "}
         <WikiItemLink name="Arcane Crystal">Arcane Crystals</WikiItemLink>. The dust comes with a few gemstone pouches
         as well.
       </p>

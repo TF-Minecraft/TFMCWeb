@@ -19,7 +19,7 @@ export const customSkinRanks: CustomSkinRank[] = [
   { rank: "Legacy", kinds: "Everything Ascended can" },
 ];
 
-/** ArmourShop 1.1.19. Every other `/armourshop` subcommand is staff only. */
+/** ArmourShop 1.2.0. Every other `/armourshop` subcommand is staff only. */
 export const armourShopCommands: WikiCommandSet = {
   system: "Armour Shop",
   href: "/wiki/armour-shop",

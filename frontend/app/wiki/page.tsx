@@ -6,9 +6,9 @@ import { navItemsForCategory, populatedCategories } from "./data";
 export default function WikiOverviewPage() {
   return (
     <WikiPage
-      lastModified="2026-10-02"
+      lastModified="2026-11-21"
       title="Gameplay Guide"
-      intro="Crafting, recipes and mechanics for Season 5."
+      intro="How to play on TFMC in Season 5, one topic per page. If you are new, start with Getting Started."
       width="sm"
     >
       {populatedCategories().map((category) => (

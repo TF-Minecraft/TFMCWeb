@@ -8,7 +8,7 @@ const body = "text-sm text-[var(--tfmc-mist)]";
 export default function FurniturePage() {
   return (
     <WikiPage
-      lastModified="2026-10-24"
+      lastModified="2026-11-21"
       title="Interactive Furniture"
       intro={
         <>
@@ -26,17 +26,13 @@ export default function FurniturePage() {
       <ul className={`mt-3 list-disc space-y-2 pl-5 ${body}`}>
         <li>
           <strong>Placing:</strong> hold the piece and right-click the floor. It faces you, and you can&apos;t turn it
-          afterwards. The Tool Shelf goes on a wall, the Meat Hook on a ceiling, and the Fire Pit inside a Campfire or
-          Soul Campfire.
+          afterwards. The Tool Shelf goes on a wall, the Meat Hook on a ceiling, and the Fire Pit inside a campfire or
+          soul campfire.
         </li>
         <li>
           <strong>Filling:</strong> right-click a slot with an item it accepts to put one in. Right-click it with an
-          empty hand to take it back out. Slots accept specific items, and some contents are added or removed through
-          the piece&apos;s cooking interaction. See the{" "}
-          <Link href="/wiki/cooking#stations" className={link}>
-            cooking guide
-          </Link>{" "}
-          for each piece.
+          empty hand to take it back out. Each slot only takes certain items, and some pieces are filled or emptied by
+          cooking with them. The Pot, for example, is filled with a Water Bucket and emptied with the Ladle.
         </li>
         <li>
           <strong>Carrying:</strong> the {carriableFurniture.slice(0, -1).join(", ")} and {carriableFurniture.at(-1)}{" "}
@@ -52,7 +48,11 @@ export default function FurniturePage() {
 
       <p className={`mt-3 ${body}`}>
         The Tool Shelf takes Cutting Knives, Ladles and Mashers. The Pedestal and Artifact Display accept any item for
-        display. Cookware has its own ingredient and tool rules.
+        display. For what each piece of cookware takes, see{" "}
+        <Link href="/wiki/cooking#stations" className={link}>
+          Cooking
+        </Link>
+        .
       </p>
 
       <WikiSectionHeading id="catalogue">Furniture pieces</WikiSectionHeading>

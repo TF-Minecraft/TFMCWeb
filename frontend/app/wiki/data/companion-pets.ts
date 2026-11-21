@@ -16,22 +16,6 @@ import housePreview from "../../../public/wiki/models/companion-pets/pet-house-p
 // on 2026-10-03.
 export const petHousePreview = housePreview;
 
-const itemTexture = (file: string) => `/wiki/textures/companion-pets/items/${file}.png`;
-export const companionPetItems = {
-  meatMeal: { name: "Meat Meal", texture: itemTexture("meat_meal") },
-  fishMeal: { name: "Fish Meal", texture: itemTexture("fish_meal") },
-  brush: { name: "Pet Brush", texture: itemTexture("pet_brush") },
-  medicine: { name: "Pet Medicine", texture: itemTexture("pet_medicine") },
-  fishSnack: { name: "Fish Snack", texture: itemTexture("fish_snack") },
-  biscuit: { name: "Biscuit Treat", texture: itemTexture("biscuit_treat") },
-  ball: { name: "Pet Ball", texture: itemTexture("pet_ball") },
-  bone: { name: "Bone Plush", texture: itemTexture("pet_chew_bone") },
-  rope: { name: "Tug Rope", texture: itemTexture("pet_tug_rope") },
-  mouse: { name: "Mouse Plush", texture: itemTexture("pet_mouse_plush") },
-  teddy: { name: "Teddy Bear Plush", texture: itemTexture("pet_teddy_plush") },
-  house: { name: "Pet House", texture: "/wiki/thumbnails/companion-pets/pet-house.webp" },
-};
-
 // Configured eggs retain their vanilla material appearance: no pack overrides.
 // All twenty modeled companions are registered in TF Dev and TF Main.
 const eggMaterials: Record<keyof typeof modelCatalogue, string> = {
@@ -65,16 +49,16 @@ const petDetails: Record<keyof typeof modelCatalogue, { name: string; egg: strin
   golden: { name: "Golden Retriever", egg: "Golden Companion Egg", unlock: "Pet Master" },
   husky: { name: "Husky", egg: "Husky Companion Egg", unlock: "Noble" },
   mainecoon: { name: "Maine Coon", egg: "Maine Coon Companion Egg", unlock: "Noble" },
-  catblack: { name: "Black cat", egg: "Black Cat Companion Egg", unlock: "Pet Master" },
-  catfunny: { name: "Funny cat", egg: "Funny Cat Companion Egg", unlock: "Pet Master" },
-  catorange: { name: "Orange cat", egg: "Orange Cat Companion Egg", unlock: "Pet Master" },
+  catblack: { name: "Black Cat", egg: "Black Cat Companion Egg", unlock: "Pet Master" },
+  catfunny: { name: "Funny Cat", egg: "Funny Cat Companion Egg", unlock: "Pet Master" },
+  catorange: { name: "Orange Cat", egg: "Orange Cat Companion Egg", unlock: "Pet Master" },
   fox: { name: "Fox", egg: "Fox Companion Egg", unlock: "Pet Master" },
   frog: { name: "Frog", egg: "Frog Companion Egg", unlock: "Pet Master" },
   bernesse: { name: "Bernese Mountain Dog", egg: "Bernese Mountain Dog Companion Egg", unlock: "Ascended" },
   bordercollie: { name: "Border Collie", egg: "Border Collie Companion Egg", unlock: "Noble" },
-  bordercolliegray: { name: "Gray Border Collie", egg: "Gray Border Collie Companion Egg", unlock: "Legacy" },
-  catgray: { name: "Gray cat", egg: "Gray Cat Companion Egg", unlock: "Gilded" },
-  cattabby: { name: "Tabby cat", egg: "Tabby Cat Companion Egg", unlock: "Gilded" },
+  bordercolliegray: { name: "Grey Border Collie", egg: "Gray Border Collie Companion Egg", unlock: "Legacy" },
+  catgray: { name: "Grey Cat", egg: "Gray Cat Companion Egg", unlock: "Gilded" },
+  cattabby: { name: "Tabby Cat", egg: "Tabby Cat Companion Egg", unlock: "Gilded" },
   lagottoromagnolo: { name: "Lagotto Romagnolo", egg: "Lagotto Romagnolo Companion Egg", unlock: "Gilded" },
   yorkshire: { name: "Yorkshire Terrier", egg: "Yorkshire Terrier Companion Egg", unlock: "Ascended" },
   cavalier_king_charles_spaniel: {
@@ -97,7 +81,7 @@ export const companionPetsSection: WikiSection = {
     href: "/wiki/companion-pets",
     label: "Companion Pets",
     category: "character",
-    blurb: "Hatch a companion, care for its needs, play fetch and teach it your own words for tricks.",
+    blurb: "Hatch a pet from an egg, feed and brush it, play fetch and teach it tricks with your own words.",
   },
   commands: {
     system: "CompanionPets",

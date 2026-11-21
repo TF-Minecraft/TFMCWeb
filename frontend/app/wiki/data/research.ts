@@ -1,6 +1,6 @@
 import type { WikiCommandSet, WikiSection } from "./types";
 
-// Source: Research v1.4.0 on Main and its live `plugins/Research` configs, the
+// Source: Research 1.5.0 on Main and its live `plugins/Research` configs, the
 // MMOItems research station, and RPCharacters' focus pool. Aspect tables, required
 // points and reveal thresholds are left off on purpose: they are the puzzle.
 

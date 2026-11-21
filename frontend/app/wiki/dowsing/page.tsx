@@ -11,7 +11,7 @@ const link = "text-[var(--tfmc-accent)] hover:underline";
 export default function DowsingPage() {
   return (
     <WikiPage
-      lastModified="2026-11-12"
+      lastModified="2026-11-21"
       title="Resource Nodes"
       intro="A node is a guild's mine, farm, forestry or quarry. Your guild stocks it with tools and other fittings, and it keeps producing resources for as long as it stays active."
       width="lg"
@@ -19,10 +19,10 @@ export default function DowsingPage() {
       <WikiSectionHeading id="node">The General Node</WikiSectionHeading>
       <p className={body}>
         Anyone can craft a General Node at a crafting table, but only a member of a{" "}
-        <Link href="/wiki/factions" className={link}>
+        <Link href="/wiki/guilds#guilds" className={link}>
           guild
         </Link>{" "}
-        can set one up. A one-person guild is enough. Each guild can run one node, and each chunk can hold one node.
+        can set one up. A guild with 1 member is enough. Each guild can run 1 node, and each chunk can hold 1 node.
       </p>
       <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]">
         <CraftingGrid recipe={generalNodeRecipe} />
@@ -34,15 +34,15 @@ export default function DowsingPage() {
         <li>Place the node on the floor and right-click it to open its menu.</li>
         <li>Pick a node type, then a production focus and fittings such as tools, a refinery, light or irrigation.</li>
         <li>
-          Put a barrel directly under the node and fill it with what the fittings use. Put a hopper directly above it to
-          collect the output. The node will not start without both.
+          Put a barrel directly under the node and fill it with the materials the fittings use. Put a hopper directly
+          above the node to collect what it produces. The node will not start without both.
         </li>
         <li>Activate the node. The guild bank must hold at least one day&apos;s upkeep.</li>
       </ol>
       <p className={`mt-3 ${body}`}>
         The node takes its fitting materials from the barrel when you activate it and again every 24 hours. If the
-        barrel or hopper is missing at that point, the node shuts off. Output goes into the hopper, and only spills on
-        top of the node once the hopper is full.
+        barrel or hopper is missing at that point, the node shuts off. Output goes into the hopper. Once the hopper is
+        full, the rest drops on top of it, where it can be lost.
       </p>
       <p className={`mt-3 ${body}`}>
         The node must be inactive before you change its type, focus or fittings, change its level, or delete it.
@@ -51,12 +51,17 @@ export default function DowsingPage() {
       </p>
 
       <WikiSectionHeading id="types">Node types</WikiSectionHeading>
+      <p className={body}>
+        A cycle is the time the node takes to produce one batch. Its menu shows the time until the next output. The node
+        takes materials from the barrel on a separate 24-hour timer.
+      </p>
       <DataTable
+        className="mt-4"
         columns={[
           { header: "Type" },
           { header: "Production focus" },
           { header: "Fittings" },
-          { header: "Base cycle", align: "right", nowrap: true },
+          { header: "Cycle at level 10", align: "right", nowrap: true },
         ]}
         rows={nodeTypes.map((type) => [type.name, type.focuses.join(", "), type.fittings.join(", "), type.cycle])}
       />
@@ -71,17 +76,22 @@ export default function DowsingPage() {
         </li>
         <li>Fruit orchards and spice plantations need basic irrigation or better.</li>
         <li>Advanced Fertilizer needs steam-powered irrigation.</li>
+        <li>
+          Steam-powered irrigation needs iron hoes or better on a farm or plantation, and iron axes or better in a
+          forestry.
+        </li>
+        <li>Arcane irrigation needs diamond hoes on a farm or plantation, and diamond axes in a forestry.</li>
       </ul>
 
       <WikiSectionHeading id="efficiency">Efficiency</WikiSectionHeading>
       <p className={body}>
-        A node&apos;s efficiency, shown in its menu, also sets the cycle length: at 0% a cycle takes four times as long
-        as at 100%. A new node starts at 50%. Efficiency rises by 0.1% per active guild member each hour, up to 1% an
-        hour, and is capped at 25% per active member, so a guild needs four active members to reach 100%. Changing the
-        node type costs 40%.
+        Efficiency, shown in the node&apos;s menu, changes the cycle length too: at 0% a cycle takes 4 times as long as
+        at 100%. A new node starts at 50%. Each active guild member adds 0.1% an hour (1% an hour at most for the whole
+        guild) and can lift the node by up to 25%, so a guild needs 4 active members to reach 100%. Changing the node
+        type takes 40% off.
       </p>
       <p className={`mt-3 ${body}`}>
-        A member who has been offline for four weeks is{" "}
+        A member who has been offline for 4 weeks is{" "}
         <Link href="/wiki/factions#inactivity" className={link}>
           inactive
         </Link>{" "}
