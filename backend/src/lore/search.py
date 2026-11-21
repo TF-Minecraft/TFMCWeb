@@ -29,7 +29,7 @@ def search(
 
     With `players`, a character search also finds players' roster characters that no lore character
     stands for yet: those come back with `id` 0 (no lore record has it) and a `player` key to adopt them by
-    (player_characters.adopt)."""
+    (player_characters.adopt). Without `q`, living ones fill the list after the lore records."""
     if isinstance(kinds, str):
         kinds = [k for k in (part.strip() for part in kinds.split(",")) if k]
     wanted = list(kinds or KINDS)
@@ -51,20 +51,23 @@ def search(
             + (f"ORDER BY prefix DESC, lower(t.{kind.label}), t.id " if q else "ORDER BY t.updated_at DESC, t.id ")
             + "LIMIT %(limit)s)"
         )
-    if players and q and "character" in wanted:
+    if players and "character" in wanted:
         parts.append(player_characters.search_sql(q))
-    # Lore records before players' characters of the same name.
+    # Lore records before players' characters: of the same name, or without a query, all of them.
     order = (
         "prefix DESC, lower(label), kind, id IS NULL, id, player_uuid, player_character_id"
         if q
-        else "updated_at DESC, kind, id"
+        else "id IS NULL, id IS NULL AND status = 'dead', updated_at DESC, kind, id"
     )
     sql = (
         "SELECT kind, id, label, sublabel, status, player_uuid, player_character_id "
         f"FROM ({' UNION ALL '.join(parts)}) found ORDER BY {order} LIMIT %(limit)s"
     )
     with database.connect() as conn:
-        rows = conn.execute(sql, {"q": _like(q), "prefix": _like(q)[1:], "limit": limit}).fetchall()
+        rows = conn.execute(
+            sql,
+            {"q": _like(q), "prefix": _like(q)[1:], "limit": limit, "realm": player_characters.realm()},
+        ).fetchall()
     return [_result(row) for row in rows]
 
 

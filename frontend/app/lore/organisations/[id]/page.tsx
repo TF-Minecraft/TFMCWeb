@@ -5,12 +5,23 @@ import { use } from "react";
 import { createEntity, getEntity, setOrganisationMembers, type SearchResult } from "@/lib/lore/api";
 import AdminColumn from "../../../components/admin/AdminColumn";
 import { inputClass, mutedClass } from "../../../components/admin/ui";
-import { Backlinks, DetailHeader, Field, Notice, RefLink, Section } from "../../../components/lore/DetailParts";
+import {
+  Backlinks,
+  DetailHeader,
+  Field,
+  Notice,
+  ReadField,
+  ReadValue,
+  RefLink,
+  Section,
+} from "../../../components/lore/DetailParts";
 import HistoryList from "../../../components/lore/HistoryList";
 import LinkedRoleList from "../../../components/lore/LinkedRoleList";
+import LoreText from "../../../components/lore/LoreText";
 import LoreTextEditor from "../../../components/lore/LoreTextEditor";
 import RelationsEditor from "../../../components/lore/RelationsEditor";
 import SaveBar from "../../../components/lore/SaveBar";
+import { useEditMode } from "../../../components/lore/useEditMode";
 import { useEntityEditor } from "../../../components/lore/useEntityEditor";
 
 export default function OrganisationPage({ params }: { params: Promise<{ id: string }> }) {
@@ -28,6 +39,7 @@ export default function OrganisationPage({ params }: { params: Promise<{ id: str
 
 function OrganisationEditor({ id }: { id: number }) {
   const editor = useEntityEditor("organisation", id);
+  const [editing, setEditing] = useEditMode();
   const { detail } = editor;
 
   if (!detail) {
@@ -38,10 +50,14 @@ function OrganisationEditor({ id }: { id: number }) {
     );
   }
 
-  const locked = Boolean(detail.deleted_at);
+  const locked = !editing || Boolean(detail.deleted_at);
 
   async function refresh() {
     editor.replace(await getEntity("organisation", id));
+  }
+
+  async function done() {
+    if (await editor.save()) setEditing(false);
   }
 
   async function createCharacter(label: string): Promise<SearchResult> {
@@ -59,57 +75,72 @@ function OrganisationEditor({ id }: { id: number }) {
         deletedAt={detail.deleted_at}
         onDelete={editor.remove}
         onRestore={editor.restore}
+        edit={{ editing, onEdit: () => setEditing(true), onDone: () => void done(), saving: editor.saving }}
       />
 
       <Section title="Details">
-        <div className="flex flex-col gap-4">
-          <Field label="Name">
-            <input
-              className={inputClass}
-              value={editor.value("name")}
-              maxLength={120}
-              disabled={locked}
-              onChange={(e) => editor.set("name", e.target.value)}
-            />
-          </Field>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Kind" hint="Free text, for example guild, house, cult or company.">
-              <input
-                className={inputClass}
-                value={editor.value("kind")}
-                maxLength={60}
-                disabled={locked}
-                onChange={(e) => editor.set("kind", e.target.value)}
-              />
-            </Field>
-            <Field label="Game faction" hint="The in-game faction this is tied to, if any.">
-              <input
-                className={inputClass}
-                value={editor.value("game_faction")}
-                maxLength={120}
-                disabled={locked}
-                onChange={(e) => editor.set("game_faction", e.target.value)}
-              />
-            </Field>
+        {locked ? (
+          <div className="flex flex-col gap-4">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <ReadField label="Kind">
+                <ReadValue text={editor.value("kind")} />
+              </ReadField>
+              <ReadField label="Game faction">
+                <ReadValue text={editor.value("game_faction")} />
+              </ReadField>
+            </div>
+            <ReadField label="Summary">
+              <LoreText text={editor.value("summary")} />
+            </ReadField>
+            <ReadField label="Notes">
+              <LoreText text={editor.value("notes")} />
+            </ReadField>
           </div>
-          <LoreTextEditor
-            label="Summary"
-            value={editor.value("summary")}
-            onChange={(v) => editor.set("summary", v)}
-            rows={3}
-            maxLength={2000}
-            placeholder="What they are, in a line or two."
-            disabled={locked}
-          />
-          <LoreTextEditor
-            label="Notes"
-            value={editor.value("notes")}
-            onChange={(v) => editor.set("notes", v)}
-            rows={8}
-            maxLength={20000}
-            disabled={locked}
-          />
-        </div>
+        ) : (
+          <div className="flex flex-col gap-4">
+            <Field label="Name">
+              <input
+                className={inputClass}
+                value={editor.value("name")}
+                maxLength={120}
+                onChange={(e) => editor.set("name", e.target.value)}
+              />
+            </Field>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="Kind" hint="Free text, for example guild, house, cult or company.">
+                <input
+                  className={inputClass}
+                  value={editor.value("kind")}
+                  maxLength={60}
+                  onChange={(e) => editor.set("kind", e.target.value)}
+                />
+              </Field>
+              <Field label="Game faction" hint="The in-game faction this is tied to, if any.">
+                <input
+                  className={inputClass}
+                  value={editor.value("game_faction")}
+                  maxLength={120}
+                  onChange={(e) => editor.set("game_faction", e.target.value)}
+                />
+              </Field>
+            </div>
+            <LoreTextEditor
+              label="Summary"
+              value={editor.value("summary")}
+              onChange={(v) => editor.set("summary", v)}
+              rows={3}
+              maxLength={2000}
+              placeholder="What they are, in a line or two."
+            />
+            <LoreTextEditor
+              label="Notes"
+              value={editor.value("notes")}
+              onChange={(v) => editor.set("notes", v)}
+              rows={8}
+              maxLength={20000}
+            />
+          </div>
+        )}
       </Section>
 
       <Section title="Members">
