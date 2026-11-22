@@ -26,16 +26,14 @@ type PreviewModel = { elements?: { faces?: Record<string, Face> }[] };
 const linkClass =
   "inline-flex items-center rounded-sm border border-[color-mix(in_srgb,var(--tfmc-cream)_25%,transparent)] px-2.5 py-1 text-xs text-[var(--tfmc-cream)] transition hover:border-[var(--tfmc-accent)] disabled:opacity-50";
 
-/** Object URLs for the picked textures, revoked when they change. */
-function useFileUrls(files: (File | null | undefined)[]): (string | null)[] {
+/** Object URLs for the picked textures, revoked when they change. `files` must be memoised. */
+function useFileUrls(files: readonly (File | null)[]): (string | null)[] {
   const [urls, setUrls] = useState<(string | null)[]>([]);
-  const key = files.map((f) => (f ? `${f.name}:${f.size}:${f.lastModified}` : "")).join("|");
   useEffect(() => {
     const next = files.map((file) => (file ? URL.createObjectURL(file) : null));
     setUrls(next);
     return () => next.forEach((url) => url && URL.revokeObjectURL(url));
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- `key` stands for the files
-  }, [key]);
+  }, [files]);
   return urls;
 }
 
@@ -127,7 +125,8 @@ async function downloadFaceGuide(vehicle: string, index: number): Promise<void> 
 export default function VehicleSkinFields({ vehicle, files, onFile, disabled }: Props) {
   const spec = vehicleSpec(vehicle);
   const fields = useMemo(() => (spec?.textures ?? []).map((_, i) => vehicleTextureField(i)), [spec]);
-  const picked = fields.map((f) => files[f] ?? null);
+  // Compared by File identity, so a replacement with the same name and size still updates.
+  const picked = useMemo(() => fields.map((f) => files[f] ?? null), [fields, files]);
   const urls = useFileUrls(picked);
   const textures = useMemo(() => vehicleTextureMap(vehicle, urls), [vehicle, urls]);
   const [guideError, setGuideError] = useState<string | null>(null);
