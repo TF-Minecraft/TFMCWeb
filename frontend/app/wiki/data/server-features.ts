@@ -9,12 +9,12 @@ export const serverFeaturesCommands: WikiCommandSet = {
     {
       command: "/linkdiscord",
       description: "Gives you a code to link your Discord account. Run /linkdiscord <code> in the Discord server.",
-      notes: "You cannot play in Survival until you are linked.",
+      notes: "You cannot play on the main server until you are linked.",
     },
     {
       command: "/unlinkdiscord",
       description: "Removes your Discord link.",
-      notes: "You will need to link again to play in Survival.",
+      notes: "You will need to link again to play on the main server.",
     },
     {
       command: "/token create profile",
@@ -22,12 +22,12 @@ export const serverFeaturesCommands: WikiCommandSet = {
     },
     {
       command: "/token create <skin|drink>",
-      description: "Gives you a one-time code to upload a custom skin or drink on the website.",
+      description: "Gives you a one-time code to upload your own skin or drink on the website.",
       notes: "Noble rank and above. Skin and drink codes share one cooldown.",
     },
     {
       command: "/patreon [unlink]",
-      description: "Links your Patreon account, shows your supporter status, or removes the link.",
+      description: "Links your Patreon account, shows your supporter status or removes the link.",
     },
     {
       command: "/tfmc patreon",
@@ -43,7 +43,7 @@ export const serverFeaturesCommands: WikiCommandSet = {
     },
     {
       command: "/tfmc drinks",
-      description: "Gives you the link to design your custom drinks on the website.",
+      description: "Gives you the link to design your own drinks on the website.",
       notes: "Noble rank and above.",
     },
     {
@@ -60,8 +60,8 @@ export const serverFeaturesCommands: WikiCommandSet = {
     },
     {
       command: "/tfmc booster",
-      description: "Starts a one-hour profession EXP booster for everyone on the server.",
-      notes: "Ascended and Legacy only, once every 3 days.",
+      description: "Starts a 1-hour profession EXP booster for everyone on the server.",
+      notes: "Ascended rank and above, once every 3 days.",
     },
   ],
 };
@@ -71,7 +71,7 @@ export const serverFeaturesSection: WikiSection = {
     href: "/wiki/server-features",
     label: "Account & Website",
     category: "character",
-    blurb: "Link Discord, sign in to the website, support the server, and handy account commands.",
+    blurb: "Link Discord, sign in to the website, support the server and find handy account commands.",
   },
   commands: serverFeaturesCommands,
 };

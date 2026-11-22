@@ -40,7 +40,7 @@ export default function CompanionPetGallery() {
           </>
         ) : (
           <>
-            Requires the <strong>{pet.unlock}</strong> donator rank or higher.
+            Requires the <strong>{pet.unlock}</strong> rank or higher.
           </>
         )}
       </p>

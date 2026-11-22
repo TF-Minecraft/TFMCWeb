@@ -56,10 +56,12 @@ const gradedAnimalProduct = (kind: string, animals: string): MaterialAcquisition
   },
   {
     method: "Animal Husbandry",
-    detail: `Owned ${animals} with good genetics give graded ${kind}. The higher their star tier, the better the grade.`,
+    detail: `Owned ${animals} with good genetics give Good, Great or Perfect Quality ${kind}. The higher their star tier, the better the quality.`,
   },
 ];
 const forgingUse = (kind: string) => `Used in Forging Station recipes for ${kind}.`;
+const refinedWoodUse = `${forgingUse("bows, shields and banners")} Also used for gun stocks and grips, and as an alloy base at the Alloy Forge.`;
+const crystalUse = "Used as a crystal at the Forging Station and the Alloy Forge.";
 
 /** Sources of the current act's materials. Which materials they give changes from act to act. */
 const activity: MaterialAcquisition = {
@@ -68,7 +70,7 @@ const activity: MaterialAcquisition = {
 };
 const referrals: MaterialAcquisition = {
   method: "Referral rewards",
-  detail: "Part of the rewards for inviting a player, or for being invited, as the invited player's playtime grows.",
+  detail: "Part of the referral rewards, which both players unlock as the invited player's playtime grows.",
 };
 const infestationMonsters: MaterialAcquisition = {
   method: "Infestations",
@@ -93,14 +95,14 @@ export const serverCraftedMaterials: CatalogMaterial[] = [
     name: "Coke",
     group: "Metals and gold",
     texture: T("materials/coke.png"),
-    lore: "Purified fuel for smelting Steel.",
+    lore: "Purified fuel for smelting steel.",
   },
   {
     name: "Steel Ingot",
     group: "Metals and gold",
     texture: T("materials/steel_ingot.png"),
     lore: "The step up from iron.",
-    usedFor: "Smithing steel weapons and armour at the Forging Station, and building guns and vehicles.",
+    usedFor: "Forging steel weapons and armour at the Forging Station, and building guns and vehicles.",
     guide: guns,
   },
   {
@@ -108,14 +110,14 @@ export const serverCraftedMaterials: CatalogMaterial[] = [
     group: "Metals and gold",
     texture: T("materials/bronze_ingot.png"),
     lore: "An alloy of tin and copper.",
-    usedFor: "Smithing at the Forging Station.",
+    usedFor: "Forging at the Forging Station.",
   },
   {
     name: "Abyssalite Ingot",
     group: "Metals and gold",
     texture: T("materials/abyssalite_ingot.png"),
-    lore: "The metal after Steel.",
-    usedFor: "Smithing abyssalite weapons and armour at the Forging Station, and building guns and vehicles.",
+    lore: "The metal after steel.",
+    usedFor: "Forging abyssalite weapons and armour at the Forging Station, and building guns.",
     guide: guns,
   },
   {
@@ -123,63 +125,63 @@ export const serverCraftedMaterials: CatalogMaterial[] = [
     group: "Metals and gold",
     texture: T("materials/mythril_ingot.png"),
     lore: "The finest metal.",
-    usedFor: "Smithing mythril weapons and armour at the Forging Station, and building guns.",
+    usedFor: "Forging mythril weapons and armour at the Forging Station, and building guns.",
     guide: guns,
   },
   {
     name: "Barkwood",
     group: "Wood",
     texture: T("materials/barkwood.png"),
-    lore: "Bark pressed together with an iron ingot. Refine it before you smith with it.",
+    lore: "Bark pressed together with an iron ingot. Refine it before you forge with it.",
   },
   {
     name: "Maplewood",
     group: "Wood",
     texture: T("materials/maplewood.png"),
-    lore: "Bark pressed together with a steel ingot. Refine it before you smith with it.",
+    lore: "Bark pressed together with a steel ingot. Refine it before you forge with it.",
   },
   {
     name: "Elderwood",
     group: "Wood",
     texture: T("materials/elderwood.png"),
-    lore: "Bark pressed together with an abyssalite ingot. Refine it before you smith with it.",
+    lore: "Bark pressed together with an abyssalite ingot. Refine it before you forge with it.",
   },
   {
     name: "Demonwood",
     group: "Wood",
     texture: T("materials/demonwood.png"),
-    lore: "Bark pressed together with a mythril ingot. Refine it before you smith with it.",
+    lore: "Bark pressed together with a mythril ingot. Refine it before you forge with it.",
   },
   {
     name: "Refined Barkwood",
     group: "Wood",
     texture: T("materials/refined_barkwood.png"),
-    lore: "The first tier of smithing wood.",
-    usedFor: `${forgingUse("bows, shields and other wooden parts")} Also gun stocks and grips.`,
+    lore: "The first tier of forging wood.",
+    usedFor: refinedWoodUse,
     guide: guns,
   },
   {
     name: "Refined Maplewood",
     group: "Wood",
     texture: T("materials/refined_maplewood.png"),
-    lore: "The second tier of smithing wood.",
-    usedFor: `${forgingUse("bows, shields and other wooden parts")} Also gun stocks and grips.`,
+    lore: "The second tier of forging wood.",
+    usedFor: refinedWoodUse,
     guide: guns,
   },
   {
     name: "Refined Elderwood",
     group: "Wood",
     texture: T("materials/refined_elderwood.png"),
-    lore: "The third tier of smithing wood.",
-    usedFor: `${forgingUse("bows, shields and other wooden parts")} Also gun stocks and grips.`,
+    lore: "The third tier of forging wood.",
+    usedFor: refinedWoodUse,
     guide: guns,
   },
   {
     name: "Refined Demonwood",
     group: "Wood",
     texture: T("materials/refined_demonwood.png"),
-    lore: "The fourth and best tier of smithing wood.",
-    usedFor: `${forgingUse("bows, shields and other wooden parts")} Also gun stocks and grips.`,
+    lore: "The fourth and best tier of forging wood.",
+    usedFor: refinedWoodUse,
     guide: guns,
   },
   {
@@ -198,7 +200,7 @@ export const serverCraftedMaterials: CatalogMaterial[] = [
     name: "Carbon Powder",
     group: "Alchemy and explosives",
     texture: T("materials/carbon_powder.png"),
-    lore: "One of the three powders that make gunpowder.",
+    lore: "One of the 3 powders that make gunpowder.",
   },
   {
     name: "Synthetic Ink",
@@ -223,14 +225,14 @@ export const serverCraftedMaterials: CatalogMaterial[] = [
     name: "Sulfur",
     group: "Alchemy and explosives",
     texture: T("materials/sulfur.png"),
-    lore: "One of the three powders that make gunpowder.",
+    lore: "One of the 3 powders that make gunpowder.",
     acquisition: [{ method: "Creepers", detail: "Creepers sometimes drop it when killed." }],
   },
   {
     name: "Saltpeter",
     group: "Alchemy and explosives",
     texture: T("materials/saltpeter.png"),
-    lore: "One of the three powders that make gunpowder.",
+    lore: "One of the 3 powders that make gunpowder.",
   },
   {
     name: "Dynamite",
@@ -253,7 +255,7 @@ export const dropOnlyMaterials: CatalogMaterial[] = [
     name: "Ignitium",
     group: "Metals and gold",
     texture: T("materials/ignitium.png"),
-    lore: "A fiery crystal, the key to making Coke and Steel.",
+    lore: "A fiery crystal, the key to making Coke and steel.",
     unpackingRecipeKeys: ["gen-ingot-station-ignitium-block2"],
     acquisition: [
       luckyMiner,
@@ -266,13 +268,13 @@ export const dropOnlyMaterials: CatalogMaterial[] = [
       infestationMonsters,
       battles("Fighters still in a battle when it ends get it."),
     ],
-    usedFor: "A crystal catalyst at the Forging Station.",
+    usedFor: crystalUse,
   },
   {
     name: "Tin",
     group: "Metals and gold",
     texture: T("materials/raw_tin.png"),
-    lore: "A soft metal, the key to making Bronze.",
+    lore: "A soft metal, the key to making bronze.",
     unpackingRecipeKeys: ["gen-ingot-station-tin-block2"],
     acquisition: [
       luckyMiner,
@@ -284,13 +286,13 @@ export const dropOnlyMaterials: CatalogMaterial[] = [
       infestationMonsters,
       battles("Fighters still in a battle when it ends sometimes get it."),
     ],
-    usedFor: "A crystal catalyst at the Forging Station.",
+    usedFor: crystalUse,
   },
   {
     name: "Abyssalite Fragment",
     group: "Metals and gold",
     texture: T("materials/abyssalite.png"),
-    lore: "A tough shard of metal, the raw material of Abyssalite.",
+    lore: "A tough shard of metal, the raw material of abyssalite.",
     acquisition: [
       luckyMiner,
       treeGatherer("IV"),
@@ -301,15 +303,15 @@ export const dropOnlyMaterials: CatalogMaterial[] = [
       infestationMonsters,
       battles("Fighters still in a battle when it ends sometimes get it."),
     ],
-    usedFor: "A catalyst at the Forging Station.",
+    usedFor: crystalUse,
   },
   {
     name: "Mythril Fragment",
     group: "Metals and gold",
     texture: T("materials/mythril_fragment.png"),
-    lore: "A metal of legend, the raw material of Mythril.",
+    lore: "A metal of legend, the raw material of mythril.",
     acquisition: [laterAct],
-    usedFor: "A catalyst at the Forging Station.",
+    usedFor: crystalUse,
   },
   {
     name: "Mythrilite",
@@ -331,7 +333,7 @@ export const dropOnlyMaterials: CatalogMaterial[] = [
       },
       node("Gold Quarry", "Quarry"),
     ],
-    usedFor: "Goldsmithing jewellery at a smithing table.",
+    usedFor: "Goldsmithing jewellery at a Smithing Table.",
   },
   {
     name: "Moldable Gold",
@@ -346,7 +348,7 @@ export const dropOnlyMaterials: CatalogMaterial[] = [
       },
       node("Gold Quarry", "Quarry"),
     ],
-    usedFor: "Goldsmithing jewellery at a smithing table.",
+    usedFor: "Goldsmithing jewellery at a Smithing Table.",
   },
   {
     name: "Shiny Gold",
@@ -361,7 +363,7 @@ export const dropOnlyMaterials: CatalogMaterial[] = [
       },
       node("Gold Quarry", "Quarry"),
     ],
-    usedFor: "Goldsmithing jewellery at a smithing table.",
+    usedFor: "Goldsmithing jewellery at a Smithing Table.",
   },
   {
     name: "Raw Iron Fragment",
@@ -388,7 +390,7 @@ export const dropOnlyMaterials: CatalogMaterial[] = [
     name: "Bark",
     group: "Wood",
     texture: T("materials/bark.png"),
-    lore: "Stripped from trees. Pressed with an ingot, it becomes smithing wood.",
+    lore: "Stripped from trees. Pressed with an ingot, it becomes forging wood.",
     acquisition: [
       {
         method: "Logging",
@@ -428,14 +430,14 @@ export const dropOnlyMaterials: CatalogMaterial[] = [
     name: "Wood Core",
     group: "Block cores",
     texture: T("materials/wood_core.png"),
-    lore: "The essence of a tree. The Forester Station turns it into stacks of logs and wood blocks.",
+    lore: "The essence of a tree. With the Herborist perk Tree Crafter, the Forester Station turns it into stacks of logs and wood blocks.",
     acquisition: [treeGatherer("I"), node("Log Forestry", "Forestry"), fishing],
   },
   {
     name: "Flower Core",
     group: "Block cores",
     texture: T("materials/flower_core.png"),
-    lore: "The essence of a plant. The Forester Station turns it into flowers, grass, moss and other plants.",
+    lore: "The essence of a plant. With the Herborist perk Tree Crafter, the Forester Station turns it into flowers, grass, moss and other plants, dyes (4 per core) and wool in all 16 colours (64 per core).",
     acquisition: [treeGatherer("II"), fishing],
   },
   {
@@ -462,6 +464,10 @@ export const dropOnlyMaterials: CatalogMaterial[] = [
         method: "Recycling",
         detail: "Runes, artifacts and mage weapons give some Enchanted Dust back at a Recycling Station.",
       },
+      {
+        method: "Animal Husbandry",
+        detail: "Owned pigs with good genetics sometimes give it when they shed or are slaughtered.",
+      },
     ],
   },
   {
@@ -470,7 +476,8 @@ export const dropOnlyMaterials: CatalogMaterial[] = [
     texture: T("materials/arcane_crystal.png"),
     lore: "Found deep below the earth, and not of this Plane.",
     acquisition: [luckyMiner, treeGatherer("IV"), node("Rare Ore Mine", "Ore Mine"), detector, fishing, trialRooms],
-    usedFor: "Building cars, planes and airships, and upgrading resource nodes.",
+    usedFor:
+      "Building planes and airships, making Arcane Fuel and the Unpowered Trace Detector at the Engineer Station, and upgrading resource nodes.",
   },
   // Every herb an Alchemist Collector can gather on Main.
   ...collectorHerbMaterials,
@@ -490,7 +497,7 @@ export const dropOnlyMaterials: CatalogMaterial[] = [
     name: `${grade} Quality ${kind}`,
     group: "Animal products",
     texture: T(`pets/${file}.png`),
-    lore: `${grade} grade ${kind === "Feather" ? "feathers" : kind.toLowerCase()} for smithing.`,
+    lore: `${grade}-quality ${kind === "Feather" ? "feathers" : kind.toLowerCase()} for forging.`,
     acquisition: gradedAnimalProduct(
       kind === "Feather" ? "feathers" : kind.toLowerCase(),
       kind === "Leather"
@@ -501,10 +508,10 @@ export const dropOnlyMaterials: CatalogMaterial[] = [
     ),
     usedFor: forgingUse(
       kind === "Feather"
-        ? "light armour, mage armour and bows"
+        ? "light, infantry and mage armour and bows"
         : kind === "Leather"
-          ? "medium armour and weapons"
-          : "heavy armour and weapons",
+          ? "medium armour, weapons, shields and banners"
+          : "heavy armour, weapons, shields and banners",
     ),
   })),
   {
@@ -516,7 +523,7 @@ export const dropOnlyMaterials: CatalogMaterial[] = [
       {
         method: "Made in a Trough",
         detail:
-          "Craft a Trough at the Animal Station and place it. Fill its four slots with wheat or vegetables, four of each per slot, then right-click it with an empty hand to take the feed.",
+          "Craft a Trough at the Animal Station and place it. The Trough has 4 slots. Right-click it holding wheat or a vegetable to fill one slot, which takes 4 of that item. When all 4 slots are full, right-click it with an empty hand to take 1 Universal Feed. Rotten food is refused.",
       },
     ],
   },
@@ -527,6 +534,6 @@ export const materialsSection: WikiSection = {
     href: "/wiki/materials",
     label: "Materials",
     category: "reference",
-    blurb: "Every custom crafting material: where to find it and what it makes.",
+    blurb: "Every crafting material of the server's own: where to find it and what it makes.",
   },
 };

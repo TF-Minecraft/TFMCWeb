@@ -11,16 +11,16 @@ const body = "text-sm text-[var(--tfmc-mist)]";
 export default function BirdMailPage() {
   return (
     <WikiPage
-      lastModified="2026-10-22"
+      lastModified="2026-11-21"
       title="Letters & Bird Mail"
-      intro="Write a letter, seal it, and hand it over yourself or send it by bird to any character on the server."
+      intro="Write a letter and seal it, then hand it over yourself or send it by bird to any character on the server."
     >
       <WikiSectionHeading id="letters">Writing a letter</WikiSectionHeading>
       <div className="mt-4">
         <CraftingGrid recipe={letterRecipe} />
       </div>
       <p className={`mt-4 ${body}`}>
-        Craft a <WikiItemLink name="Letter" /> from four Paper in a square and write in it like a book. Signing it seals
+        Craft a <WikiItemLink name="Letter" /> from 4 Paper in a square and write in it like a book. Signing it seals
         it: the title becomes the letter&apos;s name, and the author is not shown. You need to be playing a character to
         sign or edit a letter.
       </p>
@@ -33,7 +33,7 @@ export default function BirdMailPage() {
       <div className="mt-4 grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_22rem]">
         <ol className={`list-decimal space-y-2 pl-5 ${body}`}>
           <li>
-            Right-click a <StationLink name="Bird Mailbox">bird mailbox</StationLink> without sneaking.
+            Right-click a <StationLink name="Bird Mailbox" /> without sneaking.
           </li>
           <li>
             Put one <WikiItemLink name="Letter" /> in the slot. It can be blank, sealed or opened, but nothing else can
@@ -41,7 +41,7 @@ export default function BirdMailPage() {
           </li>
           <li>
             Pick the recipient from the list of character heads. It shows every living character listed for mail, online
-            or offline, except your own.
+            or offline, except your own characters.
           </li>
           <li>Click Confirm. The letter leaves your inventory and a bird flies off with it.</li>
         </ol>
@@ -58,7 +58,7 @@ export default function BirdMailPage() {
           <h3 className="mt-3 font-[family-name:var(--font-fraunces)] text-lg text-[var(--tfmc-cream)]">
             <StationLink name="Bird Mailbox" />
           </h3>
-          <p className={body}>Place it on the floor; it stands 2 blocks tall. Sneak to break it.</p>
+          <p className={body}>Place it on the floor. It stands 2 blocks tall. Sneak to break it.</p>
         </aside>
       </div>
       <p className={`mt-4 ${body}`}>
@@ -69,8 +69,8 @@ export default function BirdMailPage() {
 
       <WikiSectionHeading id="delivery">Delivery</WikiSectionHeading>
       <p className={body}>
-        The flight takes a quarter of a second per block between you and the recipient: where they are if they are
-        playing that character, otherwise where the character was last.
+        The flight takes a quarter of a second per block between you and the recipient. The distance is measured to
+        where they are now if they are playing that character, and otherwise to where the character was last.
       </p>
       <StatGrid
         columns={3}
@@ -81,7 +81,7 @@ export default function BirdMailPage() {
         ]}
       />
       <p className={`mt-3 ${body}`}>
-        When the bird arrives, the recipient gets the letter at once if they are playing that character, alive, and have
+        When the bird arrives, the recipient gets the letter at once if they are playing that character, alive and have
         a free inventory space. Otherwise it waits, for as long as it takes, and arrives as soon as all three are true.
         If they are offline or playing another character, you are told it is waiting. If the recipient&apos;s character
         dies first, waiting letters go to its heir (see{" "}

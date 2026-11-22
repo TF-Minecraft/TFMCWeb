@@ -19,16 +19,16 @@ const code = "text-[var(--tfmc-accent)]";
 export default function EconomyPage() {
   return (
     <WikiPage
-      lastModified="2026-10-24"
+      lastModified="2026-11-21"
       title="Money & Market Blocks"
       intro={
         <>
-          The server&apos;s money is the <strong>denar</strong> (d). One gold denar is worth 100 silver denars. Each of
-          your characters has its own money, so switching character switches purse.
+          The server&apos;s money is the <strong>denar</strong> (d). 1 gold denar is worth 100 silver denars. Each of
+          your characters has its own pouch and bank.
         </>
       }
     >
-      <WikiSectionHeading id="accounts" intro="Each character has two balances. Check both with /deco bal.">
+      <WikiSectionHeading id="accounts" intro="Each character has 2 balances. Check both with /deco bal.">
         Pouch and bank
       </WikiSectionHeading>
       <ul className={`mt-3 list-disc space-y-2 pl-5 ${body}`}>
@@ -67,12 +67,13 @@ export default function EconomyPage() {
         <li>Picking up coins puts them straight into your pouch, even with a full inventory.</li>
         <li>
           <code className={code}>/deco toitem &lt;amount&gt;</code> turns pouch money into coins, and{" "}
-          <code className={code}>/deco topouch</code> puts the coins in your hand back. If the command refuses coins
-          taken from a hopper or chest, drop them and pick them up yourself.
+          <code className={code}>/deco topouch</code> puts the coins in your hand back. It refuses coins that dropped
+          from mining, chopping, harvesting or a PvP death and were moved into a chest by a hopper. Drop those and pick
+          them up instead.
         </li>
         <li>
           To pay someone, drop coins for them to pick up, or use <code className={code}>/deco pay &lt;amount&gt;</code>{" "}
-          to toss that much forward from eye level.
+          to throw that amount on the ground in front of you as coins.
         </li>
       </ul>
 
@@ -90,8 +91,9 @@ export default function EconomyPage() {
           .
         </li>
         <li>
-          Holding <strong>Gold Ingots</strong>, right-click at your faction&apos;s or guild&apos;s bank to bank the
-          whole stack at 1 d each. Gold Ingots picked up anywhere else are just gold.
+          Stand at your faction&apos;s or guild&apos;s bank, hold a stack of <strong>Gold Ingots</strong> and
+          right-click. The whole stack is paid into your bank at 1 d an ingot, minus your citizen tax. You need to be in
+          a guild, and your faction&apos;s main guild counts. Anywhere else a Gold Ingot is an ordinary item.
         </li>
         <li>
           Trade with other players, or sign on with a{" "}
@@ -102,19 +104,16 @@ export default function EconomyPage() {
         </li>
       </ul>
       <p className={`mt-3 ${body}`}>
-        Money you earn, including coins someone else dropped, is subject to your faction&apos;s citizen tax. The chat
-        line shows the tax. Picking up coins you dropped yourself is not taxed, but coins spilled from your pouch on a
-        PvP death are taxed even when you pick them back up.
+        Your faction takes its citizen tax from money you earn, including coins someone else dropped and Market Block
+        sales. The chat message shows how much. Picking up coins you dropped yourself is not taxed, but coins spilled
+        from your pouch on a PvP death are taxed even when you pick them back up.
       </p>
 
-      <WikiSectionHeading
-        id="market-blocks"
-        intro="A Market Block buys raw goods for denars. It only buys. You can't purchase anything from it."
-      >
+      <WikiSectionHeading id="market-blocks" intro="A Market Block buys raw goods for denars. It never sells anything.">
         Market Blocks
       </WikiSectionHeading>
       <ol className={`mt-3 list-decimal space-y-2 pl-5 ${body}`}>
-        <li>Craft a Market Block on a crafting table and place it, or use one someone else placed.</li>
+        <li>Craft a Market Block at a crafting table and place it, or use one someone else placed.</li>
         <li>Right-click it and pick a category: Metal, Mineral, Stone, Wood, Farm, Fish or Alchemy.</li>
         <li>
           Each good shows its current price and a demand bar. Click it to sell one bundle from your inventory. The money

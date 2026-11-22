@@ -18,7 +18,7 @@ export default async function InstrumentDetailPage({ params }: { params: Promise
 
   return (
     <WikiPage
-      lastModified="2026-09-12"
+      lastModified="2026-11-21"
       title={instrument.name}
       beforeTitle={
         <Link
@@ -36,8 +36,8 @@ export default async function InstrumentDetailPage({ params }: { params: Promise
       }
       intro={
         instrument.mode === "chord"
-          ? "Keys 1-8 play a single note; hold Shift for the same eight notes as full chords."
-          : "Keys 1-8 play the base octave; hold Shift for the same eight notes one octave higher, for sixteen notes in total."
+          ? "Keys 1-8 play a single note. Hold Shift for the same 8 notes as full chords."
+          : "Keys 1-8 play the base octave. Hold Shift for the same 8 notes an octave higher, 16 notes in all."
       }
     >
       <WikiSectionHeading id="keyboard">Try it</WikiSectionHeading>
@@ -51,7 +51,7 @@ export default async function InstrumentDetailPage({ params }: { params: Promise
           <CraftingGrid recipe={recipe} />
         </div>
       ) : (
-        <p className="mt-1 text-sm text-[var(--tfmc-mist)]">Not documented yet.</p>
+        <p className="mt-1 text-sm text-[var(--tfmc-mist)]">No recipe listed.</p>
       )}
     </WikiPage>
   );

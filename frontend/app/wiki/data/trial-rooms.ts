@@ -1,12 +1,13 @@
 import type { WikiCommandSet, WikiSection } from "./types";
 
-// ---------- Trial Rooms (TrialRooms v0.3.1 on Main) ----------
+// ---------- Trial Rooms (TrialRooms 0.3.2 on Main) ----------
 //
 // Sources: EntranceManager, PlayerManager, SpawnerManager, ActiveSpawner,
-// KeyService and ChestManager at v0.3.1, plus Main's `plugins/TrialRooms`
+// KeyService and ChestManager, plus Main's `plugins/TrialRooms`
 // config, spawners and loot tables. The Unknown Key is MMOItems
 // `m.loot.trial_key`, found in Arcane Caches (`geiger_counter/config.yml`,
-// list `act_1`). The entrance location, room names, key rarity weights and
+// list `act_1`), gathering treasure (Gathering `categories.yml`) and
+// infestation loot (Infestations `rewards.yml`). The entrance location, room names, key rarity weights and
 // loot odds stay off the page. `/tr` is staff-only, so no player commands.
 
 export const trialRoomsCommands: WikiCommandSet = {

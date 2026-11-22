@@ -22,7 +22,7 @@ const body = "text-sm text-[var(--tfmc-mist)]";
 export default function WoodworkingPage() {
   return (
     <WikiPage
-      lastModified="2026-10-22"
+      lastModified="2026-11-21"
       title="Woodworking"
       intro={`Woodworkers carve decorative furniture at a Woodworking Station: ${woodworkingProjects.length} pieces in ${woodworkingCategories.length} styles.`}
       width="lg"
@@ -37,12 +37,15 @@ export default function WoodworkingPage() {
       <ol className={`mt-3 list-decimal space-y-2 pl-5 ${body}`}>
         <li>Right-click an idle Woodworking Station, choose a style, then a piece.</li>
         <li>
-          Right-click the station with materials to add them one at a time. The title shows how many of each material
-          type the piece still needs, but not which ones.
+          Right-click the station with materials to add them one at a time. Each time, text flashes in the middle of
+          your screen with how many materials of that type are in and how many the piece needs, but not which ones. The
+          menu where you choose a piece also lists how many materials and hits of each group it needs.
         </li>
         <li>
-          Once all the materials are in, left-click the station with the tools. The title counts tools by group (see the
-          table below), so full counts don&apos;t mean you used the right tools.
+          Once all the materials are in, left-click the station with the tools. Each hit flashes the same kind of text
+          with the hits done and needed for that tool&apos;s group (see the table below), so full counts don&apos;t mean
+          you used the right tools. You can&apos;t finish until every group&apos;s count is full. Only then is the work
+          checked.
         </li>
         <li>
           Left-click with the <WikiItemLink name="Branding Tool" /> to finish. The piece appears on top of the station.
@@ -52,7 +55,8 @@ export default function WoodworkingPage() {
       <p className={`mt-3 ${body}`}>
         Finishing shows your Recipe, Hits and Total percentages. Only exact work makes the piece: the right materials,
         and the right number of hits with each tool. If either is off, it is ruined and the materials are lost. If
-        someone breaks the station mid-project, the materials go to whoever broke it.
+        someone breaks the station mid-project, the materials go to whoever broke it. You can&apos;t break the station
+        while holding a woodworking tool or the Branding Tool. A piece in progress is kept through server restarts.
       </p>
 
       <WikiSectionHeading id="materials">Materials</WikiSectionHeading>
@@ -66,7 +70,8 @@ export default function WoodworkingPage() {
         .
       </p>
       <p className={`mt-3 ${body}`}>
-        With the Herborist perk Tree Gatherer III, chopping any log or wood block can drop them. A{" "}
+        With the Herborist perk Tree Gatherer III, chopping an oak, spruce, birch, jungle, acacia, dark oak, mangrove,
+        cherry or pale oak log or wood block can drop them. Stripped logs and nether stems don&apos;t count. A{" "}
         <Link href="/wiki/dowsing" className={link}>
           Forestry node
         </Link>{" "}

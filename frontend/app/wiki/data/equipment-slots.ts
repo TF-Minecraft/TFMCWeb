@@ -14,7 +14,7 @@ export const equipmentSlotsSection: WikiSection = {
     href: "/wiki/equipment-slots",
     label: "Equipment Slots",
     category: "character",
-    blurb: "Four inventory slots for a ring, an amulet and two jewellery artifacts.",
+    blurb: "4 inventory slots for a ring, an amulet and 2 jewellery artifacts.",
   },
   commands: equipmentSlotsCommands,
 };

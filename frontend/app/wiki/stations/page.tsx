@@ -7,22 +7,22 @@ const body = "mt-3 text-sm text-[var(--tfmc-mist)]";
 export default function StationsPage() {
   return (
     <WikiPage
-      lastModified="2026-11-06"
+      lastModified="2026-11-21"
       title="Crafting Stations"
-      intro="Most custom items are made at a station rather than a crafting table. Open a station's page for its recipes."
+      intro="Most of the server's own items are made at a station rather than a crafting table. Open a station's page for its recipes."
       width="lg"
     >
       <WikiSectionHeading id="basics">How stations work</WikiSectionHeading>
       <p className={body}>
-        Some stations are blocks you craft on a crafting table and place. Others are ordinary blocks, such as a blast
+        Some stations are blocks you craft at a crafting table and place. Others are ordinary blocks, such as a blast
         furnace or a jukebox, that double as a station. On those, sneak and right-click to open the station, so a plain
         right-click still uses the block normally. The fletching table and brewing stand open with a plain right-click
         instead.
       </p>
       <p className={body}>
-        A recipe can need a profession perk or a class, and most take a few seconds to craft. The recipe card on the
-        station&apos;s page shows both. Vehicles from the Engineering Table and Dockyard are the exception: they take
-        hours or days to build.
+        A recipe can need a profession perk or a supporter rank, and most take a few seconds to craft. The recipe card
+        on the station&apos;s page shows both. Vehicles from the Engineering Table and Dockyard are the exception: most
+        take hours or days to build, and the smallest take 5 minutes.
       </p>
 
       {STATION_GROUPS.map((group) => {
@@ -50,7 +50,7 @@ export default function StationsPage() {
                   {station.name}
                 </Link>,
                 station.vanillaBlock?.name ?? "Its own block",
-                station.interaction === "Shift + Right click" ? "Sneak + right-click" : "Right-click",
+                station.interaction === "Shift + Right click" ? "Sneak and right-click" : "Right-click",
                 <WikiItemText key="blurb" text={station.blurb} excludeHref={`/wiki/stations/${station.slug}`} />,
               ])}
             />

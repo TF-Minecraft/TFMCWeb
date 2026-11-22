@@ -12,7 +12,8 @@ export const farmingSection: WikiSection = {
     href: "/wiki/farming",
     label: "Farming",
     category: "gathering",
-    blurb: "Field crops and hoes, 27 custom crops, open sky and province fertility.",
+    blurb:
+      "Grow field crops and 27 new fruits, vegetables and spices, and learn why crops need open sky and fertile land.",
   },
   commands: farmingCommands,
 };

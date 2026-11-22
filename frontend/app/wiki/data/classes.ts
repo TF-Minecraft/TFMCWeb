@@ -8,7 +8,7 @@ export type BaseClass = {
   id: string;
   name: string;
   lore: string;
-  /** Mage and Musketeer have no subclasses and keep their own equipment. */
+  /** Only Musketeer has no subclasses and keeps its own equipment. */
   equipment?: string;
   subclasses: string[];
 };
@@ -49,8 +49,7 @@ export const baseClasses: BaseClass[] = [
     id: "mage",
     name: "Mage",
     lore: "The hardest class. Mages build their own weapons from parts, cast spells from runes and are very expensive to gear.",
-    equipment: "Mage Staffs, Mage Wands, Mage Blades, Mage Armour",
-    subclasses: [],
+    subclasses: ["invoker", "conjurer", "battlemage"],
   },
   {
     id: "musketeer",
@@ -174,7 +173,7 @@ export const skills: Record<string, Skill> = {
   },
   VIBRATIVE_STRIKE: {
     name: "Vibrative Strike",
-    description: "Send three waves forward that damage and immobilise everyone they hit.",
+    description: "Send three waves forward that damage and stun everyone they hit.",
   },
   SYMPHONY_OF_DESTRUCTION: {
     name: "Symphony of Destruction",
@@ -224,7 +223,7 @@ export const skills: Record<string, Skill> = {
   SHIELD_WALL: {
     name: "Shield Wall",
     description:
-      "Raise a wall of shields: you stay rooted with Resistance II, and players close to you take no damage.",
+      "Raise a wall of shields: you gain Resistance II, and players close to you take no damage. You cannot move while it lasts.",
   },
   VIGIL: { name: "Vigil", passive: true, description: "Regularly gives you and the players around you Resistance I." },
   INTERCEPT: {
@@ -233,7 +232,10 @@ export const skills: Record<string, Skill> = {
     description: "When an enemy hits you, you and the players around you gain an absorption shield.",
   },
   SUNDER: { name: "Sunder", passive: true, description: "Your hits Wound the target." },
-  MENDING: { name: "Mending", description: "Channel a heal on yourself. You are rooted and weakened while it lasts." },
+  MENDING: {
+    name: "Mending",
+    description: "Channel a heal on yourself. You cannot move and are weakened while it lasts.",
+  },
   ICE_SHIELD: { name: "Ice Shield", description: "Gain an absorption shield." },
   RUNIC_WARD: {
     name: "Runic Ward",
@@ -323,7 +325,8 @@ export const skills: Record<string, Skill> = {
   },
   BLESSING_OF_HEALING: {
     name: "Blessing of Healing",
-    description: "Toggle: stay rooted and fire a healing bolt every second, draining mana until you stop.",
+    description:
+      "Toggle: fire a healing bolt every second, draining mana until you stop. You cannot move while it lasts.",
   },
   // Warrior
   BLOODLUST: { name: "Bloodlust", passive: true, description: "Your hits heal you." },
@@ -391,7 +394,7 @@ export type Subclass = {
   skills: string[];
 };
 
-/** The 15 subclasses, picked at level 2 (`MMOCore/classes/<id>.yml` on Main). */
+/** The 15 subclasses, picked at level 2, and the 3 Mage paths, picked from level 1 (`MMOCore/classes/<id>.yml` on Main). */
 export const subclasses: Subclass[] = [
   {
     id: "ranger",
@@ -611,6 +614,33 @@ export const subclasses: Subclass[] = [
       "ARCANE_WARD",
     ],
   },
+  {
+    id: "invoker",
+    name: "Invoker",
+    base: "mage",
+    type: "Full caster",
+    equipment: "Mage Staffs, Mage Armour",
+    lore: "Stands back with the great staff and its 4 runes and breaks whole lines. Has the widest choice of spells any Mage can hold at once.",
+    skills: ["RECOVERY"],
+  },
+  {
+    id: "conjurer",
+    name: "Conjurer",
+    base: "mage",
+    type: "Full caster",
+    equipment: "Mage Wands, Mage Armour",
+    lore: "Carries a wand with fewer runes than a staff, but calls them up again sooner than any other Mage.",
+    skills: ["RECOVERY"],
+  },
+  {
+    id: "battlemage",
+    name: "Battlemage",
+    base: "mage",
+    type: "Full caster",
+    equipment: "Mage Blades, Mage Armour",
+    lore: "Fights in the front line with a blade, hardier than other Mages, and casts runes between strokes.",
+    skills: ["RECOVERY"],
+  },
 ];
 
 /** Skill slots per subclass type (`skill-slots` in each subclass file, `exp-tables.yml` on Main). */
@@ -748,7 +778,7 @@ export const classesCommands: WikiCommandSet = {
     {
       command: "/subclass",
       description: "Opens Subclass Selection with the subclasses of your current class.",
-      notes: "Subclasses unlock at class level 2.",
+      notes: "Subclasses unlock at class level 2, Mage paths at level 1.",
     },
     {
       command: "/player",

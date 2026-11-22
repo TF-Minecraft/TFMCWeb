@@ -18,12 +18,13 @@ const code = "text-[var(--tfmc-accent)]";
 export default function MusicalInstrumentsPage() {
   return (
     <WikiPage
-      lastModified="2026-10-24"
+      lastModified="2026-11-21"
       title="Musical Instruments"
       intro={
         <>
-          Nine instruments, each with its own sound, crafted at the <StationLink name="Instrument Station" />. Anyone
-          can craft and play one, and everyone within 64 blocks hears you. Pick one below to hear it and see its recipe.
+          There are 9 instruments, each with its own sound, crafted at the <StationLink name="Instrument Station" />.
+          Anyone can craft and play one, and everyone within 64 blocks hears you. Pick one below to hear it and see its
+          recipe.
         </>
       }
     >
@@ -53,10 +54,10 @@ export default function MusicalInstrumentsPage() {
         Playing from the hotbar
       </WikiSectionHeading>
       <ul className={`mt-3 list-disc space-y-2 pl-5 ${body}`}>
-        <li>Put the instrument in your off-hand.</li>
+        <li>Put the instrument in your off hand.</li>
         <li>Press 1 to 8 to play C, D, E, F, G, A, B and the next C up.</li>
         <li>
-          Hold Shift for a second layer. Most instruments play a full chord on each key. The{" "}
+          Hold Shift for a second set of notes. Most instruments play a full chord on each key. The{" "}
           <WikiItemLink name="Flute" />, <WikiItemLink name="Trumpet" /> and <WikiItemLink name="Bagpipe" /> play the
           same notes an octave higher instead.
         </li>
@@ -65,7 +66,7 @@ export default function MusicalInstrumentsPage() {
           nothing, and whatever is in it is what others see in your hand.
         </li>
         <li>
-          <code className={code}>/instruments keybinds</code> lists every key for the instrument you hold.
+          <code className={code}>/instruments keybinds</code> lists every key for the instrument in your off hand.
         </li>
       </ul>
 
@@ -74,11 +75,11 @@ export default function MusicalInstrumentsPage() {
       </WikiSectionHeading>
       <p className={body}>
         Right-click while holding an instrument, or use <code className={code}>/instruments play</code>. The keyboard
-        has three rows of notes from C to B: high, middle and low. Click a note to play it. Instruments with chords show
-        a small dot under each note: click it for the chord. The options button changes the keyboard&apos;s size.
+        has 3 rows of notes from C to B: high, middle and low. Click a note to play it. Instruments with chords show a
+        small dot under each note: click it for the chord. The options button changes the keyboard&apos;s size.
       </p>
 
-      <WikiSectionHeading id="recording" intro="Record a song in up to four layers and press it onto a music disc.">
+      <WikiSectionHeading id="recording" intro="Record a song on up to 4 tracks and press it onto a music disc.">
         Recording music discs
       </WikiSectionHeading>
       <ol className={`mt-3 list-decimal space-y-2 pl-5 ${body}`}>
@@ -88,11 +89,11 @@ export default function MusicalInstrumentsPage() {
           use it.
         </li>
         <li>
-          Create a song and give it a title. Each character can keep up to 36 songs; right-click one to delete it.
+          Create a song and give it a title. Each character can keep up to 36 songs. Right-click one to delete it.
         </li>
         <li>
-          Each row is a track, up to four. Hold an instrument and press record on a track. After a 3-second count-in,
-          play from your hotbar or the keyboard. A take can last up to 3 minutes.
+          Each row is a track, up to 4. Hold an instrument and press record on a track. After a 3-second count-in, play
+          from your hotbar or the keyboard. A take can last up to 3 minutes.
         </li>
         <li>
           Listen to the take with the other tracks, then keep or discard it. Each track has its own volume and mute.
@@ -110,7 +111,7 @@ export default function MusicalInstrumentsPage() {
       <p className={`mt-3 ${body}`}>
         Publishing over a disc that already has a song needs a second click to confirm. Copies made before keep the old
         version. You can publish once every 30 seconds, and up to 20 new or changed versions across your account in any
-        24 hours. Publishing an unchanged version again doesn&apos;t count. Every studio button also has a{" "}
+        24 hours. Publishing an unchanged version again doesn&apos;t count. Every button in the Music Station also has a{" "}
         <code className={code}>/music</code> command, and <code className={code}>/music copy</code> copies a recorded
         disc onto a blank one.
       </p>
@@ -120,7 +121,7 @@ export default function MusicalInstrumentsPage() {
         <li>
           Turn up the <strong>Jukebox/Note Blocks</strong> volume. Instruments, the keyboard and music discs all use it.
         </li>
-        <li>For the hotbar, the instrument must be in your off-hand, and slot 9 never plays.</li>
+        <li>For the hotbar, the instrument must be in your off hand, and slot 9 never plays.</li>
         <li>
           The Lute weapon forged in{" "}
           <Link href="/wiki/advanced-crafting" className={link}>

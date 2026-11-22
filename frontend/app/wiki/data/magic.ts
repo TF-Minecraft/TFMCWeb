@@ -4,12 +4,12 @@ import type { Recipe, WikiCommandSet, WikiSection } from "./types";
 
 // ---------- Magic and mage weapons ----------
 //
-// Sources: the Magic plugin (TF-Minecraft/Magic, v0.12.2 on Main) and Main's live
+// Sources: the Magic plugin (TF-Minecraft/Magic, 0.16.0 on Main) and Main's live
 // `plugins/Magic` configs, MMOItems rune and mage gear items, and the ItemsAdder
 // station recipes. Hidden values (orb counts, Rift per orb, gains per hit, odds)
 // are deliberately left off the player pages.
 
-/** The Magic Station furniture is a plain vanilla 3x3 craft. */
+/** The Magic Station furniture is a plain 3x3 crafting-table recipe. */
 export const magicStationRecipe: Recipe = {
   key: "magic-station",
   title: "Magic Station",
@@ -96,7 +96,7 @@ export const magicCommands: WikiCommandSet = {
       aliases: ["/res"],
       description:
         "Opens your Resonance screen: your Resonance in each school, your Equilibrium, your Mental Points and the Surge or Flow choice.",
-      notes: "Needs an active character.",
+      notes: "You must be playing a character.",
     },
   ],
 };

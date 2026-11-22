@@ -65,13 +65,19 @@ const biomes = [
     "Malachite",
   ],
   ["Stony Peaks", "Garlic, Grape, Olive, Onion, Pistachio, Spice Leaf", "Vesuvianite", "Zircon"],
-  ["Jagged Peaks", "Rhubarb", "Vesuvianite", "Zircon"],
+  ["Jagged Peaks", "Rhubarb, dead bush", "Vesuvianite", "Zircon"],
+  [
+    "Pale Garden",
+    "No seeds. Bones, rotten flesh, sculk and dead bushes, and now and then an Unknown Key",
+    "Onyx",
+    "Labradorite",
+  ],
 ] as const;
 
 export default function GatheringPage() {
   return (
     <WikiPage
-      lastModified="2026-11-19"
+      lastModified="2026-11-21"
       title="Gathering"
       width="lg"
       intro="In gathering mode, spots turn up on the ground around you. Harvest them for crop seeds and blank gemstones, and now and then for treasure."
@@ -79,12 +85,12 @@ export default function GatheringPage() {
       <WikiSectionHeading id="start">Gathering mode</WikiSectionHeading>
       <p className={body}>
         Type <code className={code}>/gather</code> to turn gathering mode on, and type it again to turn it off.{" "}
-        <code className={code}>/gather on</code> and <code className={code}>/gather off</code> work too. You need an
-        active character.
+        <code className={code}>/gather on</code> and <code className={code}>/gather off</code> work too. You must be
+        playing a character.
       </p>
       <p className={`mt-3 ${body}`}>
-        Gathering costs Mental Points: one when you start, and one more every 24 seconds while the mode is on. A bar at
-        the top of the screen shows how many you have. When they run out, the mode ends and chat says{" "}
+        Gathering costs Mental Points: 1 when you start, and 1 more every 24 seconds while the mode is on. A bar at the
+        top of the screen shows how many you have. When they run out, the mode ends and chat says{" "}
         <em>Your focus fades... You stop searching.</em> With none left you can&apos;t start at all, and chat says{" "}
         <em>You are too unfocused to search.</em> Logging out ends the mode too.
       </p>
@@ -106,9 +112,9 @@ export default function GatheringPage() {
         gathering mode can see spots.
       </p>
       <p className={`mt-3 ${body}`}>
-        Spots only appear on the main map, on the surface and in the hills. Caves deep down have none. A spot needs open
-        ground with room above it. Most spots sit on grass. Gemstone spots in the peaks sit on stone, and so do seed
-        spots in the Jagged Peaks. Seed spots in the Windswept Gravelly Hills sit on moss.
+        Spots only appear in the main world, on the surface and in the hills. Caves deep down have none. A spot needs
+        open ground with room above it. Most spots sit on grass. Gemstone spots in the peaks sit on stone, and so do
+        seed spots in the Jagged Peaks. Seed spots in the Windswept Gravelly Hills sit on moss.
       </p>
       <p className={`mt-3 ${body}`}>
         Higher{" "}
@@ -142,7 +148,7 @@ export default function GatheringPage() {
         . Now and then a seed spot holds treasure instead.
       </p>
       <p className={`mt-3 ${body}`}>
-        <strong>Gemstone spots</strong> are rarer and give one blank gemstone for{" "}
+        <strong>Gemstone spots</strong> are rarer and give 1 blank gemstone for{" "}
         <Link href="/wiki/gem-infusion" className={link}>
           Gem Infusion
         </Link>
@@ -159,6 +165,10 @@ export default function GatheringPage() {
         ]}
         rows={biomes.map((row) => [...row])}
       />
+      <p className={`mt-4 ${body}`}>
+        A few rarer spots turn up as well. They can give gold ingots, raw gold blocks or gold blocks, Enchanted Dust or
+        a Lost Knowledge Fragment.
+      </p>
 
       <WikiSectionHeading id="treasure">Treasure</WikiSectionHeading>
       <p className={body}>Treasure can be any of these:</p>

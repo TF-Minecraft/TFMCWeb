@@ -188,7 +188,7 @@ function IngredientTypeList({ ingredients }: { ingredients: TemplateIngredient[]
 
 const socketTrackLabel: Record<StationRecipeTemplate["socketGroup"], string> = {
   gemstones: "Gemstone",
-  mage_armor_runes: "Armor Rune",
+  mage_armor_runes: "Armour rune",
 };
 
 const recipeCount = armorRecipeTemplates.length + weaponRecipeTemplates.length + bowRecipeTemplates.length;
@@ -196,14 +196,14 @@ const recipeCount = armorRecipeTemplates.length + weaponRecipeTemplates.length +
 export default function AdvancedCraftingPage() {
   return (
     <WikiPage
-      lastModified="2026-11-12"
+      lastModified="2026-11-21"
       title="Advanced Crafting"
       intro={
         <>
           Weapons, armour and bows are forged by hand at a <StationLink name="Forging Station" />. You pick a recipe,
-          load the materials, then work them with forging tools. The materials decide the item&apos;s stats and how well
-          you work them decides its socket. At the <StationLink name="Alloy Forge" /> you can also invent new alloys and
-          name them.
+          load the materials, then work them with forging tools. The materials decide the item&apos;s stats, and how
+          well you work them decides its socket. At the <StationLink name="Alloy Forge" /> you can also invent new
+          alloys and name them.
         </>
       }
     >
@@ -230,8 +230,8 @@ export default function AdvancedCraftingPage() {
       <p className={`mt-3 ${body}`}>
         Raw materials have to be turned into ingredients before a station will take them. Right-click an{" "}
         <StationLink name="Ingredient Converter" /> while holding them. The whole stack is converted and a{" "}
-        <strong>Stat Preview</strong> shows which stats the material adds to each kind of item. You can do the same with
-        an ingredient or alloy just to see its preview.
+        <strong>Stat Preview</strong> shows which stats the material adds to each kind of item. Right-click the
+        converter holding an ingredient or alloy to see its Stat Preview too. Nothing is converted.
       </p>
       <p className={`mt-3 ${body}`}>
         The forging tools are made at the <StationLink name="Tool Station" /> (sneak and right-click a crafting table).
@@ -249,24 +249,29 @@ export default function AdvancedCraftingPage() {
         </li>
         <li>
           Once everything is loaded, left-click the station with the forging tools. Each material needs its own amount
-          of work from each tool, and the recipe doesn&apos;t tell you how much.
+          of work from each tool, and the recipe menu doesn&apos;t tell you how much. Each hit flashes a count on your
+          screen: the hits you have made with that group of tools and the total the group needs. The groups are metal
+          work (Hit and Small Hit) and refining (Etch, Whittle, Engrave and Sew). The count doesn&apos;t show how the
+          work splits between the tools in a group.
         </li>
         <li>
           Left-click with the <WikiItemLink name="Forging Branding Tool" /> to finish. You can finish whenever you like
-          after loading. Right-click with it to see your progress, or sneak and left-click to cancel.
+          after loading. Sneak and left-click with it to cancel. Right-click with it to list the recipe, how much of
+          each material type is loaded out of what it needs and how many hits you have made with each tool and in total.
+          The list doesn&apos;t show how many hits each tool needs.
         </li>
       </ol>
       <Callout variant="warning">
         Cancelling, or breaking the station mid-project, drops the loaded ingredients and loses the work. You can&apos;t
-        break a Forging Station while holding a forging tool.
+        break a Forging Station while holding a forging tool or the Forging Branding Tool.
       </Callout>
 
       <WikiSectionHeading id="quality">Quality and sockets</WikiSectionHeading>
       <p className={body}>
         When you finish, you see your <strong>Hit Percentage</strong>: how close your work came to what the materials
         needed. Working too much costs as much as working too little, and only exact work can reach Masterwork. The
-        grade decides the socket the item gets. It doesn&apos;t change the stats, which come from the materials, but
-        your Crafter XP is scaled by the percentage.
+        grade decides which socket the item gets. It doesn&apos;t change the stats, which come from the materials. A
+        higher percentage also gives more Crafter EXP.
       </p>
       <DataTable
         className="mt-4"
@@ -278,62 +283,81 @@ export default function AdvancedCraftingPage() {
         rows={qualityTiers}
       />
       <p className={`mt-3 ${body}`}>
-        Mage armour gets Armor Rune sockets instead of gemstone ones (Minor, Lesser, Greater and Ascendant, at the same
-        thresholds). Everything else takes{" "}
+        Mage armour gets armour rune sockets instead of gemstone ones (Minor, Lesser, Greater and Ascendant, at the same
+        percentages). Everything else takes{" "}
         <Link href="/wiki/gem-infusion" className={link}>
           infused gemstones
         </Link>
-        .
+        . A gem or armour rune fits a socket of its own tier or any higher one. To take one out again, use an Unsocket
+        Tool.{" "}
+        <Link href="/wiki/gem-infusion#socketing" className={link}>
+          Socketing
+        </Link>{" "}
+        on the gems page has the full steps.
       </p>
 
       <WikiSectionHeading id="recipes">Recipes</WikiSectionHeading>
       <p className={body}>
-        There are {recipeCount} recipes. &quot;4 × Metal&quot; means any four metal ingredients: four Iron Ingots, a
-        mix, or an alloy. The item is named after the material you used most, shown here as{" "}
+        There are {recipeCount} recipes. &quot;4 × Metal&quot; means any 4 metal ingredients: 4 Iron Ingots, a mix or an
+        alloy. The item is named after the material you used most, shown here as{" "}
         <span className="italic text-[var(--tfmc-accent)]">Material</span>. Durability also comes from the materials.
       </p>
+      <p className={`mt-3 ${body}`}>
+        Each forged piece can only be used by the{" "}
+        <Link href="/wiki/classes#classes" className={link}>
+          classes
+        </Link>{" "}
+        listed for it. Its tooltip shows them too.
+      </p>
 
-      <h3 className={subheading}>Armor</h3>
+      <h3 className={subheading}>Armour</h3>
       <DataTable
         columns={[
-          { header: "Class", nowrap: true },
+          { header: "Armour", nowrap: true },
           { header: "Item" },
           { header: "Ingredients" },
           { header: "Socket", nowrap: true },
+          { header: "Classes" },
         ]}
         rows={armorRecipeTemplates.map((recipe) => [
           recipe.group,
           <TemplateName key={recipe.id} name={recipe.name} />,
           <IngredientTypeList key={recipe.id} ingredients={recipe.ingredients} />,
           socketTrackLabel[recipe.socketGroup],
+          recipe.classes.join(", "),
         ])}
         rowKey={(_row, index) => armorRecipeTemplates[index].id}
-        minWidth="40rem"
+        minWidth="52rem"
       />
 
       <h3 className={subheading}>Weapons</h3>
       <DataTable
-        columns={[{ header: "Item" }, { header: "Ingredients" }]}
+        columns={[{ header: "Item" }, { header: "Ingredients" }, { header: "Classes" }]}
         rows={weaponRecipeTemplates.map((recipe) => [
           <TemplateName key={recipe.id} name={recipe.name} />,
           <IngredientTypeList key={recipe.id} ingredients={recipe.ingredients} />,
+          recipe.classes.join(", "),
         ])}
         rowKey={(_row, index) => weaponRecipeTemplates[index].id}
       />
 
       <h3 className={subheading}>Bows</h3>
       <DataTable
-        columns={[{ header: "Item" }, { header: "Ingredients" }]}
+        columns={[{ header: "Item" }, { header: "Ingredients" }, { header: "Classes" }]}
         rows={bowRecipeTemplates.map((recipe) => [
           <TemplateName key={recipe.id} name={recipe.name} />,
           <IngredientTypeList key={recipe.id} ingredients={recipe.ingredients} />,
+          recipe.classes.join(", "),
         ])}
         rowKey={(_row, index) => bowRecipeTemplates[index].id}
       />
 
       <WikiSectionHeading id="ingredients">Ingredients</WikiSectionHeading>
       <h3 className={subheading}>Crystals</h3>
-      <p className={`mt-1 ${body}`}>The 40 gemstones and four other crystals. Only crystals can go into an alloy.</p>
+      <p className={`mt-1 ${body}`}>
+        Crystals are the 40 gemstones and the 4 other materials below. They are the only thing you can add to an
+        alloy&apos;s base.
+      </p>
       <ul className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
         {gemstones.map((name) => (
           <li key={name} className={chipBox}>
@@ -380,22 +404,22 @@ export default function AdvancedCraftingPage() {
         <li>
           Right-click an <StationLink name="Alloy Forge" /> with a metal or wood to set the base.
         </li>
-        <li>Add up to four different crystals the same way.</li>
+        <li>Add up to 4 different crystals the same way. A mix needs at least 1.</li>
         <li>
           Right-click the forge with a Lava Bucket to forge. The bucket is emptied and every ingredient is used up to
           make one alloy.
         </li>
       </ol>
       <p className={`mt-3 ${body}`}>
-        A mix someone has already found always gives the same alloy, in any order. A new mix can fail, and then it gives
-        Unusable Scrap, for everyone, from then on. Scrap can go to the{" "}
+        A mix someone has already found always gives the same alloy, in any order. A new mix can fail. A failed mix
+        gives Unusable Scrap, and it gives scrap to everyone who tries it from then on. Scrap can go to the{" "}
         <Link href="/wiki/recycler" className={link}>
           Recycling Station
         </Link>
         .
       </p>
       <p className={`mt-3 ${body}`}>
-        When a new alloy works, it&apos;s saved for the whole server with a made-up name. You have 60 seconds to rename
+        When a new alloy works, it&apos;s saved for the whole server with a random name. You have 60 seconds to rename
         it with <code className={code}>/alloy name Silver_Ash</code>, for example. Underscores become spaces. Names must
         be unique and use only letters and underscores. After that, anyone can load it at a Forging Station.
       </p>

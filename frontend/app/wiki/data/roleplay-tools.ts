@@ -18,28 +18,28 @@ export const roleplayToolsCommands: WikiCommandSet = {
     {
       command: "/lay",
       aliases: ["/glay"],
-      description: "Lie down.",
+      description: "Makes you lie down.",
     },
     {
       command: "/layback",
       aliases: ["/glayback"],
-      description: "Lie on your back.",
+      description: "Makes you lie on your back.",
     },
     {
       command: "/bellyflop",
       aliases: ["/gbellyflop"],
-      description: "Lie face down.",
+      description: "Makes you lie face down.",
     },
     {
       command: "/spin",
       aliases: ["/gspin"],
-      description: "Spin around on the ground.",
+      description: "Makes you spin around on the ground.",
     },
     {
       command: "/crawl",
       aliases: ["/gcrawl"],
-      description: "Drop down and crawl.",
-      notes: "Double-tapping sneak does not start a crawl here.",
+      description: "Drops you into a crawl.",
+      notes: "Double-tapping sneak does not start a crawl on this server.",
     },
     {
       command: "/tfmc statues",
@@ -52,7 +52,7 @@ export const roleplayToolsCommands: WikiCommandSet = {
     },
     {
       command: "/tfmc patterns",
-      description: "Gives you all ten banner patterns.",
+      description: "Gives you all 10 banner patterns.",
       notes: "Once every 10 seconds.",
     },
     {
@@ -91,7 +91,7 @@ export const roleplayToolsSection: WikiSection = {
     href: "/wiki/roleplay-tools",
     label: "Roleplay Tools",
     category: "character",
-    blurb: "Sit, lie down and crawl, pose armor stands, wear masks, hang pictures, edit books, and name your items.",
+    blurb: "Sit, lie down and crawl, pose armour stands, wear masks, hang pictures, edit books and name your items.",
   },
   commands: roleplayToolsCommands,
 };

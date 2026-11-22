@@ -23,9 +23,9 @@ const blindfoldRecipe = stationRecipe("gen-tool-station-blindfold");
 export default function RoleplayToolsPage() {
   return (
     <WikiPage
-      lastModified="2026-10-24"
+      lastModified="2026-11-21"
       title="Roleplay Tools"
-      intro="Small tools for setting a scene: sit down, lie down or crawl, pose armor stands, put on a mask or a blindfold, hang pictures, edit books, and give your items their own names and lore. Every player can use them."
+      intro="Small tools for setting a scene: sit down, lie down or crawl, pose armour stands, put on a mask or a blindfold, hang pictures, edit books and give your items their own names and descriptions. Every player can use them."
     >
       <WikiSectionHeading id="sitting">Sitting</WikiSectionHeading>
       <p className={body}>
@@ -36,7 +36,7 @@ export default function RoleplayToolsPage() {
       </p>
       <p className={`mt-3 ${body}`}>
         Sneak to stand up. Taking damage does not unseat you, but breaking the block under you does. If you keep sitting
-        down by accident while building, <code className={code}>/sit toggle</code> turns click-to-sit off;{" "}
+        down by accident while building, <code className={code}>/sit toggle</code> turns click-to-sit off.{" "}
         <code className={code}>/sit</code> still works.
       </p>
 
@@ -49,10 +49,10 @@ export default function RoleplayToolsPage() {
         when someone else is in a bed.
       </p>
 
-      <WikiSectionHeading id="armor-statues">Posing armor stands</WikiSectionHeading>
+      <WikiSectionHeading id="armor-statues">Posing armour stands</WikiSectionHeading>
       <p className={body}>
         <code className={code}>/tfmc statues</code> gives you the Armor Statues book, free and as often as you need it.
-        Open the book and click an option to change the nearest armor stand within 3 blocks. Use Check Target first. It
+        Open the book and click an option to change the nearest armour stand within 3 blocks. Use Check Target first. It
         makes the stand that will be edited glow for a few seconds.
       </p>
       <DataTable
@@ -60,9 +60,9 @@ export default function RoleplayToolsPage() {
         columns={[{ header: "Category" }, { header: "What you can change" }]}
         rows={[
           ["Settings", "Arms, base plate, size, visibility, gravity and visual fire"],
-          ["Poses", "Ready-made poses such as Salute, Facepalm and Stargazing, a random pose, or each limb by hand"],
-          ["Position", "Rotation, small moves, aligning the stand to a block, and scale from 0.25 to 3 times"],
-          ["Tools", "Mirror and flip, copy and paste a pose, swap equipment slots, and undo or redo"],
+          ["Poses", "Ready-made poses such as Salute, Facepalm and Stargazing, a random pose or each limb by hand"],
+          ["Position", "Rotation, small moves, aligning the stand to a block and scale from 0.25 to 3 times"],
+          ["Tools", "Mirror and flip, copy and paste a pose, swap equipment slots and undo or redo"],
         ]}
       />
       <p className={`mt-3 ${body}`}>
@@ -77,7 +77,7 @@ export default function RoleplayToolsPage() {
         <Link href="/wiki/characters#looking-at-someone" className={link}>
           Reading a character card
         </Link>
-        ). <code className={code}>/tfmc patterns</code> gives you all ten banner patterns for the loom: Flower, Guster,
+        ). <code className={code}>/tfmc patterns</code> gives you all 10 banner patterns for the loom: Flower, Guster,
         Field Masoned, Skull, Thing, Globe, Snout, Flow, Creeper and Bordure Indented. You can use each command once
         every 10 seconds.
       </p>
@@ -107,23 +107,23 @@ export default function RoleplayToolsPage() {
 
       <WikiSectionHeading id="lorestones">
         <WikiItemLink name="Lorestone">Lorestones</WikiItemLink> and{" "}
-        <WikiItemLink name="Namestone">namestones</WikiItemLink>
+        <WikiItemLink name="Namestone">Namestones</WikiItemLink>
       </WikiSectionHeading>
       <p className={body}>
         Craft them at the <StationLink name="Tool Station" />. Pick the stone up on your cursor and click it onto a
         single, unstacked item in your inventory, then type your text in chat within 60 seconds, or type{" "}
-        <code className={code}>cancel</code>. A <WikiItemLink name="Lorestone" /> adds a line of lore, and a{" "}
+        <code className={code}>cancel</code>. A <WikiItemLink name="Lorestone" /> adds a description line, and a{" "}
         <WikiItemLink name="Namestone" /> renames the item. The stone is used up when it works. If you cancel, run out
         of time or something goes wrong, you get it back.
       </p>
       <Callout variant="warning" className="mt-4">
-        Typing <code className={code}>clear</code> into a lorestone removes every lore line on the item, including the
-        lines that describe its stats and what it does. They do not come back.
+        Typing <code className={code}>clear</code> into a Lorestone removes every description line on the item,
+        including the lines that describe its stats and what it does. They do not come back.
       </Callout>
       <p className={`mt-3 ${body}`}>
-        A line can be up to 100 characters, colour codes included, and an item can have up to 10 lore lines, counting
-        the ones it already has. Use <code className={code}>&amp;</code> colour codes or{" "}
-        <code className={code}>&amp;#RRGGBB</code> hex colours. If you type a name without colour codes, the namestone
+        A line can be up to 100 characters, colour codes included, and an item can have up to 10 description lines,
+        counting the ones it already has. Use <code className={code}>&amp;</code> colour codes or{" "}
+        <code className={code}>&amp;#RRGGBB</code> hex colours. If you type a name without colour codes, the Namestone
         offers a palette you can click, or you can type a colour name or a hex value.
       </p>
       <div className="mt-4 grid gap-4 sm:grid-cols-2">

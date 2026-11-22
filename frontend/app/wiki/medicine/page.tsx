@@ -17,7 +17,7 @@ const body = "text-sm text-[var(--tfmc-mist)]";
 export default function MedicinePage() {
   return (
     <WikiPage
-      lastModified="2026-10-24"
+      lastModified="2026-11-21"
       title={medicineSection.nav.label}
       intro="A physician can operate on another character's healing injury to cure it, and makes the prosthetic limbs that replace a lost arm or leg."
     >
@@ -28,7 +28,7 @@ export default function MedicinePage() {
           Professions
         </Link>
         ). It lets your character operate, and it unlocks the recipes at the <StationLink name="Medicine Station" />,
-        including the surgical instruments, the prosthetic limbs and the doctor&apos;s outfit.
+        including the surgical instruments, the prosthetic limbs and the Plague Doctor outfit.
       </p>
 
       <WikiSectionHeading id="operating">Starting an operation</WikiSectionHeading>
@@ -57,7 +57,11 @@ export default function MedicinePage() {
       </ol>
       <p className={`mt-3 ${body}`}>
         The patient has to stay close. If they move more than 10 blocks away, log out or switch character, the operation
-        fails. Closing the menu before you sedate or cut is safe; after that, it counts as abandoning the patient.
+        fails. You can close the menu safely before you sedate or cut. After that, closing it fails the operation (see{" "}
+        <a href="#outcome" className={link}>
+          Success and failure
+        </a>
+        ).
       </p>
 
       <WikiSectionHeading
@@ -91,12 +95,12 @@ export default function MedicinePage() {
         The menu shows the patient&apos;s consciousness, pulse and temperature, whether the operation site is clean and
         how many incisions are open. They change with every move. Chloroform wears off, cutting dirties the wound and
         can weaken the pulse, blood loss weakens it further, and a fever keeps climbing. Some injuries bring
-        complications, such as a wound that keeps bleeding, a patient who goes into shock, or an infection. Any move can
+        complications, such as a wound that keeps bleeding, a patient who goes into shock or an infection. Any move can
         slip, and working in blood makes it more likely.
       </p>
       <p className={`mt-3 ${body}`}>
         Examine the patient first, and sedate them before you cut. Clean the wound with Carbolic Acid after your last
-        cut, before you finish. Chat messages tell you when a bone turns up, when bleeding starts and when the patient
+        cut, before you finish. Chat messages tell you when you reach a bone, when bleeding starts and when the patient
         is waking.
       </p>
 

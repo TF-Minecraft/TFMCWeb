@@ -31,7 +31,7 @@ export default function CommandIndexPage() {
   const groups = commandGroups();
   return (
     <WikiPage
-      lastModified="2026-11-18"
+      lastModified="2026-11-21"
       title="Command Index"
       width="lg"
       intro="Every command a player can type, grouped by topic. Each one links to the guide page that explains it."
@@ -44,7 +44,7 @@ export default function CommandIndexPage() {
         means you pick one. Press Tab while typing to see what the server accepts.
       </p>
       <p className={body}>
-        Many systems have no command at all: you use them by right-clicking a block or an item. Their guide pages
+        Many features have no command at all. You use them by right-clicking a block or an item. Their guide pages
         explain how.
       </p>
 

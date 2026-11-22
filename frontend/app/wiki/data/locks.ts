@@ -1,6 +1,6 @@
 import type { WikiCommandSet, WikiSection } from "./types";
 
-// Thievery 1.8.3 on Main handles door locks, container ownership and key copies.
+// Thievery 1.10.0 on Main handles door locks, container ownership and key copies.
 
 export type KeyCopy = { pickUp: string; clickOnto: string; result: string };
 
@@ -10,12 +10,12 @@ export const keyCopies: KeyCopy[] = [
   {
     pickUp: "Copper Ingot",
     clickOnto: "Key Mold",
-    result: "Copper Key. It works like the original. The mold is used up.",
+    result: "Copper Key. It works like the original. The Key Mold is used up.",
   },
   {
     pickUp: "Paper",
     clickOnto: "Iron Key, Golden Key or Copper Key",
-    result: "Paper Key. It opens the door once and then falls apart. It can't lock or unlock.",
+    result: "Paper Key. It lets you through the locked door once, then falls apart. It can't change the lock.",
   },
 ];
 
@@ -25,7 +25,8 @@ export const locksCommands: WikiCommandSet = {
   commands: [
     {
       command: "/thievery clearclues",
-      description: "Then right-click one of your doors or containers within 30 seconds to wipe the clues left at it.",
+      description:
+        "Run it, then right-click one of your doors or containers within 30 seconds to wipe the clues left at it.",
     },
   ],
 };
@@ -35,7 +36,7 @@ export const locksSection: WikiSection = {
     href: "/wiki/locks",
     label: "Locks & Keys",
     category: "combat",
-    blurb: "Lock your doors with a key, choose who can open your chests, and copy keys for friends.",
+    blurb: "Lock your doors with a key, choose who can open your chests and copy keys for friends.",
   },
   commands: locksCommands,
 };

@@ -59,7 +59,7 @@ export const archaeologySection: WikiSection = {
     href: "/wiki/archaeology",
     label: "Archaeology",
     category: "magic",
-    blurb: "Find a ruin, establish a field camp, excavate by sound, then clean, register, and display recovered finds.",
+    blurb: "Find a ruin, set up camp, dig by ear, then clean, register and display what you find.",
   },
   recipes: [archeologyTableRecipe],
   commands: archaeologyCommands,

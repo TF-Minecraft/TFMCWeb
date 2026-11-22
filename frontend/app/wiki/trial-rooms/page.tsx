@@ -7,17 +7,25 @@ const body = "text-sm text-[var(--tfmc-mist)]";
 export default function TrialRoomsPage() {
   return (
     <WikiPage
-      lastModified="2026-10-24"
+      lastModified="2026-11-21"
       title="Trial Rooms"
-      intro="Trial Rooms are a series of guarded rooms. Use an Unknown Key to get in, fight the monsters that guard each room, and open chests with the keys they leave behind."
+      intro="Trial Rooms are a series of guarded rooms. Use an Unknown Key to get in, fight the monsters that guard each room and open chests with the keys they leave behind."
     >
       <WikiSectionHeading id="key">The Unknown Key</WikiSectionHeading>
       <p className={body}>
-        You need an <strong>Unknown Key</strong> to get in. One can turn up in the Arcane Cache you dig up with an{" "}
+        You need an <strong>Unknown Key</strong> to get in. Unknown Keys come from Arcane Caches found with an{" "}
         <Link href="/wiki/arcane-trace-detector" className={link}>
           Arcane Trace Detector
         </Link>
-        . Finding the entrance is up to you.
+        , from{" "}
+        <Link href="/wiki/gathering#treasure" className={link}>
+          treasure at gathering spots
+        </Link>{" "}
+        and from{" "}
+        <Link href="/wiki/infestations#loot" className={link}>
+          infestation monsters
+        </Link>
+        , including the reward for winning a Lure fight. Finding the entrance is up to you.
       </p>
 
       <WikiSectionHeading id="entering">Getting in</WikiSectionHeading>
@@ -69,7 +77,7 @@ export default function TrialRoomsPage() {
         Dying with them also loses them.
       </Callout>
 
-      <SeeAlso hrefs={["/wiki/arcane-trace-detector", "/wiki/materials"]} />
+      <SeeAlso hrefs={["/wiki/arcane-trace-detector", "/wiki/gathering", "/wiki/infestations", "/wiki/materials"]} />
     </WikiPage>
   );
 }

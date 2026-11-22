@@ -23,7 +23,8 @@ export const gettingStartedCommands: WikiCommandSet = {
     {
       command: "/referral invitedby <name>",
       description: "Names the player who invited you. You confirm before it is saved, and it cannot be changed.",
-      notes: "Anyone can do this in the first 14 days of a referral season, after that only in your first week.",
+      notes:
+        "In the first 14 days of a referral season, anyone can do this. After that, only accounts in their first week on the server can.",
     },
     {
       command: "/vote",

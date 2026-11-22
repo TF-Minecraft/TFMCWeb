@@ -26,25 +26,30 @@ const body = "text-sm text-[var(--tfmc-mist)]";
 export default function MageWeaponsPage() {
   return (
     <WikiPage
-      lastModified="2026-11-04"
+      lastModified="2026-11-21"
       title="Mage Weapons"
       width="lg"
       intro={
         <>
           A mage weapon is built from parts at a <StationLink name="Magic Station" />, attuned to a school with an
-          Enchanted Charge, and fitted with spell runes. Only the Mage class can use one. What Resonance and the schools
-          are is explained on{" "}
+          Enchanted Charge and fitted with spell runes. You need the matching Mage{" "}
+          <Link href="/wiki/classes#class-mage" className={link}>
+            path
+          </Link>{" "}
+          to use one: Invoker for a staff, Conjurer for a wand and Battlemage for a blade. Resonance and the schools are
+          explained on the{" "}
           <Link href="/wiki/magic" className={link}>
             Magic
-          </Link>
-          .
+          </Link>{" "}
+          page.
         </>
       }
     >
       <WikiSectionHeading id="overview">From parts to your first spell</WikiSectionHeading>
       <ol className={`mt-3 list-decimal space-y-2 pl-5 ${body}`}>
         <li>
-          Build a staff, wand or blade at a <StationLink name="Magic Station" />.
+          Build the weapon of your path at a <StationLink name="Magic Station" />. Anyone can build any type, but only
+          the matching path can use it.
         </li>
         <li>
           Make an Enchanted Charge at a <StationLink name="Rune Station" /> and fill it at a{" "}
@@ -64,24 +69,36 @@ export default function MageWeaponsPage() {
         </li>
       </ol>
 
-      <WikiSectionHeading id="types" intro="The core decides how many rune slots the weapon gets.">
+      <WikiSectionHeading id="types" intro="The core decides how many rune sockets the weapon gets.">
         Weapon types
       </WikiSectionHeading>
       <DataTable
-        columns={[{ header: "Weapon", nowrap: true }, { header: "How it fights" }, { header: "Rune slots by core" }]}
+        columns={[
+          { header: "Weapon", nowrap: true },
+          { header: "Used by", nowrap: true },
+          { header: "How it fights" },
+          { header: "Rune sockets by core" },
+        ]}
         rows={[
-          ["Mage Staff", "Two-handed. No melee attack.", "Iron 1, Steel 2, Abyssalite 3, Mythril 4"],
+          ["Mage Staff", "Invokers", "Two-handed. No melee attack.", "Iron 1, Steel 2, Abyssalite 3, Mythril 4"],
           [
             "Mage Wand",
-            "No melee attack. Left-click fires a bolt that costs mana.",
+            "Conjurers",
+            "One-handed. No melee attack. Left-click fires a bolt that costs mana.",
             "Iron 1, Steel 1, Abyssalite 2, Mythril 2",
           ],
-          ["Mage Blade", "A sword with normal melee hits.", "Iron 1, Steel 1, Abyssalite 2, Mythril 2"],
+          [
+            "Mage Blade",
+            "Battlemages",
+            "One-handed. A sword with normal melee hits.",
+            "Iron 1, Steel 1, Abyssalite 2, Mythril 2",
+          ],
         ]}
       />
       <p className={`mt-4 ${body}`}>
-        Every weapon needs a <strong>core</strong> and a <strong>handle</strong>. Each extra slot the core opens up
-        needs a <strong>tome</strong>. The handle and each tome give one socket, and their grade sets its size:
+        Every weapon needs a <strong>core</strong> and a <strong>handle</strong>. The handle gives the first socket.
+        Each extra socket the core allows needs a <strong>tome</strong>. The grade of the handle or tome sets the size
+        of its socket:
       </p>
       <DataTable
         columns={[{ header: "Handle or tome" }, { header: "Socket" }]}
@@ -95,14 +112,11 @@ export default function MageWeaponsPage() {
       />
       <p className={`mt-4 ${body}`}>
         A better core also gives the weapon more durability, and on a wand or blade it hits harder. The weapon is named
-        after its core, for example Steel Mage Staff. Part costs are listed under{" "}
-        <Link href="/wiki/materials" className={link}>
-          Materials
-        </Link>
-        .
+        after its core, for example Steel Mage Staff. Part costs are listed on the <StationLink name="Magic Station" />{" "}
+        page.
       </p>
 
-      <WikiSectionHeading id="station" intro="A vanilla 3x3 craft that anyone can make.">
+      <WikiSectionHeading id="station" intro="Made at an ordinary crafting table. Anyone can make one.">
         The <StationLink name="Magic Station" />
       </WikiSectionHeading>
       <div className="mt-4">
@@ -118,8 +132,8 @@ export default function MageWeaponsPage() {
           there until a charge is used on it.
         </li>
         <li>
-          Changed your mind? Sneak and left-click the station to take the weapon apart and get the materials back. A
-          charge already used on it is lost.
+          To undo the build, sneak and left-click the station. The weapon is taken apart and you get the materials back.
+          A charge already used on it is lost.
         </li>
       </ol>
 
@@ -136,7 +150,7 @@ export default function MageWeaponsPage() {
         columns={[
           { header: "Size" },
           { header: "Runestone", align: "right" },
-          { header: "Armor Runestone", align: "right" },
+          { header: "Armour Runestone", align: "right" },
           { header: "Enchanted Charge", align: "right" },
         ]}
         rows={["Minor", "Lesser", "Greater", "Ascendant"].map((tier, i) => [
@@ -147,12 +161,12 @@ export default function MageWeaponsPage() {
         ])}
       />
       <p className={`mt-4 ${body}`}>
-        Runestones are blank. To turn one into a rune, hold it and right-click a Lectern to start a{" "}
+        Runestones are blank. To turn one into a rune, hold it and right-click a lectern to start a{" "}
         <Link href="/wiki/research" className={link}>
           Research
         </Link>{" "}
-        project. Finishing it gives a random spell rune of the same size from any of the four schools. An armor
-        runestone gives a random armour rune instead.
+        project. Finishing it gives a random spell rune of the same size from any of the 4 schools. An armour runestone
+        gives a random armour rune instead.
       </p>
       <DataTable
         columns={[{ header: "Sealed artifact" }, { header: "Cost", align: "right" }]}
@@ -184,8 +198,8 @@ export default function MageWeaponsPage() {
         <li>
           Look at an orb and left-click to hit it. Hit the <strong>pale blue</strong> orbs: chat tells you how many you
           need, and every one that fades before you hit it loses part of the charge. Avoid the{" "}
-          <strong>rust-orange</strong> ones, which add Rift to the weapon. Higher-tier charges have faster orbs and
-          fewer good ones.
+          <strong>rust-orange</strong> ones, which add Rift to the weapon (the chance that a cast fails, explained
+          below). Higher-tier charges have faster orbs and fewer good ones.
         </li>
         <li>
           When time runs out, chat shows the tier the weapon reached and how much of the charge it kept. If you
@@ -210,17 +224,23 @@ export default function MageWeaponsPage() {
       <ul className={`mt-3 list-disc space-y-2 pl-5 ${body}`}>
         <li>
           <strong>Recharge:</strong> hold the weapon and right-click an empty station to set it down, then use another
-          charge on it. A later charge can add schools and raise them, but never lowers one. It also cleans some Rift
-          off the weapon.
+          charge on it. A later charge can add schools and raise them, but never lowers one. It also removes some of the
+          weapon&apos;s Rift.
         </li>
         <li>
           <strong>Re-attune:</strong> hold the weapon, sneak and right-click an empty station. Chat shows the fee, half
-          the materials of the weapon&apos;s parts, rounded up. Sneak and right-click again to pay. The next charge that
-          catches anything replaces the old attunement and its Rift. Your runes stay in place.
+          the materials of the weapon&apos;s parts, rounded up. Sneak and right-click again to pay. The next charge you
+          use replaces the old attunement and its Rift, as long as its run reaches at least tier I in a school. Your
+          runes stay in place.
+        </li>
+        <li>
+          If the run falls short, chat says &quot;The old attunement holds.&quot; The weapon keeps its old attunement
+          and Rift, the charge is still used up and the weapon waits on the station for another charge.
         </li>
         <li>
           While a re-attune is waiting, only you can charge the weapon or take it back. To call it off, sneak and
-          left-click the station when no charge is running. You get the weapon and the fee back.
+          left-click the station when no charge is running. You get the weapon and the whole fee back, but not the
+          charges you already used.
         </li>
       </ul>
 
@@ -246,7 +266,7 @@ export default function MageWeaponsPage() {
         <Link href="/wiki/advanced-crafting#quality" className={link}>
           quality of the craft
         </Link>
-        , not the metal, so a Masterwork iron piece takes an Ascendant armour rune.
+        , not the metal. A Masterwork iron piece gets an Ascendant socket, which takes an armour rune of any size.
       </p>
 
       <WikiSectionHeading id="casting" intro="Hold the weapon in either hand and use the rune's key.">
@@ -255,7 +275,7 @@ export default function MageWeaponsPage() {
       <p className={body}>
         Most runes cast with right-click, and a few use left-click or sneak and left-click. To change a rune&apos;s key,
         hold the rune and use <code className="text-[var(--tfmc-accent)]">/magic rune keybind</code>. Carry only one
-        staff: with two or more anywhere in your inventory, every cast fizzles.
+        staff: with 2 or more anywhere in your inventory or off hand, every cast fizzles.
       </p>
       <DataTable
         columns={[{ header: "What you see", nowrap: true }, { header: "Why" }, { header: "Cost" }]}

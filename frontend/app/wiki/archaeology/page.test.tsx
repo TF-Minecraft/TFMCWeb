@@ -8,14 +8,14 @@ describe("Archaeology gameplay guide", () => {
   it("covers every phase from finding a ruin to closing the site", () => {
     for (const heading of [
       "1. Find a ruin",
-      "2. Confirm it",
+      "2. Confirm the ruin",
       "3. Plant the camp",
-      "4. Dig: hear, then release",
+      "4. Dig by ear",
       "5. Brush the find out",
-      "6. Clean, sketch, register",
+      "6. Clean, draw and register",
       "7. Classify the find",
-      "8. Museum",
-      "9. When the site is finished",
+      "8. Display your finds",
+      "9. Close the camp",
     ]) {
       expect(html, heading).toContain(heading);
     }
@@ -23,15 +23,14 @@ describe("Archaeology gameplay guide", () => {
 
   it("documents the player actions and distinctions that control the workflow", () => {
     for (const phrase of [
-      "neighboring chunk rather than the ruin itself",
-      "hold left-click with an excavation tool",
-      "Release on the ready chime",
-      "air on at least one face",
-      "aiming at a dripping cube",
-      "Click the paper onto the pencil",
-      "Put the signed drawing in the top slot",
-      "sneak and right-click the displayed find",
-      "right-click it later to reopen the excavation dossier",
+      "Archaeological signal detected.",
+      "Hold left-click on a block",
+      "Traces of",
+      "every part",
+      "Field sketch",
+      "top slot",
+      "Field book",
+      "Close excavation",
     ]) {
       expect(html, phrase).toContain(phrase);
     }

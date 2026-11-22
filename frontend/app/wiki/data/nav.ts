@@ -21,32 +21,32 @@ const CATEGORY_DEFS: Record<WikiCategoryKey, Omit<WikiCategory, "key">> = {
   },
   character: {
     label: "Character & Identity",
-    blurb: "Your character, class and chat, plus everyday roleplay tools.",
+    blurb: "Your character, class and chat, roleplay tools, medicine, pets, letters, jewellery slots and your account.",
     order: 2,
   },
   professions: {
     label: "Professions & Crafting",
-    blurb: "Smithing, goldsmithing, woodworking, furniture and recycling.",
+    blurb: "Forging, goldsmithing, woodworking, furniture and recycling.",
     order: 3,
   },
   gathering: {
     label: "Gathering & Farming",
-    blurb: "Crops, fishing and guild resource nodes.",
+    blurb: "Crops, fishing, guild resource nodes and searching the land with /gather.",
     order: 4,
   },
   food: {
     label: "Food & Drink",
-    blurb: "Livestock, cooking, brewing and custom drinks.",
+    blurb: "Livestock, cooking, brewing and drinks you design yourself.",
     order: 5,
   },
   magic: {
     label: "Magic & Knowledge",
-    blurb: "Magic and mage weapons, research, the Codex, archaeology and arcane caches.",
+    blurb: "Magic and mage weapons, research, the Codex, archaeology and Arcane Caches.",
     order: 6,
   },
   combat: {
     label: "Combat & Danger",
-    blurb: "Guns, infestations, locks, thievery and trial rooms.",
+    blurb: "Guns, infestations, locks, thievery and Trial Rooms.",
     order: 7,
   },
   vehicles: {

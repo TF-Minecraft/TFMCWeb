@@ -9,7 +9,7 @@ export const animalHusbandryCommands: WikiCommandSet = {
       aliases: ["/livestock"],
       description: "Lists the animals your current character owns or shares, and where each was last seen.",
       notes:
-        "Shows each animal's name and kind, whether it is still growing, and whether it is happy, hungry or dirty, plus how many of your account's 15 places are used. Click the coordinates to copy them. If a place is missing, visit that animal once.",
+        "Shows each animal's name and kind, whether it is still growing, and whether it is happy, hungry or dirty, plus how many of your account's 15 animal places are used. Click the coordinates to copy them. If an animal shows no location, visit it once.",
     },
   ],
 };

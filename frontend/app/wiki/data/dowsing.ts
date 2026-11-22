@@ -33,12 +33,12 @@ export const generalNodeRecipe: Recipe = {
     planks,
   ],
   output: { name: "General Node", qty: 1, sourceId: "itemsadder:general_node", model: generalNodeModel },
-  note: "One General Node can run any of the six node types.",
+  note: "A General Node can run any of the 6 node types.",
 };
 
 export type NodeType = { name: string; cycle: string; focuses: string[]; fittings: string[] };
 
-/** Base cycle length before level, fittings and efficiency (types.yml `timer`, in minutes). */
+/** Cycle length at level 10, before fittings and efficiency (types.yml `timer`, in minutes). */
 export const nodeTypes: NodeType[] = [
   {
     name: "Ore Mine",

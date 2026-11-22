@@ -37,17 +37,17 @@ function itemList(items: [string, string][]) {
 export default function FishingPage() {
   return (
     <WikiPage
-      lastModified="2026-11-19"
+      lastModified="2026-11-21"
       title="Fishing"
       width="lg"
       intro="Cast into water and wait for a bite. What you can catch depends on the biome and on your rod, and the more valuable catches make you win a short minigame first."
     >
       <WikiSectionHeading id="catching">Catching something</WikiSectionHeading>
       <p className={body}>
-        Fish, ore and disc fragments and music discs go straight to you. Treasure, animal materials, coal, Bark, pottery
-        sherds and the Stone, Wood and Flower Cores start a minigame when they bite. Win it to land the catch. If you
-        lose, it gets away. The minigame is harder with a better rod: Easy on an Iron Rod, then Normal, Hard and Very
-        hard on a Mythril Rod.
+        Fish, ore fragments, disc fragments and music discs go straight into your inventory. Treasure, animal materials,
+        coal, Bark, pottery sherds and the Stone, Wood and Flower Cores start a minigame when they bite. Win it to land
+        the catch. If you lose, it gets away. The minigame is harder with a better rod: Easy on an Iron Rod, then
+        Normal, Hard and Very hard on a Mythril Rod.
       </p>
       <p className={`mt-3 ${body}`}>
         Fishing levels the{" "}
@@ -59,11 +59,17 @@ export default function FishingPage() {
 
       <WikiSectionHeading id="minigames">Playing the fishing games</WikiSectionHeading>
       <ul className={`mt-3 list-disc space-y-2 pl-5 ${body}`}>
-        <li>Timed reeling asks you to reel in when the pointer reaches the target area.</li>
-        <li>In the pointer game, press Sneak to start, then keep the pointer inside the target area.</li>
         <li>
-          In the tension game, press Sneak to start. Pull the fish in, but ease off when it struggles so the line does
-          not reach maximum tension.
+          Timed reeling is the most common game. Right-click with the rod to reel in when the pointer reaches the target
+          area.
+        </li>
+        <li>
+          In the pointer game, hold Sneak to push the pointer up and let go to let it fall. Keep it inside the target
+          area.
+        </li>
+        <li>
+          In the tension game, hold Sneak to pull the fish in. Let go when it struggles so the line does not reach
+          maximum tension.
         </li>
         <li>
           In the dance game, follow the prompts in order. Left arrow means left-click, right arrow means right-click, up
@@ -79,44 +85,48 @@ export default function FishingPage() {
         className="mt-4"
         columns={[{ header: "Catch", nowrap: true }, { header: "What comes up" }]}
         rows={[
-          ["Fish", "Vanilla fish, and four custom fish for each kind of water"],
+          ["Fish", "Ordinary Minecraft fish, and 4 of the server's own fish for each kind of water"],
           [
             "Materials",
             <>
               Raw Iron, Raw Gold and Diamond Fragments, coal, {itemList(waterMaterials)}, disc fragments and music discs
             </>,
           ],
-          ["Animal materials", "Leather, wool and feathers. Steel and Abyssalite Rods bring up better ones."],
-          ["Treasure", <>{itemList(waterTreasure)}, coins and gemstone pouches of all four kinds</>],
+          [
+            "Animal materials",
+            "Leather, wool and feathers: plain on an Iron Rod, Good Quality on a Steel Rod and Great Quality on an Abyssalite Rod.",
+          ],
+          ["Treasure", <>{itemList(waterTreasure)}, coins and gemstone pouches of all 4 kinds</>],
         ]}
       />
       <p className={`mt-3 ${body}`}>
-        All three rods catch the same treasure. Ignitium, Tin and Abyssalite Fragments sometimes come up several at
-        once, and an Abyssalite Rod brings up bigger piles of coins. Right-click a gemstone pouch to get one random
-        gemstone of its kind.
+        The Iron, Steel and Abyssalite Rods catch the same treasure. Ignitium, Tin and Abyssalite Fragments sometimes
+        come up several at once, and an Abyssalite Rod brings up bigger piles of coins. Right-click a gemstone pouch to
+        get 1 random gemstone of its kind.
       </p>
       <p className={`mt-3 ${body}`}>
         <strong>Water in land biomes</strong>, such as a forest pond or a swamp, gives that biome&apos;s blocks, mob
         drops, fragments and pottery sherds. These are the same for every rod.
       </p>
       <p className={`mt-3 ${body}`}>
-        Custom fish come out as{" "}
+        The server&apos;s own fish come out as{" "}
         <Link href="/wiki/cooking" className={link}>
           Cooking
         </Link>{" "}
         seafood with a size and a quality set by your rod: 1–2 stars on an Iron Rod, 2–3 on Steel, 3–4 on Abyssalite and
-        4–5 on Mythril. Cut one whole seafood item on a Cutting Board to get one fillet or serving, whatever its size.
+        4–5 on Mythril. Cut 1 whole seafood item on a Cutting Board to get 1 fillet or serving, whatever its size.
       </p>
 
       <WikiSectionHeading id="tiers">Rods and hooks</WikiSectionHeading>
       <p className={body}>
-        A plain vanilla fishing rod counts as an Iron Rod. The other rods and all four hooks are made at the Fishing
-        Station and need the Fisher perk. Buy it with Forager points in <code className={code}>/profession</code>, the
-        same menu as the farming perks. Rods cannot be repaired, and enchantments do nothing for fishing in water.
+        A plain Minecraft fishing rod counts as an Iron Rod. The Iron Rod can also be made at the Fishing Station with
+        no perk. The Steel, Abyssalite and Mythril Rods and all 4 hooks are made there too, and need the Fisher perk.
+        Buy it with Forager points in <code className={code}>/profession</code>, the same menu as the farming perks.
+        Rods cannot be repaired, and enchantments do nothing for fishing in water.
       </p>
       <p className={`mt-3 ${body}`}>
         To fit a hook, pick it up in your inventory and right-click the rod with it. Right-click the rod again to take
-        the hook off. A hook works on any rod, and the rod&apos;s lore shows how many uses the hook has left.
+        the hook off. A hook works on any rod, and the rod&apos;s description shows how many uses the hook has left.
       </p>
       <DataTable
         className="mt-4"

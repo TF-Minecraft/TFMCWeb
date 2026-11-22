@@ -16,7 +16,7 @@ export const fishingSection: WikiSection = {
     href: "/wiki/fishing",
     label: "Fishing",
     category: "gathering",
-    blurb: "What each biome and rod can catch, hooks, and the catch minigame.",
+    blurb: "What each biome and rod can catch, hooks, and the catch minigames.",
   },
   commands: fishingCommands,
 };

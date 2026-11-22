@@ -20,7 +20,7 @@ const subheading = "mt-6 text-sm font-semibold uppercase tracking-wide text-[var
 export default function CharactersPage() {
   return (
     <WikiPage
-      lastModified="2026-11-18"
+      lastModified="2026-11-21"
       title="Characters"
       intro={
         <>
@@ -39,8 +39,8 @@ export default function CharactersPage() {
       <p className={body}>
         Each time you join, you arrive at the character selection screen. It shows your living characters one at a time:
         use the arrows to look through them, then click <strong>Play</strong> to enter the world where that character
-        left off. Each character keeps its own inventory, ender chest, position, health and experience. Profession
-        levels are shared between them (see{" "}
+        left off. Each character keeps its own inventory, ender chest, position, health and experience levels.
+        Profession levels are shared between them (see{" "}
         <Link href="/wiki/classes#professions" className={link}>
           Professions
         </Link>
@@ -63,8 +63,11 @@ export default function CharactersPage() {
         Switching to a different character has a cooldown that depends on your rank. It counts from the last time you
         switched, and it also applies to creating a new character while you have a living one. You can always go back to
         the character you were last playing. When playing a character would start the cooldown, the selection screen
-        asks you to confirm first. You cannot switch at all during an evil RP session, or while a player who knocked you
-        out is still deciding your fate.
+        asks you to confirm first. You cannot switch at all during an{" "}
+        <a href="#injuries-graves" className={link}>
+          evil RP session
+        </a>
+        , or while a player who knocked you out is still deciding your fate.
       </p>
       <p className={`mt-3 ${body}`}>
         If your rank drops and you have more living characters than it allows, you are frozen until you end one in{" "}
@@ -89,9 +92,10 @@ export default function CharactersPage() {
         ]}
       />
       <p className={`mt-3 ${body}`}>
-        Name colours is how many colours your character&apos;s name can blend into a gradient. With 0, your name stays
-        white. Wardrobe slots counts the skins each character can wear, including the base skin. If your rank drops, the
-        skins in slots it no longer unlocks stay saved and come back when you regain the rank.
+        <strong>Name colours</strong> is how many colours your character&apos;s name can blend into a gradient. With 0,
+        your name stays white. <strong>Wardrobe slots</strong> is how many skins each character can wear, base skin
+        included. If your rank drops, the skins in slots it no longer unlocks stay saved and come back when you regain
+        the rank.
       </p>
       <p className={`mt-3 ${body}`}>
         <RankName rank="Gilded" /> and above can also run <code className={code}>/plushie &lt;character&gt; [1-5]</code>{" "}
@@ -103,13 +107,34 @@ export default function CharactersPage() {
       </WikiSectionHeading>
       <p className={body}>
         On the selection screen, choose <strong>New character</strong>, then <strong>Create character</strong>. You need
-        a free slot for a living character. The creator is a series of screens with Next and Back buttons:
+        a free slot for a living character. The creator is a series of screens with <strong>Next</strong> and{" "}
+        <strong>Back</strong> buttons. <strong>Cancel creation</strong> asks whether you want to{" "}
+        <strong>Keep creating</strong> or <strong>Discard draft</strong>.
       </p>
       <ol className={`mt-3 list-decimal space-y-1 pl-5 ${body}`}>
         <li>
-          Answer whether you are 18 or older in real life. This decides whether you can join age-restricted roleplay.
+          On your first character only, say whether you are 18 or older in real life. This decides whether you can join
+          age-restricted roleplay.
         </li>
-        <li>Name your character.</li>
+        <li>
+          Type your character&apos;s real name, 3 to 24 characters with no colour codes. It stays hidden from other
+          players until you share it in roleplay. <RankName rank="Noble" /> rank and above can colour the name here with{" "}
+          <strong>Preview name</strong> and <strong>Edit colours</strong>.
+        </li>
+        <li>
+          Choose an alias. This is the name other players see in the TAB list, in chat, on your character card and in{" "}
+          <code className={code}>/faction list</code>.
+          <ul className="mt-1 list-disc space-y-1 pl-5">
+            <li>
+              Type a nickname or title, or type <code className={code}>same</code> to show your real name. Typing your
+              real name again counts as <code className={code}>same</code>, and you can&apos;t leave it empty.
+            </li>
+            <li>
+              An alias is 3 to 24 characters. It can use letters, spaces, full stops, commas, hyphens, apostrophes and á
+              é í ó ú, but no digits or colour codes.
+            </li>
+          </ul>
+        </li>
         <li>
           Choose a{" "}
           <Link href="/wiki/classes" className={link}>
@@ -119,25 +144,33 @@ export default function CharactersPage() {
         </li>
         <li>Set your character&apos;s age.</li>
         <li>
-          Pick background traits: homeland, cataclysm, reclamation, motivation, gift, virtue, combat, physical and
-          celestial.
+          Pick background traits: homeland, cataclysm, reclamation, motivation, gift (pick 2), virtue, combat, physical
+          (pick 1 to 3) and celestial.
         </li>
         <li>
-          Spend all 12 attribute points. Every race starts with 4 in each attribute. Each rank you buy raises one
-          attribute by 1 and costs double the one before: 1 point, then 2, then 4.
+          Spend all 12 attribute points. Every race starts with 4 in each attribute. Each point you add to an attribute
+          costs double the one before: 1, then 2, then 4. The <strong>Reset</strong> and <strong>Balanced</strong>{" "}
+          buttons help.
         </li>
         <li>
-          Pick personality traits. A callous, cynical, deceitful, greedy or spiteful personality can also take up to two
-          evil archetypes, once your account is at least 24 hours old.
+          Pick 3 to 5 personality traits. A callous, cynical, deceitful, greedy or spiteful personality can also take up
+          to 2{" "}
+          <Link href="/wiki/thievery#archetypes" className={link}>
+            evil archetypes
+          </Link>{" "}
+          once your account is at least 24 hours old.
         </li>
         <li>
-          Optionally add backstory injuries (as many as you like) and one{" "}
+          If you want, add backstory injuries (as many as you like) and 1{" "}
           <a href="#prosthetics" className={link}>
             prosthetic
           </a>
           .
         </li>
-        <li>Write a description of 32 to 256 characters: how your character looks, sounds and comes across.</li>
+        <li>
+          Write a description of 32 to 256 characters: how your character looks, sounds and comes across. You can also
+          set <strong>Gender (optional)</strong> on this screen.
+        </li>
         <li>
           Write your clues: at least 2, or 4 for an evil character, each 12 to 48 characters long (see{" "}
           <a href="#clues" className={link}>
@@ -145,48 +178,83 @@ export default function CharactersPage() {
           </a>
           ).
         </li>
-        <li>Review everything, change anything you want, and confirm.</li>
+        <li>
+          Check the review screen. Every step has an <strong>[Edit]</strong> link, and the alias reads &quot;Same as the
+          real name&quot; if you set none. Confirm with <strong>Create character</strong>.
+        </li>
       </ol>
       <p className={`mt-3 ${body}`}>
-        If you close the creator partway, <code className={code}>/rpcharacter menu</code> reopens it. You can also
-        create characters on the website with the same steps: run <code className={code}>/token create profile</code> in
-        game, sign in on your{" "}
+        If you close the creator partway, <code className={code}>/rpcharacter menu</code> reopens it.
+      </p>
+      <p className={`mt-3 ${body}`}>
+        You can also create characters on the website with the same steps. Run{" "}
+        <code className={code}>/token create profile</code> in game, sign in on your{" "}
         <Link href="/profile" className={link}>
           profile
         </Link>{" "}
-        and choose New character. Skins are optional. Upload them on the website under your character&apos;s Wardrobe,
-        then swap between them in game with <code className={code}>/rpcharacter wardrobe</code>.
+        and choose <strong>New character</strong>. The alias is optional there: leaving it blank, typing{" "}
+        <code className={code}>same</code> or repeating the real name all mean no alias.
+      </p>
+
+      <h3 id="skins" className={subheading}>
+        Skins
+      </h3>
+      <p className={`mt-1 ${body}`}>
+        Skins are optional. Upload them on the website under your character&apos;s Wardrobe, then swap between them in
+        game with <code className={code}>/rpcharacter wardrobe</code>.
       </p>
       <p className={`mt-3 ${body}`}>
         Each skin can carry its own description, which others read while you wear it. Shift-click the skin in{" "}
         <code className={code}>/rpcharacter wardrobe</code> and type it in chat, or fill in{" "}
-        <strong>Description while worn</strong> on the website&apos;s Wardrobe page. The base skin uses your character
-        description.
+        <strong>Description while worn</strong> on the website. The base skin uses your character description.
       </p>
-      <p className={`mt-3 ${body}`}>
-        After creation, <code className={code}>/rpcharacter edit</code> reopens your choices, and the editor shows how
-        long each one has left. Race, backstory injuries and prosthetic lock after 24 hours. Class, age, background
-        traits and attributes lock after 5 days, though you can still change class for a fee (see{" "}
-        <Link href="/wiki/classes" className={link}>
-          Classes &amp; Professions
-        </Link>
-        ). Personality and evil archetypes never lock.
+
+      <h3 id="editing" className={subheading}>
+        Changing your choices
+      </h3>
+      <p className={`mt-1 ${body}`}>
+        <code className={code}>/rpcharacter edit</code> reopens your choices and shows how long you have before each one
+        locks.
       </p>
+      <ul className={`mt-2 list-disc space-y-1 pl-5 ${body}`}>
+        <li>Race, backstory injuries and prosthetic lock after 24 hours.</li>
+        <li>
+          Class, age, background traits and attributes lock after 5 days. After that you can still change class for a
+          fee (see{" "}
+          <Link href="/wiki/classes" className={link}>
+            Classes &amp; Professions
+          </Link>
+          ).
+        </li>
+        <li>Personality and evil archetypes never lock.</li>
+      </ul>
       <p className={`mt-3 ${body}`}>
+        The alias isn&apos;t in the editor. Change it with <code className={code}>/rpcharacter alias &lt;name&gt;</code>{" "}
+        or remove it with <code className={code}>/rpcharacter alias clear</code>. You must wait 10 seconds between
+        changes.
+      </p>
+
+      <h3 id="starter-kit" className={subheading}>
+        Starter kit
+      </h3>
+      <p className={`mt-1 ${body}`}>
         Once you are playing, <code className={code}>/rpcharacter kit starter</code> gives you an{" "}
-        <WikiItemLink name="Iron Hunting Knife">iron hunting knife</WikiItemLink>, 32 gold coins, 32 dry rations, a
-        writable book, a bundle and a brown bed. Each character can claim it once, and you must wait 48 hours between
-        claims on different characters. On your website profile you can give the kit&apos;s knife and book your own
-        look. If you do, you cannot claim the kit until staff approve the look and it reaches the resource pack, which
-        takes up to a day after approval.
+        <WikiItemLink name="Iron Hunting Knife" />, 32 gold coins, 32 dry rations, a writable book, a bundle and a brown
+        bed. Each character can claim it once, and you must wait 48 hours between claims on different characters.
+      </p>
+      <p className={`mt-3 ${body}`}>
+        On your website profile you can give the kit&apos;s knife and book your own look. If you do, you can&apos;t
+        claim the kit until staff approve the look and it reaches the resource pack, which takes up to a day after
+        approval.
       </p>
 
       <WikiSectionHeading id="looking-at-someone">Reading a character card</WikiSectionHeading>
       <p className={body}>
-        Sneak and right-click another player with an empty hand to see their character card: name, gender, age,
-        birthday, race and description. <code className={code}>/rpcharacter profile &lt;player&gt;</code> shows the same
-        card. A player wearing a mask hides their identity. In-character chat shows them as <strong>Masked</strong>, and
-        their card cannot be read in either of these ways. <code className={code}>/tfmc masks</code> gives you one (see{" "}
+        Sneak and right-click another player with an empty hand to see their character card. It shows their alias (the
+        name other players see), or their real name if they set no alias, then their gender, age, birthday, race and
+        description. <code className={code}>/rpcharacter profile &lt;player&gt;</code> shows the same card. A player
+        wearing a mask hides their identity. In-character chat shows them as <strong>Masked</strong>, and their card
+        cannot be read in either of these ways. <code className={code}>/tfmc masks</code> gives you one (see{" "}
         <Link href="/wiki/roleplay-tools#masks" className={link}>
           Roleplay Tools
         </Link>
@@ -226,7 +294,7 @@ export default function CharactersPage() {
             ["Global OOC", "/ooc", "Everyone online", "Server-wide out-of-character chat"],
             ["Guild OOC", "/gooc", "Your guild", "Out-of-character talk with your guild"],
             ["Faction OOC", "/fooc", "Your faction", "Out-of-character talk with your faction"],
-            ["Realm OOC", "/rooc", "Your whole realm", "Includes your overlord and vassal factions"],
+            ["Realm OOC", "/rooc", "Your whole realm", "Includes your overlord and subject factions"],
             ["Party OOC", "/pooc", "Your RP party", "Out-of-character talk with your /rpcharacter party"],
           ]}
         />
@@ -242,19 +310,39 @@ export default function CharactersPage() {
       <p className={body}>
         <code className={code}>/roll</code> rolls from 1 to 200. <code className={code}>/roll &lt;max&gt;</code> rolls
         from 1 to your own maximum, and you can add a modifier such as <code className={code}>/roll 20 +3</code>.{" "}
-        <code className={code}>/roll &lt;attribute&gt;</code> rolls a d20 plus that attribute&apos;s modifier, from −5
-        at 0 or 1 points to +5 at 20 points (10 or 11 points give +0). You and everyone within 20 blocks see the result.
+        <code className={code}>/roll &lt;attribute&gt;</code> rolls 1 to 20 and adds that attribute&apos;s modifier,
+        from −5 at 0 or 1 points to +5 at 20 points (10 or 11 points give +0). You and everyone within 20 blocks see the
+        result.
       </p>
 
       <WikiSectionHeading id="injuries">Injuries</WikiSectionHeading>
       <p className={body}>
-        A healing injury goes away after 72 hours, counted in real time even while you are offline, and its attribute
-        penalties ease as it heals. A physician can also cure it with{" "}
+        A <strong>healing injury</strong> goes away after 72 hours, counted in real time even while you are offline, and
+        its penalties ease as it heals. A <strong>permanent injury</strong> stays for good.
+      </p>
+      <p className={`mt-3 ${body}`}>Your character can get an injury in these ways:</p>
+      <ul className={`mt-2 list-disc space-y-1 pl-5 ${body}`}>
+        <li>dying in a permadeath zone and surviving</li>
+        <li>taking a strike in a started fight</li>
+        <li>losing a started fight to a player who chooses Wound or Maim</li>
+        <li>
+          accepting a roleplay injury that another player offers with <code className={code}>/rpcharacter injure</code>
+        </li>
+        <li>adding backstory injuries during creation</li>
+      </ul>
+      <p className={`mt-3 ${body}`}>
+        The first 3 are explained under{" "}
+        <a href="#injuries-graves" className={link}>
+          Death and permadeath
+        </a>
+        .
+      </p>
+      <p className={`mt-3 ${body}`}>
+        A physician can cure a healing injury with{" "}
         <Link href="/wiki/medicine" className={link}>
           surgery
         </Link>
-        . If it turns permanent, it stays for good. With a broken or lost arm you drop whatever is in your off hand and
-        any two-handed item you hold. A{" "}
+        . With a broken or lost arm you drop whatever is in your off hand and any two-handed item you hold. A{" "}
         <a href="#prosthetics" className={link}>
           prosthetic
         </a>{" "}
@@ -281,15 +369,15 @@ export default function CharactersPage() {
         />
       </div>
       <p className={`mt-3 ${body}`}>
-        Each body part can only hold so much. Your arms hold at most two of Broken Arm, One-Handed and an arm
-        prosthetic. Your legs hold at most two of Broken Leg, One-Legged and a leg prosthetic. Your eyes hold one
-        injury, Half Blind or Blind. When a full body part takes a permanent injury, it replaces that part&apos;s
-        healing injury instead of adding a new one, so Half Blind becomes Blind.
+        Each body part has a limit. Your arms hold at most 2 of Broken Arm, One-Handed and an arm prosthetic. Your legs
+        hold at most 2 of Broken Leg, One-Legged and a leg prosthetic. Your eyes hold 1 injury, Half Blind or Blind.
+        When a full body part takes a permanent injury, it replaces that part&apos;s healing injury instead of adding a
+        new one, so Half Blind becomes Blind.
       </p>
       <h3 id="blind" className={subheading}>
         Getting around while Blind
       </h3>
-      <p className={`mt-1 ${body}`}>Any Blind character gets two kinds of help:</p>
+      <p className={`mt-1 ${body}`}>Any Blind character gets 2 kinds of help:</p>
       <ul className={`mt-2 list-disc space-y-2 pl-5 ${body}`}>
         <li>
           You can hear creatures moving near you. They glow for you alone, as long as nothing stands between you and
@@ -301,7 +389,7 @@ export default function CharactersPage() {
         </li>
       </ul>
       <p className={`mt-3 ${body}`}>
-        A <WikiItemLink name="Walking Cane" /> adds two more while you hold it. Make one at the{" "}
+        A <WikiItemLink name="Walking Cane" /> adds 2 more while you hold it. Make one at the{" "}
         <StationLink name="Tool Station" />. The Canes category in <code className={code}>/armourshop</code> has free
         looks for it, including the old Forearm Crutch and Slim Forearm Crutch, and a cane with one of those looks still
         works as a cane.
@@ -348,61 +436,106 @@ export default function CharactersPage() {
       </div>
       <p className={`mt-3 ${body}`}>
         Arcane limbs run on <WikiItemLink name="Arcane Fuel" />, made at the <StationLink name="Engineer Station" />. A
-        new arcane limb starts full. Right-click Arcane Fuel to refill it. One fuel lasts about 50 hours of playing that
-        character, and it only burns while you play them. While it has fuel, an arcane limb has the lightest penalty of
-        any prosthetic. When it runs out, the limb becomes Depowered and its penalties get heavier.
+        new arcane limb starts full. Right-click Arcane Fuel to refill it. 1 Arcane Fuel lasts about 50 hours of playing
+        that character, and it only burns while you play them. While it has fuel, an arcane limb has the lightest
+        penalty of any prosthetic. When it runs out, the limb becomes Depowered and its penalties get heavier.
       </p>
 
       <WikiSectionHeading id="injuries-graves">Death and permadeath</WikiSectionHeading>
       <p className={body}>
-        Some regions are <strong>permadeath zones</strong>, and a title tells you when you enter one. Dying there can
-        kill your character for good, and the more injuries your character already has, the more likely that is. If your
-        character survives, the death costs an injury instead. A healing injury you already have turns permanent, or, if
-        you have none, you gain a new healing injury. Deaths while you fight in a started war battle (see{" "}
-        <Link href="/wiki/war" className={link}>
-          War
+        Every character is nonlethal by default. To switch to lethal, run <code className={code}>/pvp lethal</code> and
+        confirm. Lava, mobs and other damage are always lethal.
+      </p>
+      <p className={`mt-3 ${body}`}>
+        A <strong>started fight</strong> is one somebody announced with <code className={code}>/pvp start</code>.
+        Everyone within 80 blocks is warned that a fight begins in 10 seconds. It lasts 15 minutes, or until the player
+        who started it runs <code className={code}>/pvp end</code>.
+      </p>
+      <p className={`mt-3 ${body}`}>
+        A <strong>strike</strong> is a mark your character gets for losing a started fight. The first strike gives you a
+        healing injury and the second a permanent injury. The third kills your character. Strikes never wear off. Check
+        yours with <code className={code}>/rpcharacter strikes</code>.
+      </p>
+      <p className={`mt-3 ${body}`}>
+        An <strong>evil RP session</strong> is the 30 minutes after your latest lockpick, theft or robbery (see{" "}
+        <Link href="/wiki/thievery" className={link}>
+          Thievery
         </Link>
-        ) never kill your character, injure it or give strikes.
+        ). Each new one starts the 30 minutes again, and the time keeps counting while you are offline. During a
+        session, any strike kills your character.
+      </p>
+
+      <h3 id="outside-a-fight" className={subheading}>
+        Outside a started fight
+      </h3>
+      <p className={`mt-1 ${body}`}>
+        A nonlethal player who lands the killing blow knocks you out and blinds you for 30 seconds instead of killing
+        you. A kill by a lethal player is an ordinary death, and you leave a{" "}
+        <a href="#graves" className={link}>
+          grave
+        </a>
+        . Neither gives you a strike.
+      </p>
+
+      <h3 id="permadeath-zones" className={subheading}>
+        Permadeath zones
+      </h3>
+      <p className={`mt-1 ${body}`}>
+        A title tells you when you enter a <strong>permadeath zone</strong>. Dying there can kill your character for
+        good, and the more injuries your character already has, the more likely that is. If your character survives, a
+        healing injury you already have turns permanent. If you have none, you gain a new healing injury.
       </p>
       <p className={`mt-3 ${body}`}>
-        Every character is nonlethal by default. Outside a started fight (below), a nonlethal player who lands the
-        killing blow knocks you out and blinds you for 30 seconds instead of killing you. A kill by a player in lethal
-        mode is an ordinary death. You leave a grave, and in a permadeath zone it can kill your character for good, as
-        above. Lava, mobs and other damage are always lethal.
+        Deaths while you fight in a{" "}
+        <Link href="/wiki/war#battles" className={link}>
+          war battle
+        </Link>{" "}
+        never kill your character, injure it or give it a strike.
       </p>
-      <p className={`mt-3 ${body}`}>
-        <code className={code}>/pvp start</code> warns everyone within 80 blocks that a fight begins in 10 seconds, and
-        the fight lasts 15 minutes or until the player who started it runs <code className={code}>/pvp end</code>. In a
-        started fight, losing can give your character a <strong>strike</strong>:
-      </p>
-      <ul className={`mt-3 list-disc space-y-1 pl-5 ${body}`}>
+
+      <h3 id="losing-a-fight" className={subheading}>
+        Losing a started fight
+      </h3>
+      <ul className={`mt-2 list-disc space-y-1 pl-5 ${body}`}>
         <li>
-          A <strong>nonlethal</strong> winner knocks you out. You stay down for up to 5 minutes while they choose to
-          spare you or give you a strike. You can still talk, but you cannot fight or use items. If they do not choose,
-          you are spared.
+          A <strong>nonlethal</strong> winner knocks you out. You stay down for up to 5 minutes while they choose{" "}
+          <strong>Spare</strong> or <strong>Strike</strong>. You can still talk, but you can&apos;t fight or use items.
+          If they don&apos;t choose, you are spared.
         </li>
         <li>
-          A <strong>lethal</strong> winner (<code className={code}>/pvp lethal</code>, then confirm) gives you a strike
-          as soon as they kill you. You wake at your spawn point with your items, though not the money in your pouch. If
-          they are able to loot graves, your items go into a grave instead.
+          When a strike would kill your character (the third, or any strike during an evil RP session), a nonlethal
+          winner chooses <strong>Wound</strong>, <strong>Maim</strong> or <strong>Kill</strong> instead. Wound gives you
+          a healing injury and Maim a permanent injury. Neither adds a strike.
         </li>
         <li>
-          Your first strike is a healing injury and the second a permanent one. The third kills your character, and only
-          the killer can open its grave. When a strike would kill you, a nonlethal winner can wound or maim you instead.
+          A <strong>lethal</strong> winner gives you the strike as soon as they kill you. They can&apos;t spare, wound
+          or maim you. You wake at your spawn point with your items, but without the money in your pouch.
         </li>
         <li>
-          The same player must wait 24 hours before striking you again. Kills outside a started fight, and deaths with
-          no player to blame, give no strike. During an evil RP session, any strike kills your character.
+          If your killer is a{" "}
+          <Link href="/wiki/thievery#archetypes" className={link}>
+            Bandit
+          </Link>
+          , your items go into a grave they can loot instead. If you are in an evil RP session and your character
+          survives the death, your grave is unlocked and anyone can loot it.
         </li>
-        <li>Strikes never wear off.</li>
+        <li>A strike that kills your character always leaves a grave that only the killer can open.</li>
+        <li>
+          The same player must wait 24 hours before striking you again. Deaths with no player to blame give no strike.
+        </li>
       </ul>
-      <p className={`mt-3 ${body}`}>
-        Check your strikes with <code className={code}>/rpcharacter strikes</code>. For practice,{" "}
+
+      <h3 id="duels" className={subheading}>
+        Duels
+      </h3>
+      <p className={`mt-1 ${body}`}>
         <code className={code}>/duel &lt;player&gt;</code> challenges someone within 16 blocks to a duel of up to 10
-        minutes. When it ends, you get back the health, hunger, mana and stamina the duel cost you, and duel blows do
-        not wear your gear. A blow that would kill just ends the duel. Lava, mobs and other damage can still hurt or
-        kill you. A hit from a mob or another player interrupts the duel, and then only the health the duel took is
-        given back. Moving more than 32 blocks apart ends it as a draw.
+        minutes. When it ends, you get back the health, hunger, mana and stamina the duel cost you, and duel blows
+        don&apos;t wear your gear. A blow that would kill ends the duel instead.
+      </p>
+      <p className={`mt-3 ${body}`}>
+        Lava, mobs and other damage can still hurt or kill you. A hit from a mob or another player interrupts the duel,
+        and then only the health the duel took comes back. Moving more than 32 blocks apart ends it as a draw.
       </p>
 
       <WikiSectionHeading id="armour">Putting on armour</WikiSectionHeading>
@@ -414,66 +547,111 @@ export default function CharactersPage() {
 
       <WikiSectionHeading id="graves">Graves</WikiSectionHeading>
       <p className={body}>
-        In most deaths, your belongings go into a grave chest at the spot where you died. A hologram above it shows who
-        killed you and how long the grave has left. Right-click it to take your things back. Only you can open it,
-        unless you run <code className={code}>/grave unlock</code> to let anyone loot your newest grave, but thieves can
-        still try to rob it (see{" "}
-        <Link href="/wiki/thievery" className={link}>
-          Thievery
-        </Link>
-        ). After 40 minutes the grave disappears and drops whatever is left on the ground. When another player kills
-        you, the money in your pouch also drops as coins where you died (see{" "}
-        <Link href="/wiki/economy" className={link}>
-          Denar Economy
-        </Link>
-        ).
+        After most deaths, your belongings go into a grave chest where you died. A hologram above it shows your
+        killer&apos;s alias and how long the grave has left. Right-click the grave to take your things back.
+      </p>
+      <ul className={`mt-3 list-disc space-y-1 pl-5 ${body}`}>
+        <li>
+          Only you can open your grave. <code className={code}>/grave unlock</code> lets anyone loot your newest one.
+        </li>
+        <li>
+          A Bandit who killed your character can rob your grave while it is locked (see{" "}
+          <Link href="/wiki/thievery#graves" className={link}>
+            Thievery
+          </Link>
+          ).
+        </li>
+        <li>A grave from a strike that killed your character opens only for the killer and can&apos;t be unlocked.</li>
+      </ul>
+      <p className={`mt-3 ${body}`}>
+        After 40 minutes the grave disappears and drops whatever is left on the ground. When another player kills you,
+        the money in your pouch drops as{" "}
+        <Link href="/wiki/economy#coins" className={link}>
+          coins
+        </Link>{" "}
+        where you died.
       </p>
       <p className={`mt-3 ${body}`}>
         Right-click a <WikiItemLink name="Grave Insurance" /> ticket from anywhere to get your items back from your
         character&apos;s newest grave. Any ticket works, even one you got after you died. The ticket is used up, and it
-        cannot open a grave that only your killer can open.
+        can&apos;t open a grave that only your killer can open.
       </p>
 
       <WikiSectionHeading id="wills">Wills and inheritance</WikiSectionHeading>
       <p className={body}>
         <code className={code}>/will</code> names one living character as your character&apos;s heir. Your own
-        characters count, and nobody is told. The will is fixed when your character dies for good, and 24 hours later
-        the heir receives everything except your guild&apos;s locks, which go to the guild&apos;s leader, or to the
-        realm&apos;s leader if the guild has none. The heir collects stored items with{" "}
-        <code className={code}>/estate collect</code>. With no living heir, money goes to your guild and property to its
-        leader; with no guild, the estate waits 7 days and is then held by staff. Leading a guild or realm does not pass
-        by will, with one exception: if your character was the last member of their realm, your heir becomes its leader
-        24 hours after the death, as long as they are alive and in no other faction. An heir who is still in another
-        faction has a week from the death to leave it. You can also change your will on your website profile.
+        characters count, and nobody is told. You can also change your will on your website{" "}
+        <Link href="/profile" className={link}>
+          profile
+        </Link>
+        .
       </p>
+      <ul className={`mt-3 list-disc space-y-2 pl-5 ${body}`}>
+        <li>
+          The will is fixed when your character dies for good. 24 hours later the heir receives everything, and collects
+          stored items with <code className={code}>/estate collect</code>. Letters still waiting for your character go
+          to the heir too.
+        </li>
+        <li>
+          Guild locks are the exception: the locked containers your character owns with access set to Guild or Faction
+          (see{" "}
+          <Link href="/wiki/locks#containers" className={link}>
+            Locks
+          </Link>
+          ). They go to your guild&apos;s leader, or to the realm&apos;s leader if the guild has no leader. If the guild
+          is gone, they go to the realm&apos;s leader, or to the heir if there is none. If you had no guild, they go to
+          the heir.
+        </li>
+        <li>
+          Private and Public locks, doors, personal vehicles, shops and Research stations are property and follow the
+          heir.
+        </li>
+        <li>
+          With no living heir, your money goes to your guild and your property to its leader. With no heir and no guild,
+          the estate waits 7 days and is then held by staff.
+        </li>
+        <li>
+          Leading a guild or realm does not pass by will. The one exception: if your character was the last member of
+          their realm, the heir becomes its leader 24 hours after the death, as long as they are alive and in no other
+          faction. An heir who is still in another faction has a week from the death to leave it.
+        </li>
+      </ul>
 
       <WikiSectionHeading id="clues">Clues</WikiSectionHeading>
       <p className={body}>
-        The clues you write during creation describe your character: visual features, smells, home, habits and so on.
-        Every character also has an automatic clue that gives away their race. Low-effort or false clues can be
-        punished.
+        The clues you write describe your character: visual features, smells, home, habits. Every character also has an
+        automatic clue that gives away their race. Low-effort or false clues can be punished.
       </p>
       <p className={`mt-3 ${body}`}>
         <code className={code}>/rpcharacter clues</code> opens your list. Click <strong>Add Clue</strong> to type a new
-        one in chat (up to 10 in all), or click a clue to remove it. If you drop below the minimum (2, or 4 for an evil
+        one in chat, up to 10 in all, or click a clue to remove it. If you drop below the minimum (2, or 4 for an evil
         character), you are frozen until you add more.
       </p>
       <p className={`mt-3 ${body}`}>
-        When a clue is left at a scene, characters within a few blocks of it can notice it over time, and Wisdom and
-        Intelligence improve the odds. Clues fade. An old clue is harder to read than a fresh one, and each disappears
-        within two days.
+        A thief can drop one of their clues at a door, display or chest they pick or rob (see{" "}
+        <Link href="/wiki/thievery#clues" className={link}>
+          Thievery
+        </Link>
+        ), and you can place your own.
       </p>
       <p className={`mt-3 ${body}`}>
-        You can also leave clues yourself for roleplay. Run <code className={code}>/rpcharacter placeclue</code>{" "}
-        followed by the clue (12 to 48 characters), then right-click the block where you want to leave it. You have 30
-        seconds to click. The clue is anonymous and fades like any other.{" "}
-        <code className={code}>/rpcharacter removeclue</code> removes the clues you placed within 10 blocks of you.
+        Characters within a few blocks of a clue can notice it over time, and Wisdom and Intelligence help. Clues fade.
+        An old clue is harder to read than a fresh one, and each disappears within 2 days.
+      </p>
+      <p className={`mt-3 ${body}`}>
+        To place a clue, run <code className={code}>/rpcharacter placeclue &lt;clue&gt;</code> with a clue of 12 to 48
+        characters, then right-click the block where you want it within 30 seconds. The clue is anonymous and fades like
+        any other. <code className={code}>/rpcharacter removeclue</code> removes the clues you placed within 10 blocks
+        of you.
       </p>
 
       <WikiSectionHeading id="persona">Customising your character</WikiSectionHeading>
       <p className={body}>
-        While playing, you can change your character&apos;s alias (a name others see in place of theirs), gender,
-        description, birthday and name colour with the <code className={code}>/rpcharacter</code> commands listed below.
+        While playing, you can change your character&apos;s alias, gender, description, birthday and name colour with
+        the <code className={code}>/rpcharacter</code> commands below. The alias is the name others see in place of your
+        character&apos;s real name, and you first set it during creation. A mask still hides it in in-character chat.
+      </p>
+      <p className={`mt-3 ${body}`}>
         Players with <RankName rank="Noble" />, <RankName rank="Gilded" />, <RankName rank="Ascended" /> or{" "}
         <RankName rank="Legacy" /> rank can also use colour codes in chat and in their description.
       </p>

@@ -752,12 +752,11 @@ export const vehicleCommands: WikiCommandSet = {
   commands: [
     {
       command: "/vf keybinds",
-      description: "Prints controls for your current vehicle and its current state. Sit in a vehicle first.",
+      description: "Shows the keys for the vehicle you are sitting in. They change with what the vehicle is doing.",
     },
     {
       command: "/vf findvehicles",
-      description:
-        "Lists your vehicles and their world coordinates. An unloaded vehicle can show location unknown (stored).",
+      description: 'Lists your vehicles and where they are. A vehicle in storage shows "location unknown (stored)".',
     },
   ],
 };
@@ -807,7 +806,7 @@ export const vehicleRecipes: Recipe[] = vehicles.map((vehicle) => ({
     return texture ? { name, qty: Number(qty), texture } : { name, qty: Number(qty) };
   }),
   output: vehicleOutputSlot(vehicle),
-  note: `Construction takes ${vehicle.buildTime}; the vehicle spawns in the world.`,
+  note: `Takes ${vehicle.buildTime} to build. The finished vehicle appears in the world, not in your inventory.`,
 }));
 export const vehiclesSection: WikiSection = {
   nav: {
@@ -850,33 +849,37 @@ export const vehicleAmmunition: string[][] = [
 
 /** Weapon template, display name, accepted ammunition and how it is aimed. */
 export const vehicleWeapons: string[][] = [
-  ["gun_turret", "Mounted Rifle", "bullet", "Aims toward your cursor"],
-  ["naval_cannon", "Naval Cannon", "cannonball (+ clusterbomb on some)", "W/S elevation, A/D traverse"],
-  ["aa_turret", "Anti-Air Turret", "bullet", "W/S elevation, A/D traverse"],
-  ["autocannon", "Autocannon", "flak_bullet", "W/S elevation, A/D traverse"],
-  ["flak_cannon", "Flak Cannon (Anti-Air)", "flak_bullet", "W/S elevation, A/D traverse"],
+  ["gun_turret", "Mounted Rifle", "bullet", "Aims where you look"],
+  ["naval_cannon", "Naval Cannon", "cannonball (+ clusterbomb on some)", "W/S tilt, A/D turn"],
+  ["aa_turret", "Anti-Air Turret", "bullet", "W/S tilt, A/D turn"],
+  ["autocannon", "Autocannon", "flak_bullet", "W/S tilt, A/D turn"],
+  ["flak_cannon", "Flak Cannon (Anti-Air)", "flak_bullet", "W/S tilt, A/D turn"],
 ];
 
 export const vehicleTrackItems: string[][] = [
   [
     "Train Track Layer",
     "m.utils.train_track_layer",
-    "Left-click solid ground to mark the start, then right-click the end. Uses Train Track items from your inventory.",
+    "Left-click solid ground where the track starts, then right-click where it ends. It uses the Train Track in your inventory.",
   ],
-  ["Train Track Remover", "m.utils.train_track_remover", "Left-click track to remove it. Move trains off it first."],
+  [
+    "Train Track Remover",
+    "m.utils.train_track_remover",
+    "Left-click a piece of track to remove it. Move trains off it first.",
+  ],
   [
     "Train Track Recorder",
     "m.utils.train_track_recorder",
-    "Records a route, one lap of a loop or a run out along a line and back, so the Locomotive can drive it by itself.",
+    "Records a route so the Simple Locomotive can drive it by itself: one lap of a loop, or out along a line and back.",
   ],
   [
     "Train Track Junction",
     "m.utils.train_track_junction",
-    "Right-click existing track, then right-click the branch end with the Train Track Layer.",
+    "Right-click the track you want to branch from, then right-click where the branch ends with the Train Track Layer.",
   ],
   [
     "Train Track Dock",
     "m.utils.train_track_dock",
-    "Without sneaking, right-click a chest, barrel, shulker box, hopper, dispenser or dropper to make it a load dock, again for an unload dock, again to remove it.",
+    "Marks a chest or other container as a load dock or unload dock for your trains.",
   ],
 ];

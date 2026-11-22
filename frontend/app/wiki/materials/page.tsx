@@ -16,9 +16,13 @@ const sources: Array<[string, string, string]> = [
   [
     "Fishing",
     "/wiki/fishing",
-    "Any rod brings up metal fragments. Better rods also bring up graded leather, wool and feathers.",
+    "Any rod brings up Raw Iron, Raw Gold and Diamond Fragments. A Steel Rod also brings up Good Quality leather, wool and feathers, and an Abyssalite Rod brings up Great Quality ones.",
   ],
-  ["Animals", "/wiki/animal-husbandry", "Owned livestock give graded leather, wool and feathers."],
+  [
+    "Animals",
+    "/wiki/animal-husbandry",
+    "Owned livestock give Good, Great or Perfect Quality leather, wool and feathers. The higher an animal's genetics star tier, the better the quality.",
+  ],
 ];
 
 export default function MaterialsPage() {
@@ -26,10 +30,10 @@ export default function MaterialsPage() {
 
   return (
     <WikiPage
-      lastModified="2026-11-19"
+      lastModified="2026-11-21"
       title="Materials"
       width="lg"
-      intro="The custom materials you craft with. Open one to see where to find it and everything it makes."
+      intro="The server's own materials you craft with. Open one to see where to find it and everything it makes."
     >
       <WikiSectionHeading id="sources">Where materials come from</WikiSectionHeading>
       <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-[var(--tfmc-mist)]">
@@ -43,7 +47,8 @@ export default function MaterialsPage() {
         ))}
       </ul>
       <p className={body}>
-        A recipe card shows any profession perk or class a recipe needs. Click an ingredient on a card to open its page.
+        A recipe card shows any profession perk or supporter rank a recipe needs. Click an ingredient on a card to open
+        its page.
       </p>
 
       {MATERIAL_GROUPS.map((group) => {

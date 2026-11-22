@@ -17,13 +17,10 @@ const code = "text-[var(--tfmc-accent)]";
 export default function ArmourShopPage() {
   return (
     <WikiPage
-      lastModified="2026-11-18"
+      lastModified="2026-11-21"
       title="Armour Shop"
       intro={
-        <>
-          The Armour Shop changes how your armour, weapons and tools look. A skin changes only the look. The item keeps
-          its stats.
-        </>
+        <>The Armour Shop changes how your armour, weapons and tools look. A skin never changes an item&apos;s stats.</>
       }
     >
       <WikiSectionHeading id="applying" intro="Open the shop anywhere with /armourshop.">
@@ -31,7 +28,14 @@ export default function ArmourShopPage() {
       </WikiSectionHeading>
       <ol className={`mt-3 list-decimal space-y-2 pl-5 ${body}`}>
         <li>
-          Run <code className={code}>/armourshop</code> and choose Armour or Items, then a category.
+          Run <code className={code}>/armourshop</code> and choose Armour or Items, then a category. Besides weapons,
+          Items has categories for tools (hatchets, hoes, knives, pickaxes and shovels), instruments and books. Its
+          Canes category has free looks for the Walking Cane, and a cane with one of them still works as a Blind
+          character&apos;s cane (see{" "}
+          <Link href="/wiki/characters#blind" className={link}>
+            Getting around while Blind
+          </Link>
+          ).
         </li>
         <li>
           Armour skins are shown piece by piece: helmet, chestplate, leggings and boots. Each skin&apos;s tooltip shows
@@ -39,7 +43,7 @@ export default function ArmourShopPage() {
         </li>
         <li>
           Click a piece. The shop skins the first item in your inventory that fits, whether you carry it or wear it, and
-          uses up one scroll of that exact tier. A full armour set takes four clicks and four scrolls.
+          uses up one scroll of that exact tier. A full armour set takes 4 clicks and 4 scrolls.
         </li>
       </ol>
       <p className={`mt-3 ${body}`}>
@@ -59,15 +63,18 @@ export default function ArmourShopPage() {
       </WikiSectionHeading>
       <ItemGallery centeredSelectors selectorColumns={2} widePreview items={skinScrolls} />
       <p className={`mt-4 ${body}`}>
-        You earn scrolls from the higher weekly activity rewards, from the daily reward ranked players get once they
-        click that day&apos;s Voting card in <code className={code}>/activity</code>, and from{" "}
+        You earn scrolls from the higher weekly activity rewards and from{" "}
         <Link href="/wiki/trial-rooms" className={link}>
           Trial Room
         </Link>{" "}
-        loot. A higher tier never stands in for a lower one.
+        loot. <RankName rank="Noble" /> rank and above also get one a day for clicking that day&apos;s Voting card in{" "}
+        <code className={code}>/activity</code>. A higher tier never stands in for a lower one.
       </p>
 
-      <WikiSectionHeading id="custom-skins" intro="Ranked players can design their own skins on the website.">
+      <WikiSectionHeading
+        id="custom-skins"
+        intro="Supporters (Noble rank and above) can design their own skins on the website."
+      >
         Your own skins
       </WikiSectionHeading>
       <ol className={`mt-3 list-decimal space-y-2 pl-5 ${body}`}>

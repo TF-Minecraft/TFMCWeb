@@ -55,7 +55,7 @@ export const charactersCommands: WikiCommandSet = {
     },
     {
       command: "/rpcharacter injure <player>",
-      description: "Starts a consensual roleplay injury on another player. They must accept it.",
+      description: "Offers another player a roleplay injury. They must accept it.",
       notes: "10-block range, 30 seconds to accept.",
     },
     {
@@ -69,7 +69,8 @@ export const charactersCommands: WikiCommandSet = {
     },
     {
       command: "/rpcharacter alias <name>",
-      description: "Sets a name others see in place of your character's name (or /rpcharacter alias clear).",
+      description:
+        "Sets the name others see in place of your character's real name. /rpcharacter alias clear removes it.",
       notes: "10-second cooldown.",
     },
     {
@@ -99,12 +100,12 @@ export const charactersCommands: WikiCommandSet = {
     {
       command: "/roll [max or attribute] [+/-mod]",
       description: "Rolls dice and shows the result to players within 20 blocks.",
-      notes: "Bare /roll is 1 to 200; attribute rolls use a d20 plus the attribute's modifier.",
+      notes: "/roll on its own rolls 1 to 200. Attribute rolls are 1 to 20 plus the attribute's modifier.",
     },
     {
       command: "/players",
       description:
-        "Opens the list of online players. Hover a name for the account, rank and ping; click it for the sheet.",
+        "Opens the list of online players. Hover a name for the account, rank and ping. Click it for the sheet.",
       notes: "Also Who's online in the Quick Actions menu (G key).",
     },
     {
@@ -150,7 +151,7 @@ export const charactersCommands: WikiCommandSet = {
     },
     {
       command: "/channel [id]",
-      description: "Sets your default chat channel, or shows the current one with no argument.",
+      description: "Sets your default chat channel, or shows the current one when run on its own.",
       notes: "rp, ooc, looc, whisper, shout, yell, action.",
     },
     {
@@ -211,7 +212,7 @@ export const charactersCommands: WikiCommandSet = {
     },
     {
       command: "/rooc <message>",
-      description: "Out-of-character chat with your whole realm, overlord and vassals included.",
+      description: "Out-of-character chat with your whole realm, overlord and subjects included.",
       notes: "One message every 3 seconds.",
     },
     {

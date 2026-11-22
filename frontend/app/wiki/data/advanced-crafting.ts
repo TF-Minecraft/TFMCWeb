@@ -82,7 +82,7 @@ export const alloyForgeRecipe: Recipe = {
     { name: "Iron Ingot", qty: 1, texture: V("iron_ingot.png") },
   ],
   output: { name: "Alloy Forge", qty: 1, sourceId: "itemsadder:alloy_forge", model: alloyForgeModel },
-  note: "Right-click it with a Lava Bucket to forge; the bucket is emptied.",
+  note: "Right-click it with a Lava Bucket to forge. The bucket is emptied.",
 };
 
 export const advancedCraftingRecipes: Recipe[] = [weaponStationRecipe, ingredientConverterRecipe, alloyForgeRecipe];
@@ -96,7 +96,7 @@ export const advancedCraftingCommands: WikiCommandSet = {
     {
       command: "/alloy name <NewName>",
       description: "Names a new alloy you just forged. You have 60 seconds after forging it.",
-      notes: "Letters and underscores only; underscores show as spaces. The name must not already be taken.",
+      notes: "Letters and underscores only. Underscores show as spaces. The name must not already be taken.",
     },
     {
       command: "/alloy recipes",
@@ -170,13 +170,24 @@ export type StationRecipeTemplate = {
   /** Output name, still containing `%material%`. */
   name: string;
   category: StationRecipeCategory;
-  /** Sub-grouping for armor: the five armor classes. Absent elsewhere. */
+  /** Sub-grouping for armor: the five armour kinds (Light, Medium, Heavy, Infantry, Mage). Absent elsewhere. */
   group?: string;
+  /** Who can use the forged piece: the required classes of its MMOItems template (`MMOItems/item/*.yml` on Main). */
+  classes: string[];
   ingredients: TemplateIngredient[];
   socketGroup: "gemstones" | "mage_armor_runes";
 };
 
 const gem = "gemstones" as const;
+
+/** Required classes of each armour kind, the same for all four pieces. */
+const armourClasses = {
+  Light: ["Cleric", "Ranger", "Trapper", "Arcane Archer", "Minstrel", "Virtuoso", "Siren"],
+  Medium: ["Berserker", "Warlord", "Spellblade", "Crusader", "Templar"],
+  Heavy: ["Juggernaut", "Warden", "Runeward"],
+  Infantry: ["Musketeer"],
+  Mage: ["Invoker", "Conjurer", "Battlemage"],
+};
 
 /** recipes/weapons.yml: 13 entries, in file order. */
 export const weaponRecipeTemplates: StationRecipeTemplate[] = [
@@ -184,6 +195,7 @@ export const weaponRecipeTemplates: StationRecipeTemplate[] = [
     id: "sword",
     name: "%material% Sword",
     category: "weapons",
+    classes: ["Warlord", "Spellblade", "Templar", "Cleric", "Warden", "Runeward"],
     socketGroup: gem,
     ingredients: [
       { type: "metal", qty: 4 },
@@ -195,6 +207,7 @@ export const weaponRecipeTemplates: StationRecipeTemplate[] = [
     id: "battleaxe",
     name: "%material% Battleaxe",
     category: "weapons",
+    classes: ["Berserker", "Warlord", "Juggernaut"],
     socketGroup: gem,
     ingredients: [
       { type: "metal", qty: 4 },
@@ -206,6 +219,7 @@ export const weaponRecipeTemplates: StationRecipeTemplate[] = [
     id: "dagger",
     name: "%material% Dagger",
     category: "weapons",
+    classes: ["Spellblade", "Runeward"],
     socketGroup: gem,
     ingredients: [
       { type: "metal", qty: 4 },
@@ -217,6 +231,7 @@ export const weaponRecipeTemplates: StationRecipeTemplate[] = [
     id: "warhammer",
     name: "%material% Warhammer",
     category: "weapons",
+    classes: ["Crusader", "Templar", "Cleric", "Juggernaut", "Warden"],
     socketGroup: gem,
     ingredients: [
       { type: "metal", qty: 4 },
@@ -228,6 +243,7 @@ export const weaponRecipeTemplates: StationRecipeTemplate[] = [
     id: "spear",
     name: "%material% Spear",
     category: "weapons",
+    classes: ["Warlord", "Templar", "Cleric", "Warden", "Runeward"],
     socketGroup: gem,
     ingredients: [
       { type: "metal", qty: 4 },
@@ -239,6 +255,7 @@ export const weaponRecipeTemplates: StationRecipeTemplate[] = [
     id: "polearm",
     name: "%material% Polearm",
     category: "weapons",
+    classes: ["Warlord", "Templar", "Warden"],
     socketGroup: gem,
     ingredients: [
       { type: "metal", qty: 8 },
@@ -250,6 +267,7 @@ export const weaponRecipeTemplates: StationRecipeTemplate[] = [
     id: "greathammer",
     name: "%material% Greathammer",
     category: "weapons",
+    classes: ["Berserker", "Crusader", "Juggernaut"],
     socketGroup: gem,
     ingredients: [
       { type: "metal", qty: 8 },
@@ -261,6 +279,7 @@ export const weaponRecipeTemplates: StationRecipeTemplate[] = [
     id: "longsword",
     name: "%material% Longsword",
     category: "weapons",
+    classes: ["Warlord", "Spellblade", "Crusader"],
     socketGroup: gem,
     ingredients: [
       { type: "metal", qty: 8 },
@@ -272,6 +291,7 @@ export const weaponRecipeTemplates: StationRecipeTemplate[] = [
     id: "greataxe",
     name: "%material% Greataxe",
     category: "weapons",
+    classes: ["Berserker", "Juggernaut"],
     socketGroup: gem,
     ingredients: [
       { type: "metal", qty: 8 },
@@ -283,6 +303,7 @@ export const weaponRecipeTemplates: StationRecipeTemplate[] = [
     id: "lute",
     name: "%material% Lute",
     category: "weapons",
+    classes: ["Minstrel", "Virtuoso", "Siren"],
     socketGroup: gem,
     ingredients: [
       { type: "metal", qty: 4 },
@@ -294,6 +315,7 @@ export const weaponRecipeTemplates: StationRecipeTemplate[] = [
     id: "shortswords",
     name: "%material% Shortsword",
     category: "weapons",
+    classes: ["Berserker", "Spellblade"],
     socketGroup: gem,
     ingredients: [
       { type: "metal", qty: 4 },
@@ -305,6 +327,7 @@ export const weaponRecipeTemplates: StationRecipeTemplate[] = [
     id: "shield",
     name: "%material% Shield",
     category: "weapons",
+    classes: ["Crusader", "Templar", "Cleric", "Juggernaut", "Warden", "Runeward"],
     socketGroup: gem,
     ingredients: [
       { type: "wood", qty: 4 },
@@ -316,6 +339,7 @@ export const weaponRecipeTemplates: StationRecipeTemplate[] = [
     id: "banner",
     name: "%material% Battle Standard",
     category: "weapons",
+    classes: ["Warlord", "Crusader", "Warden"],
     socketGroup: gem,
     ingredients: [
       { type: "wood", qty: 4 },
@@ -331,6 +355,7 @@ export const bowRecipeTemplates: StationRecipeTemplate[] = [
     id: "shortbow",
     name: "%material% Shortbow",
     category: "bows",
+    classes: ["Arcane Archer"],
     socketGroup: gem,
     ingredients: [
       { type: "wood", qty: 4 },
@@ -341,6 +366,7 @@ export const bowRecipeTemplates: StationRecipeTemplate[] = [
     id: "crossbow",
     name: "%material% Crossbow",
     category: "bows",
+    classes: ["Trapper"],
     socketGroup: gem,
     ingredients: [
       { type: "wood", qty: 4 },
@@ -351,6 +377,7 @@ export const bowRecipeTemplates: StationRecipeTemplate[] = [
     id: "longbow",
     name: "%material% Longbow",
     category: "bows",
+    classes: ["Ranger"],
     socketGroup: gem,
     ingredients: [
       { type: "wood", qty: 8 },
@@ -366,6 +393,7 @@ export const armorRecipeTemplates: StationRecipeTemplate[] = [
     name: "Light %material% Helmet",
     category: "armor",
     group: "Light",
+    classes: armourClasses.Light,
     socketGroup: gem,
     ingredients: [
       { type: "metal", qty: 4 },
@@ -377,6 +405,7 @@ export const armorRecipeTemplates: StationRecipeTemplate[] = [
     name: "Light %material% Chestplate",
     category: "armor",
     group: "Light",
+    classes: armourClasses.Light,
     socketGroup: gem,
     ingredients: [
       { type: "metal", qty: 4 },
@@ -388,6 +417,7 @@ export const armorRecipeTemplates: StationRecipeTemplate[] = [
     name: "Light %material% Leggings",
     category: "armor",
     group: "Light",
+    classes: armourClasses.Light,
     socketGroup: gem,
     ingredients: [
       { type: "metal", qty: 4 },
@@ -399,6 +429,7 @@ export const armorRecipeTemplates: StationRecipeTemplate[] = [
     name: "Light %material% Boots",
     category: "armor",
     group: "Light",
+    classes: armourClasses.Light,
     socketGroup: gem,
     ingredients: [
       { type: "metal", qty: 4 },
@@ -410,6 +441,7 @@ export const armorRecipeTemplates: StationRecipeTemplate[] = [
     name: "Medium %material% Helmet",
     category: "armor",
     group: "Medium",
+    classes: armourClasses.Medium,
     socketGroup: gem,
     ingredients: [
       { type: "metal", qty: 4 },
@@ -421,6 +453,7 @@ export const armorRecipeTemplates: StationRecipeTemplate[] = [
     name: "Medium %material% Chestplate",
     category: "armor",
     group: "Medium",
+    classes: armourClasses.Medium,
     socketGroup: gem,
     ingredients: [
       { type: "metal", qty: 4 },
@@ -432,6 +465,7 @@ export const armorRecipeTemplates: StationRecipeTemplate[] = [
     name: "Medium %material% Leggings",
     category: "armor",
     group: "Medium",
+    classes: armourClasses.Medium,
     socketGroup: gem,
     ingredients: [
       { type: "metal", qty: 4 },
@@ -443,6 +477,7 @@ export const armorRecipeTemplates: StationRecipeTemplate[] = [
     name: "Medium %material% Boots",
     category: "armor",
     group: "Medium",
+    classes: armourClasses.Medium,
     socketGroup: gem,
     ingredients: [
       { type: "metal", qty: 4 },
@@ -454,6 +489,7 @@ export const armorRecipeTemplates: StationRecipeTemplate[] = [
     name: "Heavy %material% Helmet",
     category: "armor",
     group: "Heavy",
+    classes: armourClasses.Heavy,
     socketGroup: gem,
     ingredients: [
       { type: "metal", qty: 4 },
@@ -465,6 +501,7 @@ export const armorRecipeTemplates: StationRecipeTemplate[] = [
     name: "Heavy %material% Chestplate",
     category: "armor",
     group: "Heavy",
+    classes: armourClasses.Heavy,
     socketGroup: gem,
     ingredients: [
       { type: "metal", qty: 4 },
@@ -476,6 +513,7 @@ export const armorRecipeTemplates: StationRecipeTemplate[] = [
     name: "Heavy %material% Leggings",
     category: "armor",
     group: "Heavy",
+    classes: armourClasses.Heavy,
     socketGroup: gem,
     ingredients: [
       { type: "metal", qty: 4 },
@@ -487,6 +525,7 @@ export const armorRecipeTemplates: StationRecipeTemplate[] = [
     name: "Heavy %material% Boots",
     category: "armor",
     group: "Heavy",
+    classes: armourClasses.Heavy,
     socketGroup: gem,
     ingredients: [
       { type: "metal", qty: 4 },
@@ -498,6 +537,7 @@ export const armorRecipeTemplates: StationRecipeTemplate[] = [
     name: "Infantry %material% Cap",
     category: "armor",
     group: "Infantry",
+    classes: armourClasses.Infantry,
     socketGroup: gem,
     ingredients: [
       { type: "metal", qty: 4 },
@@ -509,6 +549,7 @@ export const armorRecipeTemplates: StationRecipeTemplate[] = [
     name: "Infantry %material% Jacket",
     category: "armor",
     group: "Infantry",
+    classes: armourClasses.Infantry,
     socketGroup: gem,
     ingredients: [
       { type: "metal", qty: 4 },
@@ -520,6 +561,7 @@ export const armorRecipeTemplates: StationRecipeTemplate[] = [
     name: "Infantry %material% Leggings",
     category: "armor",
     group: "Infantry",
+    classes: armourClasses.Infantry,
     socketGroup: gem,
     ingredients: [
       { type: "metal", qty: 4 },
@@ -531,6 +573,7 @@ export const armorRecipeTemplates: StationRecipeTemplate[] = [
     name: "Infantry %material% Boots",
     category: "armor",
     group: "Infantry",
+    classes: armourClasses.Infantry,
     socketGroup: gem,
     ingredients: [
       { type: "metal", qty: 4 },
@@ -542,6 +585,7 @@ export const armorRecipeTemplates: StationRecipeTemplate[] = [
     name: "Mage %material% Hood",
     category: "armor",
     group: "Mage",
+    classes: armourClasses.Mage,
     socketGroup: "mage_armor_runes",
     ingredients: [
       { type: "enchanted_dust", qty: 4 },
@@ -554,6 +598,7 @@ export const armorRecipeTemplates: StationRecipeTemplate[] = [
     name: "Mage %material% Robes",
     category: "armor",
     group: "Mage",
+    classes: armourClasses.Mage,
     socketGroup: "mage_armor_runes",
     ingredients: [
       { type: "enchanted_dust", qty: 4 },
@@ -566,6 +611,7 @@ export const armorRecipeTemplates: StationRecipeTemplate[] = [
     name: "Mage %material% Leggings",
     category: "armor",
     group: "Mage",
+    classes: armourClasses.Mage,
     socketGroup: "mage_armor_runes",
     ingredients: [
       { type: "enchanted_dust", qty: 4 },
@@ -578,6 +624,7 @@ export const armorRecipeTemplates: StationRecipeTemplate[] = [
     name: "Mage %material% Boots",
     category: "armor",
     group: "Mage",
+    classes: armourClasses.Mage,
     socketGroup: "mage_armor_runes",
     ingredients: [
       { type: "enchanted_dust", qty: 4 },

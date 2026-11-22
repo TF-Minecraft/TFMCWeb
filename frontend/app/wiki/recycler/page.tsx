@@ -11,14 +11,31 @@ const returns = [
     <Link key="ac" href="/wiki/advanced-crafting" className={link}>
       Forged weapons and armour
     </Link>,
-    "Up to half the materials. An alloy comes back as its base metal or wood and its crystals. Take socketed gems and runes out first, or recycling destroys them.",
+    <span key="ac-returns">
+      Up to half the materials. An alloy comes back as its base metal or wood and its crystals. Take socketed gems and
+      runes out first with an{" "}
+      <Link href="/wiki/gem-infusion#socketing" className={link}>
+        Unsocket Tool
+      </Link>
+      , or recycling destroys them.
+    </span>,
   ],
-  ["Guns", "Up to half the materials the gun was made from. Broken guns and guns made before tracking began can't."],
+  [
+    "Guns",
+    <span key="gun-returns">
+      Up to half the materials the gun was made from. Broken guns can&apos;t be recycled, and guns given by staff return
+      nothing. Guns built before each part had its own material are taken apart automatically instead (see{" "}
+      <Link href="/wiki/guns#old-guns" className={link}>
+        Old guns
+      </Link>
+      ).
+    </span>,
+  ],
   [
     <Link key="magic" href="/wiki/mage-weapons" className={link}>
       Mage weapons
     </Link>,
-    "Up to half the materials paid to craft it. Take any runes out first. Broken ones can't.",
+    "Up to half the materials paid to craft it. Take any runes out first. Broken ones can't be recycled.",
   ],
   [
     <Link key="gold" href="/wiki/gem-infusion" className={link}>
@@ -32,14 +49,14 @@ const returns = [
   ["Spent husks", "Half an artifact's dust: 2, 4, 6, 8 or 14."],
   [
     "Unusable Scrap",
-    "Each material in it has a chance to come back; its tooltip shows the odds. The scrap is used up either way.",
+    "Each material in it has a chance to come back, and the scrap's tooltip shows the odds. The scrap is used up either way.",
   ],
 ];
 
 export default function RecyclerPage() {
   return (
     <WikiPage
-      lastModified="2026-10-24"
+      lastModified="2026-11-21"
       title="Recycling"
       intro={
         <>
@@ -62,18 +79,18 @@ export default function RecyclerPage() {
         </li>
       </ol>
       <p className={`mt-3 ${body}`}>
-        Gear returns at most half of what went into it, less the more worn it is. Each material is rounded down, so a
-        material that went in only once won&apos;t come back, and fully broken gear gives nothing. If nothing would come
-        back, confirming tells you so and you keep the item. If you close the menu with an item still in it, you get the
-        item back. With a full inventory, it waits for your character until you have room.
+        Gear gives back at most half of what went into it, and less the more worn it is. Each material is rounded down,
+        so a material that went in only once won&apos;t come back, and fully broken gear gives nothing. If nothing would
+        come back, confirming tells you so and you keep the item. If you close the menu with an item still in it, you
+        get the item back. With a full inventory, it waits for your character until you have room.
       </p>
 
       <WikiSectionHeading id="what-recycles">What you get back</WikiSectionHeading>
       <DataTable columns={[{ header: "Item" }, { header: "Returns" }]} rows={returns} />
-      <p className={`mt-3 ${body}`}>Vanilla items can&apos;t be recycled.</p>
+      <p className={`mt-3 ${body}`}>Ordinary Minecraft items can&apos;t be recycled.</p>
 
       <WikiSectionHeading id="building">Building the station</WikiSectionHeading>
-      <p className={body}>Made on a crafting table and placed on the floor.</p>
+      <p className={body}>Craft it at a crafting table and place it on the floor.</p>
       <div className="mt-4">
         <CraftingGrid recipe={recyclingStationRecipe} />
       </div>

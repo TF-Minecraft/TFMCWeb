@@ -1,6 +1,6 @@
 import type { WikiCommandSet, WikiSection } from "./types";
 
-// Thievery 1.8.3 on Main. Its plugin.yml has no permission nodes for these
+// Thievery 1.10.0 on Main. Its plugin.yml has no permission nodes for these
 // commands; the character archetype each one needs is noted per row. Locks,
 // keys and /thievery clearclues are documented on Locks & Keys (locks.ts).
 
@@ -10,19 +10,19 @@ export const thieveryCommandSet: WikiCommandSet = {
   commands: [
     {
       command: "/thievery loadout",
-      description: "Choose which kinds of items you can see and take. Thief or Bandit.",
+      description: "Opens the menu where you choose which kinds of items you can see and take. Thief or Bandit only.",
     },
     {
       command: "/pickpocket start",
-      description: "Then right-click a player within 4 blocks to pick their pocket. Thief only.",
+      description: "Run it, then right-click a player within 4 blocks to pick their pocket. Thief only.",
     },
     {
       command: "/robbery start",
-      description: "Then right-click a player within 4 blocks to demand a robbery. Bandit only.",
+      description: "Run it, then right-click a player within 4 blocks to demand a robbery. Bandit only.",
     },
     {
       command: "/robbery accept",
-      description: "Accepts a robbery demanded of you. Anyone can use it.",
+      description: "Agrees to a robbery someone has demanded of you. Anyone can use it.",
     },
   ],
 };
@@ -32,7 +32,7 @@ export const thieverySection: WikiSection = {
     href: "/wiki/thievery",
     label: "Thievery",
     category: "combat",
-    blurb: "Thieves and bandits: picking locks and pockets, robbing players and looting graves.",
+    blurb: "Thieves and Bandits: picking locks and pockets, robbing players and looting graves.",
   },
   commands: thieveryCommandSet,
 };

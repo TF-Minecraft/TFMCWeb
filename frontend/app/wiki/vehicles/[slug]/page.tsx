@@ -15,7 +15,7 @@ export default async function VehicleDetail({ params }: { params: Promise<{ slug
   const seats = getSeatCounts(vehicle);
   const seatless = seats.total === 0;
   return (
-    <WikiPage lastModified="2026-11-12" title={vehicle.name}>
+    <WikiPage lastModified="2026-11-21" title={vehicle.name}>
       <Link href="/wiki/vehicles" className="text-sm text-[var(--tfmc-accent)] underline">
         All vehicles and operating guide
       </Link>
@@ -57,10 +57,12 @@ export default async function VehicleDetail({ params }: { params: Promise<{ slug
         })}
       />
       <p className="mt-4 text-sm text-[var(--tfmc-mist)]">
-        Select this blueprint at the station, stand at the building spot within 12 blocks and left-click before the
-        30-second selection timer expires. Inputs are consumed at placement. Stay within 96 blocks when construction
-        finishes{seatless ? "" : ", then right-click to select a seat"}. Breaking the station during construction
-        cancels the build and drops the inputs at the station.
+        Choose this blueprint at the station, stand where you want the vehicle, within 12 blocks of the station, and
+        left-click within 30 seconds. If your faction charges a Registration Fee, that click only shows the fee:
+        left-click again to pay it from your personal bank. The materials are taken from your inventory when the build
+        starts. The finished vehicle appears once a player is within 96 blocks.
+        {seatless ? "" : " Right-click it to pick a seat."} Breaking the station during the build cancels it and drops
+        the materials at the station.
       </p>
       <WikiSectionHeading id="specifications">Specifications</WikiSectionHeading>
       <DataTable
@@ -80,47 +82,48 @@ export default async function VehicleDetail({ params }: { params: Promise<{ slug
             rows={[[vehicle.fuelStats.capacity, vehicle.fuelStats.items]]}
           />
           <Callout>
-            Each fuel item supplies 100 units. Hold <WikiItemLink name={vehicle.fuel} /> and right-click once per item.{" "}
+            Hold <WikiItemLink name={vehicle.fuel} /> and right-click the vehicle once per item. Each one adds 100 fuel.{" "}
             {vehicle.fuel === "Arcane Fuel" ? (
               <>
-                Stop the engine before adding <WikiItemLink name="Arcane Fuel" />.
+                Stop the engine before you add <WikiItemLink name="Arcane Fuel" />.
               </>
             ) : (
-              "Coal Blocks can be added while the engine runs."
+              "Coal Blocks can go in while the engine runs."
             )}{" "}
             {vehicle.category === "planes" || vehicle.category === "airships"
               ? vehicle.id === "behemoth"
-                ? "The Behemoth can refuel and reload in flight."
+                ? "The Behemoth can also refuel and reload in flight."
                 : vehicle.weapons === "N/A"
-                  ? "Land before refuelling."
-                  : "Land before refuelling. Land to reload bomb bays and the Monoplane's or Biplane's front rifles; other mounted guns can reload in flight."
+                  ? "Land before you refuel."
+                  : "Land before you refuel. Bomb bays and the Monoplane's and Biplane's front rifles also reload on the ground only. Other mounted guns can reload in flight."
               : null}{" "}
-            Fuel burn is flat whenever the engine runs at nonzero throttle; using 20% throttle does not save fuel.
-            {vehicle.category === "train" ? " Overdrive above 100% burns more." : null}
+            A running engine burns fuel at the same rate at any throttle, so going slowly saves nothing. At zero
+            throttle it burns none.
+            {vehicle.category === "train" ? " Above 100% throttle it burns more." : null}
           </Callout>
         </>
       ) : (
         <Callout>
-          This vehicle has no fuel tank to fill.{" "}
+          This vehicle needs no fuel.{" "}
           {vehicle.fuel.includes("wind")
-            ? "Its sails use wind."
-            : "See its movement type above; train cars and emplacements have no independent engine."}
+            ? "Its sails use the wind."
+            : "Train cars follow the train they are coupled to, and fixed guns have no engine."}
         </Callout>
       )}
       {vehicle.category === "train" ? (
         <Callout variant="warning">
-          Build this vehicle on custom <WikiItemLink name="Train Track">train tracks</WikiItemLink>. See the{" "}
+          Build this on <WikiItemLink name="Train Track" />. See{" "}
           <Link href="/wiki/vehicles#tracks" className="underline">
-            train-track guide
+            Train tracks
           </Link>
           .
         </Callout>
       ) : null}
       {vehicle.id === "small_car" ? (
         <Callout>
-          Start the engine before driving and use the gears to increase speed. Space toggles headlights; left-click
-          sounds the horn. Run <code className="text-[var(--tfmc-accent)]">/vf keybinds</code> while seated for the
-          driving controls.
+          Start the engine before you drive and use the gears to go faster. Space switches the headlights on and off,
+          and left-click sounds the horn. Run <code className="text-[var(--tfmc-accent)]">/vf keybinds</code> in the
+          seat for the other keys.
         </Callout>
       ) : null}
       <WikiSectionHeading id="operating">Operate and maintain</WikiSectionHeading>
@@ -129,38 +132,46 @@ export default async function VehicleDetail({ params }: { params: Promise<{ slug
           <>The car follows the train it is coupled to. </>
         ) : (
           <>
-            Right-click to select a seat.{" "}
+            Right-click it to pick a seat.{" "}
             {seats.captain > 0 ? (
               <>
-                Only the captain steers; run <code className="text-[var(--tfmc-accent)]">/vf keybinds</code> while
-                seated for this vehicle’s current controls.{" "}
+                Only the captain steers. Run <code className="text-[var(--tfmc-accent)]">/vf keybinds</code> in your
+                seat to see this vehicle&apos;s keys.{" "}
               </>
             ) : null}
             {vehicle.category === "airships"
-              ? "Use Shift + left-click for seat selection; in flight, Shift alone descends."
+              ? "To open the seat menu again, sneak and left-click, because sneak alone makes a flying airship go down."
               : vehicle.category === "planes"
-                ? "Use Shift + left-click for seat selection."
-                : "Shift reopens seat selection."}{" "}
+                ? "To open the seat menu again, sneak and left-click, because you hold sneak to steer and set the throttle."
+                : "Sneak to open the seat menu again."}{" "}
           </>
         )}
         Use{" "}
         <Link href="/wiki/vehicles#repair" className="underline">
           Vehicle Repair
         </Link>{" "}
-        from outside while stationary and grounded{seats.mechanic > 0 ? ", or from a mechanic seat" : ""}.
+        from outside while the vehicle is on the ground and not moving
+        {seats.mechanic > 0 ? ", or from a mechanic seat" : ""}.
       </p>
       <p className="mt-3 text-sm text-[var(--tfmc-mist)]">
-        Your finished build starts with whitelisting on. Claiming an unowned vehicle, receiving a handover or receiving
-        a faction vehicle starts with whitelisting off.{" "}
-        {seatless
-          ? "The owner (and the faction, for a faction car) can always open the hold. While whitelisting is on, whitelisted players and allowed groups can open it too; a ticket does not."
-          : "Turn it on in Ownership Settings to control passenger access and tickets."}{" "}
-        Unloading beyond 160 blocks is storage, not destruction; use{" "}
-        <code className="text-[var(--tfmc-accent)]">/vf findvehicles</code> to locate your vehicles.
+        {seatless ? (
+          "The owner can always open the hold, and so can the faction of a faction-owned car. A car you build starts with its whitelist on. While it is on, characters on the list and members of the switched-on groups can open the hold too. A ticket doesn't open it."
+        ) : (
+          <>
+            A vehicle you build starts with its whitelist on, so only you and the characters and groups you allow can
+            board. One you claim, are given or inherit starts with it off, so anyone can board. Change it in{" "}
+            <Link href="/wiki/vehicles#ownership" className="underline">
+              Ownership Settings
+            </Link>
+            .
+          </>
+        )}{" "}
+        With no player within 160 blocks, the vehicle is put into storage, not destroyed.{" "}
+        <code className="text-[var(--tfmc-accent)]">/vf findvehicles</code> lists your vehicles.
         {vehicle.category === "train" ? (
           <>
             {" "}
-            A train driving a recorded route with fuel and nobody aboard keeps running instead (see{" "}
+            A train on a recorded route with fuel and nobody aboard keeps running instead (see{" "}
             <Link href="/wiki/vehicles#routes" className="underline">
               Teach a train a route
             </Link>
@@ -169,7 +180,7 @@ export default async function VehicleDetail({ params }: { params: Promise<{ slug
         ) : null}
       </p>
       <Link href="/wiki/vehicles#operation" className="mt-4 inline-block text-[var(--tfmc-accent)] underline">
-        Full driving, weapons, repair, storage and ownership instructions
+        Full driving, weapons, repair, storage and ownership guide
       </Link>
     </WikiPage>
   );

@@ -57,13 +57,13 @@ const cropGalleryItems = crops.map(([name, perk, stages, regrows]) => {
 export default function FarmingPage() {
   return (
     <WikiPage
-      lastModified="2026-11-19"
+      lastModified="2026-11-21"
       title="Farming"
       width="lg"
       intro={
         <>
-          Farms grow two kinds of crops: the usual field crops, such as wheat and potatoes, and 27 custom fruits,
-          vegetables and spices for{" "}
+          Farms grow two kinds of crops: the usual field crops, such as wheat and potatoes, and 27 fruits, vegetables
+          and spices of the server&apos;s own (the guide calls them custom crops) for{" "}
           <Link href="/wiki/cooking" className={link}>
             Cooking
           </Link>{" "}
@@ -107,30 +107,31 @@ export default function FarmingPage() {
 
       <WikiSectionHeading id="field-crops">Field crops and hoes</WikiSectionHeading>
       <p className={body}>
-        Wheat, potatoes, carrots, beetroots and nether wart are vanilla crops and need no perk. Harvest them by breaking
-        a ripe crop with one of the server&apos;s hoes. Every ripe crop in the hoe&apos;s area is cut at once, the
-        produce goes into your inventory, and each spot replants itself a moment later. Unripe crops are left alone.
-        Crops broken by hand drop as normal, but their produce is always 1 star. Bone meal does not work on field crops.
+        Wheat, potatoes, carrots, beetroots and nether wart are ordinary Minecraft crops and need no perk. Harvest them
+        by breaking a ripe crop with one of the server&apos;s hoes. Every ripe crop in the hoe&apos;s area is cut at
+        once, the produce goes into your inventory, and each spot replants itself a moment later. Unripe crops are left
+        alone. Crops broken by hand drop as normal, but their produce is always 1 star. Bone meal does not work on field
+        crops.
       </p>
       <DataTable
         className="mt-4"
-        columns={[
-          { header: "Hoe" },
-          { header: "Area", align: "center" },
-          { header: "Chance of +1 star", align: "right" },
-          { header: "Durability", align: "right" },
-        ]}
+        columns={[{ header: "Hoe" }, { header: "Area", align: "center" }, { header: "Durability", align: "right" }]}
         rows={[
-          [<WikiItemLink key="iron" name="Iron Hoe" />, "1 crop", "None", "600"],
-          [<WikiItemLink key="steel" name="Steel Hoe" />, "3×3", "3.5%", "1,200"],
-          [<WikiItemLink key="abyssalite" name="Abyssalite Hoe" />, "5×5", "6%", "2,400"],
-          [<WikiItemLink key="mythril" name="Mythril Hoe" />, "7×7", "10%", "4,800"],
+          [<WikiItemLink key="iron" name="Iron Hoe" />, "1 crop", "600"],
+          [<WikiItemLink key="steel" name="Steel Hoe" />, "3×3", "1,200"],
+          [<WikiItemLink key="abyssalite" name="Abyssalite Hoe" />, "5×5", "2,400"],
+          [<WikiItemLink key="mythril" name="Mythril Hoe" />, "7×7", "4,800"],
         ]}
       />
       <p className={`mt-3 ${body}`}>
+        Steel, abyssalite and mythril hoes sometimes add a star to what they harvest, more often the better the hoe.
         Each crop harvested costs the hoe 1 durability. Crafting the steel, abyssalite and mythril hoes needs the Hoe
-        Maker perks from the Forager profession. Jumping on farmland does not turn it back to dirt, but it knocks the
-        crop growing on it back to a seedling.
+        Maker perks from the Forager profession.
+      </p>
+      <p className={`mt-3 ${body}`}>
+        Jumping on farmland with a field crop on it does not turn it back to dirt, but the crop drops back to a
+        seedling. Melon and pumpkin stems are protected the same way. Empty farmland still turns to dirt. Custom crops
+        cannot be trampled.
       </p>
 
       <WikiSectionHeading id="custom-crops">Custom crops</WikiSectionHeading>
@@ -148,7 +149,7 @@ export default function FarmingPage() {
         </li>
         <li>
           On wet farmland the crop gains a growth step roughly every 10 minutes, so in fertile land a crop ripens in 20
-          to 50 minutes. Crops only grow while their chunk is loaded. Bone meal sometimes adds a step or two.
+          to 50 minutes. Crops only grow while a player is nearby. Bone meal sometimes adds a step or two.
         </li>
         <li>
           Right-click a ripe crop with an empty hand to harvest 2 to 4 produce. Crops that regrow drop back to an
@@ -157,9 +158,9 @@ export default function FarmingPage() {
       </ol>
       <p className={`mt-3 ${body}`}>
         Breaking a ripe crop always gives its produce and a seed, but removes the plant, even one that would regrow.
-        Breaking an unripe crop loses the seed. Unripe crops can also wither: at a fertility of around 80, about one
-        crop in eight withers before it ripens. Poorer land means slower growth and more losses, and a crop on dry
-        farmland can still wither while it waits. Crops that regrow take the same risk each time they regrow.
+        Breaking an unripe crop loses the seed. Even in fertile land, some unripe crops wither before they ripen. Poorer
+        land means slower growth and more losses, and a crop on dry farmland can still wither while it waits. Crops that
+        regrow take the same risk each time they regrow.
       </p>
 
       <CropGallery crops={cropGalleryItems} />

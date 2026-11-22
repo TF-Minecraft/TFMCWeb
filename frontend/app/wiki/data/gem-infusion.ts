@@ -108,7 +108,7 @@ export const gemInfusionSection: WikiSection = {
     href: "/wiki/gem-infusion",
     label: "Gems & Goldsmithing",
     category: "professions",
-    blurb: "Infuse gemstones, then set them in gold jewellery.",
+    blurb: "Infuse gemstones, then socket them in forged gear or set them in gold jewellery.",
   },
   commands: gemInfusionCommands,
 };
