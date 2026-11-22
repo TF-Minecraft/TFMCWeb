@@ -20,6 +20,12 @@ from .naming import (
     CROSSBOW_FRAME_FIELDS,
     MCMETA_SUFFIX,
 )
+from .vehicle_skins import (
+    VEHICLE_KIND,
+    texture_field,
+    texture_file_name,
+    vehicle_specs,
+)
 from .pack_models.gun import build_gun_models
 from .pack_models.large_bow import bow_file_suffix, build_large_bow_models
 from .pack_models.large_handheld import (
@@ -313,6 +319,26 @@ def _write_armor(
             _write_png(out_dir, files, key, (f"{key}.png",), ICON_SIZE)
 
 
+def _write_vehicle(
+    out_dir: Path, slug: str, vehicle_id: str | None, files: dict[str, bytes]
+) -> None:
+    """One still PNG per texture of the vehicle as ``{slug}_{n}.png`` (ArmourShop's names)."""
+    spec = vehicle_specs().get(vehicle_id or "")
+    if spec is None:
+        raise StorageError(f"Unknown vehicle: {vehicle_id}")
+    for index, texture in enumerate(spec.textures):
+        field = texture_field(index)
+        if field + MCMETA_SUFFIX in files:
+            raise StorageError(f"{field}: vehicle textures cannot be animated")
+        _write_png(
+            out_dir,
+            files,
+            field,
+            (texture_file_name(slug, index),),
+            (texture.width, texture.height),
+        )
+
+
 def write_submission_files(
     submission_id: str,
     slug: str,
@@ -363,6 +389,8 @@ def write_submission_files(
             _write_ranged_3d(out_dir, slug, kind, files)
         elif kind == GUN_KIND:
             _write_gun(out_dir, slug, files)
+        elif kind == VEHICLE_KIND:
+            _write_vehicle(out_dir, slug, base_set, files)
         elif kind == BOOK_KIND:
             for field in BOOK_FIELDS:
                 _write_png(

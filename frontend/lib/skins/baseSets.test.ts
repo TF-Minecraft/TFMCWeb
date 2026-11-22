@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import catalog from "../../../shared/skins/base_sets.json";
+import vehicleCatalog from "../../../shared/skins/vehicle_skins.json";
 import {
   ARMOR_METALS,
   ARMOR_SINGLE_SETS,
@@ -16,7 +17,11 @@ import {
 
 describe("base sets from shared/skins/base_sets.json", () => {
   it("lists every base set of the shared file once", () => {
-    expect(BASE_SET_ENTRIES.map((row) => row.id)).toEqual(catalog.base_sets.map((row) => row.id));
+    // Then every vehicle from shared/skins/vehicle_skins.json, as its own target.
+    expect(BASE_SET_ENTRIES.map((row) => row.id)).toEqual([
+      ...catalog.base_sets.map((row) => row.id),
+      ...vehicleCatalog.vehicles.map((v) => v.id),
+    ]);
     const groups = new Set(BASE_SET_GROUPS.map((g) => g.id));
     expect(BASE_SET_ENTRIES.every((row) => groups.has(row.group))).toBe(true);
   });

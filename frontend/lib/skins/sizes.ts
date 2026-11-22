@@ -15,7 +15,8 @@ export type SkinKind =
   | "helmet_3d"
   | "mask"
   | "gun"
-  | "book";
+  | "book"
+  | "vehicle";
 
 export type Size = { w: number; h: number };
 
@@ -69,6 +70,11 @@ export function isBookKind(kind: SkinKind): boolean {
   return kind === "book";
 }
 
+/** Vehicle skins repaint every texture of a vehicle; their fields depend on the vehicle. */
+export function isVehicleKind(kind: SkinKind | string | null | undefined): boolean {
+  return kind === "vehicle";
+}
+
 export function fileFieldsForKind(kind: SkinKind): readonly string[] {
   if (kind === "armor_set") {
     return ARMOR_FIELDS;
@@ -93,6 +99,10 @@ export function fileFieldsForKind(kind: SkinKind): readonly string[] {
   }
   if (isBookKind(kind)) {
     return BOOK_FIELDS;
+  }
+  if (isVehicleKind(kind)) {
+    // One per texture of the chosen vehicle (vehicleSkins.ts).
+    return [];
   }
   return ["texture"];
 }

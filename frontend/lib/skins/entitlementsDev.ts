@@ -34,7 +34,7 @@ export const DEV_CATALOG_ENTITLEMENTS: CatalogEntitlements = {
       name_colour_stops: 2,
       max_3d_pair_bytes: 30720,
       skin_token_cooldown_days: 21,
-      skin_kinds: ["armor_set"],
+      skin_kinds: ["armor_set", "vehicle"],
       allow_armor_3d_helmet: false,
     },
     {
@@ -63,4 +63,4 @@ export const DEV_CATALOG_ENTITLEMENTS: CatalogEntitlements = {
 };
 
 /** Resolved ascended-level kinds for local upload smoke without a redeem. */
-export const DEV_SESSION_SKIN_KINDS = [...NOBLE_KINDS, "armor_set", ...ASCENDED_KINDS];
+export const DEV_SESSION_SKIN_KINDS = [...NOBLE_KINDS, "armor_set", "vehicle", ...ASCENDED_KINDS];

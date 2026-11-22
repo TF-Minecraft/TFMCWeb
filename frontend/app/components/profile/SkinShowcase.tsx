@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import ArmorPreview from "../skins/ArmorPreview";
 import ModelPreview from "../skins/ModelPreview";
+import WikiModelViewer from "../wiki/WikiModelViewer";
+import { vehicleModelUrl, vehicleSpec, vehicleTextureField, vehicleTextureMap } from "../../../lib/skins/vehicleSkins";
 import { kindLabel } from "../skins/KindPicker";
 import { getSubmissionFile, type SubmissionPublic } from "../../../lib/skins/api";
 import { armorTierLabel, baseSetLabel } from "../../../lib/skins/baseSets";
@@ -61,12 +63,12 @@ function statusMessage(row: SubmissionPublic): string {
 function useOwnerFiles(row: SubmissionPublic, sessionToken: string): Files | null {
   const [files, setFiles] = useState<Files | null>(null);
   // Checking the status again returns a new row; the files only change with the skin.
-  const { kind, slug } = row;
+  const { kind, slug, base_set } = row;
   const tiers = (row.tiers ?? []).join(",");
   const names = useMemo(() => {
-    const row = { kind, slug, tiers: tiers ? tiers.split(",") : [] };
+    const row = { kind, slug, base_set, tiers: tiers ? tiers.split(",") : [] };
     return { ...ownerFileNames(row), ...ownerAnimationFileNames(row) };
-  }, [kind, slug, tiers]);
+  }, [kind, slug, base_set, tiers]);
   useEffect(() => {
     let live = true;
     setFiles(null);
@@ -158,6 +160,44 @@ function ArmourView({ row, files, fallback, children }: ViewProps) {
             }))}
           />
         </>
+      }
+    >
+      {children}
+    </Showcase>
+  );
+}
+
+/** A vehicle skin on its vehicle; textures that failed to load show the original. */
+function VehicleView({ row, files, fallback, children }: ViewProps) {
+  const vehicle = row.base_set ?? "";
+  const spec = vehicleSpec(vehicle);
+  const picked = (spec?.textures ?? []).map((_, i) => files[vehicleTextureField(i)] ?? null);
+  const [urls, setUrls] = useState<(string | null)[]>([]);
+  const key = picked.map((f) => (f ? `${f.size}:${f.lastModified}` : "")).join("|");
+  useEffect(() => {
+    const next = picked.map((file) => (file ? URL.createObjectURL(file) : null));
+    setUrls(next);
+    return () => next.forEach((url) => url && URL.revokeObjectURL(url));
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `key` stands for the files
+  }, [key]);
+  const textures = useMemo(() => vehicleTextureMap(vehicle, urls), [vehicle, urls]);
+  return (
+    <Showcase
+      stage={
+        // Every texture or none: a missing one would show the original as if it were the skin.
+        spec && urls.length === spec.textures.length && urls.every(Boolean) ? (
+          <Turnable>
+            <WikiModelViewer
+              modelUrl={vehicleModelUrl(vehicle)}
+              textures={textures}
+              label={`${row.display_name} on the ${spec.label}`}
+              height="lg"
+              className="h-full"
+            />
+          </Turnable>
+        ) : (
+          fallback
+        )
       }
     >
       {children}
@@ -338,5 +378,6 @@ export default function SkinShowcase({
   const props = { row, files, fallback, children: aside };
   if (row.kind === "armor_set") return <ArmourView {...props} />;
   if (row.kind === "book") return <BookView {...props} />;
+  if (row.kind === "vehicle") return <VehicleView {...props} />;
   return <ItemView {...props} />;
 }

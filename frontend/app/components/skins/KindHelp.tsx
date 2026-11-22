@@ -156,6 +156,21 @@ const GUIDES: Record<SkinKind, KindGuide> = {
       "Set the item name / colours, then submit.",
     ],
   },
+  vehicle: {
+    title: "Vehicle",
+    summary: "Repaint a vehicle: you paint over its own textures, and the shape stays the same.",
+    steps: [
+      "Choose the vehicle.",
+      "Download the 3D paint file and open it in Blockbench to paint on the vehicle itself, or download the flat textures (and their face guides) for any image editor.",
+      "Keep each texture the same size. In Blockbench, save each texture when you're done.",
+      "Upload each texture you painted; the ones you leave out stay as they are. The preview shows the vehicle with your paint.",
+      "Set the name, then submit.",
+    ],
+    notes: [
+      "Only you can put this skin on a vehicle, with Vehicle Paint, on vehicles you're allowed to paint.",
+      "Some vehicles have more than one texture: small ones are usually guns, wheels or ropes.",
+    ],
+  },
   book: {
     title: "Book",
     summary: "Two 16×16 covers: unsigned for the writable book, signed after the player signs it.",

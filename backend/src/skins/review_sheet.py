@@ -16,6 +16,7 @@ from src import database
 from .animation import first_frame, frame_count
 from .db import SKINS_DIR
 from .name_preview import render_name_preview_png
+from .vehicle_skins import VEHICLE_KIND, texture_file_name, vehicle_specs
 from .naming import ARMOR_FIELDS
 from .preview_3d import (
     PREVIEW_NAMES,
@@ -379,6 +380,41 @@ def _bow_body(
     return out
 
 
+VEHICLE_DISPLAY = 192
+
+
+def _vehicle_body(slug: str, base_set: str | None, out_dir: Path) -> Image.Image:
+    """Every texture of a vehicle skin side by side, in model order."""
+    spec = vehicle_specs().get(base_set or "")
+    if spec is None:
+        raise ReviewSheetError(f"Unknown vehicle: {base_set}")
+    frames: list[tuple[str, Path]] = [
+        (f"texture {i} · {t.width}x{t.height}", out_dir / texture_file_name(slug, i))
+        for i, t in enumerate(spec.textures)
+    ]
+    for _, path in frames:
+        if not path.is_file():
+            raise ReviewSheetError(f"Missing file: {path.name}")
+    cell_w = VEHICLE_DISPLAY + PAD * 2
+    cell_h = VEHICLE_DISPLAY + LABEL_H + PAD * 2
+    canvas = Image.new("RGB", (len(frames) * cell_w, cell_h + PAD), BG)
+    draw = ImageDraw.Draw(canvas)
+    font = _font(12)
+    for i, (label, path) in enumerate(frames):
+        x0 = i * cell_w + PAD
+        y0 = PAD
+        tile = _scale_nn(_load_rgba(path), VEHICLE_DISPLAY)
+        _paste_centered(canvas, tile, (x0, y0, x0 + VEHICLE_DISPLAY, y0 + VEHICLE_DISPLAY))
+        bbox = draw.textbbox((0, 0), label, font=font)
+        draw.text(
+            (x0 + (VEHICLE_DISPLAY - (bbox[2] - bbox[0])) // 2, y0 + VEHICLE_DISPLAY + 2),
+            label,
+            fill=LABEL_COLOR,
+            font=font,
+        )
+    return canvas
+
+
 def _book_body(
     slug: str,
     base_set: str | None,
@@ -513,6 +549,9 @@ def _compose_full_sheet(row, out_dir: Path) -> Image.Image:
         if base_set:
             caption_bits.append(f"base={base_set}")
         body = _book_body(slug, base_set, out_dir)
+    elif kind == VEHICLE_KIND:
+        caption_bits.append(f"vehicle={base_set}")
+        body = _vehicle_body(slug, base_set, out_dir)
     elif (
         kind in ITEM_KINDS
         or kind in MODEL_3D_KINDS

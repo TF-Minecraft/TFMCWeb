@@ -1,5 +1,6 @@
 import catalog from "../../../shared/skins/base_sets.json";
 import type { SkinKind } from "./sizes";
+import { VEHICLE_GROUP, VEHICLE_SKINS } from "./vehicleSkins";
 
 /**
  * What a player skin can apply to, from shared/skins/base_sets.json (the backend reads
@@ -17,12 +18,21 @@ export type BaseSetEntry = {
 
 export type ArmorSingleSet = { id: string; label: string; detail: string };
 
-export const BASE_SET_GROUPS: readonly BaseSetGroup[] = catalog.groups;
+export const BASE_SET_GROUPS: readonly BaseSetGroup[] = [...catalog.groups, VEHICLE_GROUP];
 
-export const BASE_SET_ENTRIES: readonly BaseSetEntry[] = catalog.base_sets.map((row) => ({
-  ...row,
-  kinds: row.kinds as SkinKind[],
-}));
+/** Vehicles come from shared/skins/vehicle_skins.json; their id is the vehicle's id. */
+export const BASE_SET_ENTRIES: readonly BaseSetEntry[] = [
+  ...catalog.base_sets.map((row) => ({
+    ...row,
+    kinds: row.kinds as SkinKind[],
+  })),
+  ...VEHICLE_SKINS.map((v) => ({
+    id: v.id,
+    label: v.label,
+    group: VEHICLE_GROUP.id,
+    kinds: ["vehicle"] as SkinKind[],
+  })),
+];
 
 /**
  * One armour submission is one metal line: up to one set per type, all the same
@@ -78,12 +88,14 @@ export const BASE_SETS: Record<SkinKind, readonly string[]> = {
   mask: setsFor("mask"),
   gun: setsFor("gun"),
   book: setsFor("book"),
+  vehicle: setsFor("vehicle"),
 };
 
 const LABELS: Record<string, string> = Object.fromEntries([
   ...catalog.armor.metals.map((m) => [m.id, m.label]),
   ...catalog.armor.single_sets.map((s) => [s.id, s.label]),
   ...catalog.base_sets.map((row) => [row.id, row.label]),
+  ...VEHICLE_SKINS.map((v) => [v.id, v.label]),
 ]);
 
 export function baseSetsForKind(kind: SkinKind): readonly string[] {
