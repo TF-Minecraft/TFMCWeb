@@ -1,9 +1,7 @@
-"""The lore panel API (/lore). Staff and lore team members only.
+"""The lore panel API (/lore). Discord roles and website staff determine panel access.
 
-Everything but `/lore/access` is hidden (404) while the panel is switched off
-(`LORE_PANEL`, see src/lore/flag.py). Reads need a signed-in member; writes also
-need the site's own origin. The bot's notification outbox uses the staff key.
-See docs/docs/lore/README.md.
+The panel and notification outbox are gated by LORE_PANEL. Access discovery
+and the staff-key role snapshot are available before the panel launches.
 """
 from __future__ import annotations
 
@@ -36,6 +34,7 @@ from src.skins.auth import HEADER_STAFF_KEY, AuthError, require_staff_key
 lore_router = APIRouter(prefix="/lore", tags=["lore"])
 
 BODY_LIMIT = 256 * 1024
+ROLE_SNAPSHOT_BODY_LIMIT = 3 * 1024 * 1024
 FACE_CACHE = "private, max-age=300"
 
 
@@ -84,6 +83,20 @@ async def _writer(request: Request, response: Response) -> people.Viewer:
     return await _reader(request, response)
 
 
+def _require_full(viewer: people.Viewer) -> people.Viewer:
+    if not viewer.full:
+        raise HTTPException(403, detail="lore_helpers_only")
+    return viewer
+
+
+async def _full_reader(viewer: people.Viewer = Depends(_reader)) -> people.Viewer:
+    return _require_full(viewer)
+
+
+async def _full_writer(viewer: people.Viewer = Depends(_writer)) -> people.Viewer:
+    return _require_full(viewer)
+
+
 async def _call(fn: Callable[..., Any], *args: Any) -> Any:
     try:
         return await run_in_threadpool(fn, *args)
@@ -108,17 +121,17 @@ def _png(data: bytes | None) -> Response:
 
 def _access(request: Request) -> dict[str, Any]:
     if not flag.enabled():
-        return {"enabled": False, "signed_in": False, "access": False, "can_manage_team": False, "user": None}
+        return {"enabled": False, "signed_in": False, "access": False, "level": None, "user": None}
     try:
         user = current_user(request, _config())
     except HTTPException:
-        return {"enabled": True, "signed_in": False, "access": False, "can_manage_team": False, "user": None}
+        return {"enabled": True, "signed_in": False, "access": False, "level": None, "user": None}
     viewer = people.viewer(user)
     return {
         "enabled": True,
         "signed_in": True,
         "access": viewer.access,
-        "can_manage_team": viewer.access and viewer.can_manage_team,
+        "level": viewer.level,
         "user": viewer.public() if viewer.access else None,
     }
 
@@ -137,7 +150,7 @@ async def get_access(request: Request, response: Response):
 @_gated.get("/overview")
 async def get_overview(
     today: str | None = Query(None, max_length=10),
-    viewer: people.Viewer = Depends(_reader),
+    viewer: people.Viewer = Depends(_full_reader),
 ):
     return await _call(overview.overview, viewer, None, today)
 
@@ -148,13 +161,13 @@ async def get_search(
     kinds: str = Query(default="", max_length=200),
     limit: int = Query(default=search.DEFAULT_LIMIT, ge=1, le=search.MAX_LIMIT),
     players: bool = Query(default=False),
-    viewer: people.Viewer = Depends(_reader),
+    viewer: people.Viewer = Depends(_full_reader),
 ):
     return {"results": await _call(lambda: search.search(q, kinds or None, limit, players=players))}
 
 
 @_gated.get("/deleted")
-async def get_deleted(viewer: people.Viewer = Depends(_reader)):
+async def get_deleted(viewer: people.Viewer = Depends(_full_reader)):
     return {"items": await _call(entities.deleted_items)}
 
 
@@ -193,12 +206,12 @@ async def get_availability(
     end: str = Query(alias="to", max_length=10),
     viewer: people.Viewer = Depends(_reader),
 ):
-    return await _call(availability.grid, start, end)
+    return await _call(availability.grid, viewer, start, end)
 
 
 @_gated.get("/availability/day/{day}")
 async def get_availability_day(day: str = Path(max_length=10), viewer: people.Viewer = Depends(_reader)):
-    return {"day": day, "people": await _call(availability.roster_on, day)}
+    return {"day": day, "people": await _call(availability.roster_on, viewer, day)}
 
 
 @_gated.get("/calendar")
@@ -207,7 +220,7 @@ async def get_calendar(
     end: str = Query(alias="to", max_length=10),
     viewer: people.Viewer = Depends(_reader),
 ):
-    return await _call(availability.calendar, start, end)
+    return await _call(availability.calendar, viewer, start, end)
 
 
 # --------------------
@@ -216,30 +229,8 @@ async def get_calendar(
 
 
 @_gated.get("/team")
-async def get_team(viewer: people.Viewer = Depends(_reader)):
+async def get_team(viewer: people.Viewer = Depends(_full_reader)):
     return await _call(team.team)
-
-
-@_gated.get("/team/candidates")
-async def get_team_candidates(q: str = Query(default="", max_length=64), viewer: people.Viewer = Depends(_reader)):
-    if not viewer.can_manage_team:
-        raise HTTPException(403, detail="forbidden")
-    return {"candidates": await _call(team.candidates, q)}
-
-
-@_gated.post("/team")
-async def post_team(request: Request, viewer: people.Viewer = Depends(_writer)):
-    return await _call(team.add, await _json(request), viewer)
-
-
-@_gated.patch("/team/{user_id}")
-async def patch_team(request: Request, user_id: int = ID(), viewer: people.Viewer = Depends(_writer)):
-    return await _call(team.update, user_id, await _json(request), viewer)
-
-
-@_gated.delete("/team/{user_id}")
-async def delete_team(user_id: int = ID(), viewer: people.Viewer = Depends(_writer)):
-    return await _call(team.remove, user_id, viewer)
 
 
 @_gated.get("/team/{user_id}/head.png")
@@ -259,28 +250,28 @@ async def get_team_head(user_id: int = ID(), viewer: people.Viewer = Depends(_re
 
 
 @_gated.post("/relations")
-async def post_relation(request: Request, viewer: people.Viewer = Depends(_writer)):
+async def post_relation(request: Request, viewer: people.Viewer = Depends(_full_writer)):
     return await _call(links.create_relation, await _json(request), viewer)
 
 
 @_gated.post("/player-characters")
-async def post_player_character(request: Request, viewer: people.Viewer = Depends(_writer)):
+async def post_player_character(request: Request, viewer: people.Viewer = Depends(_full_writer)):
     """The lore character for a player's roster character, created on first pick."""
     return await _call(player_characters.adopt, await _json(request), viewer)
 
 
 @_gated.patch("/relations/{relation_id}")
-async def patch_relation(request: Request, relation_id: int = ID(), viewer: people.Viewer = Depends(_writer)):
+async def patch_relation(request: Request, relation_id: int = ID(), viewer: people.Viewer = Depends(_full_writer)):
     return await _call(links.update_relation, relation_id, await _json(request), viewer)
 
 
 @_gated.delete("/relations/{relation_id}")
-async def delete_relation(relation_id: int = ID(), viewer: people.Viewer = Depends(_writer)):
+async def delete_relation(relation_id: int = ID(), viewer: people.Viewer = Depends(_full_writer)):
     return await _call(links.delete_relation, relation_id, viewer)
 
 
 def _link_route(path: str, fn: Callable[[int, Any, people.Viewer], dict]) -> None:
-    async def put_link(request: Request, entity_id: int = ID(), viewer: people.Viewer = Depends(_writer)):
+    async def put_link(request: Request, entity_id: int = ID(), viewer: people.Viewer = Depends(_full_writer)):
         return await _call(fn, entity_id, await _json(request), viewer)
 
     put_link.__name__ = f"put_{fn.__name__}"
@@ -305,25 +296,38 @@ _link_route("/events/{entity_id}/characters", links.set_event_characters)
 async def post_character_skin(
     character_id: int = ID(),
     skin: UploadFile = File(...),
-    viewer: people.Viewer = Depends(_writer),
+    viewer: people.Viewer = Depends(_full_writer),
 ):
     data = await skin.read(links.MAX_SKIN_BYTES + 1)
     return await _call(links.set_skin, character_id, data, viewer)
 
 
 @_gated.delete("/characters/{character_id}/skin")
-async def delete_character_skin(character_id: int = ID(), viewer: people.Viewer = Depends(_writer)):
+async def delete_character_skin(character_id: int = ID(), viewer: people.Viewer = Depends(_full_writer)):
     return await _call(links.clear_skin, character_id, viewer)
 
 
 @_gated.get("/characters/{character_id}/face.png")
-async def get_character_face(character_id: int = ID(), viewer: people.Viewer = Depends(_reader)):
+async def get_character_face(character_id: int = ID(), viewer: people.Viewer = Depends(_full_reader)):
     return _png(await run_in_threadpool(links.face, character_id))
 
 
 # --------------------
 # The bot's notification outbox (staff key)
 # --------------------
+
+
+@lore_router.put("/staff/discord-roles")
+async def put_discord_roles(
+    request: Request,
+    x_staff_key: str | None = Header(default=None, alias=HEADER_STAFF_KEY),
+):
+    _require_staff(x_staff_key)
+    try:
+        data = await read_json_body(request, ROLE_SNAPSHOT_BODY_LIMIT)
+    except HTTPException as exc:
+        raise HTTPException(400, detail="bad_discord_roles") from exc
+    return await _call(team.sync_discord_roles, data)
 
 
 @_gated.get("/staff/notifications")
@@ -358,26 +362,26 @@ def _kind_routes(kind: Kind) -> None:
         q: str = Query(default="", max_length=120),
         status: str | None = Query(default=None, max_length=32),
         include_deleted: bool = False,
-        viewer: people.Viewer = Depends(_reader),
+        viewer: people.Viewer = Depends(_full_reader),
     ):
         return {"items": await _call(entities.list_items, kind, q, status, include_deleted)}
 
-    async def create_kind(request: Request, viewer: people.Viewer = Depends(_writer)):
+    async def create_kind(request: Request, viewer: people.Viewer = Depends(_full_writer)):
         return await _call(entities.create, kind, await _json(request), viewer)
 
-    async def get_kind(entity_id: int = ID(), viewer: people.Viewer = Depends(_reader)):
+    async def get_kind(entity_id: int = ID(), viewer: people.Viewer = Depends(_full_reader)):
         return await _call(entities.detail, kind, entity_id)
 
-    async def update_kind(request: Request, entity_id: int = ID(), viewer: people.Viewer = Depends(_writer)):
+    async def update_kind(request: Request, entity_id: int = ID(), viewer: people.Viewer = Depends(_full_writer)):
         return await _call(entities.update, kind, entity_id, await _json(request), viewer)
 
-    async def delete_kind(entity_id: int = ID(), viewer: people.Viewer = Depends(_writer)):
+    async def delete_kind(entity_id: int = ID(), viewer: people.Viewer = Depends(_full_writer)):
         return await _call(entities.delete, kind, entity_id, viewer)
 
-    async def restore_kind(entity_id: int = ID(), viewer: people.Viewer = Depends(_writer)):
+    async def restore_kind(entity_id: int = ID(), viewer: people.Viewer = Depends(_full_writer)):
         return await _call(entities.restore, kind, entity_id, viewer)
 
-    async def history_kind(entity_id: int = ID(), viewer: people.Viewer = Depends(_reader)):
+    async def history_kind(entity_id: int = ID(), viewer: people.Viewer = Depends(_full_reader)):
         return {"history": await _call(history.for_entity, kind.name, entity_id)}
 
     for fn, method, path in (

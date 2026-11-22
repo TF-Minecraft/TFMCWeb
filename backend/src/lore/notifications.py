@@ -7,8 +7,8 @@ Rows are written in the same transaction as the event change:
   but `done`, sent to whoever was told about it since the last cancellation.
 
 Who is told about a day: roster members with notifications on, where the setting is
-`all`, or `available` (the default) and they are Full or Partial that day. Assigned
-helpers are told unless they turned notifications off.
+`all`, or `available` and they are Full or Partial that day. Assigned helpers
+are told unless they turned notifications off, including in `assigned` mode.
 
 The bot polls `pending` with the staff key and acks what it delivered, exactly like
 war notifications; handed-out rows come back after ten minutes until acked.
@@ -62,7 +62,7 @@ coalesce(
 def _audience(conn: database.Connection, event_id: int, day: date) -> list[dict]:
     """Roster members to tell about event `event_id` on `day`, with their status that day."""
     rows = conn.execute(
-        f"SELECT r.discord_user_id::text AS discord_user_id, r.notify_mode, {EFFECTIVE_SQL} AS day_status, "
+        f"SELECT r.discord_user_id::text AS discord_user_id, r.level, r.notify_mode, {EFFECTIVE_SQL} AS day_status, "
         "EXISTS (SELECT 1 FROM lore_event_helpers h WHERE h.event_id = %(event_id)s AND h.user_id = r.user_id) "
         "AS is_helper "
         f"FROM ({ROSTER_SQL}) r WHERE r.notify_mode <> 'off'",
@@ -72,7 +72,11 @@ def _audience(conn: database.Connection, event_id: int, day: date) -> list[dict]
         dict(row)
         for row in rows
         if row["discord_user_id"]
-        and (row["notify_mode"] == "all" or row["is_helper"] or row["day_status"] in ("full", "partial"))
+        and (
+            row["is_helper"]
+            or row["notify_mode"] == "all"
+            or (row["notify_mode"] == "available" and row["day_status"] in ("full", "partial"))
+        )
     ]
 
 
@@ -81,13 +85,13 @@ def _people(conn: database.Connection, event_id: int, day: date, discord_ids: se
     if not discord_ids:
         return []
     rows = conn.execute(
-        f"SELECT r.discord_user_id::text AS discord_user_id, r.notify_mode, {EFFECTIVE_SQL} AS day_status, "
+        f"SELECT r.discord_user_id::text AS discord_user_id, r.level, r.notify_mode, {EFFECTIVE_SQL} AS day_status, "
         "EXISTS (SELECT 1 FROM lore_event_helpers h WHERE h.event_id = %(event_id)s AND h.user_id = r.user_id) "
         "AS is_helper "
         f"FROM ({ROSTER_SQL}) r WHERE r.notify_mode <> 'off' AND r.discord_user_id::text = ANY(%(ids)s)",
         {"staff_roles": STAFF_ROLES, "day": day, "event_id": event_id, "ids": sorted(discord_ids)},
     ).fetchall()
-    return [dict(row) for row in rows]
+    return [dict(row) for row in rows if row["notify_mode"] != "assigned" or row["is_helper"]]
 
 
 def _told(conn: database.Connection, event_id: int) -> set[str]:
@@ -127,6 +131,31 @@ def _context(conn: database.Connection, event: dict) -> dict[str, Any]:
     }
 
 
+def _calendar_payload(payload: dict) -> dict:
+    """Keep only calendar information in the bot's existing payload shape."""
+    shown = (
+        "event_id", "title", "day", "starts_at", "kind", "recipient_status",
+        "recipient_is_helper", "previous_day", "previous_starts_at", "reason",
+    )
+    location = payload.get("location")
+    return {key: payload[key] for key in shown if key in payload} | {
+        "storyline": None,
+        "location": {"name": location["name"]} if location else None,
+        "url": f"{site_url()}/lore/calendar?day={payload['day']}",
+    }
+
+
+def _payload(base: dict, kind: str, person: dict) -> database.Jsonb:
+    payload = base | {
+        "kind": kind,
+        "recipient_status": person["day_status"],
+        "recipient_is_helper": person["is_helper"],
+    }
+    if person["level"] == "calendar":
+        payload = _calendar_payload(payload)
+    return database.Jsonb(jsonable_encoder(payload))
+
+
 def _enqueue(
     conn: database.Connection,
     kind: str,
@@ -156,16 +185,7 @@ def _enqueue(
                     event_id,
                     person["discord_user_id"],
                     day,
-                    database.Jsonb(
-                        jsonable_encoder(
-                            base
-                            | {
-                                "kind": kind,
-                                "recipient_status": person.get("day_status"),
-                                "recipient_is_helper": bool(person.get("is_helper")),
-                            }
-                        )
-                    ),
+                    _payload(base, kind, person),
                 )
                 for person in people
             ],
@@ -207,7 +227,7 @@ def on_event_change(conn: database.Connection, before: dict | None, after: dict)
             return
         day = before["scheduled_on"]
         told = _told(conn, event_id)
-        people = [{"discord_user_id": discord_id} for discord_id in sorted(told)]
+        people = _people(conn, event_id, day, told)
         base = _context(conn, before) | {"reason": "deleted" if after.get("deleted_at") else after.get("status")}
         _enqueue(conn, "event_cancelled", event_id, day, people, base)
 
@@ -218,7 +238,7 @@ def on_helpers_added(conn: database.Connection, event: dict, user_ids: set[int])
         return
     day = event["scheduled_on"]
     rows = conn.execute(
-        f"SELECT r.discord_user_id::text AS discord_user_id, r.notify_mode, {EFFECTIVE_SQL} AS day_status, "
+        f"SELECT r.discord_user_id::text AS discord_user_id, r.level, r.notify_mode, {EFFECTIVE_SQL} AS day_status, "
         "true AS is_helper "
         f"FROM ({ROSTER_SQL}) r WHERE r.notify_mode <> 'off' AND r.user_id = ANY(%(user_ids)s)",
         {"staff_roles": STAFF_ROLES, "day": day, "user_ids": sorted(user_ids)},
@@ -253,7 +273,7 @@ def _row(row: dict) -> dict:
         "discord_user_id": row["discord_user_id"],
         "event_day": _iso(row["event_day"]),
         "created_at": _iso(row["created_at"]),
-        "payload": row["payload"],
+        "payload": _calendar_payload(row["payload"]) if row["level"] == "calendar" else row["payload"],
     }
 
 
@@ -262,13 +282,17 @@ def pending(limit: int | None = None) -> list[dict]:
     limit = max(1, min(MAX_LIMIT, DEFAULT_LIMIT if limit is None else int(limit)))
     with database.connect() as conn:
         rows = conn.execute(
-            "WITH picked AS ("
-            " SELECT id FROM lore_notifications"
-            " WHERE acked_at IS NULL AND (dispatched_at IS NULL OR dispatched_at <= now() - %s)"
-            " ORDER BY id LIMIT %s FOR UPDATE SKIP LOCKED)"
+            f"WITH roster AS ({ROSTER_SQL}), picked AS ("
+            " SELECT n.id, r.level FROM lore_notifications n"
+            " JOIN roster r ON r.discord_user_id = n.discord_user_id"
+            " WHERE r.notify_mode <> 'off' AND n.acked_at IS NULL"
+            " AND (r.notify_mode <> 'assigned' OR EXISTS ("
+            "   SELECT 1 FROM lore_event_helpers h WHERE h.event_id = n.event_id AND h.user_id = r.user_id))"
+            " AND (n.dispatched_at IS NULL OR n.dispatched_at <= now() - %(retry)s)"
+            " ORDER BY n.id LIMIT %(limit)s FOR UPDATE OF n SKIP LOCKED)"
             " UPDATE lore_notifications n SET dispatched_at = now() FROM picked WHERE n.id = picked.id"
-            " RETURNING n.*",
-            (REDELIVER_AFTER, limit),
+            " RETURNING n.*, picked.level",
+            {"staff_roles": STAFF_ROLES, "retry": REDELIVER_AFTER, "limit": limit},
         ).fetchall()
     return [_row(row) for row in sorted(rows, key=lambda row: row["id"])]
 

@@ -33,9 +33,6 @@ export default function DayAvailability({
         return (
           <li key={person.user_id} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-1.5">
             <span className="min-w-0 break-words text-sm text-[var(--tfmc-cream)]">{person.name}</span>
-            {person.is_lead ? (
-              <span className="text-[10px] uppercase tracking-wider text-[var(--tfmc-stone)]">Lead</span>
-            ) : null}
             {showStatus ? <AvailabilityPill status={person.status} note={person.note} showNote /> : null}
             {onToggle ? (
               <button

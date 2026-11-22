@@ -27,8 +27,9 @@ export function loreSection(pathname: string): LoreSection | null {
   return null;
 }
 
-export default function LoreNav() {
+export default function LoreNav({ calendarOnly = false }: { calendarOnly?: boolean }) {
   const current = loreSection(usePathname() ?? "");
+  const links = calendarOnly ? LINKS.filter((link) => link.key === "calendar") : LINKS;
   const navRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -41,7 +42,7 @@ export default function LoreNav() {
       aria-label="Lore panel"
       className="-mb-px flex max-w-full select-none gap-4 overflow-x-auto [scrollbar-width:none] sm:gap-5"
     >
-      {LINKS.map((link) => (
+      {links.map((link) => (
         <Link
           key={link.key}
           href={link.href}

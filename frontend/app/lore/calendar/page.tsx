@@ -23,17 +23,21 @@ import {
   type MyAvailability,
 } from "@/lib/lore/api";
 import { eventsByDay, gridRange, weekStartOf } from "@/lib/lore/calendar";
-import { addMonths, browserTimeZone, formatMonth, monthStart, todayIn } from "@/lib/lore/dates";
+import { addMonths, browserTimeZone, formatMonth, isIsoDay, monthStart, todayIn } from "@/lib/lore/dates";
 
 type Loaded = { key: string; calendar: Calendar; me: MyAvailability };
 
 export default function LoreCalendarPage() {
   const access = useLoreAccess();
+  const full = access.level === "full";
   const myUserId = access.user?.user_id ?? null;
 
   // LoreFrame only renders pages after a client-side access check, so the browser zone is safe here.
-  const [month, setMonth] = useState(() => monthStart(todayIn(browserTimeZone())));
-  const [selected, setSelected] = useState<string | null>(null);
+  const [selected, setSelected] = useState<string | null>(() => {
+    const day = new URLSearchParams(window.location.search).get("day");
+    return day && isIsoDay(day) ? day : null;
+  });
+  const [month, setMonth] = useState(() => monthStart(selected ?? todayIn(browserTimeZone())));
   const [reloadKey, setReloadKey] = useState(0);
   const [loaded, setLoaded] = useState<Loaded | null>(null);
   const [error, setError] = useState("");
@@ -119,11 +123,12 @@ export default function LoreCalendarPage() {
       {!loaded && !error ? (
         <Notice>Loading…</Notice>
       ) : loaded ? (
-        <div className="mt-4 grid gap-x-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,20rem)]">
+        <div className={`mt-4 grid gap-x-6 ${full ? "lg:grid-cols-[minmax(0,1fr)_minmax(0,20rem)]" : ""}`}>
           <div className="min-w-0">
             <div className={current ? "" : "opacity-60"}>
               <MonthGrid
                 month={month}
+                full={full}
                 weeks={weeks}
                 today={today}
                 selected={selected}
@@ -140,6 +145,7 @@ export default function LoreCalendarPage() {
               <DayPanel
                 key={selected}
                 day={selected}
+                full={full}
                 events={byDay[selected] ?? []}
                 grid={calendar?.availability ?? null}
                 myUserId={myUserId}
@@ -149,42 +155,50 @@ export default function LoreCalendarPage() {
                 onClose={() => setSelected(null)}
               />
             ) : (
-              <p className={`${mutedClass} mt-3`}>Pick a day to see who is free, set your own day, or add an event.</p>
+              <p className={`${mutedClass} mt-3`}>
+                {full
+                  ? "Pick a day to see who is free, set your own day, or add an event."
+                  : "Pick a day to see events, check who is free, or set your availability."}
+              </p>
             )}
           </div>
 
-          <aside className="min-w-0">
-            <Section title="Not scheduled yet" className="lg:mt-0">
-              {(loaded.calendar.unscheduled ?? []).length === 0 ? (
-                <p className={mutedClass}>No ideas or waiting events.</p>
-              ) : (
-                <ul className={rowClass}>
-                  {loaded.calendar.unscheduled.map((event) => (
-                    <li key={event.id} className="flex flex-col gap-0.5 py-2">
-                      <span className="flex flex-wrap items-center gap-2">
-                        <Link
-                          href={`/lore/events/${event.id}`}
-                          className="text-sm text-[var(--tfmc-accent)] underline-offset-2 hover:underline"
-                        >
-                          {event.title}
-                        </Link>
-                        <StatusBadge status={event.status} />
-                      </span>
-                      {event.waiting_on ? (
-                        <span className="text-xs text-[var(--tfmc-mist)]">Waiting on: {event.waiting_on}</span>
-                      ) : null}
-                      {event.storyline_id && event.storyline_title ? (
-                        <span className="text-xs text-[var(--tfmc-stone)]">
-                          in{" "}
-                          <RefLink item={{ kind: "storyline", id: event.storyline_id, label: event.storyline_title }} />
+          {full ? (
+            <aside className="min-w-0">
+              <Section title="Not scheduled yet" className="lg:mt-0">
+                {(loaded.calendar.unscheduled ?? []).length === 0 ? (
+                  <p className={mutedClass}>No ideas or waiting events.</p>
+                ) : (
+                  <ul className={rowClass}>
+                    {loaded.calendar.unscheduled.map((event) => (
+                      <li key={event.id} className="flex flex-col gap-0.5 py-2">
+                        <span className="flex flex-wrap items-center gap-2">
+                          <Link
+                            href={`/lore/events/${event.id}`}
+                            className="text-sm text-[var(--tfmc-accent)] underline-offset-2 hover:underline"
+                          >
+                            {event.title}
+                          </Link>
+                          <StatusBadge status={event.status} />
                         </span>
-                      ) : null}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </Section>
-          </aside>
+                        {event.waiting_on ? (
+                          <span className="text-xs text-[var(--tfmc-mist)]">Waiting on: {event.waiting_on}</span>
+                        ) : null}
+                        {event.storyline_id && event.storyline_title ? (
+                          <span className="text-xs text-[var(--tfmc-stone)]">
+                            in{" "}
+                            <RefLink
+                              item={{ kind: "storyline", id: event.storyline_id, label: event.storyline_title }}
+                            />
+                          </span>
+                        ) : null}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </Section>
+            </aside>
+          ) : null}
         </div>
       ) : null}
 

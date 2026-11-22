@@ -34,7 +34,7 @@ def viewer_today(viewer: Viewer, browser_today: Any = None, now: datetime | None
 
 def overview(viewer: Viewer, today: date | None = None, browser_today: Any = None) -> dict[str, Any]:
     today = today or viewer_today(viewer, browser_today)
-    calendar = availability.calendar(today, today + timedelta(days=UPCOMING_DAYS - 1))
+    calendar = availability.calendar(viewer, today, today + timedelta(days=UPCOMING_DAYS - 1))
     with database.connect() as conn:
         recent = [
             dict(row)

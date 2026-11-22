@@ -1,30 +1,31 @@
 # Lore panel
 
-A staff-only workspace at `/lore` where the lore team keeps characters, organisations, storylines, events and lore locations, plans events against helper availability, and reaches places on the map. Everything is entered by hand. Pickers create a missing record inline, and every record links to the others and shows what mentions it.
+A workspace at `/lore` where the lore team keeps characters, organisations, storylines, events and lore locations, plans events against helper availability, and reaches places on the map. Everything is entered by hand. Pickers create a missing record inline, and every record links to the others and shows what mentions it.
 
-**Status:** on for dev.tfminecraft.net only, for the lore lead's review. Production keeps it off (see [Flag](#flag)).
+**Status:** on for dev.tfminecraft.net only, for review by the lore team. Production keeps it off (see [Flag](#flag)).
 
 ## Access
 
-| Who | Read | Add and edit | Manage the team |
-|-----|------|--------------|-----------------|
-| Website staff (`roles.is_staff`) | Yes | Yes | Yes |
-| Lore team lead (`lore_members.is_lead`) | Yes | Yes | Yes, but not to remove or demote themself |
-| Lore Helper (`lore_members`) | Yes | Yes | No (read-only team page) |
-| Anyone else | No | No | No |
+| Who | Access |
+|-----|--------|
+| Website staff (`roles.is_staff`) | Full panel, including creating and editing lore |
+| Discord Lore Helper | Full panel, including creating and editing lore |
+| Discord Helper | Calendar, personal availability and settings |
+| Anyone else | No access |
 
-- The Lore Helper roster lives in `lore_members` and is managed on `/lore/team`. There is no LuckPerms lore group.
-- Signed-out visitors get 401 and other players 403. The header's **Lore** link only shows when `GET /lore/access` returns `access: true`.
+- People with both Discord roles have full access. A Discord admin can change roles.
+- Signed-out visitors get 401 and players without access get 403. The header's **Lore** link shows when `GET /lore/access` returns `access: true`. Its `level` is `full`, `calendar`, or null.
 - Writes also need the site's `Origin`, and the view-as-player guard blocks them.
-- Only the roster can be assigned to events or notified. The roster is the lore members plus staff who have saved their availability or settings once.
+- The roster determines who can be assigned to events or notified. Lore Helpers join when they sign in to the site. Staff and Helpers join when they save availability or settings. Roster members who are website staff appear in the Staff group.
+- Losing access leaves existing event assignments and activity history intact.
 
 ## Flag
 
 `backend/src/lore/flag.py`: `LORE_PANEL=1|true|yes|on` turns it on and `0|false|no|off` turns it off. When unset, it is on unless `PS_PRODUCTION=1`.
 
-When off, every `/lore/*` route returns 404 except `GET /lore/access`, which returns `{"enabled": false, "access": false}`. The pages then show "not available". The frontend has no build-time flag.
+When off, `GET /lore/access` reports `enabled: false` and `access: false`. The role snapshot endpoint still accepts updates. The other `/lore/*` endpoints return 404. The pages show that the lore panel is unavailable.
 
-The `0012_lore_panel.sql` migration still runs everywhere, so production gets the empty tables at its next deploy.
+The lore migrations run in every environment.
 
 ## Pages
 
@@ -37,8 +38,10 @@ The `0012_lore_panel.sql` migration still runs everywhere, so production gets th
 | `/lore/events/[id]` | Date with each roster member's availability for that day, optional start time (in my time zone, with CET and EST shown), or "waiting on"; location, characters, helpers, outcome and history |
 | `/lore/calendar` | Month grid with events and Full/Partial counts, a day panel, unscheduled events, my weekly defaults, day and week overrides, notification mode and time zone |
 | `/lore/map` | Lore locations on the main map. Clicking a pin copies `/tp x y z` (`~` when y is unset). Locations are added by clicking the map. |
-| `/lore/team` | Roster, leads, add and remove |
+| `/lore/team` | Read-only roster grouped by Lore Helpers, Helpers and Staff, with the last sync time and number of role holders who have yet to sign in |
 | `/lore/deleted` | Restore soft-deleted records |
+
+Helpers opening `/lore` go straight to the calendar. Their calendar shows scheduled and completed events with the title, date, time, location name and assigned helpers. Availability summaries show statuses. Helpers can edit their own availability and settings.
 
 Character, organisation, storyline and event pages open to read. **Edit** in the header switches to the form, and **Done** saves and goes back to reading. Delete only shows while editing. A record made with a quick-create box opens in edit mode (`?edit=1`, dropped from the address once read).
 
@@ -58,12 +61,14 @@ Long-text fields (`summary`, `notes`, `outcome`) can hold links written as `[[ki
 
 ## Data
 
-Migrations `backend/src/database/migrations/0012_lore_panel.sql` and `0013_lore_player_characters.sql` (`rpc_realm_id`, `rpc_character_id` on `lore_characters`, unique per player and roster character).
+Migrations `backend/src/database/migrations/0012_lore_panel.sql`, `0013_lore_player_characters.sql` and `0014_lore_discord_roles.sql`.
 
 | Table | Holds |
 |-------|-------|
-| `lore_members` | Lore Helper roster, `is_lead`, who added them |
-| `lore_profiles` | Per-user time zone and `notify_mode` (`off`, `available`, `all`) |
+| `lore_discord_roles` | Discord user IDs and their synced `helper` or `lore_helper` roles |
+| `lore_discord_role_sync` | Last successful snapshot timestamp. Empty before the first sync |
+| `lore_members` | Unused since migration 0014. Kept for preview database restores until a later drop |
+| `lore_profiles` | Per-user time zone and `notify_mode` (`off`, `assigned`, `available`, `all`) |
 | `lore_weekly_availability`, `lore_availability` | Weekly defaults and per-day overrides (`full`, `partial`, `none`; no row = not set) |
 | `lore_characters`, `lore_organisations`, `lore_storylines`, `lore_locations`, `lore_events` | The records. Each has a `version` for edit conflicts and a `deleted_at` for soft delete |
 | `lore_character_affiliations`, `lore_relations`, `lore_storyline_members`, `lore_event_helpers`, `lore_event_characters` | Links between records |
@@ -77,24 +82,40 @@ Behaviour worth knowing:
 - Whole-list link saves keep links to soft-deleted records, so restoring a record brings its links back.
 - A day's status is the day override, else the weekly default, else not set.
 
-## Bot API (DM delivery: follow-up cog)
+## Bot API
 
-The website queues DMs now. tfmc_bot does not deliver them yet; the events page says so.
+The bot routes use `X-Staff-Key`.
 
-Rows are queued in the same transaction as the event change:
+```
+PUT /lore/staff/discord-roles  {"helper": ["123"], "lore_helper": ["456"]}
+-> {"helper": 1, "lore_helper": 1, "added": 2, "removed": 0, "synced_at": "<ISO timestamp>"}
+```
 
-- **`event_scheduled`:** an event became `scheduled` with a date. Recipients are roster users with a linked Discord account whose `notify_mode` is `all`, or `available` (the default) and Full or Partial that day. Assigned helpers are included unless their mode is `off`, and helpers added later are told too.
-- **`event_rescheduled`:** the date or start time changed. Sent to the new day's audience plus everyone already told.
-- **`event_cancelled`:** cancelled, back to idea or waiting, or deleted. Sent to everyone who was told. Marking an event `done` sends nothing.
+Send both lists in every request. Each list accepts up to 10,000 IDs as strings of 1–20 ASCII digits. Duplicates within a list count once. Empty lists are valid. Each request replaces the full snapshot in one transaction. The endpoint works while `LORE_PANEL` is off.
 
-Both endpoints use the staff key (`X-Staff-Key`) and are flag-gated, like the wars notifications.
+### DM delivery
+
+The notification endpoints are gated by `LORE_PANEL`. Rows are queued with the event change.
+
+| Mode | Which events trigger DMs |
+|------|-------------------------|
+| `off` | None |
+| `assigned` | Events the recipient is assigned to. Default for calendar access |
+| `available` | Assigned events and events on Full or Partial days. Default for full access |
+| `all` | All scheduled events |
+
+- **`event_scheduled`** is sent when an event gets a scheduled date or a new helper is assigned to it.
+- **`event_rescheduled`** is sent when the date or start time changes. It goes to the new day's audience and eligible roster members who already heard about the event.
+- **`event_cancelled`** is sent to eligible roster members who heard about the event when it is cancelled, goes back to idea or waiting, or is deleted. Marking it done sends nothing.
+
+For calendar access, `storyline` is null, `location` carries only the name, and `url` opens the event day on the calendar.
 
 ```
 GET  /lore/staff/notifications?limit=50   (1..200)
 -> {"outbox_id": "<uuid>", "notifications": [
      {"id", "kind", "event_id", "discord_user_id", "event_day", "created_at",
       "payload": {"event_id", "title", "day", "starts_at", "storyline",
-                  "location": {"name", "world", "x", "y", "z"} | null,
+                  "location": {"name", "world"?, "x"?, "y"?, "z"?} | null,
                   "url", "kind", "recipient_status", "recipient_is_helper",
                   "previous_day"?, "previous_starts_at"?,   // rescheduled
                   "reason"?}}]}                             // cancelled: status or "deleted"
@@ -102,6 +123,6 @@ GET  /lore/staff/notifications?limit=50   (1..200)
 POST /lore/staff/notifications/ack  {"ids": [..]}  ->  {"acked": [ids that exist]}
 ```
 
-- Rows come back oldest first. A row handed out but not acked is offered again after 10 minutes.
+- The outbox checks current roster access when the bot polls. Eligible rows come back oldest first. A row handed out but not acked is offered again after 10 minutes.
 - Key delivered rows by `outbox_id` plus `id`, as the wars cog does, so a database restore can't cause repeat DMs.
 - `starts_at` is ISO UTC; show it in the recipient's time zone, with CET and EST.
