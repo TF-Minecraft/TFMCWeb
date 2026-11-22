@@ -13,7 +13,7 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from src import database
 
 from .errors import bad
-from .people import ROSTER_SQL, STAFF_ROLES, Viewer, ensure_profile, roster
+from .people import NAME_SQL, PERSON_JOINS, ROSTER_SQL, STAFF_ROLES, Viewer, ensure_profile, roster
 
 STATUSES = ("full", "partial", "none")
 NOTIFY_MODES = ("off", "assigned", "available", "all")
@@ -275,7 +275,11 @@ def calendar(viewer: Viewer, start: Any, end: Any) -> dict[str, Any]:
             "SELECT e.id, e.title, e.status, e.scheduled_on, e.starts_at, e.storyline_id, s.title AS storyline_title, "
             "e.location_id, l.name AS location_name, l.world, l.x, l.y, l.z, "
             "coalesce((SELECT array_agg(h.user_id ORDER BY h.user_id) FROM lore_event_helpers h "
-            " WHERE h.event_id = e.id), '{}') AS helper_ids "
+            " WHERE h.event_id = e.id), '{}') AS helper_ids, "
+            # Names come from the event, not the roster, so helpers who have left it still show by name.
+            f"coalesce((SELECT json_agg(json_build_object('user_id', u.id, 'name', {NAME_SQL}) "
+            f" ORDER BY lower({NAME_SQL}), u.id) FROM lore_event_helpers h JOIN users u ON u.id = h.user_id "
+            f" {PERSON_JOINS} WHERE h.event_id = e.id), '[]') AS helpers "
             "FROM lore_events e "
             "LEFT JOIN lore_storylines s ON s.id = e.storyline_id AND s.deleted_at IS NULL "
             "LEFT JOIN lore_locations l ON l.id = e.location_id AND l.deleted_at IS NULL "
@@ -303,7 +307,7 @@ def calendar(viewer: Viewer, start: Any, end: Any) -> dict[str, Any]:
 
 
 def _calendar_event(row: dict, full: bool) -> dict:
-    item = {key: row[key] for key in ("id", "title", "status", "scheduled_on", "starts_at", "helper_ids")}
+    item = {key: row[key] for key in ("id", "title", "status", "scheduled_on", "starts_at", "helper_ids", "helpers")}
     if not full:
         location = {"label": row["location_name"]} if row["location_name"] is not None else None
         return {**item, "storyline": None, "location": location}

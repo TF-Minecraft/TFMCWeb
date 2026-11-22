@@ -75,7 +75,6 @@ export default function DayPanel({
       };
     }),
   );
-  const names = new Map((grid?.people ?? []).map((p) => [p.user_id, p.name]));
 
   async function save(next: Availability | null) {
     setBusy(true);
@@ -143,8 +142,8 @@ export default function DayPanel({
                       </span>
                     ) : null}
                     {event.location ? <span>At {event.location.label}</span> : null}
-                    {event.helper_ids.length ? (
-                      <span>Helpers: {event.helper_ids.map((id) => names.get(id) ?? `#${id}`).join(", ")}</span>
+                    {event.helpers.length ? (
+                      <span>Helpers: {event.helpers.map((h) => h.name).join(", ")}</span>
                     ) : null}
                   </span>
                 </li>

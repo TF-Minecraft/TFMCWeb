@@ -300,6 +300,7 @@ export type CalendarEvent = {
   scheduled_on: string;
   starts_at: string | null;
   helper_ids: number[];
+  helpers: { user_id: number; name: string }[];
   storyline: { id: number; label: string } | null;
   location: ({ label: string } & Partial<{ id: number; world: string; x: number; y: number | null; z: number }>) | null;
 };

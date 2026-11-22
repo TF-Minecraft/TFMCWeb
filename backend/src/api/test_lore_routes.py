@@ -746,15 +746,18 @@ def test_helper_calendar_and_day_availability_redact_lore(client):
     ok(lore_helper.post("/events", {"title": "Hidden idea"}))
     ok(lore_helper.post("/events", {"title": "Cancelled", "status": "cancelled", "scheduled_on": day}))
 
+    helpers = ok(lore_helper.get(f"/events/{event['id']}"))["helpers"]
+    assert [h["user_id"] for h in helpers] == [lore_helper.user_id]
     calendar = ok(helper.get("/calendar" + query))
     assert calendar["events"] == [
         {
             "id": event["id"], "title": "Ambush", "status": "scheduled", "scheduled_on": day,
-            "starts_at": None, "helper_ids": [lore_helper.user_id], "storyline": None, "location": {"label": "Old Keep"},
+            "starts_at": None, "helper_ids": [lore_helper.user_id], "helpers": helpers, "storyline": None,
+            "location": {"label": "Old Keep"},
         },
         {
             "id": done["id"], "title": "Feast", "status": "done", "scheduled_on": day,
-            "starts_at": None, "helper_ids": [], "storyline": None, "location": None,
+            "starts_at": None, "helper_ids": [], "helpers": [], "storyline": None, "location": None,
         },
     ]
     assert calendar["unscheduled"] == []
