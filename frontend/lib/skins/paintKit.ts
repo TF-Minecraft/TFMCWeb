@@ -165,7 +165,7 @@ export function buildPaintKit(vehicleId: string, model: WikiBlockModel, textures
   });
   const first = textures[0];
   return {
-    meta: { format_version: "4.10", model_format: "free", box_uv: false },
+    meta: { format_version: "4.9", model_format: "free", box_uv: false },
     name: `${vehicleId}_paint_kit`,
     resolution: { width: first?.width ?? 16, height: first?.height ?? 16 },
     elements,

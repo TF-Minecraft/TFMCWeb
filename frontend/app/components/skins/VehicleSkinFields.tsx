@@ -43,6 +43,12 @@ function useFileUrls(files: (File | null | undefined)[]): (string | null)[] {
  * The texture with every face of the model that uses it outlined, four times larger,
  * so a player can see which part of the sheet lands where.
  */
+async function fetchModel(vehicle: string): Promise<PreviewModel> {
+  const res = await fetch(vehicleModelUrl(vehicle));
+  if (!res.ok) throw new Error("Could not load the vehicle model");
+  return (await res.json()) as PreviewModel;
+}
+
 function save(href: string, name: string): void {
   const a = document.createElement("a");
   a.href = href;
@@ -63,7 +69,7 @@ function dataUrl(blob: Blob): Promise<string> {
 async function downloadPaintKit(vehicle: string): Promise<void> {
   const spec = vehicleSpec(vehicle);
   if (!spec) return;
-  const model = (await fetch(vehicleModelUrl(vehicle)).then((r) => r.json())) as WikiBlockModel;
+  const model = (await fetchModel(vehicle)) as WikiBlockModel;
   const textures = await Promise.all(
     spec.textures.map(async (t, i) => {
       const res = await fetch(vehicleTemplateUrl(vehicle, i));
@@ -82,7 +88,7 @@ async function downloadFaceGuide(vehicle: string, index: number): Promise<void> 
   const texture = spec?.textures[index];
   if (!spec || !texture) return;
   const [model, image] = await Promise.all([
-    fetch(vehicleModelUrl(vehicle)).then((r) => r.json() as Promise<PreviewModel>),
+    fetchModel(vehicle),
     new Promise<HTMLImageElement>((resolve, reject) => {
       const img = new Image();
       img.onload = () => resolve(img);
