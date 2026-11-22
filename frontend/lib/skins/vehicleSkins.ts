@@ -1,5 +1,4 @@
 import catalog from "../../../shared/skins/vehicle_skins.json";
-import { readPngSize } from "./sizes";
 
 /**
  * Vehicles players can repaint, from shared/skins/vehicle_skins.json (the backend reads the
@@ -55,12 +54,4 @@ export function vehicleTextureMap(id: string, urls: readonly (string | null | un
   const spec = vehicleSpec(id);
   if (!spec) return {};
   return Object.fromEntries(spec.textures.map((t, i) => [t.key, urls[i] || vehicleTemplateUrl(id, i)]));
-}
-
-/** Check one upload against its texture's size. */
-export async function assertVehicleTexture(file: File, texture: VehicleTexture, label: string): Promise<void> {
-  const size = await readPngSize(file);
-  if (size.w !== texture.width || size.h !== texture.height) {
-    throw new Error(`${label} must be ${texture.width}×${texture.height}, got ${size.w}×${size.h}`);
-  }
 }

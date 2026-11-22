@@ -44,12 +44,8 @@ import FancyCheckbox from "./FancyCheckbox";
 import FileSlot from "./FileSlot";
 import KindPicker from "./KindPicker";
 import VehicleSkinFields from "./VehicleSkinFields";
-import {
-  assertVehicleTexture,
-  vehicleSpec,
-  vehicleTemplateUrl,
-  vehicleTextureField,
-} from "../../../lib/skins/vehicleSkins";
+import { vehicleSpec, vehicleTemplateUrl, vehicleTextureField } from "../../../lib/skins/vehicleSkins";
+import { assertVehicleTexture } from "../../../lib/skins/vehicleUpload";
 import SkinTargetPicker from "./SkinTargetPicker";
 import ModelPreview from "./ModelPreview";
 import ArmorPreview from "./ArmorPreview";

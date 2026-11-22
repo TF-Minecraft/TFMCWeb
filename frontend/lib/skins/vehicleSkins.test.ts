@@ -7,13 +7,13 @@ import { firstAllowedKind } from "./kindAccess";
 import { ownerAnimationFileNames, ownerFileNames } from "./ownerFiles";
 import {
   VEHICLE_SKINS,
-  assertVehicleTexture,
   vehicleModelUrl,
   vehicleSpec,
   vehicleTemplateUrl,
   vehicleTextureFields,
   vehicleTextureMap,
 } from "./vehicleSkins";
+import { assertVehicleTexture } from "./vehicleUpload";
 
 const PUBLIC = join(__dirname, "..", "..", "public");
 
