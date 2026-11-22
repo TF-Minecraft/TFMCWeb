@@ -23,7 +23,7 @@ type Tile = {
 type Section = { id: string; label: string; tiles: Tile[] };
 
 function styleSummary(kinds: readonly SkinKind[]): string {
-  const styles = kinds.map((k) => (kindStyle(k).style.startsWith("3D") ? "3D" : "Flat"));
+  const styles = kinds.map((k) => (k === "vehicle" ? "Repaint" : kindStyle(k).style.startsWith("3D") ? "3D" : "Flat"));
   return [...new Set(styles)].join(" · ");
 }
 
