@@ -161,8 +161,8 @@ const GUIDES: Record<SkinKind, KindGuide> = {
     summary: "Repaint a vehicle: you paint over its own textures, and the shape stays the same.",
     steps: [
       "Choose the vehicle.",
-      "Download its textures (and the face guide if you want to see where each face sits).",
-      "Paint over them in Blockbench or any image editor. Keep each picture the same size.",
+      "Download the 3D paint file and open it in Blockbench to paint on the vehicle itself, or download the flat textures (and their face guides) for any image editor.",
+      "Keep each texture the same size. In Blockbench, save each texture when you're done.",
       "Upload each texture you painted; the ones you leave out stay as they are. The preview shows the vehicle with your paint.",
       "Set the name, then submit.",
     ],

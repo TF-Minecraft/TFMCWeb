@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import WikiModelViewer from "../wiki/WikiModelViewer";
 import FileSlot from "./FileSlot";
+import { buildPaintKit } from "../../../lib/skins/paintKit";
+import type { WikiBlockModel } from "../wiki/modelGeometry";
 import {
   vehicleModelUrl,
   vehicleSpec,
@@ -41,6 +43,40 @@ function useFileUrls(files: (File | null | undefined)[]): (string | null)[] {
  * The texture with every face of the model that uses it outlined, four times larger,
  * so a player can see which part of the sheet lands where.
  */
+function save(href: string, name: string): void {
+  const a = document.createElement("a");
+  a.href = href;
+  a.download = name;
+  a.click();
+}
+
+function dataUrl(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(new Error("Could not read a texture"));
+    reader.readAsDataURL(blob);
+  });
+}
+
+/** A Blockbench project with the vehicle's cubes and original textures, to paint in 3D. */
+async function downloadPaintKit(vehicle: string): Promise<void> {
+  const spec = vehicleSpec(vehicle);
+  if (!spec) return;
+  const model = (await fetch(vehicleModelUrl(vehicle)).then((r) => r.json())) as WikiBlockModel;
+  const textures = await Promise.all(
+    spec.textures.map(async (t, i) => {
+      const res = await fetch(vehicleTemplateUrl(vehicle, i));
+      if (!res.ok) throw new Error(`Could not load texture ${i + 1}`);
+      return { key: t.key, width: t.width, height: t.height, dataUrl: await dataUrl(await res.blob()) };
+    }),
+  );
+  const blob = new Blob([JSON.stringify(buildPaintKit(vehicle, model, textures))], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  save(url, `${vehicle}_paint_kit.bbmodel`);
+  setTimeout(() => URL.revokeObjectURL(url), 10_000);
+}
+
 async function downloadFaceGuide(vehicle: string, index: number): Promise<void> {
   const spec = vehicleSpec(vehicle);
   const texture = spec?.textures[index];
@@ -78,10 +114,7 @@ async function downloadFaceGuide(vehicle: string, index: number): Promise<void> 
       if (w > 0 && h > 0) ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
     }
   }
-  const a = document.createElement("a");
-  a.href = canvas.toDataURL("image/png");
-  a.download = `${vehicle}_${index}_face_guide.png`;
-  a.click();
+  save(canvas.toDataURL("image/png"), `${vehicle}_${index}_face_guide.png`);
 }
 
 /** Vehicle skins: one upload per texture of the vehicle, with its original to paint over. */
@@ -101,6 +134,26 @@ export default function VehicleSkinFields({ vehicle, files, onFile, disabled }: 
         Paint over the {spec.label}&apos;s own textures and keep each one the same size. The shape stays as it is.
         Textures you don&apos;t upload keep their original look.
       </p>
+      <div className="flex flex-wrap items-center gap-3">
+        <button
+          type="button"
+          className={linkClass}
+          disabled={disabled}
+          onClick={() => {
+            setGuideError(null);
+            downloadPaintKit(vehicle).catch((err: unknown) =>
+              setGuideError(err instanceof Error ? err.message : "Could not make the 3D paint file"),
+            );
+          }}
+        >
+          3D paint file (Blockbench)
+        </button>
+        <span className="text-xs text-[var(--tfmc-mist)]">
+          Open it in Blockbench (4.9 or newer) and paint on the {spec.label} itself. Then save each texture (right-click
+          it, Save As) and upload it in its slot: {vehicle}_0.png goes in Texture 1, {vehicle}_1.png in Texture 2, and
+          so on.
+        </span>
+      </div>
       <WikiModelViewer
         key={vehicle}
         modelUrl={vehicleModelUrl(vehicle)}
