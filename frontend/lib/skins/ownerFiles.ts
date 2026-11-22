@@ -1,11 +1,14 @@
 import type { SubmissionPublic } from "./api";
 import { ARMOR_FIELDS, isModelField, mcmetaField } from "./sizes";
+import { vehicleSpec, vehicleStoredName, vehicleTextureField } from "./vehicleSkins";
 
 /**
  * The stored files a skin's 3D viewer needs, keyed by the upload form's field names
  * (armour fields are `<tier>_<field>`). Mirrors backend/src/skins/storage.py.
  */
-export function ownerFileNames(row: Pick<SubmissionPublic, "kind" | "slug" | "tiers">): Record<string, string> {
+export function ownerFileNames(
+  row: Pick<SubmissionPublic, "kind" | "slug" | "tiers"> & { base_set?: string | null },
+): Record<string, string> {
   const { kind, slug } = row;
   switch (kind) {
     case "armor_set": {
@@ -59,6 +62,10 @@ export function ownerFileNames(row: Pick<SubmissionPublic, "kind" | "slug" | "ti
       };
     case "book":
       return { unsigned: `${slug}_unsigned.png`, signed: `${slug}_signed.png` };
+    case "vehicle":
+      return Object.fromEntries(
+        (vehicleSpec(row.base_set)?.textures ?? []).map((_, i) => [vehicleTextureField(i), vehicleStoredName(slug, i)]),
+      );
     default:
       return { texture: `${slug}.png` };
   }
@@ -70,9 +77,11 @@ export function ownerFileNames(row: Pick<SubmissionPublic, "kind" | "slug" | "ti
  * which never animate, and the helmet model needs its first frame.
  */
 export function ownerAnimationFileNames(
-  row: Pick<SubmissionPublic, "kind" | "slug" | "tiers">,
+  row: Pick<SubmissionPublic, "kind" | "slug" | "tiers"> & { base_set?: string | null },
 ): Record<string, string> {
   const names: Record<string, string> = {};
+  // Vehicle textures never animate.
+  if (row.kind === "vehicle") return names;
   for (const [field, name] of Object.entries(ownerFileNames(row))) {
     if (isModelField(field) || !name.endsWith(".png")) continue;
     if (row.kind === "armor_set" && !field.endsWith("_helmet_texture")) continue;

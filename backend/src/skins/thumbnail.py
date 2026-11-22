@@ -38,7 +38,7 @@ def skin_thumbnail(submission_id: str, slug: str) -> bytes | None:
         path = out_dir / PREVIEW_NAMES[view]
         if path.is_file():
             return _without_backdrop(path)
-    for name in (f"{slug}.png", f"{slug}_unsigned.png"):
+    for name in (f"{slug}.png", f"{slug}_unsigned.png", f"{slug}_0.png"):
         path = out_dir / name
         if path.is_file():
             return first_frame_png(path) or path.read_bytes()

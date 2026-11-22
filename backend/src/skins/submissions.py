@@ -32,6 +32,7 @@ from .naming import (
     slugify_display_name,
 )
 from .notifications import enqueue_submitted
+from .vehicle_skins import VEHICLE_KIND, texture_fields, vehicle_specs
 from .name_preview import write_name_preview
 from .storage import (
     BOOK_KIND,
@@ -42,6 +43,7 @@ from .storage import (
     RANGED_3D_KINDS,
     StorageError,
     ranged_3d_model_fields,
+    validate_png,
     write_submission_files,
 )
 from src.name_colours import NameColourError, validate_name_colours
@@ -70,6 +72,7 @@ ALLOWED_KINDS = frozenset(
         "mask",
         "gun",
         "book",
+        "vehicle",
     }
 )
 # Armour has no base_set: its sets come from tiers (see _validate_tiers).
@@ -368,7 +371,40 @@ def _reject_duplicate_textures(files_bytes: dict[str, bytes]) -> None:
         seen[dig] = field
 
 
+def _validate_vehicle_files(vehicle_id: str, files_bytes: dict[str, bytes]) -> None:
+    """One PNG per texture of the vehicle, each its exact size, not all left as they were."""
+    spec = vehicle_specs()[vehicle_id]
+    wanted = texture_fields(vehicle_id)
+    missing = [f for f in wanted if f not in files_bytes]
+    if missing:
+        raise SubmissionError(f"Missing files: {', '.join(missing)}")
+    extra = sorted(set(files_bytes) - set(wanted))
+    if extra:
+        raise SubmissionError(
+            f"A {spec.label} skin takes {len(wanted)} texture(s); unexpected: {', '.join(extra)}"
+        )
+    unchanged = 0
+    for field, texture in zip(wanted, spec.textures, strict=True):
+        try:
+            validate_png(files_bytes[field], (texture.width, texture.height))
+        except StorageError as e:
+            raise SubmissionError(f"{field}: {e}") from e
+        if hashlib.sha256(files_bytes[field]).hexdigest() == texture.sha256:
+            unchanged += 1
+    if unchanged == len(wanted):
+        raise SubmissionError("Paint at least one texture: these are the vehicle's own textures")
+
+
 def texture_sha256(files_bytes: dict[str, bytes]) -> str | None:
+    if "texture_0" in files_bytes:
+        # A vehicle skin is all of its textures together.
+        digest = hashlib.sha256()
+        for i in range(len(files_bytes)):
+            data = files_bytes.get(f"texture_{i}")
+            if data is None:
+                break
+            digest.update(hashlib.sha256(data).digest())
+        return digest.hexdigest()
     data = files_bytes.get("texture") or files_bytes.get("unsigned")
     if not data:
         return None
@@ -580,7 +616,8 @@ def create_submission(
     if kind not in ALLOWED_KINDS:
         raise SubmissionError(
             "kind must be armor_set, handheld, large_handheld, bow, large_bow, "
-            "crossbow, bow_3d, crossbow_3d, item_3d, shield, helmet_3d, mask, gun, or book"
+            "crossbow, bow_3d, crossbow_3d, item_3d, shield, helmet_3d, mask, gun, book, "
+            "or vehicle"
         )
 
     try:
@@ -642,6 +679,9 @@ def create_submission(
             raise SubmissionError(
                 f"Your rank cannot upload kind '{kind}'"
             )
+    if kind == VEHICLE_KIND and is_staff:
+        # A vehicle skin belongs to the player who made it; the staff lane has no owner.
+        raise SubmissionError("Vehicle skins are made by players, not with a staff code")
 
     want_add_name = bool(add_name)
     colours = _validate_name_colours(name_colours, max_colours=colour_cap)
@@ -719,6 +759,8 @@ def create_submission(
             missing = [f for f in BOOK_FIELDS if f not in files_bytes]
             if missing:
                 raise SubmissionError(f"Missing files: {', '.join(missing)}")
+        elif kind == VEHICLE_KIND:
+            _validate_vehicle_files(base, files_bytes)
         elif "texture" not in files_bytes:
             raise SubmissionError("Missing file: texture")
 
@@ -732,7 +774,9 @@ def create_submission(
     except SizeLimitError as e:
         raise SubmissionError(str(e)) from e
 
-    _reject_duplicate_textures(files_bytes)
+    if kind != VEHICLE_KIND:
+        # Two small vehicle textures may well be painted alike.
+        _reject_duplicate_textures(files_bytes)
 
     player_uuid = session_row["player_uuid"]
     link = get_link_for_uuid(player_uuid)

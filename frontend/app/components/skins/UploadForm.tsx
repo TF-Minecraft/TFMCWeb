@@ -38,6 +38,7 @@ import {
   isModel3dKind,
   isModelField,
   isRanged3dKind,
+  isVehicleKind,
   mcmetaAllowed,
   mcmetaField,
   pairBudgetHint,
@@ -49,6 +50,13 @@ import { NAME_STYLES, normalizePreviewHex, type NameStyle } from "../../../lib/s
 import FancyCheckbox from "./FancyCheckbox";
 import FileSlot from "./FileSlot";
 import KindPicker from "./KindPicker";
+import VehicleSkinFields from "./VehicleSkinFields";
+import {
+  assertVehicleTexture,
+  vehicleSpec,
+  vehicleTemplateUrl,
+  vehicleTextureField,
+} from "../../../lib/skins/vehicleSkins";
 import SkinTargetPicker from "./SkinTargetPicker";
 import ModelPreview from "./ModelPreview";
 import ArmorPreview from "./ArmorPreview";
@@ -252,13 +260,16 @@ export default function UploadForm({
           : 0;
   const pairHint = pairBudgetHint(resolvedPairBytes);
 
+  /** A vehicle skin belongs to the player who made it, so staff codes cannot make one. */
+  const usable = (k: SkinKind): boolean => kindAllowed(k, resolvedKinds) && !(staff && isVehicleKind(k));
   /** Rank that unlocks a kind, or undefined when the player can already use it. */
   const lockedByKind = (k: SkinKind): string | undefined =>
-    kindAllowed(k, resolvedKinds) ? undefined : (rankForKind(entitlements, k) ?? "Locked");
+    usable(k) ? undefined : staff && isVehicleKind(k) ? "Players only" : (rankForKind(entitlements, k) ?? "Locked");
   const lockedByKinds = (kinds: readonly SkinKind[]): string | undefined =>
-    kinds.length === 0 || kinds.some((k) => kindAllowed(k, resolvedKinds)) ? undefined : lockedByKind(kinds[0]!);
+    kinds.length === 0 || kinds.some(usable) ? undefined : lockedByKind(kinds[0]!);
 
   const isArmor = kind === "armor_set";
+  const isVehicle = isVehicleKind(kind);
   const isSingleSet = target?.type === "single";
   const metal = target?.type === "metal" ? target.metal : "";
   const lineLabel =
@@ -372,8 +383,12 @@ export default function UploadForm({
       setError(target ? "Choose a style" : "Choose what you're skinning");
       return;
     }
-    if (!kindAllowed(kind, resolvedKinds)) {
-      setError(`That style unlocks at ${lockedByKind(kind)}.`);
+    if (!usable(kind)) {
+      setError(
+        isVehicleKind(kind) && staff
+          ? "Vehicle skins are made by players."
+          : `That style unlocks at ${lockedByKind(kind)}.`,
+      );
       return;
     }
 
@@ -485,6 +500,25 @@ export default function UploadForm({
         }
         const h3d = tiers.filter((t) => t.helmet3d).map(tierId);
         assert3dPairBudgets(kind, uploadFiles, resolvedPairBytes, h3d);
+      } else if (isVehicle) {
+        const spec = vehicleSpec(baseSet);
+        if (!spec) throw new Error("Choose a vehicle");
+        let painted = 0;
+        for (const [index, texture] of spec.textures.entries()) {
+          const field = vehicleTextureField(index);
+          const file = files[field];
+          if (file) {
+            await assertVehicleTexture(file, texture, `Texture ${index + 1}`);
+            uploadFiles[field] = file;
+            painted++;
+          } else {
+            // Not repainted: send the vehicle's own texture back unchanged.
+            const res = await fetch(vehicleTemplateUrl(baseSet, index));
+            if (!res.ok) throw new Error(`Could not load texture ${index + 1}`);
+            uploadFiles[field] = new File([await res.blob()], `${baseSet}_${index}.png`, { type: "image/png" });
+          }
+        }
+        if (painted === 0) throw new Error("Upload at least one painted texture");
       } else {
         for (const field of fileFields) {
           await addSlot(field, field, files[field], files[mcmetaField(field)], slotLabel(kind, field));
@@ -533,9 +567,9 @@ export default function UploadForm({
           : undefined,
         helmet_3d_tiers: isArmor ? tiers.filter((e) => e.helmet3d).map(tierId) : undefined,
         grip_preset: kind === "large_handheld" ? gripY.toFixed(1) : null,
-        add_name: applyName,
-        name_colours: colours.length ? colours : undefined,
-        name_styles: styles.length ? styles : undefined,
+        add_name: isVehicle ? false : applyName,
+        name_colours: !isVehicle && colours.length ? colours : undefined,
+        name_styles: !isVehicle && styles.length ? styles : undefined,
         category: staff ? category.trim() : undefined,
         scroll: staff && !isArmor ? scroll.trim() : undefined,
         tier_scrolls:
@@ -687,13 +721,17 @@ export default function UploadForm({
             ) : null}
 
             <label className="flex flex-col gap-2 text-left">
-              <span className="text-sm font-medium text-[var(--tfmc-stone)]">Item name</span>
+              <span className="text-sm font-medium text-[var(--tfmc-stone)]">
+                {isVehicle ? "Skin name" : "Item name"}
+              </span>
               <span className="text-xs text-[var(--tfmc-mist)]">
-                {isArmor
-                  ? `Base name before the set label (e.g. Norain becomes Norain ${
-                      isSingleSet ? lineLabel : "Light Iron"
-                    }). Spaces and capitals are fine.`
-                  : "Shown in the armour shop."}{" "}
+                {isVehicle
+                  ? "Shown in the Vehicle Paint menu."
+                  : isArmor
+                    ? `Base name before the set label (e.g. Norain becomes Norain ${
+                        isSingleSet ? lineLabel : "Light Iron"
+                      }). Spaces and capitals are fine.`
+                    : "Shown in the armour shop."}{" "}
                 Allowed: {DISPLAY_NAME_HINT}.
               </span>
               <input
@@ -721,50 +759,54 @@ export default function UploadForm({
               ) : null}
             </label>
 
-            <label className="flex cursor-pointer items-start gap-2.5 text-sm text-[var(--tfmc-cream)]">
-              <FancyCheckbox checked={applyName} disabled={loading} onChange={setApplyName} />
-              <span>
-                Rename the item to this name
-                <span className="mt-0.5 block text-xs text-[var(--tfmc-mist)]">
-                  When off, the item keeps its own name.
-                </span>
-              </span>
-            </label>
+            {isVehicle ? null : (
+              <>
+                <label className="flex cursor-pointer items-start gap-2.5 text-sm text-[var(--tfmc-cream)]">
+                  <FancyCheckbox checked={applyName} disabled={loading} onChange={setApplyName} />
+                  <span>
+                    Rename the item to this name
+                    <span className="mt-0.5 block text-xs text-[var(--tfmc-mist)]">
+                      When off, the item keeps its own name.
+                    </span>
+                  </span>
+                </label>
 
-            <fieldset className="flex flex-col gap-4 border-0 p-0">
-              <legend className="sr-only">Name colours and styles</legend>
+                <fieldset className="flex flex-col gap-4 border-0 p-0">
+                  <legend className="sr-only">Name colours and styles</legend>
 
-              <NameColourPicker
-                colours={colours}
-                onChange={setColours}
-                previewText={itemName.trim() || "Preview"}
-                maxStops={resolvedColourStops}
-                disabled={loading}
-                previewStyles={styles}
-                onError={setError}
-                lockedMessage={colourLockedMessage || "Name colours require a donator rank"}
-              />
+                  <NameColourPicker
+                    colours={colours}
+                    onChange={setColours}
+                    previewText={itemName.trim() || "Preview"}
+                    maxStops={resolvedColourStops}
+                    disabled={loading}
+                    previewStyles={styles}
+                    onError={setError}
+                    lockedMessage={colourLockedMessage || "Name colours require a donator rank"}
+                  />
 
-              <div className="flex flex-col gap-2">
-                <span className="text-sm font-medium text-[var(--tfmc-stone)]">Styles</span>
-                <div className="flex flex-wrap gap-3">
-                  {NAME_STYLES.map((s) => (
-                    <label
-                      key={s}
-                      className="flex cursor-pointer items-center gap-2.5 text-sm text-[var(--tfmc-cream)]"
-                    >
-                      <FancyCheckbox
-                        checked={styles.includes(s)}
-                        disabled={loading}
-                        onChange={() => toggleStyle(s)}
-                        className="mt-0"
-                      />
-                      {s}
-                    </label>
-                  ))}
-                </div>
-              </div>
-            </fieldset>
+                  <div className="flex flex-col gap-2">
+                    <span className="text-sm font-medium text-[var(--tfmc-stone)]">Styles</span>
+                    <div className="flex flex-wrap gap-3">
+                      {NAME_STYLES.map((s) => (
+                        <label
+                          key={s}
+                          className="flex cursor-pointer items-center gap-2.5 text-sm text-[var(--tfmc-cream)]"
+                        >
+                          <FancyCheckbox
+                            checked={styles.includes(s)}
+                            disabled={loading}
+                            onChange={() => toggleStyle(s)}
+                            className="mt-0"
+                          />
+                          {s}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                </fieldset>
+              </>
+            )}
 
             {kind === "large_handheld" ? (
               <fieldset className="flex flex-col gap-2">
@@ -793,12 +835,14 @@ export default function UploadForm({
         ) : null}
 
         {kind ? (
-          <Step n={detailsStep + 1} title={isArmor ? `${lineLabel} armour` : "Files"}>
-            <p className="m-0 text-xs text-[var(--tfmc-mist)]">
-              Any texture except armour layers can be animated: add its Minecraft <code>.mcmeta</code> and stack the
-              frames in the PNG
-              {isLargeTextureKind(kind) ? " (each frame 32×32)" : ""}.
-            </p>
+          <Step n={detailsStep + 1} title={isArmor ? `${lineLabel} armour` : isVehicle ? "Textures" : "Files"}>
+            {isVehicle ? null : (
+              <p className="m-0 text-xs text-[var(--tfmc-mist)]">
+                Any texture except armour layers can be animated: add its Minecraft <code>.mcmeta</code> and stack the
+                frames in the PNG
+                {isLargeTextureKind(kind) ? " (each frame 32×32)" : ""}.
+              </p>
+            )}
             {pairHint && (isModel3dKind(kind) || isGunKind(kind) || isArmor) ? (
               <p className="m-0 text-sm text-[var(--tfmc-mist)]">{pairHint}</p>
             ) : null}
@@ -811,7 +855,9 @@ export default function UploadForm({
               </p>
             ) : null}
 
-            {isArmor ? (
+            {isVehicle ? (
+              <VehicleSkinFields vehicle={baseSet} files={files} onFile={setFile} disabled={loading} />
+            ) : isArmor ? (
               <fieldset className="flex flex-col gap-4 border-0 p-0">
                 {isSingleSet ? (
                   <p className="m-0 text-xs text-[var(--tfmc-mist)]">

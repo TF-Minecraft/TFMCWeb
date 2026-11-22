@@ -10,6 +10,8 @@ type Props = {
   file: File | null | undefined;
   onPick: (file: File) => void;
   disabled?: boolean;
+  /** Shown while no file is picked; defaults to "Required". */
+  emptyLabel?: string;
   /** When set, the card offers an optional `.mcmeta` animation for this texture. */
   animation?: {
     file: File | null | undefined;
@@ -28,7 +30,16 @@ const pickButton =
   "inline-flex cursor-pointer items-center rounded-sm bg-[var(--tfmc-moss)] px-3 py-1.5 text-xs font-medium text-[var(--tfmc-cream)] transition hover:opacity-90";
 
 /** One upload card: required file, its hint, and an optional animation slot. */
-export default function FileSlot({ label, hint, accept, file, onPick, disabled, animation }: Props) {
+export default function FileSlot({
+  label,
+  hint,
+  accept,
+  file,
+  onPick,
+  disabled,
+  emptyLabel = "Required",
+  animation,
+}: Props) {
   const id = useId();
   const animId = useId();
   return (
@@ -45,7 +56,7 @@ export default function FileSlot({ label, hint, accept, file, onPick, disabled, 
           <span className="block text-xs text-[var(--tfmc-mist)]">{hint}</span>
         </span>
         <span aria-hidden className={`text-xs ${file ? "text-[var(--tfmc-accent)]" : "text-[var(--tfmc-mist)]"}`}>
-          {file ? "✓" : "Required"}
+          {file ? "✓" : emptyLabel}
         </span>
       </div>
       <div className="flex flex-wrap items-center gap-2">

@@ -59,6 +59,11 @@ const KINDS: Record<SkinKind, { label: string; style: string; detail: string }> 
     style: "Flat covers",
     detail: "Unsigned + signed · 16×16",
   },
+  vehicle: {
+    label: "Vehicle",
+    style: "Repaint",
+    detail: "The vehicle's own textures, repainted",
+  },
 };
 
 /** Player-facing label for a skin kind. */

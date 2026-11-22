@@ -84,6 +84,12 @@ Namespace: **`tfmc_submissions`**.
 
 A PNG may arrive with a sibling `{png name}.mcmeta` (animated texture); writers copy it next to the pack PNG.
 
+## Vehicle skins (`vehicle`)
+
+Not an ItemsAdder item. `base_set` is the VehicleFramework vehicle id and `files` are `{slug}_{n}.png`, one per texture of that vehicle's default ModelEngine model, in model order and at each texture's exact size (the API checks both against [`shared/skins/vehicle_skins.json`](../../../shared/skins/vehicle_skins.json)). ArmourShop (`VehicleSkinWriter`) writes a copy of the model with only the textures swapped to `ModelEngine/blueprints/tfmc_submissions/vskin_{slug}.bbmodel` and an entry in VehicleFramework's `player-skins.yml` naming the uploader's UUID as owner; only that player can pick it with Vehicle Paint. No shop entry. The IA refresh runs `meg reload`, then `vf skins reload`, before `iareload` / `iazip`. Staff codes cannot make vehicle skins.
+
+When a vehicle model changes on Main, regenerate the catalogue, templates and preview models with `frontend/scripts/build-vehicle-skin-templates.mjs` (read from copies of Main's `ModelEngine/blueprints` and `VehicleFramework/vehicles`).
+
 Never add new skins via manual `custom_model_data` lists in legacy `tfmc_pack`.
 
 ## Discord link (before skins upload)

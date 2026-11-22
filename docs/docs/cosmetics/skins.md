@@ -31,8 +31,9 @@ End-to-end design for donator texture submissions on **TFMCWeb** (store + review
 | `mask` | `texture` + `model` | Same pair budget | `set: masks`. Wearing the skinned mask hides identity in RPCharacters |
 | `gun` | `texture` + carry/reload/aim models | Three pair checks | GaG `skins.yml` `ia.…` |
 | `book` | `unsigned` + `signed` | Both **16×16** | `base_set: books` |
+| `vehicle` | `texture_0` … `texture_{n-1}` | Each the exact size of that vehicle texture | `base_set` = vehicle id; players only (no staff lane); no `.mcmeta`. The upload page offers each original texture, a face guide and a 3D preview, and sends untouched textures back unchanged; at least one must be repainted. See [integrations/armourshop.md](../integrations/armourshop.md#vehicle-skins-vehicle) |
 
-Which item types each kind may target (`base_set`) lives in [`shared/skins/base_sets.json`](../../../shared/skins/base_sets.json), read by both the API and the upload page.
+Which item types each kind may target (`base_set`) lives in [`shared/skins/base_sets.json`](../../../shared/skins/base_sets.json), read by both the API and the upload page. Vehicles and their texture sizes live in [`shared/skins/vehicle_skins.json`](../../../shared/skins/vehicle_skins.json), generated from Main's vehicle models.
 
 ### Animated textures (`.mcmeta`)
 
@@ -95,7 +96,7 @@ Configured in TFMCWeb `config.yml` `player-meta.skins`; pushed on join/reload vi
 |------|----------|--------------------------|-----------------|
 | defaults / no rank | disallowed | none | false |
 | Noble | 28 days | handheld, large_handheld, bow, large_bow, crossbow, book | false |
-| Gilded | 21 days | + armor_set | false |
+| Gilded | 21 days | + armor_set, vehicle | false |
 | Ascended | 14 days | + item_3d, shield, helmet_3d, mask, gun, bow_3d, crossbow_3d | true |
 | Legacy | 7 days | (same as Ascended) | true |
 

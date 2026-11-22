@@ -30,6 +30,10 @@ def base_sets_by_kind() -> dict[str, frozenset[str]]:
     for row in load_base_sets()["base_sets"]:
         for kind in row["kinds"]:
             out.setdefault(kind, set()).add(row["id"])
+    # Vehicle skins target a VehicleFramework vehicle id (shared/skins/vehicle_skins.json).
+    from .vehicle_skins import VEHICLE_KIND, vehicle_specs
+
+    out[VEHICLE_KIND] = set(vehicle_specs())
     return {kind: frozenset(ids) for kind, ids in out.items()}
 
 

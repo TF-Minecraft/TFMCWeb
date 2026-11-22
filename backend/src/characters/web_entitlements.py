@@ -13,7 +13,8 @@ from src.name_colours import MAX_NAME_COLOURS, effective_colour_cap
 # RPCharacters and TFMCWebBridge use the same cap.
 MAX_WARDROBE_SKIN_SLOTS = 5
 
-# Mirrors submissions.ALLOWED_KINDS; keep in sync for the staff redeem UI.
+# Mirrors submissions.ALLOWED_KINDS (except vehicle, which has no staff lane); keep in
+# sync for the staff redeem UI.
 _STAFF_SKIN_KINDS = (
     "armor_set",
     "handheld",
