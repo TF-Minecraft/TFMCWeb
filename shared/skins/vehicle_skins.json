@@ -99,13 +99,15 @@
           "key": "1",
           "width": 16,
           "height": 16,
-          "sha256": "b63e5be4627b350b1447a14c464028e7052fbdbc3c55973ed8c1950168e095a0"
+          "sha256": "b63e5be4627b350b1447a14c464028e7052fbdbc3c55973ed8c1950168e095a0",
+          "hidden": true
         },
         {
           "key": "2",
           "width": 32,
           "height": 32,
-          "sha256": "652f53216256815084d1bba3abbe3c117ea9112d18daa81e4fdf479f28df6d4a"
+          "sha256": "652f53216256815084d1bba3abbe3c117ea9112d18daa81e4fdf479f28df6d4a",
+          "hidden": true
         },
         {
           "key": "3",
@@ -375,13 +377,15 @@
           "key": "2",
           "width": 32,
           "height": 32,
-          "sha256": "ab18dc2b13ee9c3111fe833c90b427a7ff06c5132a4295426c25c625a9d525b1"
+          "sha256": "ab18dc2b13ee9c3111fe833c90b427a7ff06c5132a4295426c25c625a9d525b1",
+          "hidden": true
         },
         {
           "key": "3",
           "width": 32,
           "height": 32,
-          "sha256": "34e8e329678ea8aabc7380394dc3ec7624bea65541bc7548ed96c1d03fbdc862"
+          "sha256": "34e8e329678ea8aabc7380394dc3ec7624bea65541bc7548ed96c1d03fbdc862",
+          "hidden": true
         }
       ]
     },

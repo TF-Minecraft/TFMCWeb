@@ -17,14 +17,7 @@ import {
   baseSetLabel,
   kindsForBaseSet,
 } from "../../../lib/skins/baseSets";
-import {
-  firstAllowedKind,
-  kindAllowed,
-  kindsForTarget,
-  rankForKind,
-  sameTarget,
-  type SkinTarget,
-} from "../../../lib/skins/kindAccess";
+import { kindAllowed, kindsForTarget, rankForKind, sameTarget, type SkinTarget } from "../../../lib/skins/kindAccess";
 import {
   assert3dPairBudgets,
   assertRanged3dBudget,
@@ -267,6 +260,7 @@ export default function UploadForm({
     usable(k) ? undefined : staff && isVehicleKind(k) ? "Players only" : (rankForKind(entitlements, k) ?? "Locked");
   const lockedByKinds = (kinds: readonly SkinKind[]): string | undefined =>
     kinds.length === 0 || kinds.some(usable) ? undefined : lockedByKind(kinds[0]!);
+  const firstUsableKind = (t: SkinTarget): SkinKind | null => kindsForTarget(t).find(usable) ?? null;
 
   const isArmor = kind === "armor_set";
   const isVehicle = isVehicleKind(kind);
@@ -311,8 +305,8 @@ export default function UploadForm({
   const [seenKindsKey, setSeenKindsKey] = useState(kindsKey);
   if (kindsKey !== seenKindsKey) {
     setSeenKindsKey(kindsKey);
-    if (target && (!kind || !kindAllowed(kind, resolvedKinds))) {
-      const next = firstAllowedKind(target, resolvedKinds);
+    if (target && (!kind || !usable(kind))) {
+      const next = firstUsableKind(target);
       if (next !== kind) {
         setKind(next);
         resetUploads();
@@ -324,7 +318,7 @@ export default function UploadForm({
     // Re-clicking the chosen tile only matters when it has no usable style yet.
     if (sameTarget(next, target) && kind) return;
     setTarget(next);
-    setKind(firstAllowedKind(next, resolvedKinds));
+    setKind(firstUsableKind(next));
     setTiers(next.type === "single" ? [newTier(next.set)] : []);
     resetUploads();
   }

@@ -56,7 +56,7 @@ describe("vehicle skins", () => {
   });
 
   it("names the owner's stored files like ArmourShop expects", () => {
-    const row = { kind: "vehicle", slug: "bob_cart", tiers: null, base_set: "horse_cart" };
+    const row = { kind: "vehicle", slug: "bob_cart", tiers: [] as string[], base_set: "horse_cart" };
     expect(ownerFileNames(row)).toEqual({ texture_0: "bob_cart_0.png", texture_1: "bob_cart_1.png" });
     expect(ownerAnimationFileNames(row)).toEqual({});
   });

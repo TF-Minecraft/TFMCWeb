@@ -88,6 +88,9 @@ class VehicleFileRulesTest(unittest.TestCase):
         files = painted("horse_cart") | {"texture_0": b"not a png"}
         with self.assertRaisesRegex(SubmissionError, "texture_0: File is not a valid PNG"):
             _validate_vehicle_files("horse_cart", files)
+        broken = png(48, 48)[:60]
+        with self.assertRaisesRegex(SubmissionError, "texture_0: the PNG is damaged"):
+            _validate_vehicle_files("horse_cart", painted("horse_cart") | {"texture_0": broken})
 
     def test_the_vehicles_own_textures_alone_are_not_a_skin(self) -> None:
         a, b = png(4, 4, (1, 2, 3, 255)), png(2, 2, (4, 5, 6, 255))
@@ -109,10 +112,12 @@ class VehicleFileRulesTest(unittest.TestCase):
 
     def test_duplicate_check_hashes_every_vehicle_texture(self) -> None:
         files = painted("horse_cart")
-        first = texture_sha256(files)
-        self.assertNotEqual(first, texture_sha256(files | {"texture_1": png(16, 16, (1, 1, 1, 255))}))
-        self.assertEqual(first, texture_sha256(dict(files)))
+        first = texture_sha256(files, VEHICLE_KIND)
+        self.assertNotEqual(first, texture_sha256(files | {"texture_1": png(16, 16, (1, 1, 1, 255))}, VEHICLE_KIND))
+        self.assertEqual(first, texture_sha256(dict(files), VEHICLE_KIND))
         self.assertEqual(texture_sha256({"texture": b"x"}), hashlib.sha256(b"x").hexdigest())
+        # Other kinds keep hashing their own texture, whatever extra fields arrive.
+        self.assertEqual(texture_sha256({"texture": b"x", "texture_0": b"y"}, "handheld"), hashlib.sha256(b"x").hexdigest())
 
 
 class VehicleSubmissionLaneTest(unittest.TestCase):

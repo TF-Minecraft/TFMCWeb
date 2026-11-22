@@ -184,7 +184,8 @@ function VehicleView({ row, files, fallback, children }: ViewProps) {
   return (
     <Showcase
       stage={
-        spec && urls.some(Boolean) ? (
+        // Every texture or none: a missing one would show the original as if it were the skin.
+        spec && urls.length === spec.textures.length && urls.every(Boolean) ? (
           <Turnable>
             <WikiModelViewer
               modelUrl={vehicleModelUrl(vehicle)}

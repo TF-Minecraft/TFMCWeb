@@ -8,7 +8,14 @@ import { readPngSize } from "./sizes";
  * uploaded at its exact size, in model order, as `texture_0` … `texture_{n-1}`.
  */
 
-export type VehicleTexture = { key: string; width: number; height: number; sha256: string };
+export type VehicleTexture = {
+  key: string;
+  width: number;
+  height: number;
+  sha256: string;
+  /** No visible face of the vehicle uses it (only hidden parts do). */
+  hidden?: boolean;
+};
 
 export type VehicleSkinSpec = { id: string; label: string; textures: readonly VehicleTexture[] };
 

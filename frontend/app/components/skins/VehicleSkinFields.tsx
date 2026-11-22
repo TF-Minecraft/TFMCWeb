@@ -150,7 +150,7 @@ export default function VehicleSkinFields({ vehicle, files, onFile, disabled }: 
               </div>
               <FileSlot
                 label={`Texture ${index + 1}`}
-                hint={`${texture.width}×${texture.height} PNG`}
+                hint={`${texture.width}×${texture.height} PNG${texture.hidden ? " · not shown on the vehicle, leave as is" : ""}`}
                 accept="image/png"
                 file={files[field]}
                 emptyLabel="Original"

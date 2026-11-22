@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 import hashlib
+import io
 import shutil
 from datetime import datetime, timezone
 from pathlib import Path
+
+from PIL import Image
 
 from src import database
 
@@ -389,14 +392,20 @@ def _validate_vehicle_files(vehicle_id: str, files_bytes: dict[str, bytes]) -> N
             validate_png(files_bytes[field], (texture.width, texture.height))
         except StorageError as e:
             raise SubmissionError(f"{field}: {e}") from e
+        try:
+            # ArmourShop decodes every texture; a broken one would pass review and never apply.
+            with Image.open(io.BytesIO(files_bytes[field])) as im:
+                im.load()
+        except Exception as e:
+            raise SubmissionError(f"{field}: the PNG is damaged") from e
         if hashlib.sha256(files_bytes[field]).hexdigest() == texture.sha256:
             unchanged += 1
     if unchanged == len(wanted):
         raise SubmissionError("Paint at least one texture: these are the vehicle's own textures")
 
 
-def texture_sha256(files_bytes: dict[str, bytes]) -> str | None:
-    if "texture_0" in files_bytes:
+def texture_sha256(files_bytes: dict[str, bytes], kind: str | None = None) -> str | None:
+    if kind == VEHICLE_KIND:
         # A vehicle skin is all of its textures together.
         digest = hashlib.sha256()
         for i in range(len(files_bytes)):
@@ -875,7 +884,7 @@ def create_submission(
     tiers_json = database.Jsonb(tier_list) if tier_list else None
     aliases_json = database.Jsonb(aliases) if aliases else None
     h3d_json = database.Jsonb(h3d_list) if h3d_list else None
-    tex_hash = texture_sha256(files_bytes)
+    tex_hash = texture_sha256(files_bytes, kind)
     if not is_staff and tex_hash:
         dup_id = find_duplicate_texture(player_uuid, base, tex_hash)
         if dup_id:

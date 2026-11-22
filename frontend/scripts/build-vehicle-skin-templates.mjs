@@ -150,6 +150,13 @@ export function main() {
       } finally {
         rmSync(scratch, { recursive: true, force: true });
       }
+      // Some textures are only used by hidden parts (hitboxes, mount points): say so on the page.
+      const preview = JSON.parse(readFileSync(join(OUT_PUBLIC, `${vehicle.id}.json`), "utf8"));
+      const shown = new Set();
+      for (const element of preview.elements ?? []) {
+        for (const face of Object.values(element.faces ?? {})) shown.add(String(face.texture ?? "").replace(/^#/, ""));
+      }
+      for (const texture of textures) if (!shown.has(texture.key)) texture.hidden = true;
       vehicles.push({ id: vehicle.id, label: vehicle.label, textures });
       console.log(`${vehicle.id.padEnd(18)} ${textures.map((t) => `${t.width}x${t.height}`).join(" ")}`);
     }
