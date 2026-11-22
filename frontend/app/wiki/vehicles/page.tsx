@@ -89,14 +89,14 @@ export default function VehiclesPage() {
         </li>
         <li>
           Stand where you want the vehicle, within 12 blocks of the station, and left-click within 30 seconds of
-          choosing the blueprint. The materials are taken from your inventory on that click.
+          choosing the blueprint. The materials are taken from your inventory when the build starts.
         </li>
         <li>
           If{" "}
           <Link href="/wiki/factions#government" className={linkClass}>
             your faction
           </Link>{" "}
-          charges a Registration Fee, the first left-click shows the fee. Left-click again to pay it from your{" "}
+          charges a Registration Fee, the first left-click only shows the fee. Left-click again to pay it from your{" "}
           <Link href="/wiki/economy#accounts" className={linkClass}>
             personal bank
           </Link>{" "}

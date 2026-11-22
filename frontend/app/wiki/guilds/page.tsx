@@ -35,7 +35,7 @@ export default function GuildsPage() {
       <p className={`mt-3 ${body}`}>
         A guild has its own leader, banner, capital and bank. Any member of the main guild except the faction leader can
         found one, and it is free. If you are in another guild, leave it first with{" "}
-        <code className={code}>/guild leave</code>. To found one:
+        <code className={code}>/guild leave</code> (a guild&apos;s leader has to delete it instead). To found one:
       </p>
       <ol className={`mt-3 list-decimal space-y-2 pl-5 ${body}`}>
         <li>
