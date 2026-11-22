@@ -142,9 +142,7 @@ export default function DayPanel({
                       </span>
                     ) : null}
                     {event.location ? <span>At {event.location.label}</span> : null}
-                    {event.helpers.length ? (
-                      <span>Helpers: {event.helpers.map((h) => h.name).join(", ")}</span>
-                    ) : null}
+                    {event.helpers.length ? <span>Helpers: {event.helpers.map((h) => h.name).join(", ")}</span> : null}
                   </span>
                 </li>
               ))}
