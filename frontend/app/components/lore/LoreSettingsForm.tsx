@@ -10,6 +10,7 @@ import { Field } from "./DetailParts";
 
 const NOTIFY_LABEL: Record<NotifyMode, string> = {
   off: "Off",
+  assigned: "Only events I'm assigned to",
   available: "Days I'm available",
   all: "All events",
 };

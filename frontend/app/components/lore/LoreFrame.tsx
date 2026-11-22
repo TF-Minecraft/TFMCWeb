@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import { createContext, useContext, useEffect, useState } from "react";
 
 import { discordSignInUrl } from "@/lib/account/api";
@@ -23,9 +25,11 @@ function Notice({ children }: { children: React.ReactNode }) {
 
 /**
  * The frame for every lore page: title and tabs, then the page once /lore/access
- * says the viewer is on the Lore team or staff.
+ * gives the viewer access.
  */
 export default function LoreFrame({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
+  const pathname = usePathname()?.replace(/\/$/, "");
   const [state, setState] = useState<State>({ kind: "loading" });
 
   useEffect(() => {
@@ -39,6 +43,12 @@ export default function LoreFrame({ children }: { children: React.ReactNode }) {
   }, []);
 
   const access = state.kind === "ready" ? state.access : null;
+  const calendarOnly = access?.access && access.level === "calendar";
+  const redirectToCalendar = calendarOnly && pathname === "/lore";
+  useEffect(() => {
+    if (redirectToCalendar) router.replace("/lore/calendar");
+  }, [redirectToCalendar, router]);
+
   let body: React.ReactNode;
   if (state.kind === "loading") body = <Notice>Loading…</Notice>;
   else if (state.kind === "error")
@@ -59,7 +69,19 @@ export default function LoreFrame({ children }: { children: React.ReactNode }) {
         to use the lore panel.
       </Notice>
     );
-  else if (!access!.access) body = <Notice>The lore panel is for the Lore team and staff.</Notice>;
+  else if (!access!.access)
+    body = <Notice>The lore panel is for Discord Helpers, Lore Helpers and website staff.</Notice>;
+  else if (redirectToCalendar) body = <Notice>Loading…</Notice>;
+  else if (calendarOnly && pathname !== "/lore/calendar")
+    body = (
+      <Notice>
+        This part of the lore panel is for Lore Helpers. Helpers can use the{" "}
+        <Link href="/lore/calendar" className="text-[var(--tfmc-accent)] underline-offset-2 hover:underline">
+          calendar
+        </Link>
+        .
+      </Notice>
+    );
   else body = <AccessContext.Provider value={access}>{children}</AccessContext.Provider>;
 
   return (
@@ -69,7 +91,7 @@ export default function LoreFrame({ children }: { children: React.ReactNode }) {
           <h1 className="pb-2 font-[family-name:var(--font-fraunces)] text-2xl text-[var(--tfmc-cream)] sm:text-3xl">
             Lore panel
           </h1>
-          {access?.access ? <LoreNav /> : null}
+          {access?.access ? <LoreNav calendarOnly={calendarOnly} /> : null}
         </div>
       </header>
       {body}

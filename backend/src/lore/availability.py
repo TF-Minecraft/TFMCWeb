@@ -13,10 +13,10 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from src import database
 
 from .errors import bad
-from .people import Viewer, ensure_profile, roster
+from .people import ROSTER_SQL, STAFF_ROLES, Viewer, ensure_profile, roster
 
 STATUSES = ("full", "partial", "none")
-NOTIFY_MODES = ("off", "available", "all")
+NOTIFY_MODES = ("off", "assigned", "available", "all")
 MAX_DAYS = 62
 NOTE_MAX = 200
 
@@ -89,7 +89,14 @@ def _load(conn: database.Connection, user_ids: list[int], first: date, last: dat
     return weekly, overrides
 
 
-def _grid(conn: database.Connection, first: date, last: date) -> dict[str, Any]:
+def _roster_status(weekly: dict, overrides: dict, user_id: int, day: date, full: bool) -> dict:
+    status = effective(weekly[user_id], overrides[user_id], day)
+    if not full:
+        status["note"] = ""
+    return status
+
+
+def _grid(conn: database.Connection, first: date, last: date, *, full: bool) -> dict[str, Any]:
     people = roster(conn)
     ids = [p["user_id"] for p in people]
     weekly, overrides = _load(conn, ids, first, last)
@@ -102,7 +109,7 @@ def _grid(conn: database.Connection, first: date, last: date) -> dict[str, Any]:
             p
             | {
                 "days": {
-                    d.isoformat(): effective(weekly[p["user_id"]], overrides[p["user_id"]], d) for d in range_days
+                    d.isoformat(): _roster_status(weekly, overrides, p["user_id"], d, full) for d in range_days
                 }
             }
             for p in people
@@ -110,11 +117,11 @@ def _grid(conn: database.Connection, first: date, last: date) -> dict[str, Any]:
     }
 
 
-def grid(start: Any, end: Any) -> dict[str, Any]:
+def grid(viewer: Viewer, start: Any, end: Any) -> dict[str, Any]:
     """Roster x days: every roster member's effective status for each day in the range."""
     first, last = day_range(start, end)
     with database.connect() as conn:
-        return _grid(conn, first, last)
+        return _grid(conn, first, last, full=viewer.full)
 
 
 # --------------------
@@ -122,26 +129,24 @@ def grid(start: Any, end: Any) -> dict[str, Any]:
 # --------------------
 
 
-def _settings(conn: database.Connection, user_id: int) -> dict[str, Any]:
-    row = conn.execute("SELECT timezone, notify_mode FROM lore_profiles WHERE user_id = %s", (user_id,)).fetchone()
+def _settings(conn: database.Connection, viewer: Viewer) -> dict[str, Any]:
+    row = conn.execute("SELECT timezone, notify_mode FROM lore_profiles WHERE user_id = %s", (viewer.user_id,)).fetchone()
     return {
         "timezone": (row or {}).get("timezone"),
-        "notify_mode": (row or {}).get("notify_mode") or "available",
+        "notify_mode": (row or {}).get("notify_mode") or viewer.default_notify_mode,
     }
 
 
 def saved_timezone(viewer: Viewer) -> str | None:
     with database.connect() as conn:
-        return _settings(conn, viewer.user_id)["timezone"]
+        return _settings(conn, viewer)["timezone"]
 
 
 def _on_roster(conn: database.Connection, viewer: Viewer) -> bool:
-    """Members are always on the roster; staff join it once they have a profile."""
-    if viewer.is_member:
-        return True
-    if not viewer.is_staff:
-        return False
-    return conn.execute("SELECT 1 FROM lore_profiles WHERE user_id = %s", (viewer.user_id,)).fetchone() is not None
+    return conn.execute(
+        f"SELECT 1 FROM ({ROSTER_SQL}) r WHERE r.user_id = %(user_id)s",
+        {"staff_roles": STAFF_ROLES, "user_id": viewer.user_id},
+    ).fetchone() is not None
 
 
 def _me(conn: database.Connection, viewer: Viewer, first: date, last: date) -> dict[str, Any]:
@@ -157,7 +162,7 @@ def _me(conn: database.Connection, viewer: Viewer, first: date, last: date) -> d
         "days": [
             {"day": d.isoformat(), **effective(mine_weekly, mine_overrides, d)} for d in days(first, last)
         ],
-        "settings": _settings(conn, viewer.user_id) | {"on_roster": _on_roster(conn, viewer)},
+        "settings": _settings(conn, viewer) | {"on_roster": _on_roster(conn, viewer)},
     }
 
 
@@ -181,7 +186,7 @@ def set_weekly(viewer: Viewer, data: Any) -> dict[str, Any]:
             rows.append((viewer.user_id, weekday, status, _note(entry.get("note"))))
     today = date.today()
     with database.connect() as conn:
-        ensure_profile(conn, viewer.user_id)
+        ensure_profile(conn, viewer)
         conn.execute("DELETE FROM lore_weekly_availability WHERE user_id = %s", (viewer.user_id,))
         if rows:
             with conn.cursor() as cur:
@@ -205,7 +210,7 @@ def set_days(viewer: Viewer, data: Any) -> dict[str, Any]:
     cleared = sorted(day for day, (status, _) in wanted.items() if status is None)
     rows = [(viewer.user_id, day, status, note) for day, (status, note) in sorted(wanted.items()) if status]
     with database.connect() as conn:
-        ensure_profile(conn, viewer.user_id)
+        ensure_profile(conn, viewer)
         if cleared:
             conn.execute(
                 "DELETE FROM lore_availability WHERE user_id = %s AND day = ANY(%s)", (viewer.user_id, cleared)
@@ -244,7 +249,7 @@ def set_settings(viewer: Viewer, data: Any) -> dict[str, Any]:
             raise bad("bad_notify_mode")
         updates["notify_mode"] = data["notify_mode"]
     with database.connect() as conn:
-        ensure_profile(conn, viewer.user_id)
+        ensure_profile(conn, viewer)
         if updates:
             conn.execute(
                 "UPDATE lore_profiles SET "
@@ -252,7 +257,7 @@ def set_settings(viewer: Viewer, data: Any) -> dict[str, Any]:
                 + ", updated_at = now() WHERE user_id = %(user_id)s",
                 updates | {"user_id": viewer.user_id},
             )
-        return _settings(conn, viewer.user_id) | {"on_roster": _on_roster(conn, viewer)}
+        return _settings(conn, viewer) | {"on_roster": _on_roster(conn, viewer)}
 
 
 # --------------------
@@ -262,7 +267,7 @@ def set_settings(viewer: Viewer, data: Any) -> dict[str, Any]:
 _UNSCHEDULED_LIMIT = 200
 
 
-def calendar(start: Any, end: Any) -> dict[str, Any]:
+def calendar(viewer: Viewer, start: Any, end: Any) -> dict[str, Any]:
     """Scheduled events in the range, the roster's availability for it, and what is not yet scheduled."""
     first, last = day_range(start, end)
     with database.connect() as conn:
@@ -278,25 +283,30 @@ def calendar(start: Any, end: Any) -> dict[str, Any]:
             "ORDER BY e.scheduled_on, e.starts_at NULLS LAST, e.id",
             (first, last),
         ).fetchall()
-        unscheduled = conn.execute(
-            "SELECT e.id, e.title, e.status, e.waiting_on, e.storyline_id, s.title AS storyline_title, e.updated_at "
-            "FROM lore_events e LEFT JOIN lore_storylines s ON s.id = e.storyline_id AND s.deleted_at IS NULL "
-            "WHERE e.deleted_at IS NULL AND e.status IN ('idea', 'waiting') "
-            "ORDER BY e.status DESC, e.updated_at DESC, e.id LIMIT %s",
-            (_UNSCHEDULED_LIMIT,),
-        ).fetchall()
-        availability = _grid(conn, first, last)
+        unscheduled = []
+        if viewer.full:
+            unscheduled = conn.execute(
+                "SELECT e.id, e.title, e.status, e.waiting_on, e.storyline_id, s.title AS storyline_title, e.updated_at "
+                "FROM lore_events e LEFT JOIN lore_storylines s ON s.id = e.storyline_id AND s.deleted_at IS NULL "
+                "WHERE e.deleted_at IS NULL AND e.status IN ('idea', 'waiting') "
+                "ORDER BY e.status DESC, e.updated_at DESC, e.id LIMIT %s",
+                (_UNSCHEDULED_LIMIT,),
+            ).fetchall()
+        availability = _grid(conn, first, last, full=viewer.full)
     return {
         "from": first.isoformat(),
         "to": last.isoformat(),
-        "events": [_calendar_event(row) for row in events],
+        "events": [_calendar_event(row, viewer.full) for row in events],
         "unscheduled": [dict(row) for row in unscheduled],
         "availability": availability,
     }
 
 
-def _calendar_event(row: dict) -> dict:
+def _calendar_event(row: dict, full: bool) -> dict:
     item = {key: row[key] for key in ("id", "title", "status", "scheduled_on", "starts_at", "helper_ids")}
+    if not full:
+        location = {"label": row["location_name"]} if row["location_name"] is not None else None
+        return {**item, "storyline": None, "location": location}
     item["storyline"] = (
         {"id": row["storyline_id"], "label": row["storyline_title"]} if row["storyline_title"] is not None else None
     )
@@ -308,11 +318,11 @@ def _calendar_event(row: dict) -> dict:
     return item
 
 
-def roster_on(day: Any) -> list[dict]:
+def roster_on(viewer: Viewer, day: Any) -> list[dict]:
     """Every roster member's status on one day, for the event date picker."""
     target = parse_day(day)
     with database.connect() as conn:
         people = roster(conn)
         weekly, overrides = _load(conn, [p["user_id"] for p in people], target, target)
-    return [p | effective(weekly[p["user_id"]], overrides[p["user_id"]], target) for p in people]
+    return [p | _roster_status(weekly, overrides, p["user_id"], target, viewer.full) for p in people]
 

@@ -1,18 +1,14 @@
-"""Who may use the panel, and the roster of people who can be assigned and notified.
-
-Access: website staff (`roles.is_staff`) or a row in `lore_members` (the Lore
-Helpers, managed in the panel). The roster: every lore member, plus staff who
-joined it by saving their availability or settings once (a `lore_profiles` row).
-"""
+"""Panel access and the roster of people who can be assigned and notified."""
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Literal
 
 from src import database
 from src.auth import roles
 
 STAFF_ROLES = [role for role in roles.ROLES if roles.is_staff(role)]
+AccessLevel = Literal["full", "calendar"]
 
 # A person's display name: their linked Minecraft name, else their Discord name.
 NAME_SQL = (
@@ -20,33 +16,46 @@ NAME_SQL = (
     "nullif(u.discord_username, ''), 'account ' || u.id)"
 )
 PERSON_JOINS = "LEFT JOIN discord_links dl ON dl.discord_user_id = u.discord_user_id"
+_ROLE_JOINS = """
+LEFT JOIN lore_discord_roles lh ON lh.discord_user_id = u.discord_user_id AND lh.role = 'lore_helper'
+LEFT JOIN lore_discord_roles h ON h.discord_user_id = u.discord_user_id AND h.role = 'helper'
+"""
 
 
 @dataclass(frozen=True)
 class Viewer:
     user_id: int
     name: str
-    role: str
     is_staff: bool
-    is_member: bool
-    is_lead: bool
+    is_lore_helper: bool
+    is_helper: bool
     player_uuid: str | None
 
     @property
-    def access(self) -> bool:
-        return self.is_staff or self.is_member
+    def level(self) -> AccessLevel | None:
+        if self.is_staff or self.is_lore_helper:
+            return "full"
+        return "calendar" if self.is_helper else None
 
     @property
-    def can_manage_team(self) -> bool:
-        return self.is_staff or self.is_lead
+    def access(self) -> bool:
+        return self.level is not None
+
+    @property
+    def full(self) -> bool:
+        return self.level == "full"
+
+    @property
+    def default_notify_mode(self) -> str:
+        return "available" if self.full else "assigned"
 
     def public(self) -> dict[str, Any]:
         return {
             "user_id": self.user_id,
             "name": self.name,
             "is_staff": self.is_staff,
-            "is_lead": self.is_lead,
-            "is_member": self.is_member,
+            "is_lore_helper": self.is_lore_helper,
+            "is_helper": self.is_helper,
         }
 
 
@@ -55,33 +64,37 @@ def viewer(user: dict) -> Viewer:
     user_id = int(user["user_id"])
     with database.connect() as conn:
         row = conn.execute(
-            f"SELECT {NAME_SQL} AS name, dl.player_uuid, m.user_id IS NOT NULL AS is_member, "
-            "coalesce(m.is_lead, false) AS is_lead "
-            f"FROM users u {PERSON_JOINS} LEFT JOIN lore_members m ON m.user_id = u.id WHERE u.id = %s",
+            f"SELECT {NAME_SQL} AS name, dl.player_uuid, "
+            "lh.discord_user_id IS NOT NULL AS is_lore_helper, h.discord_user_id IS NOT NULL AS is_helper "
+            f"FROM users u {PERSON_JOINS} {_ROLE_JOINS} WHERE u.id = %s",
             (user_id,),
         ).fetchone()
-    role = str(user.get("role") or "")
     return Viewer(
         user_id=user_id,
         name=(row or {}).get("name") or f"account {user_id}",
-        role=role,
-        is_staff=roles.is_staff(role),
-        is_member=bool(row and row["is_member"]),
-        is_lead=bool(row and row["is_lead"]),
+        is_staff=roles.is_staff(str(user.get("role") or "")),
+        is_lore_helper=bool(row and row["is_lore_helper"]),
+        is_helper=bool(row and row["is_helper"]),
         player_uuid=(row or {}).get("player_uuid") or None,
     )
 
 
+_IS_STAFF = "u.role = ANY(%(staff_roles)s)"
+_IS_FULL = f"({_IS_STAFF} OR lh.discord_user_id IS NOT NULL)"
 ROSTER_SQL = f"""
-SELECT u.id AS user_id, u.discord_user_id, u.role, {NAME_SQL} AS name, dl.player_uuid,
-       m.user_id IS NOT NULL AS is_member, coalesce(m.is_lead, false) AS is_lead,
-       u.role = ANY(%(staff_roles)s) AS is_staff,
-       p.timezone, coalesce(p.notify_mode, 'available') AS notify_mode
+SELECT u.id AS user_id, u.discord_user_id, {NAME_SQL} AS name, dl.player_uuid,
+       CASE WHEN {_IS_FULL} THEN 'full' ELSE 'calendar' END AS level,
+       CASE WHEN {_IS_STAFF} THEN 'staff'
+            WHEN lh.discord_user_id IS NOT NULL THEN 'lore_helper' ELSE 'helper' END AS lore_role,
+       p.timezone,
+       coalesce(p.notify_mode, CASE WHEN {_IS_FULL} THEN 'available' ELSE 'assigned' END) AS notify_mode
 FROM users u
 {PERSON_JOINS}
-LEFT JOIN lore_members m ON m.user_id = u.id
+{_ROLE_JOINS}
 LEFT JOIN lore_profiles p ON p.user_id = u.id
-WHERE m.user_id IS NOT NULL OR (u.role = ANY(%(staff_roles)s) AND p.user_id IS NOT NULL)
+WHERE NOT u.placeholder AND (
+    lh.discord_user_id IS NOT NULL OR (p.user_id IS NOT NULL AND ({_IS_STAFF} OR h.discord_user_id IS NOT NULL))
+)
 """
 
 
@@ -98,26 +111,27 @@ def roster_ids(conn: database.Connection) -> set[int]:
 
 
 def person(row: dict) -> dict:
-    """The public shape of a roster row: never the Discord id."""
+    """The public shape of a roster row."""
     return {
         "user_id": row["user_id"],
         "name": row["name"],
-        "is_staff": bool(row["is_staff"]),
-        "is_member": bool(row["is_member"]),
-        "is_lead": bool(row["is_lead"]),
-        "timezone": row.get("timezone"),
-        "notify_mode": row.get("notify_mode") or "available",
-        "has_head": bool(row.get("player_uuid")),
+        "level": row["level"],
+        "lore_role": row["lore_role"],
+        "timezone": row["timezone"],
+        "notify_mode": row["notify_mode"],
+        "has_head": bool(row["player_uuid"]),
     }
 
 
-def ensure_profile(conn: database.Connection, user_id: int) -> None:
-    """Staff join the roster by saving their availability or settings once."""
-    conn.execute("INSERT INTO lore_profiles (user_id) VALUES (%s) ON CONFLICT (user_id) DO NOTHING", (user_id,))
+def ensure_profile(conn: database.Connection, viewer: Viewer) -> None:
+    conn.execute(
+        "INSERT INTO lore_profiles (user_id, notify_mode) VALUES (%s, %s) ON CONFLICT (user_id) DO NOTHING",
+        (viewer.user_id, viewer.default_notify_mode),
+    )
 
 
 def head_uuid(user_id: int) -> str | None:
-    """The linked player of a roster member, for their head; None for anyone off the roster."""
+    """The linked player of a roster member, for their head."""
     with database.connect() as conn:
         row = conn.execute(
             f"SELECT r.player_uuid FROM ({ROSTER_SQL}) r WHERE r.user_id = %(user_id)s",

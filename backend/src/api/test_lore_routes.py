@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import io
 import os
+from contextlib import contextmanager
 from datetime import UTC, date, datetime, timedelta
 from zoneinfo import ZoneInfo
 
@@ -16,6 +17,7 @@ os.environ.setdefault("SKINS_DEV", "1")
 from src import database  # noqa: E402
 from src.api.lore_routes import lore_router  # noqa: E402
 from src.auth import users  # noqa: E402
+from src.lore import team as lore_team  # noqa: E402
 
 pytestmark = pytest.mark.usefixtures("postgres")
 
@@ -47,8 +49,8 @@ _ids = iter(range(1, 1_000_000))
 
 
 class Person:
-    def __init__(self, client: TestClient, name: str, *, role: str = "player", member: bool = False,
-                 lead: bool = False, minecraft: str | None = None):
+    def __init__(self, client: TestClient, name: str, *, role: str = "player", lore_helper: bool = False,
+                 helper: bool = False, minecraft: str | None = None):
         self.client = client
         self.discord_id = str(300000000000000000 + next(_ids))
         self.token = users.sign_in(
@@ -60,8 +62,12 @@ class Person:
             self.user_id = conn.execute(
                 "UPDATE users SET role = %s WHERE discord_user_id = %s RETURNING id", (role, self.discord_id)
             ).fetchone()["id"]
-            if member:
-                conn.execute("INSERT INTO lore_members (user_id, is_lead) VALUES (%s, %s)", (self.user_id, lead))
+            for discord_role, present in (("lore_helper", lore_helper), ("helper", helper)):
+                if present:
+                    conn.execute(
+                        "INSERT INTO lore_discord_roles (discord_user_id, role) VALUES (%s, %s)",
+                        (self.discord_id, discord_role),
+                    )
             if minecraft:
                 conn.execute(
                     "INSERT INTO discord_links (player_uuid, discord_user_id, minecraft_name, linked_at) "
@@ -119,16 +125,28 @@ def skin_png(color=(200, 30, 30, 255)) -> bytes:
 def test_access_answers_everyone_without_401(client):
     client.cookies.clear()
     assert ok(client.get("/lore/access")) == {"enabled": True, "signed_in": False, "access": False,
-                                                "can_manage_team": False, "user": None}
+                                                "level": None, "user": None}
     player = Person(client, "player")
     body = ok(player.get("/access"))
-    assert body["signed_in"] is True and body["access"] is False and body["user"] is None
-    member = Person(client, "helper", member=True)
-    body = ok(member.get("/access"))
-    assert body["access"] is True and body["can_manage_team"] is False
-    assert body["user"]["user_id"] == member.user_id
-    staff = Person(client, "mod", role="mod")
-    assert ok(staff.get("/access"))["can_manage_team"] is True
+    assert body["signed_in"] is True and body["access"] is False and body["level"] is None and body["user"] is None
+
+
+@pytest.mark.parametrize(("role", "lore_helper", "helper", "level"), [
+    ("player", False, True, "calendar"),
+    ("player", True, False, "full"),
+    ("player", True, True, "full"),
+    ("mod", False, False, "full"),
+    ("mod", False, True, "full"),
+])
+def test_viewer_levels(client, role, lore_helper, helper, level):
+    user = Person(client, "viewer", role=role, lore_helper=lore_helper, helper=helper)
+    assert ok(user.get("/access")) == {
+        "enabled": True, "signed_in": True, "access": True, "level": level,
+        "user": {
+            "user_id": user.user_id, "name": "viewer", "is_staff": role == "mod",
+            "is_lore_helper": lore_helper, "is_helper": helper,
+        },
+    }
 
 
 def test_reads_need_access(client):
@@ -139,8 +157,56 @@ def test_reads_need_access(client):
     assert error(player.post("/characters", {"name": "X"}), 403) == "no_access"
 
 
+def test_all_lore_routes_enforce_calendar_allowlist(client):
+    helper = Person(client, "helper", helper=True)
+    player = Person(client, "player")
+    allowed = {
+        ("GET", "/lore/access"),
+        ("GET", "/lore/calendar"),
+        ("GET", "/lore/availability/me"),
+        ("PUT", "/lore/availability/me/weekly"),
+        ("PUT", "/lore/availability/me/days"),
+        ("PUT", "/lore/me/settings"),
+        ("GET", "/lore/availability"),
+        ("GET", "/lore/availability/day/{day}"),
+        ("GET", "/lore/team/{user_id}/head.png"),
+    }
+    bot_only = {
+        ("GET", "/lore/staff/notifications"),
+        ("POST", "/lore/staff/notifications/ack"),
+        ("PUT", "/lore/staff/discord-roles"),
+    }
+    def walk(router, prefix=""):
+        for route in router.routes:
+            if hasattr(route, "original_router"):
+                # Newer FastAPI versions keep included routers nested.
+                yield from walk(route.original_router, prefix + route.include_context.prefix)
+            else:
+                yield prefix + route.path, route
+
+    visited = set()
+    for path, route in walk(lore_router):
+        for method in route.methods:
+            key = (method, path)
+            visited.add(key)
+            url = path
+            for name in route.param_convertors:
+                url = url.replace("{" + name + "}", TODAY.isoformat() if name == "day" else "1")
+            kwargs = {"headers": ORIGIN}
+            if path == "/lore/characters/{character_id}/skin" and method == "POST":
+                kwargs["files"] = {"skin": ("skin.png", skin_png(), "image/png")}
+            elif method in ("POST", "PATCH", "PUT"):
+                kwargs["json"] = {}
+            if key in bot_only:
+                assert helper._use().request(method, url, **kwargs).status_code == 401, key
+            elif key not in allowed:
+                assert error(helper._use().request(method, url, **kwargs), 403) == "lore_helpers_only", key
+                assert error(player._use().request(method, url, **kwargs), 403) == "no_access", key
+    assert allowed | bot_only <= visited
+
+
 def test_writes_need_same_origin(client):
-    member = Person(client, "helper", member=True)
+    member = Person(client, "helper", lore_helper=True)
     member._use()
     response = client.post("/lore/characters", json={"name": "X"}, headers={"Origin": "https://evil.example"})
     assert response.status_code == 403
@@ -148,18 +214,18 @@ def test_writes_need_same_origin(client):
 
 @pytest.mark.parametrize("env", [{"PS_PRODUCTION": "1"}, {"LORE_PANEL": "off"}])
 def test_flag_off_hides_everything(client, monkeypatch, env):
-    member = Person(client, "helper", member=True)
+    member = Person(client, "helper", lore_helper=True)
     for name, value in env.items():
         monkeypatch.setenv(name, value)
     assert ok(member.get("/access")) == {"enabled": False, "signed_in": False, "access": False,
-                                         "can_manage_team": False, "user": None}
+                                         "level": None, "user": None}
     assert member.get("/characters").status_code == 404
     assert member.get("/overview").status_code == 404
     assert client.get("/lore/staff/notifications", headers=STAFF_KEY).status_code == 404
 
 
 def test_flag_on_in_production_when_set(client, monkeypatch):
-    member = Person(client, "helper", member=True)
+    member = Person(client, "helper", lore_helper=True)
     monkeypatch.setenv("PS_PRODUCTION", "1")
     monkeypatch.setenv("LORE_PANEL", "1")
     assert ok(member.get("/access"))["enabled"] is True
@@ -181,7 +247,7 @@ SAMPLES = {
 
 @pytest.mark.parametrize("plural", list(SAMPLES))
 def test_crud_history_delete_restore(client, plural):
-    member = Person(client, "helper", member=True)
+    member = Person(client, "helper", lore_helper=True)
     create, change = SAMPLES[plural]
     item = ok(member.post(f"/{plural}", create))
     assert item["version"] == 1 and item["created_by"] == member.user_id
@@ -210,7 +276,7 @@ def test_crud_history_delete_restore(client, plural):
 
 
 def test_validation_errors(client):
-    member = Person(client, "helper", member=True)
+    member = Person(client, "helper", lore_helper=True)
     assert error(member.post("/characters", {"name": "  "}), 400) == "name_required"
     assert error(member.post("/characters", {"name": "A", "status": "zombie"}), 400) == "bad_status"
     assert error(member.post("/events", {"title": "E", "status": "scheduled"}), 400) == "date_required"
@@ -227,7 +293,7 @@ def test_validation_errors(client):
 
 
 def test_list_filters_and_search(client):
-    member = Person(client, "helper", member=True)
+    member = Person(client, "helper", lore_helper=True)
     ok(member.post("/characters", {"name": "Aldric", "status": "dead"}))
     ok(member.post("/characters", {"name": "Maldric"}))
     ok(member.post("/organisations", {"name": "Aldric's Band"}))
@@ -242,7 +308,7 @@ def test_list_filters_and_search(client):
 
 
 def test_mentions_make_backlinks(client):
-    member = Person(client, "helper", member=True)
+    member = Person(client, "helper", lore_helper=True)
     keep = ok(member.post("/locations", {"name": "Old Keep"}))
     aldric = ok(member.post("/characters", {"name": "Aldric", "notes": f"Lives at [[location:{keep['id']}|the keep]]"}))
     backlinks = ok(member.get(f"/locations/{keep['id']}"))["backlinks"]
@@ -261,7 +327,7 @@ def test_mentions_make_backlinks(client):
 
 
 def test_relations_and_affiliations(client):
-    member = Person(client, "helper", member=True)
+    member = Person(client, "helper", lore_helper=True)
     aldric = ok(member.post("/characters", {"name": "Aldric"}))
     brenna = ok(member.post("/characters", {"name": "Brenna"}))
     order = ok(member.post("/organisations", {"name": "The Order"}))
@@ -295,7 +361,7 @@ def test_relations_and_affiliations(client):
 
 
 def test_storyline_members_and_order(client):
-    member = Person(client, "helper", member=True)
+    member = Person(client, "helper", lore_helper=True)
     story = ok(member.post("/storylines", {"title": "The Fall"}))
     aldric = ok(member.post("/characters", {"name": "Aldric"}))
     keep = ok(member.post("/locations", {"name": "Old Keep"}))
@@ -318,7 +384,7 @@ def test_storyline_members_and_order(client):
 
 
 def test_list_saves_keep_links_to_deleted_records(client):
-    member = Person(client, "helper", member=True)
+    member = Person(client, "helper", lore_helper=True)
     aldric = ok(member.post("/characters", {"name": "Aldric"}))
     brenna = ok(member.post("/characters", {"name": "Brenna"}))
     order = ok(member.post("/organisations", {"name": "The Order"}))
@@ -353,8 +419,8 @@ def test_list_saves_keep_links_to_deleted_records(client):
 
 
 def test_event_helpers_must_be_on_roster(client):
-    member = Person(client, "helper", member=True)
-    other = Person(client, "helper2", member=True)
+    member = Person(client, "helper", lore_helper=True)
+    other = Person(client, "helper2", lore_helper=True)
     player = Person(client, "player")
     staff = Person(client, "mod", role="mod")
     event = ok(member.post("/events", {"title": "Ambush"}))
@@ -377,7 +443,7 @@ def test_event_helpers_must_be_on_roster(client):
 
 
 def test_skin_upload_and_face(client):
-    member = Person(client, "helper", member=True)
+    member = Person(client, "helper", lore_helper=True)
     aldric = ok(member.post("/characters", {"name": "Aldric"}))
     assert member.get(f"/characters/{aldric['id']}/face.png").status_code == 404
 
@@ -400,7 +466,7 @@ def test_skin_upload_and_face(client):
 
 
 def test_link_player(client):
-    member = Person(client, "helper", member=True)
+    member = Person(client, "helper", lore_helper=True)
     Person(client, "linked", minecraft="SirAldric")
     aldric = ok(member.post("/characters", {"name": "Aldric"}))
     detail = ok(member.put(f"/characters/{aldric['id']}/player", {"name": "siraldric"}))
@@ -429,7 +495,7 @@ def player_uuid_of(minecraft):
 
 
 def test_search_finds_player_characters_only_when_asked(client):
-    member = Person(client, "helper", member=True)
+    member = Person(client, "helper", lore_helper=True)
     Person(client, "linked", minecraft="Tamsin")
     uuid = player_uuid_of("Tamsin")
     roster_character(uuid, "c1", "Brannoc Vale")
@@ -454,7 +520,7 @@ def test_search_finds_player_characters_only_when_asked(client):
 
 
 def test_empty_search_lists_player_characters_after_lore_records(client):
-    member = Person(client, "helper", member=True)
+    member = Person(client, "helper", lore_helper=True)
     Person(client, "linked", minecraft="Tamsin")
     uuid = player_uuid_of("Tamsin")
     roster_character(uuid, "c1", "Brannoc the Dead", status="DEAD")
@@ -472,7 +538,7 @@ def test_empty_search_lists_player_characters_after_lore_records(client):
 
 
 def test_player_characters_come_from_the_sites_realm(client, monkeypatch):
-    member = Person(client, "helper", member=True)
+    member = Person(client, "helper", lore_helper=True)
     Person(client, "linked", minecraft="Tamsin")
     uuid = player_uuid_of("Tamsin")
     roster_character(uuid, "c1", "Brannoc Main")
@@ -490,7 +556,7 @@ def test_player_characters_come_from_the_sites_realm(client, monkeypatch):
 
 
 def test_adopt_player_character(client):
-    member = Person(client, "helper", member=True)
+    member = Person(client, "helper", lore_helper=True)
     Person(client, "linked", minecraft="Tamsin")
     uuid = player_uuid_of("Tamsin")
     roster_character(uuid, "c1", "Brannoc Vale", status="DEAD")
@@ -542,7 +608,7 @@ def test_adopt_player_character(client):
 def test_player_character_face_is_its_worn_skin(client, monkeypatch):
     from src.lore import links
 
-    member = Person(client, "helper", member=True)
+    member = Person(client, "helper", lore_helper=True)
     Person(client, "linked", minecraft="Tamsin")
     uuid = player_uuid_of("Tamsin")
     roster_character(uuid, "c1", "Brannoc Vale")
@@ -570,8 +636,8 @@ def _monday_after(day: date) -> date:
 
 
 def test_availability_weekly_overrides_and_grid(client):
-    member = Person(client, "helper", member=True)
-    other = Person(client, "helper2", member=True)
+    member = Person(client, "helper", lore_helper=True)
+    other = Person(client, "helper2", lore_helper=True)
     monday = _monday_after(TODAY)
     weekly = [{"status": "full", "note": ""}] * 5 + [{"status": "none", "note": "away"}, {"status": None, "note": ""}]
     ok(member.put("/availability/me/weekly", {"weekly": weekly}))
@@ -599,7 +665,7 @@ def test_availability_weekly_overrides_and_grid(client):
 
 
 def test_availability_limits(client):
-    member = Person(client, "helper", member=True)
+    member = Person(client, "helper", lore_helper=True)
     far = TODAY + timedelta(days=100)
     assert error(member.get(f"/availability?from={TODAY}&to={far}"), 400) == "range_too_long"
     assert error(member.get(f"/availability?from={TODAY}&to={TODAY - timedelta(days=1)}"), 400) == "bad_range"
@@ -613,7 +679,7 @@ def test_availability_limits(client):
 
 def test_staff_join_roster_with_a_profile(client):
     staff = Person(client, "mod", role="mod")
-    member = Person(client, "helper", member=True)
+    member = Person(client, "helper", lore_helper=True)
     grid = ok(member.get(f"/availability?from={TODAY}&to={TODAY}"))
     assert [p["user_id"] for p in grid["people"]] == [member.user_id]
     assert ok(staff.get(f"/availability/me?from={TODAY}&to={TODAY}"))["settings"]["on_roster"] is False
@@ -623,7 +689,7 @@ def test_staff_join_roster_with_a_profile(client):
 
 
 def test_overview_today_follows_the_viewer(client):
-    member = Person(client, "helper", member=True)
+    member = Person(client, "helper", lore_helper=True)
     utc_today = datetime.now(UTC).date()
     tomorrow = (utc_today + timedelta(days=1)).isoformat()
     assert ok(member.get("/overview"))["today"] == utc_today.isoformat()
@@ -638,7 +704,7 @@ def test_overview_today_follows_the_viewer(client):
 
 
 def test_calendar_and_overview(client):
-    member = Person(client, "helper", member=True)
+    member = Person(client, "helper", lore_helper=True)
     story = ok(member.post("/storylines", {"title": "The Fall"}))
     keep = ok(member.post("/locations", {"name": "Old Keep", "x": 1, "y": 70, "z": 2}))
     soon = TODAY + timedelta(days=3)
@@ -661,49 +727,190 @@ def test_calendar_and_overview(client):
     assert overview["recent"][0]["target"]["label"] == "Gone"
 
 
+def test_helper_calendar_and_day_availability_redact_lore(client):
+    lore_helper = Person(client, "lore-helper", lore_helper=True)
+    helper = Person(client, "helper", helper=True)
+    day = TODAY.isoformat()
+    query = f"?from={day}&to={day}"
+    ok(lore_helper.put("/availability/me/days", {
+        "days": [{"day": day, "status": "full", "note": "Preparing the story reveal"}],
+    }))
+    story = ok(lore_helper.post("/storylines", {"title": "Secret plot"}))
+    location = ok(lore_helper.post("/locations", {"name": "Old Keep", "x": 1, "z": 2}))
+    event = ok(lore_helper.post("/events", {
+        "title": "Ambush", "status": "scheduled", "scheduled_on": day, "summary": "Secret summary",
+        "notes": "Secret notes", "storyline_id": story["id"], "location_id": location["id"],
+    }))
+    ok(lore_helper.put(f"/events/{event['id']}/helpers", {"user_ids": [lore_helper.user_id]}))
+    done = ok(lore_helper.post("/events", {"title": "Feast", "status": "done", "scheduled_on": day}))
+    ok(lore_helper.post("/events", {"title": "Hidden idea"}))
+    ok(lore_helper.post("/events", {"title": "Cancelled", "status": "cancelled", "scheduled_on": day}))
+
+    calendar = ok(helper.get("/calendar" + query))
+    assert calendar["events"] == [
+        {
+            "id": event["id"], "title": "Ambush", "status": "scheduled", "scheduled_on": day,
+            "starts_at": None, "helper_ids": [lore_helper.user_id], "storyline": None, "location": {"label": "Old Keep"},
+        },
+        {
+            "id": done["id"], "title": "Feast", "status": "done", "scheduled_on": day,
+            "starts_at": None, "helper_ids": [], "storyline": None, "location": None,
+        },
+    ]
+    assert calendar["unscheduled"] == []
+    assert calendar["availability"]["people"][0]["days"][day]["note"] == ""
+    assert ok(helper.get("/availability" + query)) == calendar["availability"]
+    assert ok(helper.get(f"/availability/day/{day}"))["people"][0]["note"] == ""
+    assert ok(lore_helper.get(f"/availability/day/{day}"))["people"][0]["note"] == "Preparing the story reveal"
+    own = ok(helper.put("/availability/me/days", {
+        "days": [{"day": day, "status": "partial", "note": "After dinner"}],
+    }))
+    assert own["days"][0]["note"] == "After dinner"
+    assert own["settings"]["notify_mode"] == "assigned"
+    for mode in ("off", "assigned", "available", "all"):
+        assert ok(helper.put("/me/settings", {"notify_mode": mode}))["notify_mode"] == mode
+
+
 # --------------------
 # Team
 # --------------------
 
 
-def test_team_management(client):
-    staff = Person(client, "mod", role="mod")
-    lead = Person(client, "lead", member=True, lead=True)
-    helper = Person(client, "helper", member=True)
-    newcomer = Person(client, "shaymin_fan")
+def _sync(client, helper=(), lore_helper=()):
+    return client.put(
+        "/lore/staff/discord-roles", json={"helper": list(helper), "lore_helper": list(lore_helper)}, headers=STAFF_KEY
+    )
 
-    assert error(helper.post("/team", {"user_id": newcomer.user_id}), 403) == "forbidden"
-    assert error(helper.get("/team/candidates?q=sha"), 403) == "forbidden"
-    candidates = ok(lead.get("/team/candidates?q=sha"))["candidates"]
-    assert [c["user_id"] for c in candidates] == [newcomer.user_id]
 
-    added = ok(lead.post("/team", {"user_id": newcomer.user_id}))
-    assert added["is_lead"] is False and added["added_by"] == lead.user_id
-    assert error(lead.post("/team", {"user_id": newcomer.user_id}), 409) == "already_member"
-    assert ok(newcomer.get("/access"))["access"] is True
+def test_team_roster_and_role_loss(client):
+    staff = Person(client, "mod", role="mod", helper=True)
+    lore_helper = Person(client, "lore-helper", lore_helper=True, helper=True)
+    helper = Person(client, "helper", helper=True)
+    staff_lore = Person(client, "mod-lore", role="mod", lore_helper=True)
+    placeholder = Person(client, "placeholder", lore_helper=True)
+    with database.connect() as conn:
+        conn.execute("UPDATE users SET placeholder = true WHERE id = %s", (placeholder.user_id,))
+    missing = "123456"
+    sync = ok(_sync(
+        client,
+        helper=[staff.discord_id, lore_helper.discord_id, helper.discord_id, missing],
+        lore_helper=[lore_helper.discord_id, staff_lore.discord_id, placeholder.discord_id, missing],
+    ))
 
-    assert error(lead.patch(f"/team/{lead.user_id}", {"is_lead": False}), 403) == "cannot_change_self"
-    assert error(lead.delete(f"/team/{lead.user_id}"), 403) == "cannot_change_self"
-    ok(staff.patch(f"/team/{newcomer.user_id}", {"is_lead": True}))
+    def groups():
+        team = ok(staff.get("/team"))
+        assert team["unlinked"] == 2
+        assert team["synced_at"] == sync["synced_at"]
+        return {
+            name: [(p["user_id"], p["level"], p["lore_role"], p["notify_mode"]) for p in team[name]]
+            for name in ("lore_helpers", "helpers", "staff")
+        }
 
-    team = ok(helper.get("/team"))
-    assert {m["user_id"]: m["is_lead"] for m in team["members"]} == {
-        lead.user_id: True, helper.user_id: False, newcomer.user_id: True
+    assert groups() == {
+        "lore_helpers": [(lore_helper.user_id, "full", "lore_helper", "available")],
+        "helpers": [],
+        "staff": [(staff_lore.user_id, "full", "staff", "available")],
     }
-    assert team["staff"] == []  # staff appear once they join the roster
+    assert ok(helper.get(f"/availability/me?from={TODAY}&to={TODAY}"))["settings"] == {
+        "notify_mode": "assigned", "timezone": None, "on_roster": False,
+    }
+    ok(helper.put("/availability/me/weekly", {"weekly": [{}] * 7}))
+    assert ok(staff.put("/me/settings", {}))["notify_mode"] == "available"
+    assert groups()["helpers"] == [(helper.user_id, "calendar", "helper", "assigned")]
+    assert {row[0] for row in groups()["staff"]} == {staff.user_id, staff_lore.user_id}
 
-    ok(staff.delete(f"/team/{newcomer.user_id}"))
-    assert ok(newcomer.get("/access"))["access"] is False
-    assert newcomer.get("/characters").status_code == 403
+    event = ok(staff.post("/events", {"title": "Feast"}))
+    ok(staff.put(f"/events/{event['id']}/helpers", {"user_ids": [helper.user_id, lore_helper.user_id]}))
+    ok(_sync(client, helper=[lore_helper.discord_id]))
+    assert ok(helper.get("/access"))["level"] is None
+    assert ok(lore_helper.get("/access"))["level"] == "calendar"
+    team = ok(staff.get("/team"))
+    assert team["helpers"] == team["lore_helpers"] == []
+    assert {p["user_id"] for p in ok(staff.get(f"/events/{event['id']}"))["helpers"]} == {
+        helper.user_id, lore_helper.user_id,
+    }
 
+
+def test_legacy_team_history_still_appears(client):
+    staff = Person(client, "mod", role="mod")
+    with database.connect() as conn:
+        conn.execute(
+            "INSERT INTO lore_history (entity_kind, entity_id, action, actor_name, changes) "
+            "VALUES ('team', 42, 'removed', 'mod', %s)",
+            (database.Jsonb({"name": ["shaymin_fan", None]}),),
+        )
     recent = ok(staff.get("/overview"))["recent"]
-    assert [(r["entity_kind"], r["action"], r["target"]["label"]) for r in recent[:3]] == [
-        ("team", "removed", "shaymin_fan"), ("team", "updated", "shaymin_fan"), ("team", "added", "shaymin_fan")
+    assert [(r["entity_kind"], r["action"], r["target"]["label"]) for r in recent] == [
+        ("team", "removed", "shaymin_fan"),
     ]
 
 
+def test_discord_role_sync_requires_key_and_bypasses_flag(client, monkeypatch):
+    monkeypatch.setenv("LORE_PANEL", "off")
+    path = "/lore/staff/discord-roles"
+    payload = {"helper": [], "lore_helper": []}
+    assert client.put(path, json=payload).status_code == 401
+    assert client.put(path, json=payload, headers={"X-Staff-Key": "wrong"}).status_code == 401
+    with database.connect() as conn:
+        assert conn.execute("SELECT * FROM lore_discord_role_sync").fetchall() == []
+    body = ok(_sync(client, helper=["1", "1", "2"], lore_helper=["2", "3"]))
+    first_sync = datetime.fromisoformat(body.pop("synced_at"))
+    assert first_sync.tzinfo is not None
+    assert body == {"helper": 2, "lore_helper": 2, "added": 4, "removed": 0}
+
+    body = ok(_sync(client, helper=["1", "3"], lore_helper=["2"]))
+    assert datetime.fromisoformat(body.pop("synced_at")) >= first_sync
+    assert body == {"helper": 2, "lore_helper": 1, "added": 1, "removed": 2}
+    with database.connect() as conn:
+        assert {(r["discord_user_id"], r["role"]) for r in conn.execute("SELECT * FROM lore_discord_roles")} == {
+            ("1", "helper"), ("3", "helper"), ("2", "lore_helper"),
+        }
+    repeated = ok(_sync(client, helper=["1", "3"], lore_helper=["2"]))
+    assert repeated["added"] == repeated["removed"] == 0
+    assert ok(_sync(client))["removed"] == 3
+
+
+@pytest.mark.parametrize("payload", [
+    [], {}, {"helper": []}, {"helper": [], "lore_helper": [], "other": []},
+    {"helper": "123", "lore_helper": []}, {"helper": [123], "lore_helper": []},
+    {"helper": [], "lore_helper": ["123\n"]}, {"helper": [""], "lore_helper": []},
+    {"helper": ["１２３"], "lore_helper": []}, {"helper": ["1" * 21], "lore_helper": []},
+    {"helper": [], "lore_helper": ["1"] * 10_001},
+])
+def test_invalid_discord_role_snapshot(client, payload):
+    assert error(client.put("/lore/staff/discord-roles", json=payload, headers=STAFF_KEY), 400) == "bad_discord_roles"
+
+
+def test_largest_discord_role_snapshot(client):
+    ids = [str(10**19 + i) for i in range(10_000)]
+    result = ok(_sync(client, helper=ids, lore_helper=ids))
+    assert result["added"] == 20_000
+
+
+def test_snapshot_rolls_back_roles_and_timestamp_together(client, monkeypatch):
+    first = ok(_sync(client, helper=["1"]))
+    original = database.transaction
+
+    @contextmanager
+    def abort_commit(**kwargs):
+        with original(**kwargs) as conn:
+            yield conn
+            raise RuntimeError("abort commit")
+
+    monkeypatch.setattr(database, "transaction", abort_commit)
+    with pytest.raises(RuntimeError, match="abort commit"):
+        lore_team.sync_discord_roles({"helper": [], "lore_helper": ["2"]})
+    with database.connect() as conn:
+        assert conn.execute("SELECT * FROM lore_discord_roles").fetchall() == [
+            {"discord_user_id": "1", "role": "helper"},
+        ]
+        assert conn.execute("SELECT synced_at FROM lore_discord_role_sync").fetchone() == {
+            "synced_at": datetime.fromisoformat(first["synced_at"]),
+        }
+
+
 def test_team_head_is_only_for_roster(client):
-    member = Person(client, "helper", member=True)
+    member = Person(client, "helper", lore_helper=True)
     player = Person(client, "player", minecraft="Someone")
     assert member.get(f"/team/{player.user_id}/head.png").status_code == 404
 
@@ -723,11 +930,11 @@ def test_notifications_need_staff_key(client):
 
 
 def test_notifications_by_mode_reschedule_cancel(client):
-    lead = Person(client, "lead", member=True, lead=True)
-    available = Person(client, "available", member=True)
-    busy = Person(client, "busy", member=True)
-    everything = Person(client, "everything", member=True)
-    quiet = Person(client, "quiet", member=True)
+    lead = Person(client, "lead", lore_helper=True)
+    available = Person(client, "available", lore_helper=True)
+    busy = Person(client, "busy", lore_helper=True)
+    everything = Person(client, "everything", lore_helper=True)
+    quiet = Person(client, "quiet", lore_helper=True)
     day = TODAY + timedelta(days=5)
     later = day + timedelta(days=1)
     ok(available.put("/availability/me/days", {"days": [{"day": day.isoformat(), "status": "full"},
@@ -778,8 +985,8 @@ def test_notifications_by_mode_reschedule_cancel(client):
 
 
 def test_rescheduling_after_cancel_queues_fresh_rows(client):
-    lead = Person(client, "lead", member=True, lead=True)
-    helper = Person(client, "helper", member=True)
+    lead = Person(client, "lead", lore_helper=True)
+    helper = Person(client, "helper", lore_helper=True)
     ok(lead.put("/me/settings", {"notify_mode": "all"}))
     day = TODAY + timedelta(days=3)
     event = ok(lead.post("/events", {"title": "Raid", "status": "scheduled", "scheduled_on": day.isoformat()}))
@@ -817,7 +1024,7 @@ def test_rescheduling_after_cancel_queues_fresh_rows(client):
 
 
 def test_marking_done_sends_nothing(client):
-    lead = Person(client, "lead", member=True)
+    lead = Person(client, "lead", lore_helper=True)
     ok(lead.put("/me/settings", {"notify_mode": "all"}))
     event = ok(lead.post("/events", {"title": "Feast", "status": "scheduled", "scheduled_on": TODAY.isoformat()}))
     assert [n["kind"] for n in _poll(client)] == ["event_scheduled"]
@@ -825,3 +1032,64 @@ def test_marking_done_sends_nothing(client):
     assert _poll(client) == []
     ok(lead.delete(f"/events/{event['id']}"))
     assert _poll(client) == []
+
+
+def test_assigned_mode_and_calendar_notification_redaction(client):
+    editor = Person(client, "editor", lore_helper=True)
+    assigned = Person(client, "assigned", helper=True)
+    calendar_all = Person(client, "calendar-all", helper=True)
+    full_available = Person(client, "full-available", lore_helper=True)
+    day = TODAY.isoformat()
+    for person in (assigned, full_available):
+        ok(person.put("/availability/me/days", {"days": [{"day": day, "status": "full"}]}))
+    ok(calendar_all.put("/me/settings", {"notify_mode": "all"}))
+    storyline = ok(editor.post("/storylines", {"title": "Secret story"}))
+    location = ok(editor.post("/locations", {"name": "Old Keep", "x": 1, "z": 2}))
+    event = ok(editor.post("/events", {
+        "title": "Feast", "status": "scheduled", "scheduled_on": day,
+        "storyline_id": storyline["id"], "location_id": location["id"], "notes": "Secret notes",
+    }))
+    received = {n["discord_user_id"]: n["payload"] for n in _poll(client)}
+    assert set(received) == {calendar_all.discord_id, full_available.discord_id}
+    assert received[full_available.discord_id]["storyline"] == "Secret story"
+    assert received[full_available.discord_id]["location"]["x"] == 1
+    assert received[full_available.discord_id]["url"] == f"{SITE}/lore/events/{event['id']}"
+
+    def check_redacted(payload):
+        assert payload["storyline"] is None
+        assert payload["location"] == {"name": "Old Keep"}
+        assert payload["url"] == f"{SITE}/lore/calendar?day={day}"
+        assert "notes" not in payload
+
+    check_redacted(received[calendar_all.discord_id])
+    ok(editor.put(f"/events/{event['id']}/helpers", {"user_ids": [assigned.user_id]}))
+    (notice,) = _poll(client)
+    assert notice["discord_user_id"] == assigned.discord_id
+    assert notice["payload"]["recipient_is_helper"] is True
+    check_redacted(notice["payload"])
+    with database.connect() as conn:
+        queued = conn.execute("SELECT payload FROM lore_notifications WHERE id = %s", (notice["id"],)).fetchone()
+        check_redacted(queued["payload"])
+    ok(editor.patch(f"/events/{event['id']}", {"status": "cancelled", "version": 1}))
+    cancelled = {n["discord_user_id"]: n["payload"] for n in _poll(client)}
+    check_redacted(cancelled[assigned.discord_id])
+    check_redacted(cancelled[calendar_all.discord_id])
+
+
+def test_pending_notifications_follow_current_access(client):
+    editor = Person(client, "editor", role="mod")
+    downgraded = Person(client, "downgraded", lore_helper=True, helper=True)
+    removed = Person(client, "removed", lore_helper=True)
+    switched = Person(client, "switched", lore_helper=True)
+    for person in (downgraded, removed, switched):
+        ok(person.put("/me/settings", {"notify_mode": "all"}))
+    storyline = ok(editor.post("/storylines", {"title": "Secret story"}))
+    ok(editor.post("/events", {
+        "title": "Feast", "status": "scheduled", "scheduled_on": TODAY.isoformat(), "storyline_id": storyline["id"],
+    }))
+    ok(switched.put("/me/settings", {"notify_mode": "assigned"}))
+    ok(_sync(client, helper=[downgraded.discord_id], lore_helper=[switched.discord_id]))
+    (notice,) = _poll(client)
+    assert notice["discord_user_id"] == downgraded.discord_id
+    assert notice["payload"]["storyline"] is None
+    assert notice["payload"]["url"] == f"{SITE}/lore/calendar?day={TODAY}"

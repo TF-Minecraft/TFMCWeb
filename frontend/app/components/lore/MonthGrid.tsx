@@ -31,6 +31,7 @@ const MY_DOT: Record<string, string> = {
  */
 export default function MonthGrid({
   month,
+  full,
   weeks,
   today,
   selected,
@@ -42,6 +43,7 @@ export default function MonthGrid({
 }: {
   /** First day of the shown month. */
   month: string;
+  full: boolean;
   weeks: string[][];
   today: string;
   selected: string | null;
@@ -128,18 +130,31 @@ export default function MonthGrid({
                     const times = event.starts_at
                       ? formatStartTimes(event.starts_at, zone, event.scheduled_on).join(" · ")
                       : "";
+                    const title = `${event.title} (${statusLabel(event.status)})${times ? ` · ${times}` : ""}`;
+                    const chipClass = `block truncate rounded-sm px-1 py-0.5 text-[11px] leading-tight ${
+                      CHIP_TONE[event.status] ?? CHIP_TONE.done
+                    }`;
+                    const label = (
+                      <>
+                        {time ? <span className="mr-1 tabular-nums opacity-80">{time}</span> : null}
+                        {event.title}
+                      </>
+                    );
                     return (
                       <li key={event.id} className="min-w-0">
-                        <Link
-                          href={`/lore/events/${event.id}`}
-                          title={`${event.title} (${statusLabel(event.status)})${times ? ` · ${times}` : ""}`}
-                          className={`block truncate rounded-sm px-1 py-0.5 text-[11px] leading-tight hover:opacity-85 ${
-                            CHIP_TONE[event.status] ?? CHIP_TONE.done
-                          }`}
-                        >
-                          {time ? <span className="mr-1 tabular-nums opacity-80">{time}</span> : null}
-                          {event.title}
-                        </Link>
+                        {full ? (
+                          <Link
+                            href={`/lore/events/${event.id}`}
+                            title={title}
+                            className={`${chipClass} hover:opacity-85`}
+                          >
+                            {label}
+                          </Link>
+                        ) : (
+                          <span title={title} className={chipClass}>
+                            {label}
+                          </span>
+                        )}
                       </li>
                     );
                   })}

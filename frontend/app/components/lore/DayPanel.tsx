@@ -28,6 +28,7 @@ const subheadClass = "mb-2 text-xs font-semibold uppercase tracking-wider text-[
  */
 export default function DayPanel({
   day,
+  full,
   events,
   grid,
   myUserId,
@@ -37,6 +38,7 @@ export default function DayPanel({
   onClose,
 }: {
   day: string;
+  full: boolean;
   events: CalendarEvent[];
   grid: AvailabilityGrid | null;
   myUserId: number | null;
@@ -68,7 +70,6 @@ export default function DayPanel({
       return {
         user_id: person.user_id,
         name: person.name,
-        is_lead: person.is_lead,
         status: entry?.status ?? null,
         note: entry?.note ?? "",
       };
@@ -115,12 +116,16 @@ export default function DayPanel({
               {events.map((event) => (
                 <li key={event.id} className="flex flex-col gap-0.5 py-2">
                   <span className="flex flex-wrap items-center gap-2">
-                    <Link
-                      href={`/lore/events/${event.id}`}
-                      className="font-semibold text-[var(--tfmc-accent)] underline-offset-2 hover:underline"
-                    >
-                      {event.title}
-                    </Link>
+                    {full ? (
+                      <Link
+                        href={`/lore/events/${event.id}`}
+                        className="font-semibold text-[var(--tfmc-accent)] underline-offset-2 hover:underline"
+                      >
+                        {event.title}
+                      </Link>
+                    ) : (
+                      <span className="font-semibold text-[var(--tfmc-cream)]">{event.title}</span>
+                    )}
                     <StatusBadge status={event.status} />
                   </span>
                   {event.starts_at ? (
@@ -131,7 +136,7 @@ export default function DayPanel({
                     <span className="text-xs text-[var(--tfmc-stone)]">No start time</span>
                   )}
                   <span className="flex flex-wrap gap-x-3 text-xs text-[var(--tfmc-mist)]">
-                    {event.storyline ? (
+                    {full && event.storyline ? (
                       <span>
                         Storyline:{" "}
                         <RefLink item={{ kind: "storyline", id: event.storyline.id, label: event.storyline.label }} />
@@ -146,10 +151,12 @@ export default function DayPanel({
               ))}
             </ul>
           )}
-          <div className="mt-3">
-            <h3 className={subheadClass}>Add event on this day</h3>
-            <QuickCreate kind="event" extra={{ status: "scheduled", scheduled_on: day }} placeholder="Event title…" />
-          </div>
+          {full ? (
+            <div className="mt-3">
+              <h3 className={subheadClass}>Add event on this day</h3>
+              <QuickCreate kind="event" extra={{ status: "scheduled", scheduled_on: day }} placeholder="Event title…" />
+            </div>
+          ) : null}
         </div>
 
         <div className="min-w-0">
@@ -170,7 +177,6 @@ export default function DayPanel({
                     {person.user_id === myUserId ? (
                       <span className="ml-1 text-xs text-[var(--tfmc-accent)]">(me)</span>
                     ) : null}
-                    {person.is_lead ? <span className="ml-1 text-xs text-[var(--tfmc-stone)]">lead</span> : null}
                   </span>
                   <AvailabilityPill status={person.status} note={person.note} showNote />
                 </li>

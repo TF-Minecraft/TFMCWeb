@@ -12,7 +12,7 @@ export type EventStatus = "idea" | "waiting" | "scheduled" | "done" | "cancelled
 export type LocationKind = "settlement" | "landmark" | "camp" | "ruin" | "event" | "other";
 export type RelationType = "ally" | "friendly" | "neutral" | "unfriendly" | "hostile" | "rival" | "family";
 export type Availability = "full" | "partial" | "none";
-export type NotifyMode = "off" | "available" | "all";
+export type NotifyMode = "off" | "assigned" | "available" | "all";
 
 export const ENTITY_KINDS: EntityKind[] = ["character", "organisation", "storyline", "location", "event"];
 export const CHARACTER_STATUSES: CharacterStatus[] = ["active", "inactive", "missing", "dead"];
@@ -53,14 +53,22 @@ export function entityHref(kind: string, id: number): string {
   return plural ? `/lore/${plural}/${id}` : "/lore";
 }
 
-export type LoreUser = { user_id: number; name: string; is_staff: boolean; is_lead: boolean; is_member: boolean };
+export type LoreLevel = "full" | "calendar";
+
+export type LoreUser = {
+  user_id: number;
+  name: string;
+  is_staff: boolean;
+  is_lore_helper: boolean;
+  is_helper: boolean;
+};
 
 export type LoreAccess = {
   enabled: boolean;
   /** False also when the flag is off; check `enabled` first. */
   signed_in: boolean;
   access: boolean;
-  can_manage_team: boolean;
+  level: LoreLevel | null;
   user: LoreUser | null;
 };
 
@@ -271,9 +279,8 @@ export type MyAvailability = {
 export type RosterPerson = {
   user_id: number;
   name: string;
-  is_staff: boolean;
-  is_member: boolean;
-  is_lead: boolean;
+  level: LoreLevel;
+  lore_role: "staff" | "lore_helper" | "helper";
   timezone: string | null;
   notify_mode: NotifyMode;
   has_head: boolean;
@@ -294,7 +301,7 @@ export type CalendarEvent = {
   starts_at: string | null;
   helper_ids: number[];
   storyline: { id: number; label: string } | null;
-  location: { id: number; label: string; world: string; x: number; y: number | null; z: number } | null;
+  location: ({ label: string } & Partial<{ id: number; world: string; x: number; y: number | null; z: number }>) | null;
 };
 
 export type UnscheduledEvent = {
@@ -331,19 +338,13 @@ export type Overview = {
   settings: LoreSettings;
 };
 
-export type TeamMember = {
-  user_id: number;
-  name: string;
-  has_head: boolean;
-  is_lead: boolean;
-  is_staff: boolean;
-  added_at: string | null;
-  added_by: number | null;
-  added_by_name: string | null;
+export type Team = {
+  lore_helpers: RosterPerson[];
+  helpers: RosterPerson[];
+  staff: RosterPerson[];
+  synced_at: string | null;
+  unlinked: number;
 };
-
-export type Team = { members: TeamMember[]; staff: TeamMember[] };
-export type TeamCandidate = { user_id: number; name: string; minecraft_name?: string | null };
 
 export type DeletedItem = {
   kind: EntityKind;
@@ -402,8 +403,8 @@ function send<T>(method: string, path: string, body?: unknown): Promise<T> {
 
 const ERROR_MESSAGES: Record<string, string> = {
   not_signed_in: "Your session has ended. Sign in again.",
-  no_access: "The lore panel is for staff and the Lore team.",
-  forbidden: "Only staff and Lore team leads can change the team.",
+  no_access: "The lore panel is for Discord Helpers, Lore Helpers and website staff.",
+  lore_helpers_only: "This part of the lore panel is for Lore Helpers. Helpers can use the calendar.",
   bad_origin: "That request was blocked. Reload the page and try again.",
   viewing_as_player: VIEW_ONLY_MESSAGE,
   not_found: "That record no longer exists.",
@@ -420,8 +421,6 @@ const ERROR_MESSAGES: Record<string, string> = {
   bad_day: "That isn’t a valid date.",
   bad_timezone: "That time zone isn’t recognised.",
   bad_notify_mode: "Pick one of the notification options.",
-  already_member: "They’re already on the Lore team.",
-  cannot_change_self: "You can’t change your own place on the team.",
   unknown_player: "No Minecraft player with that name has been seen on the server.",
   bad_member: "One of those links no longer exists.",
   bad_order: "The event list changed. Reload and try again.",
@@ -637,16 +636,4 @@ export function getCalendar(from: string, to: string): Promise<Calendar> {
 // Team
 export function getTeam(): Promise<Team> {
   return loreRequest("/team");
-}
-export async function getTeamCandidates(q: string): Promise<TeamCandidate[]> {
-  return (await loreRequest<{ candidates: TeamCandidate[] }>(`/team/candidates${qs({ q })}`)).candidates;
-}
-export function addTeamMember(userId: number, isLead = false) {
-  return send<TeamMember>("POST", "/team", { user_id: userId, is_lead: isLead });
-}
-export function setTeamLead(userId: number, isLead: boolean) {
-  return send<TeamMember>("PATCH", `/team/${userId}`, { is_lead: isLead });
-}
-export function removeTeamMember(userId: number) {
-  return send<{ ok: true }>("DELETE", `/team/${userId}`);
 }
