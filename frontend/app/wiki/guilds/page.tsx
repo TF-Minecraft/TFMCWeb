@@ -277,10 +277,9 @@ export default function GuildsPage() {
         ]}
       />
       <p className={`mt-3 ${body}`}>
-        &quot;Open to foreign guilds&quot; is how open a faction&apos;s installations are to foreign guilds. &quot;Own guilds
-        abroad&quot; is added to that figure, or taken from it, when your own guilds use installations abroad, up to 100%
-        in all. A guild from a
-        Mercantilism faction visiting a Free Trade faction gets 50% plus 20%, so 70%.
+        &quot;Open to foreign guilds&quot; is how open a faction&apos;s installations are to foreign guilds. &quot;Own
+        guilds abroad&quot; is added to that figure, or taken from it, when your own guilds use installations abroad, up
+        to 100% in all. A guild from a Mercantilism faction visiting a Free Trade faction gets 50% plus 20%, so 70%.
       </p>
       <p className={`mt-3 ${body}`}>
         An Isolationism faction stays closed whatever the visitor&apos;s law. Only a trade agreement opens it. A subject
