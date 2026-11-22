@@ -33,8 +33,9 @@ export default function GuildsPage() {
         Every faction has a main guild, run by the faction leader. You are in it until you found or join another.
       </p>
       <p className={`mt-3 ${body}`}>
-        A guild has its own leader, banner, capital and bank. Any member except the faction leader can found one, and it
-        is free:
+        A guild has its own leader, banner, capital and bank. Any member of the main guild except the faction leader can
+        found one, and it is free. If you are in another guild, leave it first with{" "}
+        <code className={code}>/guild leave</code>. To found one:
       </p>
       <ol className={`mt-3 list-decimal space-y-2 pl-5 ${body}`}>
         <li>
@@ -276,8 +277,9 @@ export default function GuildsPage() {
         ]}
       />
       <p className={`mt-3 ${body}`}>
-        The first column is how open a faction&apos;s installations are to foreign guilds. The second column is added to
-        that figure, or taken from it, when your own guilds use installations abroad, up to 100% in all. A guild from a
+        &quot;Open to foreign guilds&quot; is how open a faction&apos;s installations are to foreign guilds. &quot;Own guilds
+        abroad&quot; is added to that figure, or taken from it, when your own guilds use installations abroad, up to 100%
+        in all. A guild from a
         Mercantilism faction visiting a Free Trade faction gets 50% plus 20%, so 70%.
       </p>
       <p className={`mt-3 ${body}`}>

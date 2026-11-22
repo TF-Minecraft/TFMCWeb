@@ -87,8 +87,8 @@ export default function DowsingPage() {
       <p className={body}>
         Efficiency, shown in the node&apos;s menu, changes the cycle length too: at 0% a cycle takes 4 times as long as
         at 100%. A new node starts at 50%. Each active guild member adds 0.1% an hour (1% an hour at most for the whole
-        guild) and can lift the node by up to 25%, so a guild needs 4 active members to reach 100%. Changing the node
-        type takes 40% off.
+        guild). A node can&apos;t rise above 25% for each active member, so a guild needs 4 active members to reach 100%.
+        Changing the node type takes 40% off.
       </p>
       <p className={`mt-3 ${body}`}>
         A member who has been offline for 4 weeks is{" "}
