@@ -67,6 +67,20 @@ export const gemSocketTypes: { type: string; gems: { name: string; texture: stri
   },
 ];
 
+/** The stat each gem gives, in the same order as the gems of every socket type above. */
+export const gemStats = [
+  "Max Health",
+  "Armor",
+  "Physical Damage Reduction",
+  "Projectile Damage Reduction",
+  "Magic Damage Reduction",
+  "Physical Damage",
+  "Projectile Damage",
+  "Magic Damage",
+  "Spell Vampirism",
+  "Lifesteal",
+];
+
 function gemTexture(name: string) {
   return `/wiki/textures/gems/${name.toLowerCase().replaceAll("'", "").replaceAll(" ", "_")}.png`;
 }

@@ -20,7 +20,7 @@ const subheading = "mt-6 text-sm font-semibold uppercase tracking-wide text-[var
 export default function CharactersPage() {
   return (
     <WikiPage
-      lastModified="2026-11-21"
+      lastModified="2026-11-23"
       title="Characters"
       intro={
         <>
@@ -317,8 +317,9 @@ export default function CharactersPage() {
 
       <WikiSectionHeading id="injuries">Injuries</WikiSectionHeading>
       <p className={body}>
-        A <strong>healing injury</strong> goes away after 72 hours, counted in real time even while you are offline, and
-        its penalties ease as it heals. A <strong>permanent injury</strong> stays for good.
+        A <strong>healing injury</strong> goes away after 72 hours, or 48 hours for Half Blind. The time is counted in
+        real time even while you are offline, and the penalties ease as the injury heals. A{" "}
+        <strong>permanent injury</strong> stays for good.
       </p>
       <p className={`mt-3 ${body}`}>Your character can get an injury in these ways:</p>
       <ul className={`mt-2 list-disc space-y-1 pl-5 ${body}`}>
@@ -484,6 +485,11 @@ export default function CharactersPage() {
         A title tells you when you enter a <strong>permadeath zone</strong>. Dying there can kill your character for
         good, and the more injuries your character already has, the more likely that is. If your character survives, a
         healing injury you already have turns permanent. If you have none, you gain a new healing injury.
+      </p>
+      <p className={`mt-3 ${body}`}>
+        To check your risk, run <code className={code}>/rpcharacter menu</code> and click your character to open
+        Character Info. Its Character Traits item shows your injuries, your current permadeath risk and how much each
+        injury adds to it.
       </p>
       <p className={`mt-3 ${body}`}>
         Deaths while you fight in a{" "}

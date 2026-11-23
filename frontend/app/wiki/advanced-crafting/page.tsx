@@ -196,7 +196,7 @@ const recipeCount = armorRecipeTemplates.length + weaponRecipeTemplates.length +
 export default function AdvancedCraftingPage() {
   return (
     <WikiPage
-      lastModified="2026-11-21"
+      lastModified="2026-11-23"
       title="Advanced Crafting"
       intro={
         <>
@@ -294,6 +294,26 @@ export default function AdvancedCraftingPage() {
           Socketing
         </Link>{" "}
         on the gems page has the full steps.
+      </p>
+
+      <WikiSectionHeading id="repair">Repairing your gear</WikiSectionHeading>
+      <p className={body}>
+        Forged weapons, armour and tools can&apos;t be repaired at an anvil. Use a repair kit: drag it onto the item in
+        your inventory and click. Weak, Medium and Strong Repair Kits fix weapons and armour, and a stronger kit
+        restores more. The Tool Repair Kit fixes tools. Mage equipment takes a{" "}
+        <WikiItemLink name="Magical Repair Kit" /> (see{" "}
+        <Link href="/wiki/mage-weapons" className={link}>
+          Mage Weapons
+        </Link>
+        ). Repair kits turn up as loot, for example from{" "}
+        <Link href="/wiki/gathering#treasure" className={link}>
+          gathering
+        </Link>{" "}
+        and{" "}
+        <Link href="/wiki/arcane-trace-detector" className={link}>
+          Arcane Trace Detector
+        </Link>{" "}
+        caches.
       </p>
 
       <WikiSectionHeading id="recipes">Recipes</WikiSectionHeading>

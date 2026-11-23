@@ -17,7 +17,7 @@ const body = "text-sm text-[var(--tfmc-mist)]";
 export default function MedicinePage() {
   return (
     <WikiPage
-      lastModified="2026-11-21"
+      lastModified="2026-11-23"
       title={medicineSection.nav.label}
       intro="A physician can operate on another character's healing injury to cure it, and makes the prosthetic limbs that replace a lost arm or leg."
     >
@@ -102,6 +102,10 @@ export default function MedicinePage() {
         Examine the patient first, and sedate them before you cut. Clean the wound with Carbolic Acid after your last
         cut, before you finish. Chat messages tell you when you reach a bone, when bleeding starts and when the patient
         is waking.
+      </p>
+      <p className={`mt-3 ${body}`}>
+        The incisions block in the menu turns red while the patient is bleeding. A leg wound stops bleeding once it is
+        dressed. After the dressing, a chat line starting &quot;Still to do:&quot; lists the steps you have left.
       </p>
 
       <WikiSectionHeading id="outcome">Success and failure</WikiSectionHeading>

@@ -42,7 +42,7 @@ const ammunitionName = (name: string) => {
 export default function VehiclesPage() {
   return (
     <WikiPage
-      lastModified="2026-11-21"
+      lastModified="2026-11-23"
       title="Vehicles & Construction"
       width="lg"
       intro="Build a cart, crew a ship or fly an airship. Choose a vehicle below for its materials, build time, fuel and 3D preview."
@@ -152,15 +152,26 @@ export default function VehiclesPage() {
         <li>Simple Locomotive: A and D pick the branch at a junction.</li>
         <li>
           Planes: hold sneak and press W or S for the throttle, A or D to turn. In flight, W and S on their own tilt the
-          nose and A and D roll.
+          nose and A and D roll. At low throttle a plane loses height.
         </li>
         <li>Airships: Space goes up and sneak goes down.</li>
       </ul>
       <p className="mt-3 text-sm text-[var(--tfmc-mist)]">
+        <strong>Side panel:</strong> while you are aboard, the panel at the side of your screen shows the vehicle&apos;s
+        name and type, and the condition of each part in %. It marks a part that is on fire. It also shows the
+        engine&apos;s throttle and fuel, the pumps&apos; power and, on a flooding ship, SINKING with a %. In a weapon
+        seat it shows the weapon and the ammunition loaded. A locomotive shows its overdrive too. Use it to see what
+        needs{" "}
+        <Link href="#repair" className={linkClass}>
+          repair
+        </Link>
+        .
+      </p>
+      <p className="mt-3 text-sm text-[var(--tfmc-mist)]">
         <strong>Refuel:</strong> hold the fuel listed on the vehicle&apos;s page and right-click the vehicle once per
         item. Each Coal Block or <WikiItemLink name="Arcane Fuel" /> adds 100 fuel. Coal Blocks can go in while the
         engine runs, but stop an Arcane Fuel engine first. Planes and airships refuel on the ground only, except the
-        Behemoth, which also refuels and reloads in flight.
+        Behemoth, which also refuels and reloads in flight. An empty tank stops the engine, even in the air.
       </p>
       <p className="mt-3 text-sm text-[var(--tfmc-mist)]">
         <strong>Carry cargo:</strong> to open a hold, sit in the seat that belongs to it and right-click. The Flat
@@ -219,6 +230,11 @@ export default function VehiclesPage() {
         ]}
       />
       <p className="mt-3 text-sm text-[var(--tfmc-mist)]">
+        A ticket never expires and you can&apos;t take it back. If you switch Tickets off, the old tickets work again
+        when you switch it back on. On the Wooden Cart, the storage is opened from a passenger seat, so anyone with a
+        ticket can open it.
+      </p>
+      <p className="mt-3 text-sm text-[var(--tfmc-mist)]">
         Claiming a vehicle that someone else last owned can cost your faction&apos;s Transfer Fee. Right-click the
         vehicle again to confirm. When an owner hands a vehicle over, the giver pays the Transfer Fee once the other
         player accepts.
@@ -267,8 +283,7 @@ export default function VehiclesPage() {
           personal bank
         </Link>{" "}
         when the new day starts. Bigger and armed vehicles cost more, and each vehicle&apos;s page lists its upkeep. If
-        your bank is short, you get a warning before the charge. Your faction can add a Vehicle Tax, a share of the
-        upkeep that is charged with it.
+        your bank is short, you get a warning before the charge.
       </p>
       <p className="mt-3 text-sm text-[var(--tfmc-mist)]">
         Each hour that upkeep stays unpaid, every part of the vehicle loses more of its condition. Parts never wear away
@@ -402,9 +417,9 @@ export default function VehiclesPage() {
       </p>
       <WikiSectionHeading id="repair">Repair and repaint</WikiSectionHeading>
       <p className="text-sm text-[var(--tfmc-mist)]">
-        Hold Vehicle Repair and right-click a vehicle that is on the ground and not moving. Aboard, repair from a
-        mechanic seat instead. In the menu, the Repair Tool fixes parts and the Water Bucket puts out fires. Keep the
-        menu open and stay near the vehicle until the repair finishes.
+        Hold Vehicle Repair and right-click a vehicle that is stopped and not flying. A ship sitting still on the water
+        counts. Aboard, repair from a mechanic seat instead. In the menu, the Repair Tool fixes parts and the Water
+        Bucket puts out fires. Keep the menu open and stay near the vehicle until the repair finishes.
       </p>
       <p className="mt-3 text-sm text-[var(--tfmc-mist)]">
         Hold <WikiItemLink name="Vehicle Paint" /> and right-click a vehicle to open Select Skin. The paint is not used
@@ -443,7 +458,7 @@ export default function VehiclesPage() {
       </p>
       <p className="mt-3 text-sm text-[var(--tfmc-mist)]">
         Keep a ship&apos;s pumps repaired to hold back flooding. Repair engines and wings to get performance back. A
-        damaged engine limits your throttle and can fail to start.
+        damaged engine limits your throttle and can fail to start. A badly damaged balloon loses lift.
       </p>
       <WikiSectionHeading id="skins">Preview skins</WikiSectionHeading>
       <p className="text-sm text-[var(--tfmc-mist)]">
