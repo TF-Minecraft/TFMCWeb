@@ -264,8 +264,8 @@ export default function FactionsPage() {
         </li>
         <li>In a faction with no council, the faction leader&apos;s change applies straight away.</li>
         <li>
-          In a faction with a council, the faction leader and the council members propose changes to laws, taxes and
-          fees in Government, and a{" "}
+          In a faction with a council, the faction leader and the council members propose changes to laws and taxes in
+          Government, and a{" "}
           <a href="#council" className={link}>
             council session
           </a>{" "}
@@ -539,8 +539,8 @@ export default function FactionsPage() {
         <li>Your regiments.</li>
         <li>Your faction&apos;s vehicles and where each one is berthed. The installations themselves stay visible.</li>
         <li>
-          The military entries in your ledger: military and vehicle upkeep, vehicle fees and mercenary contracts. The
-          totals still include them.
+          The military entries in your ledger: military and vehicle upkeep, plus mercenary contracts. The totals still
+          include them.
         </li>
       </ul>
       <p className={`mt-3 ${body}`}>

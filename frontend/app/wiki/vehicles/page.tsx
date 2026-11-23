@@ -93,8 +93,7 @@ export default function VehiclesPage() {
         </li>
         <li>
           Right-click the station during the build to see its progress. As the builder, you can cancel from that menu.
-          The materials come back to your inventory and any that don&apos;t fit drop at your feet. The fee goes back to
-          your bank.
+          The materials come back to your inventory and any that don&apos;t fit drop at your feet.
         </li>
         <li>
           Wait for the build to finish. The vehicle appears in the world, not in your inventory, once a player is within
