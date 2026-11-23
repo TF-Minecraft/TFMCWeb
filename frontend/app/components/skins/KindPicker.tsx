@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { stripMcText } from "../../../lib/mcText";
 import type { SkinKind } from "../../../lib/skins/sizes";
+import McText from "../McText";
 import { KindHelpPanel, KindHelpToggle, useKindHelpId } from "./KindHelp";
 
 const KINDS: Record<SkinKind, { label: string; style: string; detail: string }> = {
@@ -115,7 +117,7 @@ export default function KindPicker({ kinds, value, onChange, disabled, lockedBy 
               aria-disabled={Boolean(lock)}
               disabled={disabled || Boolean(lock)}
               onClick={() => onChange(kind)}
-              title={lock ? `Unlocks at ${lock}` : undefined}
+              title={lock ? `Unlocks at ${stripMcText(lock)}` : undefined}
               className={`group relative overflow-hidden rounded-sm border px-3.5 py-3 text-left transition duration-200 ease-out disabled:cursor-not-allowed ${
                 lock ? "opacity-60" : "disabled:opacity-50"
               } ${
@@ -131,7 +133,7 @@ export default function KindPicker({ kinds, value, onChange, disabled, lockedBy 
                 </span>
                 {lock ? (
                   <span className="shrink-0 rounded-sm border border-[color-mix(in_srgb,var(--tfmc-accent)_45%,transparent)] px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--tfmc-accent)]">
-                    <LockIcon /> {lock}
+                    <LockIcon /> <McText text={lock} />
                   </span>
                 ) : (
                   <span

@@ -1,3 +1,4 @@
+import { stripMcText } from "../mcText";
 import type { CatalogEntitlements } from "./catalog";
 import type { SkinKind } from "./sizes";
 import { ARMOR_METALS, ARMOR_SINGLE_SETS, kindsForBaseSet } from "./baseSets";
@@ -41,7 +42,9 @@ export function kindAllowed(kind: string, allowed: readonly string[] | null | un
 export function rankForKind(entitlements: CatalogEntitlements | null | undefined, kind: string): string | null {
   const groups = [...(entitlements?.groups ?? [])].sort((a, b) => a.tier - b.tier);
   const group = groups.find((g) => g.skin_kinds.some((k) => k.toLowerCase() === kind));
-  return group ? group.display_name || group.id : null;
+  if (!group) return null;
+  // A name of colour codes alone would show as nothing.
+  return stripMcText(group.display_name ?? "").trim() ? group.display_name : group.id;
 }
 
 /** First kind for a target the player may upload, else null. */

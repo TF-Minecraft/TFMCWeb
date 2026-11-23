@@ -10,7 +10,9 @@ import {
   baseSetLabel,
 } from "../../../lib/skins/baseSets";
 import { ARMOR_TARGETS, kindsForTarget, sameTarget, type SkinTarget } from "../../../lib/skins/kindAccess";
+import { stripMcText } from "../../../lib/mcText";
 import type { SkinKind } from "../../../lib/skins/sizes";
+import McText from "../McText";
 import { LockIcon, kindStyle } from "./KindPicker";
 
 type Tile = {
@@ -126,7 +128,7 @@ export default function SkinTargetPicker({ value, onChange, disabled, lockedBy }
                     role="radio"
                     aria-checked={selected}
                     disabled={disabled || Boolean(lock)}
-                    title={lock ? `Unlocks at ${lock}` : tile.detail}
+                    title={lock ? `Unlocks at ${stripMcText(lock)}` : tile.detail}
                     onClick={() => onChange(tile.target)}
                     className={`relative flex min-h-[3.5rem] flex-col justify-center rounded-sm border px-3 py-2 text-left transition duration-150 disabled:cursor-not-allowed ${
                       lock ? "opacity-55" : "disabled:opacity-50"
@@ -140,7 +142,7 @@ export default function SkinTargetPicker({ value, onChange, disabled, lockedBy }
                     <span className="truncate text-[11px] text-[var(--tfmc-mist)]">
                       {lock ? (
                         <>
-                          <LockIcon /> {lock}
+                          <LockIcon /> <McText text={lock} />
                         </>
                       ) : (
                         tile.detail

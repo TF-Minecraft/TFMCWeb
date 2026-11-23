@@ -1,8 +1,10 @@
 "use client";
 
 import LoadingSkeleton from "@/app/components/shared/LoadingSkeleton";
+import McText from "../McText";
 
 import { FormEvent, useEffect, useState, type ReactNode } from "react";
+import { stripMcText } from "../../../lib/mcText";
 import { createSubmission, checkSubmissionConflict, getCatalog, SkinsApiError } from "../../../lib/skins/api";
 import type { SkinsCatalog } from "../../../lib/skins/catalog";
 import { filterStaffCategories } from "../../../lib/skins/catalog";
@@ -377,7 +379,7 @@ export default function UploadForm({
       setError(
         isVehicleKind(kind) && staff
           ? "Vehicle skins are made by players."
-          : `That style unlocks at ${lockedByKind(kind)}.`,
+          : `That style unlocks at ${stripMcText(lockedByKind(kind) ?? "")}.`,
       );
       return;
     }
@@ -1121,9 +1123,13 @@ export default function UploadForm({
           </Step>
         ) : target && !kind ? (
           <p className="text-sm text-[var(--tfmc-mist)]">
-            {lockedByKinds(kindsForTarget(target))
-              ? `Skins for this unlock at ${lockedByKinds(kindsForTarget(target))}.`
-              : "Choose a style to continue."}
+            {lockedByKinds(kindsForTarget(target)) ? (
+              <>
+                Skins for this unlock at <McText text={lockedByKinds(kindsForTarget(target))!} />.
+              </>
+            ) : (
+              "Choose a style to continue."
+            )}
           </p>
         ) : null}
 
