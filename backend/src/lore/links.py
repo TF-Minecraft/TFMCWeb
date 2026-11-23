@@ -18,7 +18,7 @@ from src.characters.wardrobe import active_face_png, skin_face_png
 from . import history, notifications
 from .entities import KINDS, _detail, _usable, exists, labels, touch
 from .errors import LoreError, bad, not_found
-from .people import Viewer, roster_ids
+from .people import NAME_SQL, PERSON_JOINS, Viewer, ensure_profile, roster_ids
 
 RELATION_TYPES = ("ally", "friendly", "neutral", "unfriendly", "hostile", "rival", "family")
 RELATION_KINDS = ("character", "organisation")
@@ -355,6 +355,46 @@ def set_event_helpers(event_id: int, data: Any, actor: Viewer) -> dict:
             touch(conn, KINDS["event"], event_id, actor)
             notifications.on_helpers_added(conn, event, added)
         return _detail(conn, KINDS["event"], event_id)
+
+
+def sign_up(event_id: int, actor: Viewer, joining: bool) -> dict:
+    """Put the viewer on a scheduled event's helpers, or take them off it.
+
+    Anyone with panel access may sign themselves up or withdraw; Helpers have no other
+    way to change an event. Signing up queues the usual assignment DM. Repeats are harmless.
+    """
+    with database.connect() as conn:
+        event = _usable(conn, KINDS["event"], event_id)
+        if joining and (event["status"] != "scheduled" or event["scheduled_on"] is None):
+            raise LoreError(409, "not_open_for_signup")
+        if not joining and event["status"] == "done":
+            raise LoreError(409, "event_done")
+        ensure_profile(conn, actor)
+        if joining:
+            changed = conn.execute(
+                "INSERT INTO lore_event_helpers (event_id, user_id) VALUES (%s, %s) ON CONFLICT DO NOTHING",
+                (event_id, actor.user_id),
+            ).rowcount
+        else:
+            changed = conn.execute(
+                "DELETE FROM lore_event_helpers WHERE event_id = %s AND user_id = %s", (event_id, actor.user_id)
+            ).rowcount
+        if changed:
+            history.record(conn, "event", event_id, "signed_up" if joining else "withdrew", actor)
+            touch(conn, KINDS["event"], event_id, actor)
+            if joining:
+                notifications.on_helpers_added(conn, event, {actor.user_id})
+        helpers = conn.execute(
+            f"SELECT u.id AS user_id, {NAME_SQL} AS name FROM lore_event_helpers h JOIN users u ON u.id = h.user_id "
+            f"{PERSON_JOINS} WHERE h.event_id = %s ORDER BY lower({NAME_SQL}), u.id",
+            (event_id,),
+        ).fetchall()
+    return {
+        "id": event_id,
+        "signed_up": joining,
+        "helper_ids": sorted(row["user_id"] for row in helpers),
+        "helpers": [dict(row) for row in helpers],
+    }
 
 
 def set_event_characters(event_id: int, data: Any, actor: Viewer) -> dict:

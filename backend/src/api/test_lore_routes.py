@@ -170,6 +170,8 @@ def test_all_lore_routes_enforce_calendar_allowlist(client):
         ("GET", "/lore/availability"),
         ("GET", "/lore/availability/day/{day}"),
         ("GET", "/lore/team/{user_id}/head.png"),
+        ("PUT", "/lore/events/{event_id}/signup"),
+        ("DELETE", "/lore/events/{event_id}/signup"),
     }
     bot_only = {
         ("GET", "/lore/staff/notifications"),
@@ -581,6 +583,11 @@ def test_adopt_player_character(client):
     # The roster fixes the player.
     assert error(member.put(f"/characters/{made['id']}/player", {"name": None}), 409) == "player_character_linked"
 
+    # The list tells player characters from the lore team's own.
+    npc = ok(member.post("/characters", {"name": "Old Hask"}))
+    flags = {row["id"]: row["is_player_character"] for row in ok(member.get("/characters"))["items"]}
+    assert flags == {made["id"]: True, npc["id"]: False}
+
     # Usable as any character, e.g. in a storyline.
     storyline = ok(member.post("/storylines", {"title": "The Vale"}))
     ok(member.put(f"/storylines/{storyline['id']}/members",
@@ -761,10 +768,18 @@ def test_helper_calendar_and_day_availability_redact_lore(client):
         },
     ]
     assert calendar["unscheduled"] == []
-    assert calendar["availability"]["people"][0]["days"][day]["note"] == ""
+    # The Helper is on the roster too, without having set anything.
+    by_user = {p["user_id"]: p for p in calendar["availability"]["people"]}
+    assert set(by_user) == {lore_helper.user_id, helper.user_id}
+    assert by_user[lore_helper.user_id]["days"][day]["note"] == ""
     assert ok(helper.get("/availability" + query)) == calendar["availability"]
-    assert ok(helper.get(f"/availability/day/{day}"))["people"][0]["note"] == ""
-    assert ok(lore_helper.get(f"/availability/day/{day}"))["people"][0]["note"] == "Preparing the story reveal"
+
+    def day_note(viewer):
+        people = ok(viewer.get(f"/availability/day/{day}"))["people"]
+        return {p["user_id"]: p["note"] for p in people}[lore_helper.user_id]
+
+    assert day_note(helper) == ""
+    assert day_note(lore_helper) == "Preparing the story reveal"
     own = ok(helper.put("/availability/me/days", {
         "days": [{"day": day, "status": "partial", "note": "After dinner"}],
     }))
@@ -809,18 +824,19 @@ def test_team_roster_and_role_loss(client):
             for name in ("lore_helpers", "helpers", "staff")
         }
 
+    # Helpers are on the roster from their first sign-in, like Lore Helpers; so are staff holding either role.
     assert groups() == {
         "lore_helpers": [(lore_helper.user_id, "full", "lore_helper", "available")],
-        "helpers": [],
-        "staff": [(staff_lore.user_id, "full", "staff", "available")],
+        "helpers": [(helper.user_id, "calendar", "helper", "assigned")],
+        "staff": sorted([(staff.user_id, "full", "staff", "available"),
+                         (staff_lore.user_id, "full", "staff", "available")], key=lambda row: row[0]),
     }
     assert ok(helper.get(f"/availability/me?from={TODAY}&to={TODAY}"))["settings"] == {
-        "notify_mode": "assigned", "timezone": None, "on_roster": False,
+        "notify_mode": "assigned", "timezone": None, "on_roster": True,
     }
     ok(helper.put("/availability/me/weekly", {"weekly": [{}] * 7}))
     assert ok(staff.put("/me/settings", {}))["notify_mode"] == "available"
     assert groups()["helpers"] == [(helper.user_id, "calendar", "helper", "assigned")]
-    assert {row[0] for row in groups()["staff"]} == {staff.user_id, staff_lore.user_id}
 
     event = ok(staff.post("/events", {"title": "Feast"}))
     ok(staff.put(f"/events/{event['id']}/helpers", {"user_ids": [helper.user_id, lore_helper.user_id]}))
@@ -828,7 +844,8 @@ def test_team_roster_and_role_loss(client):
     assert ok(helper.get("/access"))["level"] is None
     assert ok(lore_helper.get("/access"))["level"] == "calendar"
     team = ok(staff.get("/team"))
-    assert team["helpers"] == team["lore_helpers"] == []
+    assert team["lore_helpers"] == []
+    assert [p["user_id"] for p in team["helpers"]] == [lore_helper.user_id]
     assert {p["user_id"] for p in ok(staff.get(f"/events/{event['id']}"))["helpers"]} == {
         helper.user_id, lore_helper.user_id,
     }
@@ -1077,6 +1094,46 @@ def test_assigned_mode_and_calendar_notification_redaction(client):
     cancelled = {n["discord_user_id"]: n["payload"] for n in _poll(client)}
     check_redacted(cancelled[assigned.discord_id])
     check_redacted(cancelled[calendar_all.discord_id])
+
+
+def test_helpers_sign_themselves_up(client):
+    editor = Person(client, "editor", lore_helper=True)
+    helper = Person(client, "helper", helper=True)
+    player = Person(client, "player")
+    day = (TODAY + timedelta(days=2)).isoformat()
+    event = ok(editor.post("/events", {"title": "Feast", "status": "scheduled", "scheduled_on": day}))
+    _poll(client)
+    path = f"/events/{event['id']}/signup"
+
+    # A Helper who never opened the panel is on the roster and can sign up.
+    body = ok(helper.put(path))
+    assert body["signed_up"] is True and body["helper_ids"] == [helper.user_id]
+    assert body["helpers"] == [{"user_id": helper.user_id, "name": "helper"}]
+    assert ok(helper.put(path))["helper_ids"] == [helper.user_id]
+    (notice,) = _poll(client)
+    assert notice["discord_user_id"] == helper.discord_id and notice["payload"]["recipient_is_helper"] is True
+    calendar = ok(helper.get(f"/calendar?from={day}&to={day}"))
+    assert calendar["events"][0]["helper_ids"] == [helper.user_id]
+    assert [h["user_id"] for h in ok(editor.get(f"/events/{event['id']}"))["helpers"]] == [helper.user_id]
+
+    # Lore Helpers can sign up the same way.
+    assert ok(editor.put(path))["helper_ids"] == sorted([editor.user_id, helper.user_id])
+
+    body = ok(helper.delete(path))
+    assert body["signed_up"] is False and body["helper_ids"] == [editor.user_id]
+    assert ok(helper.delete(path))["helper_ids"] == [editor.user_id]
+    actions = [h["action"] for h in ok(editor.get(f"/events/{event['id']}/history"))["history"]]
+    assert actions[:3] == ["withdrew", "signed_up", "signed_up"]
+
+    assert error(player.put(path), 403) == "no_access"
+    assert error(helper.put("/events/999999/signup"), 404) == "not_found"
+    idea = ok(editor.post("/events", {"title": "Someday"}))
+    assert error(helper.put(f"/events/{idea['id']}/signup"), 409) == "not_open_for_signup"
+    done = ok(editor.post("/events", {"title": "Old feast", "status": "done", "scheduled_on": day}))
+    assert error(helper.put(f"/events/{done['id']}/signup"), 409) == "not_open_for_signup"
+    assert error(helper.delete(f"/events/{done['id']}/signup"), 409) == "event_done"
+    ok(editor.delete(f"/events/{event['id']}"))
+    assert error(helper.put(path), 409) == "deleted"
 
 
 def test_pending_notifications_follow_current_access(client):

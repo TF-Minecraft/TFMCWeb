@@ -287,6 +287,18 @@ _link_route("/events/{entity_id}/helpers", links.set_event_helpers)
 _link_route("/events/{entity_id}/characters", links.set_event_characters)
 
 
+@_gated.put("/events/{event_id}/signup")
+async def put_event_signup(event_id: int = ID(), viewer: people.Viewer = Depends(_writer)):
+    """Sign myself up to help at a scheduled event. Open to Helpers too."""
+    return await _call(links.sign_up, event_id, viewer, True)
+
+
+@_gated.delete("/events/{event_id}/signup")
+async def delete_event_signup(event_id: int = ID(), viewer: people.Viewer = Depends(_writer)):
+    """Take myself off an event's helpers."""
+    return await _call(links.sign_up, event_id, viewer, False)
+
+
 # --------------------
 # Character faces
 # --------------------

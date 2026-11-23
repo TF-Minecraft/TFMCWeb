@@ -37,6 +37,10 @@ export default function CharactersPage() {
 
   const loading = loaded?.key !== key;
   const rows = loaded?.rows ?? [];
+  // Lore NPCs are the panel's own; player characters arrive when someone links one to a record.
+  const npcs = rows.filter((row) => !row.is_player_character);
+  const players = rows.filter((row) => row.is_player_character);
+  const filtered = Boolean(q.trim()) || status !== "all";
 
   return (
     <AdminColumn>
@@ -46,7 +50,7 @@ export default function CharactersPage() {
       <section className={panelClass}>
         <div className="mb-4 flex flex-wrap items-baseline justify-between gap-3">
           <h2 className={headingClass}>Characters</h2>
-          <span className={mutedClass}>{loaded ? `${loaded.rows.length} shown` : ""}</span>
+          <span className={mutedClass}>{loaded ? `${npcs.length} shown` : ""}</span>
         </div>
         <div className="mb-4 flex flex-col gap-2 sm:flex-row">
           <input
@@ -78,40 +82,56 @@ export default function CharactersPage() {
           <p className={errorClass} role="alert">
             {loaded.error}
           </p>
-        ) : rows.length === 0 ? (
+        ) : npcs.length === 0 ? (
           <p className={mutedClass}>
-            {q.trim() || status !== "all" ? "No characters match." : "No characters yet. Add the first above."}
+            {filtered ? "No characters match." : "No lore characters yet. Add the first above."}
           </p>
         ) : (
-          <ul className={`${rowClass} ${loading ? "opacity-60" : ""}`} aria-busy={loading}>
-            {rows.map((row) => (
-              <li key={row.id}>
-                <Link
-                  href={entityHref("character", row.id)}
-                  className="flex items-center gap-3 py-2.5 hover:bg-[color-mix(in_srgb,var(--tfmc-cream)_5%,transparent)]"
-                >
-                  <CharacterFace id={row.id} name={row.name} hasFace={row.has_face} cacheKey={row.updated_at} />
-                  <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                    <span className="flex flex-wrap items-center gap-2">
-                      <span className="break-words text-[var(--tfmc-cream)]">{row.name || "Unnamed"}</span>
-                      <StatusBadge status={row.status} />
-                      {row.player_name ? (
-                        <span className="text-xs text-[var(--tfmc-stone)]">{row.player_name}</span>
-                      ) : null}
-                    </span>
-                    {row.organisations.length > 0 ? (
-                      <span className="truncate text-xs text-[var(--tfmc-mist)]">{row.organisations.join(", ")}</span>
-                    ) : null}
-                    {row.summary ? (
-                      <span className="line-clamp-1 text-xs text-[var(--tfmc-stone)]">{row.summary}</span>
-                    ) : null}
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
+          <CharacterList rows={npcs} loading={loading} />
         )}
       </section>
+      {loaded && !loaded.error && players.length > 0 ? (
+        <section className={panelClass}>
+          <div className="mb-2 flex flex-wrap items-baseline justify-between gap-3">
+            <h2 className={headingClass}>Player characters</h2>
+            <span className={mutedClass}>{players.length} shown</span>
+          </div>
+          <p className={`${mutedClass} mb-3`}>
+            Players’ characters linked to events, storylines, relations or organisations.
+          </p>
+          <CharacterList rows={players} loading={loading} />
+        </section>
+      ) : null}
     </AdminColumn>
+  );
+}
+
+function CharacterList({ rows, loading }: { rows: CharacterRow[]; loading: boolean }) {
+  return (
+    <ul className={`${rowClass} ${loading ? "opacity-60" : ""}`} aria-busy={loading}>
+      {rows.map((row) => (
+        <li key={row.id}>
+          <Link
+            href={entityHref("character", row.id)}
+            className="flex items-center gap-3 py-2.5 hover:bg-[color-mix(in_srgb,var(--tfmc-cream)_5%,transparent)]"
+          >
+            <CharacterFace id={row.id} name={row.name} hasFace={row.has_face} cacheKey={row.updated_at} />
+            <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+              <span className="flex flex-wrap items-center gap-2">
+                <span className="break-words text-[var(--tfmc-cream)]">{row.name || "Unnamed"}</span>
+                <StatusBadge status={row.status} />
+                {row.player_name ? <span className="text-xs text-[var(--tfmc-stone)]">{row.player_name}</span> : null}
+              </span>
+              {row.organisations.length > 0 ? (
+                <span className="truncate text-xs text-[var(--tfmc-mist)]">{row.organisations.join(", ")}</span>
+              ) : null}
+              {row.summary ? (
+                <span className="line-clamp-1 text-xs text-[var(--tfmc-stone)]">{row.summary}</span>
+              ) : null}
+            </span>
+          </Link>
+        </li>
+      ))}
+    </ul>
   );
 }

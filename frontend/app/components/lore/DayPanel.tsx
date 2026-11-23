@@ -5,6 +5,7 @@ import { useState } from "react";
 
 import {
   loreErrorMessage,
+  setEventSignup,
   setMyDays,
   type Availability,
   type AvailabilityGrid,
@@ -63,6 +64,8 @@ export default function DayPanel({
   }
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [signupBusy, setSignupBusy] = useState<number | null>(null);
+  const [signupError, setSignupError] = useState("");
 
   const people = rankForDay(
     (grid?.people ?? []).map((person) => {
@@ -90,6 +93,19 @@ export default function DayPanel({
       setError(loreErrorMessage(err));
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function signup(eventId: number, joining: boolean) {
+    setSignupBusy(eventId);
+    setSignupError("");
+    try {
+      await setEventSignup(eventId, joining);
+      onSaved();
+    } catch (err) {
+      setSignupError(loreErrorMessage(err));
+    } finally {
+      setSignupBusy(null);
     }
   }
 
@@ -144,10 +160,38 @@ export default function DayPanel({
                     {event.location ? <span>At {event.location.label}</span> : null}
                     {event.helpers.length ? <span>Helpers: {event.helpers.map((h) => h.name).join(", ")}</span> : null}
                   </span>
+                  {myUserId !== null && event.status === "scheduled" ? (
+                    <span className="mt-1">
+                      {event.helper_ids.includes(myUserId) ? (
+                        <button
+                          type="button"
+                          className={quietButtonClass}
+                          disabled={signupBusy !== null}
+                          onClick={() => signup(event.id, false)}
+                        >
+                          {signupBusy === event.id ? "Withdrawing…" : "Withdraw"}
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          className={buttonClass}
+                          disabled={signupBusy !== null}
+                          onClick={() => signup(event.id, true)}
+                        >
+                          {signupBusy === event.id ? "Signing up…" : "Sign up to help"}
+                        </button>
+                      )}
+                    </span>
+                  ) : null}
                 </li>
               ))}
             </ul>
           )}
+          {signupError ? (
+            <p className={errorClass} role="alert">
+              {signupError}
+            </p>
+          ) : null}
           {full ? (
             <div className="mt-3">
               <h3 className={subheadClass}>Add event on this day</h3>
