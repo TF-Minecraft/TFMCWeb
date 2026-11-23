@@ -92,17 +92,6 @@ export default function VehiclesPage() {
           choosing the blueprint. The materials are taken from your inventory when the build starts.
         </li>
         <li>
-          If{" "}
-          <Link href="/wiki/factions#government" className={linkClass}>
-            your faction
-          </Link>{" "}
-          charges a Registration Fee, the first left-click only shows the fee. Left-click again to pay it from your{" "}
-          <Link href="/wiki/economy#accounts" className={linkClass}>
-            personal bank
-          </Link>{" "}
-          and start the build. Faction leaders and players with no faction pay no fee.
-        </li>
-        <li>
           Right-click the station during the build to see its progress. As the builder, you can cancel from that menu.
           The materials come back to your inventory and any that don&apos;t fit drop at your feet. The fee goes back to
           your bank.
@@ -233,11 +222,6 @@ export default function VehiclesPage() {
         A ticket never expires and you can&apos;t take it back. If you switch Tickets off, the old tickets work again
         when you switch it back on. On the Wooden Cart, the storage is opened from a passenger seat, so anyone with a
         ticket can open it.
-      </p>
-      <p className="mt-3 text-sm text-[var(--tfmc-mist)]">
-        Claiming a vehicle that someone else last owned can cost your faction&apos;s Transfer Fee. Right-click the
-        vehicle again to confirm. When an owner hands a vehicle over, the giver pays the Transfer Fee once the other
-        player accepts.
       </p>
       <p className="mt-3 text-sm text-[var(--tfmc-mist)]">
         To throw a passenger out, the owner clicks their seat in the seat menu. Occupied seats are yellow. That

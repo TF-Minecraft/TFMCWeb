@@ -260,9 +260,9 @@ export default function GuildsPage() {
         guild also has trade power. Workshops raise production, and the main guild&apos;s Bureaucracy adds a little.
       </p>
       <p className={`mt-3 ${body}`}>
-        Prosperity isn&apos;t a pile that runs out when someone takes from it. It is worked out again from
-        everyone&apos;s current production, so the money keeps coming as long as the production is there. A province
-        also makes a little more when more guilds trade in it.
+        Prosperity is worked out again from everyone&apos;s current production, so taking a share doesn&apos;t use it
+        up. The money keeps coming as long as the production is there. A province also makes a little more when more
+        guilds trade in it.
       </p>
       <h3 className={subheading}>Trade power</h3>
       <p className={`mt-3 ${body}`}>
@@ -283,11 +283,7 @@ export default function GuildsPage() {
       <p className={`mt-3 ${body}`}>
         This works across borders. Foreign guilds with trade power in your provinces take a share of the prosperity your
         Workshops build. Your guilds can take a share of other factions&apos; provinces and of unclaimed land in the
-        same way.
-      </p>
-      <p className={`mt-3 ${body}`}>
-        So production pays off in the long run, and trade power and reach let you take a share of other provinces now. A
-        faction that closes its economy or embargoes you cuts that share off.
+        same way. A faction that closes its economy or embargoes you cuts that share off.
       </p>
       <p className={`mt-3 ${body}`}>
         Trade and production can also travel along railways, sea lanes and air routes between installations. Railways

@@ -58,9 +58,8 @@ export default async function VehicleDetail({ params }: { params: Promise<{ slug
       />
       <p className="mt-4 text-sm text-[var(--tfmc-mist)]">
         Choose this blueprint at the station, stand where you want the vehicle, within 12 blocks of the station, and
-        left-click within 30 seconds. If your faction charges a Registration Fee, that click only shows the fee:
-        left-click again to pay it from your personal bank. The materials are taken from your inventory when the build
-        starts. The finished vehicle appears once a player is within 96 blocks.
+        left-click within 30 seconds. The materials are taken from your inventory when the build starts. The finished
+        vehicle appears once a player is within 96 blocks.
         {seatless ? "" : " Right-click it to pick a seat."} Breaking the station during the build cancels it and drops
         the materials at the station.
       </p>

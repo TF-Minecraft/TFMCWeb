@@ -104,8 +104,9 @@ export default function MedicinePage() {
         is waking.
       </p>
       <p className={`mt-3 ${body}`}>
-        The incisions block in the menu turns red while the patient is bleeding. A leg wound stops bleeding once it is
-        dressed. After the dressing, a chat line starting &quot;Still to do:&quot; lists the steps you have left.
+        The incisions block in the menu turns red while the patient is bleeding. Once a leg wound is dressed, it no
+        longer starts bleeding again on its own. After the dressing, a chat line starting &quot;Still to do:&quot; lists
+        the steps you have left.
       </p>
 
       <WikiSectionHeading id="outcome">Success and failure</WikiSectionHeading>
