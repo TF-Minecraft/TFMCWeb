@@ -80,7 +80,8 @@ KINDS: dict[str, Kind] = {
         statuses=CHARACTER_STATUSES,
         list_columns=(
             "t.id, t.name, t.status, t.summary, t.player_name, t.version, "
-            "(t.face_png IS NOT NULL OR t.player_uuid IS NOT NULL) AS has_face, t.updated_at, t.deleted_at, "
+            "(t.face_png IS NOT NULL OR t.player_uuid IS NOT NULL) AS has_face, "
+            "(t.rpc_character_id IS NOT NULL) AS is_player_character, t.updated_at, t.deleted_at, "
             "(SELECT coalesce(array_agg(o.name ORDER BY lower(o.name)), '{}') FROM lore_character_affiliations a "
             " JOIN lore_organisations o ON o.id = a.organisation_id AND o.deleted_at IS NULL "
             " WHERE a.character_id = t.id) AS organisations"

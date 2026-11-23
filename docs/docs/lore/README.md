@@ -10,13 +10,13 @@ A workspace at `/lore` where the lore team keeps characters, organisations, stor
 |-----|--------|
 | Website staff (`roles.is_staff`) | Full panel, including creating and editing lore |
 | Discord Lore Helper | Full panel, including creating and editing lore |
-| Discord Helper | Calendar, personal availability and settings |
+| Discord Helper | Calendar, signing themselves up to help at scheduled events, personal availability and settings |
 | Anyone else | No access |
 
 - People with both Discord roles have full access. A Discord admin can change roles.
 - Signed-out visitors get 401 and players without access get 403. The header's **Lore** link shows when `GET /lore/access` returns `access: true`. Its `level` is `full`, `calendar`, or null.
 - Writes also need the site's `Origin`, and the view-as-player guard blocks them.
-- The roster determines who can be assigned to events or notified. Lore Helpers join when they sign in to the site. Staff and Helpers join when they save availability or settings. Roster members who are website staff appear in the Staff group.
+- The roster determines who can be assigned to events or notified. Lore Helpers and Helpers join when they sign in to the site. Other staff join when they save availability or settings or sign up to an event. Roster members who are website staff appear in the Staff group.
 - Losing access leaves existing event assignments and activity history intact.
 
 ## Flag
@@ -32,7 +32,7 @@ The lore migrations run in every environment.
 | Path | What it does |
 |------|--------------|
 | `/lore` | Upcoming events (14 days), ideas and "waiting on" events, recent edits, and a quick-set for my next 7 days |
-| `/lore/characters`, `/[id]` | Profiles: status, summary, notes, a face (uploaded skin, linked Minecraft name, or a player character's worn skin), affiliations, relations, storylines, events, backlinks and history |
+| `/lore/characters`, `/[id]` | Lore characters first, then player characters (adopted from RPCharacters) in their own list below. Profiles: status, summary, notes, a face (uploaded skin, linked Minecraft name, or a player character's worn skin), affiliations, relations, storylines, events, backlinks and history |
 | `/lore/organisations`, `/[id]` | Factions and organisations: kind, game faction, members with roles, relations, backlinks and history |
 | `/lore/storylines`, `/[id]` | Status, involved characters, organisations and locations, and the ordered event list with inline "add event" |
 | `/lore/events/[id]` | Date with each roster member's availability for that day, optional start time (in my time zone, with CET and EST shown), or "waiting on"; location, characters, helpers, outcome and history |
@@ -42,6 +42,14 @@ The lore migrations run in every environment.
 | `/lore/deleted` | Restore soft-deleted records |
 
 Helpers opening `/lore` go straight to the calendar. Their calendar shows scheduled and completed events with the title, date, time, location name and assigned helpers. Availability summaries show statuses. Helpers can edit their own availability and settings.
+
+### Signing up
+
+Everyone with panel access can sign themselves up to help at a scheduled event from the calendar's day panel, and withdraw again. `PUT /lore/events/{id}/signup` signs up and `DELETE` withdraws; both return `{id, signed_up, helper_ids, helpers}` and repeating one changes nothing.
+
+- Only `scheduled` events with a date take sign-ups (409 `not_open_for_signup`). Withdrawing from a `done` event is refused (409 `event_done`). A deleted event returns 409 `deleted`.
+- Signing up queues the same `event_scheduled` DM as being assigned, unless notifications are off. History records `signed_up` or `withdrew`.
+- Withdrawing also works for an assignment someone else made.
 
 Character, organisation, storyline and event pages open to read. **Edit** in the header switches to the form, and **Done** saves and goes back to reading. Delete only shows while editing. A record made with a quick-create box opens in edit mode (`?edit=1`, dropped from the address once read).
 

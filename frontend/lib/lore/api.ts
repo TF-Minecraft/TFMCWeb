@@ -196,6 +196,8 @@ export type CharacterRow = ListCommon & {
   player_name: string | null;
   version: number;
   has_face: boolean;
+  /** Adopted from a player's RPCharacters character rather than made by hand. */
+  is_player_character: boolean;
   organisations: string[];
 };
 export type OrganisationRow = ListCommon & { name: string; kind: string; game_faction: string; member_count: number };
@@ -426,6 +428,8 @@ const ERROR_MESSAGES: Record<string, string> = {
   bad_member: "One of those links no longer exists.",
   bad_order: "The event list changed. Reload and try again.",
   not_on_roster: "Helpers must be staff or on the Lore team.",
+  not_open_for_signup: "Only scheduled events take sign-ups.",
+  event_done: "That event already happened.",
   bad_skin: "Upload a 64×64 or 64×32 Minecraft skin PNG.",
   bad_type: "Pick one of the listed relation types.",
   bad_player: "Enter a Minecraft player name.",
@@ -569,6 +573,13 @@ export function setStorylineOrder(id: number, eventIds: number[]) {
 }
 export function setEventHelpers(id: number, userIds: number[]) {
   return send<EventDetail>("PUT", `/events/${id}/helpers`, { user_ids: userIds });
+}
+/** Sign myself up to help at a scheduled event, or withdraw. Open to Helpers too. */
+export function setEventSignup(id: number, joining: boolean) {
+  return send<{ id: number; signed_up: boolean; helper_ids: number[]; helpers: { user_id: number; name: string }[] }>(
+    joining ? "PUT" : "DELETE",
+    `/events/${id}/signup`,
+  );
 }
 export function setEventCharacters(id: number, characterIds: number[]) {
   return send<EventDetail>("PUT", `/events/${id}/characters`, { character_ids: characterIds });

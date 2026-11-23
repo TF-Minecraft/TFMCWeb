@@ -81,6 +81,8 @@ def viewer(user: dict) -> Viewer:
 
 _IS_STAFF = "u.role = ANY(%(staff_roles)s)"
 _IS_FULL = f"({_IS_STAFF} OR lh.discord_user_id IS NOT NULL)"
+# Lore Helpers and Helpers are on the roster from their first sign-in, so they can be
+# assigned (or sign up) before they open the panel. Other staff join with a profile.
 ROSTER_SQL = f"""
 SELECT u.id AS user_id, u.discord_user_id, {NAME_SQL} AS name, dl.player_uuid,
        CASE WHEN {_IS_FULL} THEN 'full' ELSE 'calendar' END AS level,
@@ -93,7 +95,7 @@ FROM users u
 {_ROLE_JOINS}
 LEFT JOIN lore_profiles p ON p.user_id = u.id
 WHERE NOT u.placeholder AND (
-    lh.discord_user_id IS NOT NULL OR (p.user_id IS NOT NULL AND ({_IS_STAFF} OR h.discord_user_id IS NOT NULL))
+    lh.discord_user_id IS NOT NULL OR h.discord_user_id IS NOT NULL OR (p.user_id IS NOT NULL AND {_IS_STAFF})
 )
 """
 

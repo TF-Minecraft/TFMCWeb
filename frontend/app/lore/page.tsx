@@ -33,6 +33,8 @@ const ACTION_LABEL: Record<string, string> = {
   members_changed: "changed members of",
   events_reordered: "reordered events of",
   helpers_changed: "changed helpers of",
+  signed_up: "signed up to help at",
+  withdrew: "withdrew from helping at",
   characters_changed: "changed characters of",
   player_changed: "changed the linked player of",
   face_uploaded: "uploaded a face for",
