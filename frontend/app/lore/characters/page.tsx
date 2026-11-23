@@ -84,7 +84,7 @@ export default function CharactersPage() {
           </p>
         ) : npcs.length === 0 ? (
           <p className={mutedClass}>
-            {filtered ? "No characters match." : "No lore characters yet. Add the first above."}
+            {filtered ? "No lore characters match." : "No lore characters yet. Add the first above."}
           </p>
         ) : (
           <CharacterList rows={npcs} loading={loading} />
