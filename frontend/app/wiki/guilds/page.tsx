@@ -10,7 +10,7 @@ const subheading = "mt-6 text-sm font-semibold uppercase tracking-wide text-[var
 export default function GuildsPage() {
   return (
     <WikiPage
-      lastModified="2026-11-21"
+      lastModified="2026-11-23"
       title="Guilds & Trade"
       intro={
         <>
@@ -68,7 +68,12 @@ export default function GuildsPage() {
           [
             "Guild Hall",
             "Every guild except the main guild",
-            "Gives the guild its trade power, the trading strength that decides its trade income",
+            <>
+              Gives the guild its trade power, which decides its share of each province&apos;s{" "}
+              <a href="#trade-income" className={link}>
+                prosperity
+              </a>
+            </>,
           ],
           [
             "Bureaucracy",
@@ -236,6 +241,190 @@ export default function GuildsPage() {
           ).
         </li>
       </ul>
+
+      <WikiSectionHeading id="trade-income" intro="Where a guild's trade income comes from, and how to get more of it.">
+        Trade income
+      </WikiSectionHeading>
+      <h3 className={subheading}>Prosperity</h3>
+      <p className={`mt-3 ${body}`}>
+        Every land province makes money each day. That amount is its Prosperity. Sea and lake provinces make none. Your
+        faction&apos;s info shows its Prosperity, the total of all its provinces. The{" "}
+        <Link href="/map" className={link}>
+          map
+        </Link>{" "}
+        has Prosperity and Trade map modes.
+      </p>
+      <p className={`mt-3 ${body}`}>
+        Guilds build prosperity with production. A guild&apos;s production starts at its guild capital and spreads to
+        the provinces around it, weaker with every province it crosses. It only spreads well through provinces where the
+        guild also has trade power. Workshops raise production, and the main guild&apos;s Bureaucracy adds a little.
+      </p>
+      <p className={`mt-3 ${body}`}>
+        Prosperity is worked out again from everyone&apos;s current production, so taking a share doesn&apos;t use it
+        up. The money keeps coming as long as the production is there. A province also makes a little more when more
+        guilds trade in it.
+      </p>
+      <h3 className={subheading}>Trade power</h3>
+      <p className={`mt-3 ${body}`}>
+        Trade power decides how much of that money a guild takes. Each day, a province&apos;s prosperity is shared
+        between every guild with trade power there, by its share of the trade power. Hold half the trade power in a
+        province and you take half its prosperity.
+      </p>
+      <p className={`mt-3 ${body}`}>
+        Trade power also starts at the guild capital and gets weaker with every province it crosses. It carries best
+        over farmland and plains, worse over hills, forest, jungle and highlands, and worst over bogs and mountains.
+        Guild Halls give a guild its trade power (the main guild gets a little from its Bureaucracy instead), and
+        Storehouses carry it further.
+      </p>
+      <p className={`mt-3 ${body}`}>
+        <strong>Trade Power</strong> in <code className={code}>/guild menu</code> is the guild&apos;s trade power added
+        up over every province it reaches, so Storehouses raise it too.
+      </p>
+      <p className={`mt-3 ${body}`}>
+        This works across borders. Foreign guilds with trade power in your provinces take a share of the prosperity your
+        Workshops build. Your guilds can take a share of other factions&apos; provinces and of unclaimed land in the
+        same way. A faction that closes its economy or embargoes you cuts most of that share off.
+      </p>
+      <p className={`mt-3 ${body}`}>
+        Trade and production can also travel along railways, sea lanes and air routes between installations. Railways
+        carry the most, then sea lanes. Air routes carry trade but no production. Some is lost over long distances.
+        Whose installations your guilds can use is under{" "}
+        <a href="#trade" className={link}>
+          Trade between realms
+        </a>
+        .
+      </p>
+      <h3 className={subheading}>What changes trade power and production</h3>
+      <p className={`mt-3 ${body}`}>
+        Your faction&apos;s <strong>Economy</strong> law:
+      </p>
+      <ul className={`mt-3 list-disc space-y-2 pl-5 ${body}`}>
+        <li>
+          <strong>Free Trade</strong>: foreign guilds get more trade power in your land. Your guilds get more abroad and
+          in unclaimed land.
+        </li>
+        <li>
+          <strong>Mercantilism</strong>: your guilds get more trade power abroad and in unclaimed land.
+        </li>
+        <li>
+          <strong>Protectionism</strong>: your guilds get more production and a little more trade power at home. Foreign
+          guilds get less of both in your land, and your guilds are weaker abroad.
+        </li>
+        <li>
+          <strong>Isolationism</strong>: foreign guilds are nearly shut out of your land, and your own production at
+          home goes up. Your guilds do very poorly abroad and in unclaimed land.
+        </li>
+        <li>
+          <strong>Decentralized</strong>: foreign guilds get slightly more trade power in your land. Your guilds get
+          slightly less abroad and in unclaimed land.
+        </li>
+      </ul>
+      <p className={`mt-3 ${body}`}>
+        Your{" "}
+        <Link href="/wiki/factions#diplomacy" className={link}>
+          diplomacy
+        </Link>
+        :
+      </p>
+      <ul className={`mt-3 list-disc space-y-2 pl-5 ${body}`}>
+        <li>
+          <strong>Trade agreement</strong>: each side&apos;s guilds get more trade power and a little more production in
+          the other&apos;s land.
+        </li>
+        <li>
+          <strong>Unequal treaty</strong>: the stronger side gets full use of the weaker side&apos;s installations, and
+          the weaker side only half (see{" "}
+          <a href="#trade" className={link}>
+            Trade between realms
+          </a>
+          ).
+        </li>
+        <li>
+          <strong>Embargo</strong>: the embargoed faction&apos;s guilds lose almost all their trade power and production
+          in your provinces. Its members can&apos;t buy at your members&apos; barter shops either.
+        </li>
+        <li>
+          <strong>Vassalage law</strong>: Extractive gives your guilds much more trade power and some production in your
+          subjects&apos; land. Your subjects&apos; guilds lose trade power in yours, though they gain a little
+          production. Inclusive gives both sides a small boost in each other&apos;s land.
+        </li>
+      </ul>
+      <p className={`mt-3 ${body}`}>Inside your faction:</p>
+      <ul className={`mt-3 list-disc space-y-2 pl-5 ${body}`}>
+        <li>
+          <strong>Favour</strong> and <strong>Repress</strong> raise or lower one guild&apos;s trade power in your land.
+          See{" "}
+          <a href="#leader-actions" className={link}>
+            Leader actions
+          </a>
+          .
+        </li>
+        <li>
+          <strong>Stability</strong>: as it falls, the main guild&apos;s trade power and production fall with it. The
+          guild menu shows this as <strong>State Output</strong>. What else low stability does is under{" "}
+          <Link href="/wiki/factions#stability" className={link}>
+            Stability and legitimacy
+          </Link>
+          .
+        </li>
+        <li>
+          <strong>Strained Government</strong> shows in the guild menu when a guild has more branch levels than the main
+          guild can support. That guild&apos;s trade power is cut.
+        </li>
+      </ul>
+      <h3 className={subheading}>Taxes, upkeep and tariffs</h3>
+      <p className={`mt-3 ${body}`}>These come off a guild&apos;s income:</p>
+      <ul className={`mt-3 list-disc space-y-2 pl-5 ${body}`}>
+        <li>
+          <strong>Guild tax</strong> comes off first, before trade upkeep and tariffs. It is taken from the guild&apos;s
+          income for the day: trade, loan interest, mercenary contracts and gambling. The Guild Tax law can also set a
+          dividend tax, held back from the dividends paid to members.
+        </li>
+        <li>
+          <strong>Trade upkeep</strong> is a share of each province&apos;s trade income that the guild pays back. Every
+          branch level adds to it except Counting Houses, which lower it, down to zero. Trade upkeep never takes more
+          than three quarters of a province&apos;s trade income.
+        </li>
+        <li>
+          <strong>Tariffs</strong> are a share of the trade income foreign guilds earn in a faction&apos;s provinces,
+          paid to that faction&apos;s main guild. Guilds in your own realm never pay them. The most each law allows is
+          under{" "}
+          <a href="#trade" className={link}>
+            Trade between realms
+          </a>
+          .
+        </li>
+      </ul>
+      <p className={`mt-3 ${body}`}>A subject&apos;s vassal tax comes from its main guild&apos;s income.</p>
+      <h3 className={subheading}>The new day</h3>
+      <p className={`mt-3 ${body}`}>
+        The faction day is a 24-hour cycle. The menus show when the next one starts, as <strong>New day in</strong>. At
+        the new day:
+      </p>
+      <ol className={`mt-3 list-decimal space-y-2 pl-5 ${body}`}>
+        <li>Income arrives.</li>
+        <li>Upkeep is paid: regiments, installations and the rest.</li>
+        <li>Loan payments come out of what&apos;s left.</li>
+        <li>
+          If a guild&apos;s bank ends the day below zero, its branch levels are sold off one at a time, for part of
+          their price, until the debt is covered.
+        </li>
+      </ol>
+      <p className={`mt-3 ${body}`}>
+        A guild whose bank is below zero is bankrupt. It receives and pays nothing, trade income included, until its
+        bank is topped back up. A guild with no{" "}
+        <a href="#guilds" className={link}>
+          bank set
+        </a>{" "}
+        gets no income either.
+      </p>
+      <p className={`mt-3 ${body}`}>
+        What bankruptcy does to a faction is under{" "}
+        <Link href="/wiki/factions#stability" className={link}>
+          Stability and legitimacy
+        </Link>
+        .
+      </p>
 
       <WikiSectionHeading
         id="trade"

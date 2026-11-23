@@ -9,7 +9,7 @@ const code = "text-[var(--tfmc-accent)]";
 export default function FactionsPage() {
   return (
     <WikiPage
-      lastModified="2026-11-21"
+      lastModified="2026-11-23"
       title="Factions"
       intro={
         <>
@@ -114,10 +114,21 @@ export default function FactionsPage() {
             </>,
           ],
           [
+            "Prosperity",
+            <>
+              The money a province makes each day. Guilds build it up with their production, and every guild with trade
+              power there takes a share. Your faction&apos;s info shows the total over its provinces. See{" "}
+              <Link href="/wiki/guilds#trade-income" className={link}>
+                Trade income
+              </Link>
+              .
+            </>,
+          ],
+          [
             "Trade power",
             <>
-              A guild&apos;s trading strength, mostly from its Guild Halls. It decides the guild&apos;s trade income and
-              adds to the faction&apos;s prestige. See{" "}
+              A guild&apos;s trading strength, mostly from its Guild Halls. It decides the guild&apos;s share of each
+              province&apos;s prosperity and adds to the faction&apos;s prestige. See{" "}
               <Link href="/wiki/guilds#trade" className={link}>
                 Trade
               </Link>
@@ -246,16 +257,28 @@ export default function FactionsPage() {
       </p>
       <ul className={`mt-3 list-disc space-y-2 pl-5 ${body}`}>
         <li>Changing a law costs administrative power and locks that law for 3 days.</li>
+        <li>
+          A faction has a council only under an Oligarchy, Plutocracy or Democracy <strong>Government</strong> law. The{" "}
+          <strong>Council</strong> law sets how big the council is. Community and Autocracy have no council, whatever
+          the Council law says.
+        </li>
         <li>In a faction with no council, the faction leader&apos;s change applies straight away.</li>
         <li>
-          In a faction with a council (any <strong>Council</strong> law other than None), the faction leader and the
-          council members propose changes to laws, taxes and fees in Government, and a{" "}
+          In a faction with a council, the faction leader and the council members propose changes to laws and taxes in
+          Government, and a{" "}
           <a href="#council" className={link}>
             council session
           </a>{" "}
           decides them. The administrative power is paid when a change is proposed, not when it passes.
         </li>
-        <li>Every law also costs administrative power for as long as it stays in force.</li>
+        <li>
+          Every law also has an upkeep. It lowers your maximum administrative power for as long as the law stays in
+          force.
+        </li>
+        <li>
+          If upkeep pushes that maximum below zero, or your diplomatic ties use more capacity than you have, the faction
+          pays the shortfall in denars every day.
+        </li>
         <li>
           The <strong>Repression</strong> and <strong>Favouring</strong> laws let the government penalise or support
           chosen guilds and subjects, which changes their trade and their support for the government. Each guild or
@@ -516,8 +539,8 @@ export default function FactionsPage() {
         <li>Your regiments.</li>
         <li>Your faction&apos;s vehicles and where each one is berthed. The installations themselves stay visible.</li>
         <li>
-          The military entries in your ledger: military and vehicle upkeep, vehicle fees and mercenary contracts. The
-          totals still include them.
+          The military entries in your ledger: military and vehicle upkeep, plus mercenary contracts. The totals still
+          include them.
         </li>
       </ul>
       <p className={`mt-3 ${body}`}>

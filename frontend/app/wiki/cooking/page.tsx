@@ -21,7 +21,7 @@ const piece = (name: string) => (
 export default function CookingPage() {
   return (
     <WikiPage
-      lastModified="2026-11-21"
+      lastModified="2026-11-23"
       title="Cooking"
       width="lg"
       intro="You cook on furniture placed in the world, not in a menu. Food keeps track of how fresh it is, how it was cooked and how it was seasoned, and has a quality from 1 to 5 stars."
@@ -216,6 +216,11 @@ export default function CookingPage() {
         and more stars improve your diet, but eating at full hunger does not. Your diet is rated from Terrible to
         Fantastic. A better diet gives you more damage, health, mana and critical chance, and shorter cooldowns. Eating
         the same few ingredients over and over lowers your rating, so vary your meals.
+      </p>
+      <p className={`mt-3 ${body}`}>
+        A dish&apos;s stars come from the average of its main ingredients. A seasoning with fewer stars than that can
+        knock the dish down a star, and a better one can lift it. Every meal you eat while hungry pulls your diet
+        towards the quality of that food, so poor food drags a good diet down.
       </p>
 
       <WikiSectionHeading id="freshness">Keeping food fresh</WikiSectionHeading>

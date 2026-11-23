@@ -8,7 +8,7 @@ import {
   WikiPage,
   WikiSectionHeading,
 } from "@/app/components/wiki";
-import { gemSocketTypes, goldMaterials, goldTools, jewelleryProjects } from "../data/gem-infusion";
+import { gemSocketTypes, gemStats, goldMaterials, goldTools, jewelleryProjects } from "../data/gem-infusion";
 
 const link = "text-[var(--tfmc-accent)] hover:underline";
 const body = "text-sm text-[var(--tfmc-mist)]";
@@ -17,7 +17,7 @@ const subheading = "mt-6 text-sm font-semibold uppercase tracking-wide text-[var
 export default function GemInfusionPage() {
   return (
     <WikiPage
-      lastModified="2026-11-21"
+      lastModified="2026-11-23"
       title="Gems & Goldsmithing"
       width="lg"
       intro="Blank gemstones are infused with a stat at an Enchanting Table. Infused gems go into the sockets of forged gear, or a goldsmith sets one in gold jewellery."
@@ -75,8 +75,9 @@ export default function GemInfusionPage() {
         <li>The infused gems pop out above the table. A Legendary gem is announced to the whole server.</li>
       </ol>
       <p className={`mt-3 ${body}`}>
-        Each infused gem gets a random stat and a rarity name that shows how strong it is, such as Legendary Infused
-        Ruby. Your character&apos;s Intelligence helps the stat come out better.
+        Each kind of gem always gives the same stat. Infusing only decides its rarity, which shows in the name, such as
+        Legendary Infused Ruby. A rarer gem gives more of its stat. Your character&apos;s Intelligence helps the stat
+        come out better.
       </p>
       <p className={`mt-3 ${body}`}>
         Each gem also shows a Success Rate: the chance that it goes in when you{" "}
@@ -85,6 +86,23 @@ export default function GemInfusionPage() {
         </a>{" "}
         it. Infuse fewer gems at once for a chance at a higher Success Rate.
       </p>
+      <h3 id="gem-stats" className={subheading}>
+        What each gem gives
+      </h3>
+      <p className={`mt-1 ${body}`}>
+        A blank gem doesn&apos;t show its stat, so look it up here. Higher tiers give a stronger stat.
+      </p>
+      <DataTable
+        className="mt-3"
+        minWidth="40rem"
+        columns={[{ header: "Stat" }, ...gemSocketTypes.map(({ type }) => ({ header: type }))]}
+        rows={gemStats.map((stat, index) => [
+          stat,
+          ...gemSocketTypes.map(({ gems }) =>
+            gems[index].name === "Direstone" ? "Firestone (Direstone once infused)" : gems[index].name,
+          ),
+        ])}
+      />
       {gemSocketTypes.map(({ type, gems }) => (
         <section key={type}>
           <h3 className={subheading}>{type} gemstones</h3>
