@@ -219,8 +219,8 @@ export default function CookingPage() {
       </p>
       <p className={`mt-3 ${body}`}>
         A dish&apos;s stars come from the average of its main ingredients. A seasoning with fewer stars than that can
-        knock the dish down a star, and a better one can lift it. Every meal pulls your diet towards the quality of that
-        food, so poor food drags a good diet down.
+        knock the dish down a star, and a better one can lift it. Every meal you eat while hungry pulls your diet
+        towards the quality of that food, so poor food drags a good diet down.
       </p>
 
       <WikiSectionHeading id="freshness">Keeping food fresh</WikiSectionHeading>

@@ -71,7 +71,9 @@ export default function WarPage() {
               <Link href="/wiki/factions#titles" className={link}>
                 title
               </Link>{" "}
-              you are claiming. The holders keep their settlements, their capital and the road between them.
+              you hold, or an unowned title you already have a province in. It can&apos;t be above your rank, and you
+              need enough prestige for the new provinces. The holders keep their settlements, their capital and the road
+              between them.
             </>,
           ],
           ["Usurp", "You take the defender's highest title and its subjects, and the defender becomes your subject."],
@@ -98,7 +100,7 @@ export default function WarPage() {
       />
       <p className={`mt-3 ${body}`}>
         The defenders can set one counter-demand. Each side&apos;s leader can also add a second demand, for their own
-        faction or an ally. Demands lock when the first battle starts.
+        faction or an ally. Demands lock when the first battle or raid starts.
       </p>
 
       <WikiSectionHeading id="calls" intro="Once war is declared, each side can call its allies to arms.">
@@ -300,8 +302,8 @@ export default function WarPage() {
       <p className={`mt-3 ${body}`}>Leaders can skip a battle in two ways:</p>
       <ul className={`mt-3 list-disc space-y-2 pl-5 ${body}`}>
         <li>
-          <strong>Retreat</strong> concedes the coming battle. The enemy advances without a fight, and no Initiative is
-          spent.
+          <strong>Retreat</strong> lets the leader of the side being attacked give up the coming battle, until 16:00 on
+          the battle day. The enemy advances without a fight, and no Initiative is spent.
         </li>
         <li>
           The two leaders can agree on an automatic result. One asks for it, and the other answers with{" "}
@@ -396,7 +398,10 @@ export default function WarPage() {
       </p>
       <p className={`mt-3 ${body}`}>Launching a raid:</p>
       <ul className={`mt-3 list-disc space-y-2 pl-5 ${body}`}>
-        <li>Raids open once the buildup week is over. No battle day has to be set yet.</li>
+        <li>
+          A war&apos;s first raid needs its first battle day set and the buildup week over. Once the first battle or
+          raid has started, raids no longer wait for a battle day.
+        </li>
         <li>They can be launched every evening between 19:00 and 21:00.</li>
         <li>
           A faction leader at war launches a raid from one of their own ports or airports. A port can raid an enemy
@@ -413,7 +418,10 @@ export default function WarPage() {
         <li>Defenders who are online are signed up automatically.</li>
         <li>Each attacker has one life. Defenders respawn as often as they like.</li>
         <li>The defenders win if every attacker is out. If not, the raid ends in a draw when the 10 minutes are up.</li>
-        <li>Anyone in the raid area who isn&apos;t part of the raid takes damage.</li>
+        <li>
+          Players from the raiding side who aren&apos;t fighting in the raid, or are already out, take damage while they
+          stay in the raided province.
+        </li>
       </ul>
       <p className={`mt-3 ${body}`}>Raids give no spoils.</p>
 

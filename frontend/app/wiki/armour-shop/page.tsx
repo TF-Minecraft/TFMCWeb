@@ -42,9 +42,10 @@ export default function ArmourShopPage() {
           the Skin Scroll it costs and the kind of item it fits, such as medium steel armour or swords.
         </li>
         <li>
-          Click a piece. The shop skins the first item that fits and uses up one scroll of that exact tier. It checks
-          your hotbar first, then the rest of your inventory, then what you wear. If you carry an item you don&apos;t
-          want skinned, move it out of the way first. A full armour set takes 4 clicks and 4 scrolls.
+          Click a piece. The shop skins the first item that fits. A paid skin uses up one scroll of that exact tier, and
+          a free one costs nothing. It checks your hotbar first, then the rest of your inventory, then what you wear. If
+          you carry an item you don&apos;t want skinned, move it out of the way first. A full armour set takes 4 clicks
+          and 4 scrolls.
         </li>
       </ol>
       <p className={`mt-3 ${body}`}>

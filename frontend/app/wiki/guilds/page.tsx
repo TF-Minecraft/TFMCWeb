@@ -283,7 +283,7 @@ export default function GuildsPage() {
       <p className={`mt-3 ${body}`}>
         This works across borders. Foreign guilds with trade power in your provinces take a share of the prosperity your
         Workshops build. Your guilds can take a share of other factions&apos; provinces and of unclaimed land in the
-        same way. A faction that closes its economy or embargoes you cuts that share off.
+        same way. A faction that closes its economy or embargoes you cuts most of that share off.
       </p>
       <p className={`mt-3 ${body}`}>
         Trade and production can also travel along railways, sea lanes and air routes between installations. Railways
@@ -332,17 +332,21 @@ export default function GuildsPage() {
           the other&apos;s land.
         </li>
         <li>
-          <strong>Unequal treaty</strong>: the stronger side gets more in the weaker side&apos;s land than the other way
-          round.
+          <strong>Unequal treaty</strong>: the stronger side gets full use of the weaker side&apos;s installations, and
+          the weaker side only half (see{" "}
+          <a href="#trade" className={link}>
+            Trade between realms
+          </a>
+          ).
         </li>
         <li>
           <strong>Embargo</strong>: the embargoed faction&apos;s guilds lose almost all their trade power and production
-          in your provinces. Members of the two factions can&apos;t trade at each other&apos;s barter shops either.
+          in your provinces. Its members can&apos;t buy at your members&apos; barter shops either.
         </li>
         <li>
           <strong>Vassalage law</strong>: Extractive gives your guilds much more trade power and some production in your
-          subjects&apos; land, and weakens your subjects&apos; guilds in yours. Inclusive gives both sides a small boost
-          in each other&apos;s land.
+          subjects&apos; land. Your subjects&apos; guilds lose trade power in yours, though they gain a little
+          production. Inclusive gives both sides a small boost in each other&apos;s land.
         </li>
       </ul>
       <p className={`mt-3 ${body}`}>Inside your faction:</p>
@@ -378,8 +382,8 @@ export default function GuildsPage() {
         </li>
         <li>
           <strong>Trade upkeep</strong> is a share of each province&apos;s trade income that the guild pays back. Every
-          branch level adds to it except Counting Houses, which lower it, down to zero. A guild always keeps at least a
-          quarter of its trade income.
+          branch level adds to it except Counting Houses, which lower it, down to zero. Trade upkeep never takes more
+          than three quarters of a province&apos;s trade income.
         </li>
         <li>
           <strong>Tariffs</strong> are a share of the trade income foreign guilds earn in a faction&apos;s provinces,

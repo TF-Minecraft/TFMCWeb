@@ -149,7 +149,7 @@ export default async function VehicleDetail({ params }: { params: Promise<{ slug
         <Link href="/wiki/vehicles#repair" className="underline">
           Vehicle Repair
         </Link>{" "}
-        from outside while the vehicle is on the ground and not moving
+        from outside while the vehicle is stopped and not flying
         {seats.mechanic > 0 ? ", or from a mechanic seat" : ""}.
       </p>
       <p className="mt-3 text-sm text-[var(--tfmc-mist)]">
