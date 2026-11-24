@@ -100,18 +100,18 @@ class PromptTest(unittest.TestCase):
         text = "\n".join(compose.fallback_messages(_FACTS, notes=["Mages deal 15% less."], **common))
         self.assertIn("## This week\n- Mages deal 15% less.", text)
 
-    def test_the_fallback_leaves_out_notes_that_disagree_with_the_configs(self) -> None:
+    def test_the_fallback_leaves_number_notes_to_the_configs(self) -> None:
         facts = {"files": [{"path": "MMOCore/classes/mage.yml", "plugin": "MMOCore", "kind": "changed", "entries": [
             {"name": "Mage", "kind": "changed",
              "details": ["attributes.max_health.base: 30 --> 28", "skills.Bloodlust.cooldown.base: 7 --> 8"]},
         ]}]}
-        notes = ["Mage health is now 25.", "Bloodlust cooldown 7 --> 9 s.", "Mage health 30 --> 28.",
+        notes = ["Mage health is now 25.", "Mage health is now 30.", "Bloodlust cooldown 7 --> 9 s.",
                  "Mages feel weaker.", "Horses run 10% faster."]
         text = "\n".join(compose.fallback_messages(
             facts, week="2026-W41", label="5.3", act=None, page_url="x", notes=notes))
-        for note in notes[:2]:
+        for note in notes[:3]:
             self.assertNotIn(note, text)
-        for note in notes[2:]:
+        for note in notes[3:]:
             self.assertIn(note, text)
 
     def test_developer_descriptions_follow_their_subject(self) -> None:

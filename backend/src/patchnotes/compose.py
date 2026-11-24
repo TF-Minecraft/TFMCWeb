@@ -445,37 +445,23 @@ def _readable(detail: str) -> str:
     return f"{name}: {change}" if change else detail
 
 
-_NUMBER = re.compile(r"\d+(?:\.\d+)?")
-
-
-def _numbers(text: str) -> set[float]:
-    return {float(number) for number in _NUMBER.findall(text)}
-
-
 def _unsettled(note: str, facts: dict[str, Any]) -> bool:
-    """A note with another number than the configs end on for something it names.
+    """A note with numbers about something the configs also changed.
 
-    The plain post has no writer to settle that, so it leaves the note out.
+    The plain post has no writer to settle which number is final, so the configs speak alone.
     """
-    stated = _numbers(note)
-    if not stated:
+    if not re.search(r"\d", note):
         return False
-    found: dict[str, set[float]] = {}
+    names: set[str] = set()
     for item in facts.get("files") or []:
         for entry in (item or {}).get("entries") or []:
             if not isinstance(entry, dict):
                 continue
+            names.add(str(entry.get("name") or ""))
             for detail in entry.get("details") or []:
-                path, _, change = str(detail).partition(": ")
                 # A skill inside a class is a capitalised part of the path.
-                names = [str(entry.get("name") or ""), *(part for part in path.split(".") if part[:1].isupper())]
-                for name in names:
-                    if len(name) > 2:
-                        found.setdefault(name, set()).update(_numbers(change))
-    return any(
-        numbers and not stated <= numbers and re.search(rf"(?i)\b{re.escape(name)}", note)
-        for name, numbers in found.items()
-    )
+                names.update(part for part in str(detail).partition(": ")[0].split(".") if part[:1].isupper())
+    return any(len(name) > 2 and re.search(rf"(?i)\b{re.escape(name)}", note) for name in names)
 
 
 def fallback_messages(
