@@ -329,6 +329,17 @@ def post_title(post: dict) -> str:
     return f"{act} ({title})" if act else title
 
 
+def note_pages(heading: str, lines: list[str], limit: int = 1900) -> list[str]:
+    """Every staff note, over as many messages as it takes."""
+    pages = [heading]
+    for line in lines or ["None yet."]:
+        if len(pages[-1]) + len(line) + 1 > limit:
+            pages.append(line)
+        else:
+            pages[-1] += f"\n{line}"
+    return pages
+
+
 def post_messages(post: dict, mention: str | None = None) -> list[str]:
     """The post as Discord messages, with the ping in front of the first.
 

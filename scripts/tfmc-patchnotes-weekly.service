@@ -12,13 +12,16 @@ TimeoutStartSec=30min
 EnvironmentFile=/etc/tfmc/patchnotes.env
 Environment=PYTHONPATH=/usr/local/lib/tfmc-patchnotes/current
 Environment=PATCHNOTES_BACKUPS_DIR=/home/amp/.ampdata/instances/TFMCMain01/Backups
+# Where the week's filtered gameplay configs wait for the writer's check.
+Environment=PATCHNOTES_CONFIGS_DIR=/var/lib/tfmc-patchnotes-configs
 WorkingDirectory=/
 ExecStart=/usr/bin/python3 -B -m patchnotes.weekly_run
 Nice=10
 IOSchedulingClass=idle
 
-# A throwaway user that sees only Main's backups, read-only.
+# A throwaway user that sees only Main's backups, read-only, and keeps only those configs.
 DynamicUser=yes
+StateDirectory=tfmc-patchnotes-configs
 CapabilityBoundingSet=
 NoNewPrivileges=true
 ProtectSystem=strict

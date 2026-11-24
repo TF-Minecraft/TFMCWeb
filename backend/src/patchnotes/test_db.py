@@ -18,7 +18,7 @@ NEXT = "2026-W40"
 TABLES = (
     "patchnote_bullets, patchnote_sources, patchnote_previews, patchnote_folders, "
     "patchnote_week_status, patchnote_jobs, patchnote_sync_tasks, patchnote_week_facts, "
-    "patchnote_posts, patchnote_week_meta"
+    "patchnote_posts, patchnote_week_meta, patchnote_player_notes"
 )
 
 
@@ -93,7 +93,7 @@ def test_migrate_skips_without_database_url(monkeypatch):
 def test_migrate_twice_is_harmless(notes):
     db._MIGRATED = False
     db.migrate()
-    assert _sql("SELECT count(*) AS n FROM pg_tables WHERE tablename LIKE 'patchnote_%'")[0]["n"] == 10
+    assert _sql("SELECT count(*) AS n FROM pg_tables WHERE tablename LIKE 'patchnote_%'")[0]["n"] == 11
 
 
 def test_unreachable_database_is_a_patch_notes_error(monkeypatch):
@@ -453,12 +453,18 @@ def test_stale_jobs_expire_and_the_expiry_sticks_when_a_new_job_is_refused(notes
     db.create_job(WEEK, "feedback", "y")
     running = db.claim_job()
     db.create_job(WEEK, "compose")
-    _sql("UPDATE patchnote_jobs SET claimed_at = now() - interval '11 minutes' WHERE id = %s", (running["id"],))
+    _sql("UPDATE patchnote_jobs SET claimed_at = now() - interval '21 minutes' WHERE id = %s", (running["id"],))
     with pytest.raises(db.JobActive):
         db.create_job(WEEK, "compose")
     # The refused create still commits the expiry it found.
     [row] = _sql("SELECT status, error FROM patchnote_jobs WHERE id = %s", (running["id"],))
     assert (row["status"], row["error"]) == ("failed", "The rewrite took too long.")
+
+
+def test_jobs_remember_who_asked(notes):
+    assert db.create_job(WEEK, "sort")["requester"] is None
+    db.create_job(WEEK, "compose", requester="weekly")
+    assert {db.claim_job()["requester"], db.claim_job()["requester"]} == {None, "weekly"}
 
 
 def test_latest_job_tracks_line_and_post_jobs_apart(notes):
@@ -471,6 +477,21 @@ def test_latest_job_tracks_line_and_post_jobs_apart(notes):
 
 
 # Weekly post
+
+
+def test_player_notes_are_kept_once_per_week(notes):
+    first = db.add_player_note("  Mages deal\n15% less. ", author="staff", week=WEEK)
+    assert (first["body"], first["author"], first["week"]) == ("Mages deal 15% less.", "staff", WEEK)
+    assert db.add_player_note("Mages deal 15% less.", week=WEEK)["id"] == first["id"]
+    second = db.add_player_note("Horses are faster.", week=WEEK)
+    assert [note["id"] for note in db.list_player_notes(WEEK)] == [first["id"], second["id"]]
+    assert db.list_player_notes(NEXT) == []
+    assert db.remove_player_note(first["id"])
+    assert not db.remove_player_note(first["id"])
+    assert db.add_player_note("Today")["week"] == db.current_week()
+    for bad in ("   ", "x" * (db.MAX_PLAYER_NOTE + 1)):
+        with pytest.raises(ValueError):
+            db.add_player_note(bad, week=WEEK)
 
 
 def test_facts_post_and_act_are_stored_per_week(notes):
@@ -487,6 +508,14 @@ def test_facts_post_and_act_are_stored_per_week(notes):
         ["Hello", "again"], "fallback", "draft")
     assert db.get_post(WEEK)["messages"] == ["Hello", "again"]
     assert db.get_post(NEXT) is None
+    assert db.recent_posts(NEXT) == []
+    db.save_post(WEEK, ["Hello", "again"], "writer")
+    assert db.recent_posts(NEXT) == [["Hello", "again"]]
+    assert db.recent_posts(WEEK) == []
+    db.postpone_week(WEEK)
+    assert db.recent_posts(NEXT) == []
+    db.undo_postpone(WEEK)
+    assert db.recent_posts(NEXT) == [["Hello", "again"]]
     with pytest.raises(ValueError):
         db.save_post(WEEK, [], "someone")
 

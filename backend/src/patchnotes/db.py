@@ -401,6 +401,7 @@ def migrate() -> None:
                 CHECK (kind IN ('feedback', 'sort', 'compose'))
             """
         )
+        cur.execute("ALTER TABLE patchnote_jobs ADD COLUMN IF NOT EXISTS requester TEXT")
         cur.execute("DROP INDEX IF EXISTS patchnote_jobs_active_week_idx")
         cur.execute(
             """
@@ -435,6 +436,18 @@ def migrate() -> None:
                 week TEXT PRIMARY KEY,
                 act TEXT,
                 updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+            )
+            """
+        )
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS patchnote_player_notes (
+                id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+                week TEXT NOT NULL,
+                body TEXT NOT NULL,
+                author TEXT NOT NULL DEFAULT '',
+                created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+                UNIQUE (week, body)
             )
             """
         )
@@ -1133,7 +1146,7 @@ class BulletNotOpen(RuntimeError):
 
 
 _JOB_COLUMNS = (
-    "id, week, kind, feedback, status, error, changed, line_ids, "
+    "id, week, kind, feedback, requester, status, error, changed, line_ids, "
     "created_at, claimed_at, finished_at"
 )
 
@@ -1150,7 +1163,7 @@ def _expire_jobs(cur) -> None:
                AND NOT EXISTS (
                    SELECT 1 FROM patchnote_jobs active WHERE active.status = 'running'
                ))
-           OR (status = 'running' AND claimed_at < now() - interval '10 minutes')
+           OR (status = 'running' AND claimed_at < now() - interval '20 minutes')
         """
     )
 
@@ -1159,7 +1172,10 @@ LINE_JOB_KINDS = ("feedback", "sort")
 POST_JOB_KINDS = ("compose",)
 
 
-def create_job(week: str, kind: str, feedback: str | None = None) -> dict[str, Any]:
+def create_job(
+    week: str, kind: str, feedback: str | None = None, *, requester: str | None = None
+) -> dict[str, Any]:
+    """Queue a job. `requester` is `weekly` for the Friday run, or the Discord id of who asked."""
     week_key = parse_week(week)
     if kind not in {*LINE_JOB_KINDS, *POST_JOB_KINDS}:
         raise ValueError("Invalid job kind")
@@ -1167,12 +1183,12 @@ def create_job(week: str, kind: str, feedback: str | None = None) -> dict[str, A
         _expire_jobs(cur)
         cur.execute(
             f"""
-            INSERT INTO patchnote_jobs (week, kind, feedback)
-            VALUES (%s, %s, %s)
+            INSERT INTO patchnote_jobs (week, kind, feedback, requester)
+            VALUES (%s, %s, %s, %s)
             ON CONFLICT (week, (kind = 'compose')) WHERE status IN ('queued', 'running') DO NOTHING
             RETURNING {_JOB_COLUMNS}
             """,
-            (week_key, kind, feedback),
+            (week_key, kind, feedback, requester),
         )
         row = cur.fetchone()
     if row is None:
@@ -1424,12 +1440,63 @@ def get_post(week: str) -> dict[str, Any] | None:
         return dict(row) if row else None
 
 
+def recent_posts(week: str, limit: int = 4) -> list[list[str]]:
+    """The newest written posts before `week`, newest first, for style and for what players know.
+
+    A postponed week was never posted.
+    """
+    with _connect() as conn, _cursor(conn) as cur:
+        cur.execute(
+            "SELECT posts.messages FROM patchnote_posts AS posts "
+            "LEFT JOIN patchnote_week_status AS state ON state.week = posts.week "
+            "WHERE posts.week < %s AND posts.source = 'writer' AND NOT COALESCE(state.postponed, FALSE) "
+            "ORDER BY posts.week DESC LIMIT %s",
+            (parse_week(week), limit),
+        )
+        return [list(row["messages"]) for row in cur.fetchall()]
+
+
 def approve_post(week: str) -> bool:
     with _connect() as conn, _cursor(conn) as cur:
         cur.execute(
             "UPDATE patchnote_posts SET status = 'approved', updated_at = now() WHERE week = %s",
             (parse_week(week),),
         )
+        return cur.rowcount > 0
+
+
+MAX_PLAYER_NOTE = 600
+
+
+def add_player_note(body: str, *, author: str = "", week: str | None = None) -> dict[str, Any]:
+    """Keep a line staff want in the week's post. The same line twice is kept once."""
+    text = " ".join(body.split())
+    if not text or len(text) > MAX_PLAYER_NOTE:
+        raise ValueError(f"A note needs 1 to {MAX_PLAYER_NOTE} characters")
+    with _connect() as conn, _cursor(conn) as cur:
+        cur.execute(
+            """
+            INSERT INTO patchnote_player_notes (week, body, author) VALUES (%s, %s, %s)
+            ON CONFLICT (week, body) DO UPDATE SET author = EXCLUDED.author
+            RETURNING id, week, body, author, created_at
+            """,
+            (parse_week(week) if week else current_week(), text, " ".join(author.split())[:60]),
+        )
+        return dict(cur.fetchone())
+
+
+def list_player_notes(week: str) -> list[dict[str, Any]]:
+    with _connect() as conn, _cursor(conn) as cur:
+        cur.execute(
+            "SELECT id, week, body, author, created_at FROM patchnote_player_notes WHERE week = %s ORDER BY id",
+            (parse_week(week),),
+        )
+        return [dict(row) for row in cur.fetchall()]
+
+
+def remove_player_note(note_id: int) -> bool:
+    with _connect() as conn, _cursor(conn) as cur:
+        cur.execute("DELETE FROM patchnote_player_notes WHERE id = %s", (note_id,))
         return cur.rowcount > 0
 
 

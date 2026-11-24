@@ -84,6 +84,57 @@ class PromptTest(unittest.TestCase):
         self.assertIn('["# Update 5.3"]', prompt)
         self.assertIn("Explain the armour change better.", prompt)
 
+    def test_earlier_posts_come_before_the_facts(self) -> None:
+        prompt = compose.compose_prompt(
+            _FACTS, week="2026-W41", label="5.3", act=None, page_url="x", examples=[["# Update 5.2"]],
+        )
+        self.assertLess(prompt.index('["# Update 5.2"]'), prompt.index("Facts:"))
+        plain = compose.compose_prompt(_FACTS, week="2026-W41", label="5.3", act=None, page_url="x")
+        self.assertNotIn("Earlier posts", plain)
+
+    def test_staff_notes_reach_the_writer_and_the_fallback(self) -> None:
+        common = {"week": "2026-W41", "label": "5.3", "act": None, "page_url": "x"}
+        prompt = compose.compose_prompt(_FACTS, notes=["Mages deal 15% less."], **common)
+        self.assertLess(prompt.index("- Mages deal 15% less."), prompt.index("Facts:"))
+        self.assertNotIn("Staff notes", compose.compose_prompt(_FACTS, **common))
+        text = "\n".join(compose.fallback_messages(_FACTS, notes=["Mages deal 15% less."], **common))
+        self.assertIn("## This week\n- Mages deal 15% less.", text)
+
+    def test_the_fallback_leaves_number_notes_to_the_configs(self) -> None:
+        facts = {"files": [{"path": "MMOCore/classes/mage.yml", "plugin": "MMOCore", "kind": "changed", "entries": [
+            {"name": "Mage", "kind": "changed",
+             "details": ["attributes.max_health.base: 30 --> 28", "skills.Bloodlust.cooldown.base: 7 --> 8"]},
+        ]}]}
+        notes = ["Mage health is now 25.", "Mage health is now 30.", "Bloodlust cooldown 7 --> 9 s.",
+                 "Mages feel weaker.", "Horses run 10% faster."]
+        text = "\n".join(compose.fallback_messages(
+            facts, week="2026-W41", label="5.3", act=None, page_url="x", notes=notes))
+        for note in notes[:3]:
+            self.assertNotIn(note, text)
+        for note in notes[3:]:
+            self.assertIn(note, text)
+
+    def test_developer_descriptions_follow_their_subject(self) -> None:
+        facts = {"plugins": [{"plugin": "p", "old": "1", "new": "2", "commits": ["A", "B"], "details": {"A": "More."}}]}
+        self.assertIn("  - A\n    Developer description: More.\n  - B", compose.render_facts(facts))
+
+    def test_feedback_wins_over_the_facts_in_both_passes(self) -> None:
+        prompt = compose.compose_prompt(
+            _FACTS, week="2026-W41", label="5.3", act=None, page_url="x",
+            previous=["# Update 5.3"], feedback="Say mages deal less damage.",
+        )
+        self.assertIn("true even when the facts do not show it", " ".join(prompt.split()))
+        review = compose.feedback_review_prompt(["# Update 5.3"], "Say mages deal less damage.")
+        self.assertIn('["# Update 5.3"]', review)
+        self.assertIn("Say mages deal less damage.", review)
+        self.assertNotIn("Facts:", review)
+        self.assertTrue(review.endswith("Draft:"))
+
+    def test_the_review_carries_the_whole_task(self) -> None:
+        review = compose.review_prompt("The task and facts")
+        self.assertTrue(review.startswith("The task and facts"))
+        self.assertTrue(review.endswith("Draft:"))
+
     def test_facts_are_trimmed_to_the_budget(self) -> None:
         text = compose.render_facts(_FACTS, budget=80)
         self.assertLessEqual(len(text), 130)

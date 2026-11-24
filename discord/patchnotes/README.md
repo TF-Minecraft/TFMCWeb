@@ -34,6 +34,8 @@ this cog shows it to staff and posts it to #updates.
 | --- | --- |
 | `/patchnotes test-post [week] [here]` | Sends a test copy of the post to the review channel, or this channel with `here`. No buttons, nobody is pinged. |
 | `/patchnotes write-post [week]` | Writes the post again from the server changes, dropping earlier feedback. |
+| `/patchnotes note <text> [week]` | Adds a line for the week's post. The writer treats it as true and puts it in. |
+| `/patchnotes notes [week]`, `/patchnotes remove-note <number>` | Lists or removes those lines. |
 | `/patchnotes act [act] [week]` | Titles an act change week's post with the act, such as `Act 1`. Empty clears it. |
 | `/patchnotes refresh <week>` | Edits a week's #updates messages without pinging. |
 | `/patchnotes test`, `sort`, `reset`, `pending`, `ping`, `folders`, ... | Unchanged line review tools. |

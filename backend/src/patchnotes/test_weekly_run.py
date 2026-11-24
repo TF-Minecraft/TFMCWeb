@@ -88,6 +88,8 @@ class CommitSubjectsTest(unittest.TestCase):
                     {"commit": {"message": "Make armour take time to put on (#72)\n\nBody"}},
                     {"commit": {"message": "Merge pull request #9 from x/y"}},
                     {"commit": {"message": "Rotate staff_key: hunter2"}},
+                    {"commit": {"message": "Add a hidden path"}},
+                    {"commit": {"message": "Mage paths (Dev)"}},
                 ]
             }
 
@@ -95,6 +97,40 @@ class CommitSubjectsTest(unittest.TestCase):
         self.assertEqual(subjects, ["Make armour take time to put on"])
         self.assertTrue(calls[0].endswith("/repos/TF-Minecraft/RPCharacters/compare/v2.11.0...v2.12.6"))
         self.assertTrue(calls[1].endswith("/compare/2.11.0...2.12.6"))
+
+
+    @mock.patch.dict("os.environ", {"PATCHNOTES_HIDDEN_WORDS": "moonpath"})
+    def test_details_keep_what_changed_and_drop_reviews_and_hidden_work(self) -> None:
+        message = (
+            "Upkeep-only vehicles (#247)\n\n* Pay vehicle upkeep from the bank\n\n"
+            "The leader moves vehicles in, up to three\nper member.\n\n"
+            "The hidden dungeon gets a new vehicle.\n\nMoonpath users pay less.\n\nThe chest is at 1200, 64, -900.\n\n"
+            "Another is at 12, 64, -34.\n\n"
+            "Co-Authored-By: A <a@example.net>\n\n* Address review round 1\n\nGuild rows use the incarnation.\n"
+        )
+        self.assertEqual(
+            weekly_run.commit_detail(message),
+            "Pay vehicle upkeep from the bank The leader moves vehicles in, up to three per member.",
+        )
+        self.assertEqual(weekly_run.commit_detail("Add the hidden path\n\nBody"), "")
+        self.assertEqual(weekly_run.commit_detail("Only a subject"), "")
+        long = weekly_run.commit_detail("Subject\n\n" + "word " * 2000)
+        self.assertLess(len(long), 1830)
+        self.assertTrue(long.endswith("(shortened)"))
+
+    @mock.patch.dict("os.environ", {}, clear=True)
+    def test_no_details_without_the_hidden_words(self) -> None:
+        self.assertEqual(weekly_run.commit_detail("Subject\n\nBody"), "")
+
+    @mock.patch.dict("os.environ", {"PATCHNOTES_HIDDEN_WORDS": "moonpath"})
+    def test_details_belong_to_kept_subjects(self) -> None:
+        details: dict[str, str] = {}
+        weekly_run.commit_subjects(
+            "RPCharacters", "1", "2",
+            lambda _path: {"commits": [{"commit": {"message": "Make armour take time to put on (#72)\n\nFive seconds."}}]},
+            details,
+        )
+        self.assertEqual(details, {"Make armour take time to put on": "Five seconds."})
 
 
 class RunTest(unittest.TestCase):
@@ -128,6 +164,23 @@ class RunTest(unittest.TestCase):
         self.assertEqual(facts["until"], "2026-10-09T06:02:00+00:00")
         self.assertFalse(facts["partial"])
         self.assertEqual(facts["plugins"][0]["old"], "2.11.0")
+
+    def test_keeps_the_configs_of_the_closing_backup_first(self) -> None:
+        kept = Path(self.directory.name, "kept")
+        kept.mkdir()
+        env = {"PATCHNOTES_CONFIGS_DIR": str(kept), "PATCHNOTES_HIDDEN_WORDS": "moonpath"}
+
+        def api(_base, _key, method, _path, payload=None):
+            if method == "POST":
+                self.assertEqual([path.name for path in kept.iterdir()], ["2026-W41"])
+            return (404 if method == "GET" else 200), {}
+
+        with mock.patch.dict("os.environ", env), mock.patch.object(weekly_run, "_api", side_effect=api) as called:
+            weekly_run.run(_args(self.directory.name), now=self.now)
+            self.assertEqual(called.call_count, 2)
+        env["PATCHNOTES_CONFIGS_DIR"] = str(kept / "gone")
+        with mock.patch.dict("os.environ", env), mock.patch.object(weekly_run, "_api", side_effect=api):
+            self.assertIn("sent", weekly_run.run(_args(self.directory.name), now=self.now))
 
     def test_skips_a_week_the_api_already_has(self) -> None:
         with mock.patch.object(weekly_run, "_api", return_value=(200, {})) as api:

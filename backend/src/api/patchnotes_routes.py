@@ -21,6 +21,8 @@ from src.api.map_access import require_site_staff
 from src.patchnotes.compose import (
     POST_SCHEMA,
     compose_prompt,
+    feedback_review_prompt,
+    review_prompt,
     fallback_messages,
     messages_from_response,
 )
@@ -37,6 +39,7 @@ from src.patchnotes.db import (
     WeekNotPostponed,
     WeekPostponed,
     add_folder_rule,
+    add_player_note,
     apply_feedback,
     apply_sort,
     approve_bullet,
@@ -83,6 +86,9 @@ from src.patchnotes.db import (
     restore_bullet,
     revise_denied_bullet,
     save_facts,
+    list_player_notes,
+    recent_posts,
+    remove_player_note,
     save_post,
     set_act,
     undo_postpone,
@@ -142,6 +148,9 @@ def _client_detail(exc: Exception) -> str:
     if isinstance(exc, PatchnotesConfigError):
         return "Patch notes are misconfigured. Check server logs."
     return "Patch notes request failed. Check server logs."
+
+
+WEEKLY_REQUESTER = "weekly"
 
 
 def _iso(value: Any) -> str | None:
@@ -219,8 +228,20 @@ class CreateBulletBody(BaseModel):
         return text
 
 
+class RequesterBody(BaseModel):
+    """Who asked for a job: the Discord id of the staff member, or the bot's own Friday run."""
+
+    requester_id: str | None = Field(default=None, pattern=r"^\d{1,20}$")
+    automatic: bool = False
+
+    @property
+    def requester(self) -> str | None:
+        return self.requester_id or (WEEKLY_REQUESTER if self.automatic else None)
+
+
 class FeedbackBody(BaseModel):
     feedback: str = Field(..., min_length=1, max_length=1000)
+    requester_id: str | None = Field(default=None, pattern=r"^\d{1,20}$")
 
     @field_validator("feedback")
     @classmethod
@@ -831,7 +852,7 @@ def _job_payload(row: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def _queue_job(week: str, kind: str, feedback: str | None = None):
+def _queue_job(week: str, kind: str, feedback: str | None = None, requester: str | None = None):
     week_key = _week_or_400(week)
     try:
         migrate()
@@ -840,7 +861,7 @@ def _queue_job(week: str, kind: str, feedback: str | None = None):
             raise JobActive(week_key)
         if not list_open_bullets(week_key):
             raise HTTPException(status_code=422, detail="Nothing to rewrite for this week.")
-        row = create_job(week_key, kind, feedback)
+        row = create_job(week_key, kind, feedback, requester=requester)
     except JobActive as e:
         raise HTTPException(status_code=409, detail="A rewrite is already running for this week.") from e
     except (PatchnotesDBError, PatchnotesConfigError, database.Error) as e:
@@ -851,12 +872,12 @@ def _queue_job(week: str, kind: str, feedback: str | None = None):
 
 @patchnotes_router.post("/staff/weeks/{week}/feedback", status_code=202, dependencies=[Depends(_staff_guard)])
 def staff_week_feedback(week: str, body: FeedbackBody):
-    return _queue_job(week, "feedback", body.feedback)
+    return _queue_job(week, "feedback", body.feedback, body.requester_id)
 
 
 @patchnotes_router.post("/staff/weeks/{week}/sort", status_code=202, dependencies=[Depends(_staff_guard)])
-def staff_week_sort(week: str):
-    return _queue_job(week, "sort")
+def staff_week_sort(week: str, body: RequesterBody | None = None):
+    return _queue_job(week, "sort", requester=body.requester if body else None)
 
 
 @patchnotes_router.get("/staff/weeks", dependencies=[Depends(_staff_guard)])
@@ -924,14 +945,20 @@ def staff_claim_job():
         if job is None:
             return {"job": None}
         if job["kind"] == "compose":
-            return {"job": _job_payload(job), "prompt": _post_prompt(job), "schema": POST_SCHEMA}
+            prompt, review = _post_prompts(job)
+            return {
+                "job": _job_payload(job), "prompt": prompt, "schema": POST_SCHEMA, "review": review,
+                "requester": job.get("requester"),
+            }
         lines = _job_lines(job)
         if job["kind"] == "feedback":
             prompt = feedback_prompt(lines, job.get("feedback") or "")
             schema = FEEDBACK_SCHEMA
         else:
             prompt, schema = sort_prompt(lines), SORT_SCHEMA
-        return {"job": _job_payload(job), "prompt": prompt, "schema": schema}
+        return {
+            "job": _job_payload(job), "prompt": prompt, "schema": schema, "requester": job.get("requester"),
+        }
     except (PatchnotesDBError, PatchnotesConfigError, database.Error) as e:
         logger.exception("staff_claim_job failed")
         raise HTTPException(status_code=502, detail=_client_detail(e)) from e
@@ -1058,7 +1085,12 @@ def _page_url() -> str:
     return os.environ.get("PATCHNOTES_PAGE_URL", "").strip() or _DEFAULT_PAGE_URL
 
 
-def _post_prompt(job: dict[str, Any]) -> str:
+def _note_lines(week: str) -> list[str]:
+    return [note["body"] for note in list_player_notes(week)]
+
+
+def _post_prompts(job: dict[str, Any]) -> tuple[str, str]:
+    """The writing prompt and the one for checking its draft."""
     week = job["week"]
     stored = get_facts(week)
     feedback = (job.get("feedback") or "").strip() or None
@@ -1066,7 +1098,7 @@ def _post_prompt(job: dict[str, Any]) -> str:
     if feedback:
         post = get_post(week)
         previous = list(post["messages"]) if post else None
-    return compose_prompt(
+    prompt = compose_prompt(
         stored["facts"] if stored else {},
         week=week,
         label=patch_label(week),
@@ -1074,7 +1106,12 @@ def _post_prompt(job: dict[str, Any]) -> str:
         page_url=_page_url(),
         previous=previous,
         feedback=feedback,
+        examples=recent_posts(week),
+        notes=_note_lines(week),
     )
+    if previous and feedback:
+        return prompt, feedback_review_prompt(previous, feedback)
+    return prompt, review_prompt(prompt)
 
 
 def _save_fallback(week: str) -> dict[str, Any] | None:
@@ -1082,7 +1119,8 @@ def _save_fallback(week: str) -> dict[str, Any] | None:
     if stored is None:
         return None
     messages = fallback_messages(
-        stored["facts"], week=week, label=patch_label(week), act=get_act(week), page_url=_page_url()
+        stored["facts"], week=week, label=patch_label(week), act=get_act(week), page_url=_page_url(),
+        notes=_note_lines(week),
     )
     return save_post(week, messages, "fallback")
 
@@ -1116,9 +1154,9 @@ def _post_payload(week: str, post: dict[str, Any] | None, job: dict[str, Any] | 
     }
 
 
-def _start_post_job(week: str, feedback: str | None) -> dict[str, Any]:
+def _start_post_job(week: str, feedback: str | None, requester: str | None) -> dict[str, Any]:
     try:
-        return create_job(week, "compose", feedback)
+        return create_job(week, "compose", feedback, requester=requester)
     except JobActive as e:
         raise HTTPException(status_code=409, detail="The post is already being written.") from e
 
@@ -1141,7 +1179,7 @@ def staff_week_facts(week: str, body: FactsBody):
         migrate()
         save_facts(week_key, body.facts)
         try:
-            job = create_job(week_key, "compose")
+            job = create_job(week_key, "compose", requester=WEEKLY_REQUESTER)
         except JobActive:
             job = None
     except (PatchnotesDBError, PatchnotesConfigError, database.Error) as e:
@@ -1193,7 +1231,7 @@ def staff_week_post_feedback(week: str, body: FeedbackBody):
         migrate()
         if get_post(week_key) is None:
             raise HTTPException(status_code=409, detail="This week has no post to rewrite yet.")
-        job = _start_post_job(week_key, body.feedback)
+        job = _start_post_job(week_key, body.feedback, body.requester_id)
     except (PatchnotesDBError, PatchnotesConfigError, database.Error) as e:
         logger.exception("staff_week_post_feedback failed")
         raise HTTPException(status_code=502, detail=_client_detail(e)) from e
@@ -1203,18 +1241,67 @@ def staff_week_post_feedback(week: str, body: FeedbackBody):
 @patchnotes_router.post(
     "/staff/weeks/{week}/post/compose", status_code=202, dependencies=[Depends(_staff_guard)]
 )
-def staff_week_post_compose(week: str):
+def staff_week_post_compose(week: str, body: RequesterBody | None = None):
     """Write the post again from the facts, without the earlier feedback."""
     week_key = _week_or_400(week)
     try:
         migrate()
         if get_facts(week_key) is None:
             raise HTTPException(status_code=404, detail="No weekly comparison for this week yet.")
-        job = _start_post_job(week_key, None)
+        job = _start_post_job(week_key, None, body.requester_id if body else None)
     except (PatchnotesDBError, PatchnotesConfigError, database.Error) as e:
         logger.exception("staff_week_post_compose failed")
         raise HTTPException(status_code=502, detail=_client_detail(e)) from e
     return {"job": _job_payload(job)}
+
+
+class PlayerNoteBody(BaseModel):
+    body: str = Field(..., min_length=1, max_length=600)
+    author: str = Field(default="", max_length=60)
+    week: str | None = None
+
+
+def _note_payload(note: dict[str, Any]) -> dict[str, Any]:
+    return {**note, "created_at": _iso(note.get("created_at"))}
+
+
+@patchnotes_router.post("/staff/player-notes", status_code=201, dependencies=[Depends(_staff_guard)])
+def staff_add_player_note(body: PlayerNoteBody):
+    """Keep a line for the week's post. Without a week it goes to the one still open."""
+    week_key = _week_or_400(body.week) if body.week else None
+    try:
+        migrate()
+        return {"note": _note_payload(add_player_note(body.body, author=body.author, week=week_key))}
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e)) from e
+    except (PatchnotesDBError, PatchnotesConfigError, database.Error) as e:
+        logger.exception("staff_add_player_note failed")
+        raise HTTPException(status_code=502, detail=_client_detail(e)) from e
+
+
+@patchnotes_router.get("/staff/player-notes", dependencies=[Depends(_staff_guard)])
+def staff_player_notes(week: str | None = None):
+    week_key = _week_or_400(week) if week else None
+    try:
+        migrate()
+        week_key = week_key or current_week()
+        return {"week": week_key, "notes": [_note_payload(note) for note in list_player_notes(week_key)]}
+    except (PatchnotesDBError, PatchnotesConfigError, database.Error) as e:
+        logger.exception("staff_player_notes failed")
+        raise HTTPException(status_code=502, detail=_client_detail(e)) from e
+
+
+@patchnotes_router.delete("/staff/player-notes/{note_id}", dependencies=[Depends(_staff_guard)])
+def staff_remove_player_note(note_id: int):
+    try:
+        migrate()
+        removed = remove_player_note(note_id)
+    except (PatchnotesDBError, PatchnotesConfigError, database.Error) as e:
+        logger.exception("staff_remove_player_note failed")
+        raise HTTPException(status_code=502, detail=_client_detail(e)) from e
+    if not removed:
+        raise HTTPException(status_code=404, detail="Note not found")
+    return {"removed": note_id}
 
 
 @patchnotes_router.post("/staff/weeks/{week}/post/approve", dependencies=[Depends(_staff_guard)])

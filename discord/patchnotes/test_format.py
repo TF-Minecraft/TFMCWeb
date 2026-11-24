@@ -263,6 +263,14 @@ class WeeklyPostTest(unittest.TestCase):
         self.assertIn(notes_format.CANCEL_LINE, line_review)
         self.assertLessEqual(len(line_review), DISCORD_LIMIT)
 
+    def test_every_staff_note_number_is_listed(self) -> None:
+        lines = [f"#{n} {'x' * 600} (fran)" for n in range(1, 8)]
+        pages = notes_format.note_pages("Notes:", lines)
+        self.assertGreater(len(pages), 1)
+        self.assertTrue(all(len(page) <= 1900 for page in pages))
+        self.assertEqual("\n".join(pages).splitlines(), ["Notes:", *lines])
+        self.assertEqual(notes_format.note_pages("Notes:", []), ["Notes:\nNone yet."])
+
     def test_test_copy_says_nothing_was_posted(self) -> None:
         notice = notes_format.post_test_notice("2026-W41", self.POST)
         self.assertTrue(notice.startswith("# Test: Update 5.3"))

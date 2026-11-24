@@ -18,6 +18,7 @@ import os
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Optional
+from urllib.parse import quote
 
 import aiohttp
 import discord
@@ -27,6 +28,7 @@ from redbot.core.bot import Red
 
 from .format import (
     folders_message,
+    note_pages,
     post_messages,
     post_review_controls,
     post_review_notice,
@@ -69,7 +71,7 @@ _CANCELLED_REPLY = "This week's post is cancelled. Use Undo cancel to take it ba
 # requests. A hung API must not hold the week lock (and a staff click) for aiohttp's 5 minutes.
 _API_TIMEOUT = aiohttp.ClientTimeout(total=60)
 # How long Deny waits for the writer to rewrite the post.
-_POST_JOB_SECONDS = 540
+_POST_JOB_SECONDS = 870
 
 
 def _clamp_poll(value: int) -> int:
@@ -1059,10 +1061,11 @@ class PatchNotes(commands.Cog):
         await self.config.post_review_messages.set(reviews)
         logger.info("Posted the %s post review with %s messages", week, len(sent) - 2)
 
-    async def submit_post_feedback(self, week: str, feedback: str) -> dict:
+    async def submit_post_feedback(self, week: str, feedback: str, requester_id: int) -> dict:
         """Rewrite the whole post from feedback and return the new post."""
         status, text, data = await self.api_request(
-            "POST", f"/patchnotes/staff/weeks/{week}/post/feedback", {"feedback": feedback}
+            "POST", f"/patchnotes/staff/weeks/{week}/post/feedback",
+            {"feedback": feedback, "requester_id": str(requester_id)},
         )
         if status == 409:
             raise RuntimeError(_api_detail(data, text))
@@ -1070,9 +1073,11 @@ class PatchNotes(commands.Cog):
             raise RuntimeError(_api_detail(data, text))
         return await self._wait_for_post(week, str(data["job"].get("id") or ""))
 
-    async def write_post(self, week: str) -> dict:
+    async def write_post(self, week: str, requester_id: int) -> dict:
         """Write the post again from the week's server changes."""
-        status, text, data = await self.api_request("POST", f"/patchnotes/staff/weeks/{week}/post/compose")
+        status, text, data = await self.api_request(
+            "POST", f"/patchnotes/staff/weeks/{week}/post/compose", {"requester_id": str(requester_id)}
+        )
         if status != 202 or not isinstance(data, dict) or not isinstance(data.get("job"), dict):
             raise RuntimeError(_api_detail(data, text))
         return await self._wait_for_post(week, str(data["job"].get("id") or ""))
@@ -1586,7 +1591,7 @@ class PatchNotes(commands.Cog):
     ) -> None:
         """Rewrite the whole test note from feedback. The week is not postponed."""
         try:
-            result = await self.submit_feedback(week, feedback)
+            result = await self.submit_feedback(week, feedback, interaction.user.id)
         except Exception as exc:
             await interaction.followup.send(
                 f"Could not rewrite the note: {exc}",
@@ -1628,12 +1633,12 @@ class PatchNotes(commands.Cog):
                 return None
             await asyncio.sleep(min(3, remaining))
 
-    async def submit_feedback(self, week: str, feedback: str) -> dict:
+    async def submit_feedback(self, week: str, feedback: str, requester_id: int) -> dict:
         """Queue feedback and return its completed job response."""
         status, text, data = await self.api_request(
             "POST",
             f"/patchnotes/staff/weeks/{week}/feedback",
-            {"feedback": feedback},
+            {"feedback": feedback, "requester_id": str(requester_id)},
         )
         if status == 409:
             raise RuntimeError("A rewrite is already running for this week.")
@@ -1653,11 +1658,12 @@ class PatchNotes(commands.Cog):
         result["changed"] = job.get("changed")
         return result
 
-    async def sort_week(self, week: str) -> str:
-        """Queue a sort, wait for its result, and return its outcome."""
+    async def sort_week(self, week: str, requester_id: Optional[int] = None) -> str:
+        """Queue a sort, wait for its result, and return its outcome. Without a requester it is the Friday run."""
+        asked = {"automatic": True} if requester_id is None else {"requester_id": str(requester_id)}
         try:
             status, text, data = await self.api_request(
-                "POST", f"/patchnotes/staff/weeks/{week}/sort"
+                "POST", f"/patchnotes/staff/weeks/{week}/sort", asked
             )
         except Exception:
             logger.exception("Could not start sort for %s; posting the review anyway", week)
@@ -1798,7 +1804,7 @@ class PatchNotes(commands.Cog):
             await self.post_post_denial(interaction, week, feedback)
             return
         try:
-            data = await self.submit_feedback(week, feedback)
+            data = await self.submit_feedback(week, feedback, interaction.user.id)
         except Exception as exc:
             await interaction.followup.send(
                 f"Could not rewrite the note: {exc}",
@@ -1843,7 +1849,7 @@ class PatchNotes(commands.Cog):
     async def post_post_denial(self, interaction: discord.Interaction, week: str, feedback: str) -> None:
         """Rewrite the weekly post from feedback and show the new version for review."""
         try:
-            post = await self.submit_post_feedback(week, feedback)
+            post = await self.submit_post_feedback(week, feedback, interaction.user.id)
         except Exception as exc:
             await interaction.followup.send(f"Could not rewrite the post: {exc}", ephemeral=True)
             return
@@ -2754,7 +2760,7 @@ class PatchNotes(commands.Cog):
         await interaction.response.defer(ephemeral=True)
         try:
             week = await self.unreleased_week()
-            outcome = await self.sort_week(week)
+            outcome = await self.sort_week(week, interaction.user.id)
             await self.retire_review_message(week)
             await self.post_week_review(week, ping=False)
         except Exception as exc:
@@ -2852,7 +2858,7 @@ class PatchNotes(commands.Cog):
         await interaction.response.defer(ephemeral=True)
         try:
             week = await self._command_week(week)
-            post = await self.write_post(week)
+            post = await self.write_post(week, interaction.user.id)
         except Exception as exc:
             await interaction.followup.send(f"Could not write the post: {exc}"[:300], ephemeral=True)
             return
@@ -2861,6 +2867,70 @@ class PatchNotes(commands.Cog):
             "Use `/patchnotes test-post` to read it. A review that is already posted is not replaced.",
             ephemeral=True,
         )
+
+    @patchnotes.command(name="note", description="Add a line for the next update post. The writer treats it as true.")
+    @app_commands.describe(
+        text="What changed for players and why, such as: Horses run faster because trips took too long.",
+        week="ISO week, such as 2026-W41. Defaults to the week that is still open.",
+    )
+    @app_commands.check(_has_staff)
+    @app_commands.guild_only()
+    async def note_cmd(
+        self, interaction: discord.Interaction, text: app_commands.Range[str, 1, 600], week: Optional[str] = None
+    ):
+        await interaction.response.defer(ephemeral=True)
+        payload: dict[str, Any] = {"body": text, "author": interaction.user.display_name[:60]}
+        if week:
+            payload["week"] = week
+        try:
+            status, body, data = await self.api_request("POST", "/patchnotes/staff/player-notes", payload)
+        except Exception as exc:
+            await interaction.followup.send(str(exc)[:300], ephemeral=True)
+            return
+        if status != 201 or not isinstance(data, dict) or not isinstance(data.get("note"), dict):
+            await interaction.followup.send(f"Could not add the note: {_api_detail(data, body)}", ephemeral=True)
+            return
+        note = data["note"]
+        await interaction.followup.send(
+            f"Added note #{note.get('id')} for {week_label(str(note.get('week')))}. "
+            "If its post is already written, use Deny instead.",
+            ephemeral=True,
+        )
+
+    @patchnotes.command(name="notes", description="List the staff notes for an update post.")
+    @app_commands.describe(week="ISO week, such as 2026-W41. Defaults to the week that is still open.")
+    @app_commands.check(_has_staff)
+    @app_commands.guild_only()
+    async def notes_cmd(self, interaction: discord.Interaction, week: Optional[str] = None):
+        await interaction.response.defer(ephemeral=True)
+        path = "/patchnotes/staff/player-notes" + (f"?week={quote(week)}" if week else "")
+        try:
+            status, body, data = await self.api_request("GET", path)
+        except Exception as exc:
+            await interaction.followup.send(str(exc)[:300], ephemeral=True)
+            return
+        if status != 200 or not isinstance(data, dict):
+            await interaction.followup.send(f"Could not load the notes: {_api_detail(data, body)}", ephemeral=True)
+            return
+        lines = [f"#{note.get('id')} {note.get('body')} ({note.get('author') or 'unknown'})" for note in data["notes"]]
+        for page in note_pages(f"Notes for {week_label(str(data.get('week')))}:", lines):
+            await interaction.followup.send(page, ephemeral=True, allowed_mentions=discord.AllowedMentions.none())
+
+    @patchnotes.command(name="remove-note", description="Remove a staff note by its number.")
+    @app_commands.describe(number="The number /patchnotes notes shows.")
+    @app_commands.check(_has_staff)
+    @app_commands.guild_only()
+    async def remove_note_cmd(self, interaction: discord.Interaction, number: int):
+        await interaction.response.defer(ephemeral=True)
+        try:
+            status, body, data = await self.api_request("DELETE", f"/patchnotes/staff/player-notes/{number}")
+        except Exception as exc:
+            await interaction.followup.send(str(exc)[:300], ephemeral=True)
+            return
+        if status != 200:
+            await interaction.followup.send(f"Could not remove the note: {_api_detail(data, body)}", ephemeral=True)
+            return
+        await interaction.followup.send(f"Removed note #{number}.", ephemeral=True)
 
     @patchnotes.command(name="act", description="Title a week's update post with an act, on act change weeks.")
     @app_commands.describe(
