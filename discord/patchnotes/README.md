@@ -11,7 +11,9 @@ this cog shows it to staff and posts it to #updates.
 2. The cog posts a staff notice in the review channel, then the post exactly
    as players will see it, then Approve / Deny / Postpone / Cancel post. It
    waits up to an hour for the post; without one it falls back to the old line
-   review.
+   review. While the writer waits for its usage limit, it waits until 16:15.
+   The notice says who wrote the post, how often it was checked and which
+   numbers to look at.
 3. Deny asks what should change and rewrites the whole post.
 4. Postpone and Cancel post both ask for confirmation and have an undo button.
    - **Postpone** holds the week: #updates says so at 18:00 and the notes move
@@ -33,7 +35,8 @@ this cog shows it to staff and posts it to #updates.
 | Command | What it does |
 | --- | --- |
 | `/patchnotes test-post [week] [here]` | Sends a test copy of the post to the review channel, or this channel with `here`. No buttons, nobody is pinged. |
-| `/patchnotes write-post [week]` | Writes the post again from the server changes, dropping earlier feedback. |
+| `/patchnotes write-post [week] [rewrite_posted]` | Writes the post again from the server changes, dropping earlier feedback. A week already in #updates needs `rewrite_posted`; the messages there do not change. |
+| `/patchnotes undo-write [week]` | Puts back the version the last write or rewrite replaced. Again swaps back. |
 | `/patchnotes note <text> [week]` | Adds a line for the week's post. The writer treats it as true and puts it in. |
 | `/patchnotes notes [week]`, `/patchnotes remove-note <number>` | Lists or removes those lines. |
 | `/patchnotes act [act] [week]` | Titles an act change week's post with the act, such as `Act 1`. Empty clears it. |

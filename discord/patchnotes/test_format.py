@@ -252,6 +252,23 @@ class WeeklyPostTest(unittest.TestCase):
         self.assertIn("plain list from the server changes", notice)
         self.assertLessEqual(len(notice), DISCORD_LIMIT)
 
+    def test_staff_see_who_wrote_the_post_and_what_to_check(self) -> None:
+        report = {"writer": "claude:claude-opus-5-5", "checks": 2,
+                  "unconfirmed": [["- **Bless** reaches 3 --> 6 blocks." + "x" * 200, "3 --> 6"]]}
+        notice = notes_format.post_review_notice("2026-W41", {**self.POST, "report": report})
+        self.assertIn("Written by Claude Opus, checked 2 times.\n", notice)
+        self.assertIn("- 3 --> 6 in: **Bless** reaches", notice)
+        self.assertLessEqual(len(notice), DISCORD_LIMIT)
+        codex = {**self.POST, "report": {"writer": "codex:gpt-6.1-sol", "checks": 1}}
+        self.assertIn("Written by Codex, checked once. Please read it", notes_format.post_test_notice("2026-W41", codex))
+        rewritten = notes_format.post_review_notice("2026-W41", codex, rewritten=True)
+        self.assertIn("Rewritten by Codex, checked once.\n", rewritten)
+        unchecked = {"report": {"writer": "claude:claude-sonnet-5-5", "checks": 0}}
+        self.assertEqual(notes_format.writer_lines(unchecked),
+                         ["Written by Claude Sonnet, not checked. Please read it more closely than usual."])
+        self.assertEqual(notes_format.writer_lines(self.POST), [])
+        self.assertEqual(notes_format.writer_name("claude:new"), "Claude")
+
     def test_review_explains_cancel_apart_from_postpone(self) -> None:
         notice = notes_format.post_review_notice("2026-W41", self.POST)
         self.assertIn("Postpone holds the whole week until next week", notice)

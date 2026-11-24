@@ -10,7 +10,7 @@ import json
 import logging
 import os
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any, Literal
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request
@@ -24,6 +24,7 @@ from src.patchnotes.compose import (
     feedback_review_prompt,
     review_prompt,
     fallback_messages,
+    improve_prompt,
     messages_from_response,
 )
 from src.patchnotes.db import (
@@ -36,6 +37,7 @@ from src.patchnotes.db import (
     PatchnotesConfigError,
     PatchnotesDBError,
     TOPICS,
+    WEEKLY_REQUESTER,
     WeekNotPostponed,
     WeekPostponed,
     add_folder_rule,
@@ -53,6 +55,7 @@ from src.patchnotes.db import (
     drop_bullet,
     ensure_folder,
     finish_job,
+    friday,
     get_act,
     get_bullet,
     get_facts,
@@ -89,6 +92,8 @@ from src.patchnotes.db import (
     list_player_notes,
     recent_posts,
     remove_player_note,
+    requeue_job,
+    restore_post,
     save_post,
     set_act,
     undo_postpone,
@@ -150,7 +155,6 @@ def _client_detail(exc: Exception) -> str:
     return "Patch notes request failed. Check server logs."
 
 
-WEEKLY_REQUESTER = "weekly"
 
 
 def _iso(value: Any) -> str | None:
@@ -849,6 +853,7 @@ def _job_payload(row: dict[str, Any]) -> dict[str, Any]:
         "feedback": row.get("feedback"),
         "created_at": _iso(row.get("created_at")),
         "finished_at": _iso(row.get("finished_at")),
+        "retry_at": _iso(row.get("not_before")),
     }
 
 
@@ -945,10 +950,10 @@ def staff_claim_job():
         if job is None:
             return {"job": None}
         if job["kind"] == "compose":
-            prompt, review = _post_prompts(job)
+            prompt, improve, review = _post_prompts(job)
             return {
-                "job": _job_payload(job), "prompt": prompt, "schema": POST_SCHEMA, "review": review,
-                "requester": job.get("requester"),
+                "job": _job_payload(job), "prompt": prompt, "schema": POST_SCHEMA, "improve": improve,
+                "review": review, "requester": job.get("requester"), "may_wait": _retry_at(job) is not None,
             }
         lines = _job_lines(job)
         if job["kind"] == "feedback":
@@ -967,6 +972,12 @@ def staff_claim_job():
 class JobResultBody(BaseModel):
     output: str | None = None
     error: str | None = None
+    # The first writer is out of usage and asks to be tried again later.
+    retry: bool = False
+    writer: str | None = Field(default=None, max_length=80)
+    checks: int = Field(default=0, ge=0, le=10)
+    # Post lines with number changes the facts do not show: [line, numbers].
+    unconfirmed: list[tuple[str, str]] = Field(default_factory=list, max_length=200)
 
 
 @patchnotes_router.post("/staff/jobs/{job_id}/result", dependencies=[Depends(_staff_guard)])
@@ -1089,8 +1100,8 @@ def _note_lines(week: str) -> list[str]:
     return [note["body"] for note in list_player_notes(week)]
 
 
-def _post_prompts(job: dict[str, Any]) -> tuple[str, str]:
-    """The writing prompt and the one for checking its draft."""
+def _post_prompts(job: dict[str, Any]) -> tuple[str, str | None, str]:
+    """The writing prompt, the one for improving its draft and the one for checking it."""
     week = job["week"]
     stored = get_facts(week)
     feedback = (job.get("feedback") or "").strip() or None
@@ -1110,8 +1121,31 @@ def _post_prompts(job: dict[str, Any]) -> tuple[str, str]:
         notes=_note_lines(week),
     )
     if previous and feedback:
-        return prompt, feedback_review_prompt(previous, feedback)
-    return prompt, review_prompt(prompt)
+        return prompt, None, feedback_review_prompt(previous, feedback)
+    return prompt, improve_prompt(prompt), review_prompt(prompt)
+
+
+_RETRY_EVERY = timedelta(hours=1)
+# The last try starts early enough for staff to review the post before 18:00.
+_LAST_RETRY = (15, 15)
+_MAX_UNCONFIRMED = 5
+
+
+def _retry_at(job: dict[str, Any], now: datetime | None = None) -> datetime | None:
+    """When a Friday run whose first writer is out of usage may try again, if there is time."""
+    if job.get("requester") != WEEKLY_REQUESTER or job.get("kind") != "compose":
+        return None
+    moment = (now or datetime.now(timezone.utc)) + _RETRY_EVERY
+    return moment if moment <= friday(job["week"], *_LAST_RETRY) else None
+
+
+def _post_report(body: JobResultBody, messages: list[str]) -> dict[str, Any] | None:
+    """Who wrote the post and which of its lines staff should look at."""
+    if not body.writer:
+        return None
+    text = "\n".join(messages)
+    lines = [[line, numbers] for line, numbers in body.unconfirmed if line.strip() and line in text]
+    return {"writer": body.writer, "checks": body.checks, "unconfirmed": lines[:_MAX_UNCONFIRMED]}
 
 
 def _save_fallback(week: str) -> dict[str, Any] | None:
@@ -1128,11 +1162,14 @@ def _save_fallback(week: str) -> dict[str, Any] | None:
 def _finish_post_job(job: dict[str, Any], body: JobResultBody) -> dict[str, Any]:
     """Store the writer's post. A failure keeps the last post, or a plain one from the facts."""
     job_id = str(job["id"])
+    if body.retry and job.get("requester") == WEEKLY_REQUESTER:
+        # Past the last try it is claimed again at once, and then the next writer takes it.
+        return requeue_job(job_id, _retry_at(job) or datetime.now(timezone.utc))
     try:
-        if body.error is not None:
-            raise FeedbackError(body.error.strip()[:300] or "The rewrite agent failed.")
-        messages = messages_from_response(_json_object(body.output or ""))
-        save_post(job["week"], messages, "writer")
+        if body.error is not None or body.retry:
+            raise FeedbackError((body.error or "").strip()[:300] or "The rewrite agent failed.")
+        messages = messages_from_response(_json_object(body.output or ""), pack=not job.get("feedback"))
+        save_post(job["week"], messages, "writer", _post_report(body, messages))
         return finish_job(job_id, changed=len(messages))
     except (FeedbackError, ValueError) as e:
         row = finish_job(job_id, error=str(e)[:300])
@@ -1150,6 +1187,8 @@ def _post_payload(week: str, post: dict[str, Any] | None, job: dict[str, Any] | 
         "source": post["source"] if post else None,
         "status": post["status"] if post else "composing",
         "updated_at": _iso(post.get("updated_at")) if post else None,
+        "report": post.get("report") if post else None,
+        "has_previous": bool(post and post.get("has_previous")),
         "job": _job_payload(job) if job else None,
     }
 
@@ -1253,6 +1292,24 @@ def staff_week_post_compose(week: str, body: RequesterBody | None = None):
         logger.exception("staff_week_post_compose failed")
         raise HTTPException(status_code=502, detail=_client_detail(e)) from e
     return {"job": _job_payload(job)}
+
+
+@patchnotes_router.post("/staff/weeks/{week}/post/restore", dependencies=[Depends(_staff_guard)])
+def staff_week_post_restore(week: str):
+    """Put back the version the last write replaced. Doing it again swaps back."""
+    week_key = _week_or_400(week)
+    try:
+        migrate()
+        job = latest_job(week_key, POST_JOB_KINDS)
+        if job is not None and job["status"] in {"queued", "running"}:
+            raise HTTPException(status_code=409, detail="The post is already being written.")
+        post = restore_post(week_key)
+        if post is None:
+            raise HTTPException(status_code=404, detail="There is no earlier version of this post.")
+        return _post_payload(week_key, post, job)
+    except (PatchnotesDBError, PatchnotesConfigError, database.Error) as e:
+        logger.exception("staff_week_post_restore failed")
+        raise HTTPException(status_code=502, detail=_client_detail(e)) from e
 
 
 class PlayerNoteBody(BaseModel):

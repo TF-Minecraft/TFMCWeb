@@ -25,11 +25,13 @@ The default is `claude:claude-opus-5-5,claude:claude-sonnet-5-5,codex:gpt-6.1-so
 signed in, out of usage or too slow is skipped, so the post is still written when one subscription ends. The journal
 names the writer of each job and why earlier ones failed.
 
-After writing the weekly post, the writer gets its draft back once with the facts to correct it. Claude may then also
+The weekly post is written in three passes by the same writer: a draft, a better version (what is missing, the reasons,
+how it reads) and a check of every line. `number_check.py` gives the check each `Old --> New` that no change in the facts
+or notes shows; those still there at the end are listed for staff in the review. In the check Claude may also
 read Main's gameplay configs from the backup the facts end with. The weekly job keeps
 them in `/var/lib/private/tfmc-patchnotes-configs/<week>`, so neither the worker nor Codex sees the backups.
-`config_pack.py` lists which plugin folders, and leaves out discoveries, lore, player data and logins. If the check
-fails or time is short, the draft is used. The facts include the descriptions of the commits behind each plugin update,
+`config_pack.py` lists which plugin folders, and leaves out discoveries, lore, player data and logins. If a later pass
+fails or time is short, the version before it is used. The Friday run has 45 minutes, a run from Discord 14. The facts include the descriptions of the commits behind each plugin update,
 without review rounds, hidden features or staff work.
 
 - **Claude:** `npm install -g --prefix /usr/local @anthropic-ai/claude-code@<version>` as root, and `/etc/tfmc/patchnotes-claude.env`
@@ -39,6 +41,8 @@ without review rounds, hidden features or staff work.
 - **Who Claude answers:** it runs on one person's own login, so it only writes the Friday post and answers
   `PATCHNOTES_CLAUDE_OWNER`, that person's Discord id, in the same file. The bot sends the id of whoever pressed Deny
   or ran a command. Everyone else's rewrites, and those from the website, go to Codex.
+- **Out of usage on Friday:** when Claude hits its limit, the post waits and is tried again every hour until 15:15.
+  After that Codex writes it. Staff can stop waiting with `/patchnotes write-post`. The review says who wrote the post.
 - **Codex:** root's Codex login.
 
 `PATCHNOTES_HIDDEN_WORDS` in `/etc/tfmc/patchnotes.env` is a comma-separated list of names players must not learn, kept

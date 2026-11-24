@@ -40,6 +40,7 @@ from .format import (
     review_parts,
     updates_message,
     week_label,
+    writer_lines,
 )
 from .safety import hidden_knowledge_warning
 from .schedule import (
@@ -66,6 +67,8 @@ _MAX_POLL_SECONDS = 600
 _CONFIG_PATH = Path(__file__).resolve().parent / "config.yml"
 # How long the Friday review waits for the weekly post before using the line review.
 _POST_WAIT = timedelta(hours=1)
+# A writer that is out of usage is tried again until 15:15 and needs up to 45 minutes.
+_RETRY_WAIT = timedelta(hours=4, minutes=15)
 _CANCELLED_REPLY = "This week's post is cancelled. Use Undo cancel to take it back."
 # Every API call the cog makes is a quick database call, and jobs are polled with separate
 # requests. A hung API must not hold the week lock (and a staff click) for aiohttp's 5 minutes.
@@ -1012,6 +1015,12 @@ class PatchNotes(commands.Cog):
     def post_ready(post: Optional[dict]) -> bool:
         return bool(post and post.get("messages"))
 
+    @staticmethod
+    def post_waits_for_usage(post: Optional[dict]) -> bool:
+        """The writer ran out of usage and is tried again later, or is on that later try now."""
+        job = (post or {}).get("job") or {}
+        return bool(job.get("retry_at")) and job.get("status") in {"queued", "running"}
+
     def ping_mention(self) -> Optional[str]:
         return f"<@&{self.update_ping_role_id}>" if self.update_ping_role_id else None
 
@@ -1025,7 +1034,10 @@ class PatchNotes(commands.Cog):
         if self.post_ready(post):
             await self.post_post_review(week, post, ping=ping)
             return True
-        if now < friday_at(week, REVIEW_HOUR, self.zone) + _POST_WAIT:
+        opened = friday_at(week, REVIEW_HOUR, self.zone)
+        if now < opened + _POST_WAIT:
+            return False
+        if self.post_waits_for_usage(post) and now < opened + _RETRY_WAIT:
             return False
         logger.warning("No post for %s after an hour; posting the line review", week)
         await self.post_week_review(week, ping=ping)
@@ -1081,6 +1093,17 @@ class PatchNotes(commands.Cog):
         if status != 202 or not isinstance(data, dict) or not isinstance(data.get("job"), dict):
             raise RuntimeError(_api_detail(data, text))
         return await self._wait_for_post(week, str(data["job"].get("id") or ""))
+
+    async def restore_post(self, week: str) -> dict:
+        """Put back the version the last write replaced."""
+        status, text, data = await self.api_request("POST", f"/patchnotes/staff/weeks/{week}/post/restore")
+        if status != 200 or not isinstance(data, dict):
+            raise RuntimeError(_api_detail(data, text))
+        return data
+
+    async def is_posted(self, week: str) -> bool:
+        published = {str(item) for item in await self.config.published_weeks()}
+        return week in published or bool(dict(await self.config.week_post_messages()).get(week))
 
     async def _wait_for_post(self, week: str, job_id: str) -> dict:
         if not job_id:
@@ -2851,20 +2874,55 @@ class PatchNotes(commands.Cog):
         name="write-post",
         description="Write a week's update post again from the server changes, dropping earlier feedback.",
     )
-    @app_commands.describe(week="ISO week, such as 2026-W41. Defaults to the week in review.")
+    @app_commands.describe(
+        week="ISO week, such as 2026-W41. Defaults to the week in review.",
+        rewrite_posted="Also write a week that is already in #updates. The messages there do not change.",
+    )
     @app_commands.check(_has_staff)
     @app_commands.guild_only()
-    async def write_post_cmd(self, interaction: discord.Interaction, week: Optional[str] = None):
+    async def write_post_cmd(
+        self, interaction: discord.Interaction, week: Optional[str] = None, rewrite_posted: bool = False
+    ):
         await interaction.response.defer(ephemeral=True)
         try:
             week = await self._command_week(week)
+            if not rewrite_posted and await self.is_posted(week):
+                await interaction.followup.send(
+                    f"The post for {week_label(week)} is already in #updates. To write its saved text again anyway, "
+                    "run this with `rewrite_posted: True`.",
+                    ephemeral=True,
+                )
+                return
             post = await self.write_post(week, interaction.user.id)
         except Exception as exc:
             await interaction.followup.send(f"Could not write the post: {exc}"[:300], ephemeral=True)
             return
-        await interaction.followup.send(
+        lines = [
             f"Wrote {post_title(post)} with {len(post.get('messages') or [])} messages. "
             "Use `/patchnotes test-post` to read it. A review that is already posted is not replaced.",
+            *writer_lines(post),
+        ]
+        if post.get("has_previous"):
+            lines.append("`/patchnotes undo-write` puts the version before it back.")
+        await interaction.followup.send(
+            "\n".join(lines)[:2000], ephemeral=True, allowed_mentions=discord.AllowedMentions.none()
+        )
+
+    @patchnotes.command(name="undo-write", description="Put back the version of the post the last write replaced.")
+    @app_commands.describe(week="ISO week, such as 2026-W41. Defaults to the week in review.")
+    @app_commands.check(_has_staff)
+    @app_commands.guild_only()
+    async def undo_write_cmd(self, interaction: discord.Interaction, week: Optional[str] = None):
+        await interaction.response.defer(ephemeral=True)
+        try:
+            week = await self._command_week(week)
+            post = await self.restore_post(week)
+        except Exception as exc:
+            await interaction.followup.send(f"Could not restore the post: {exc}"[:300], ephemeral=True)
+            return
+        await interaction.followup.send(
+            f"Put back the earlier version of {post_title(post)}. Use `/patchnotes test-post` to read it, "
+            "or run this again to swap back.",
             ephemeral=True,
         )
 

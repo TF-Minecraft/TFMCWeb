@@ -118,6 +118,28 @@ class CommitSubjectsTest(unittest.TestCase):
         self.assertLess(len(long), 1830)
         self.assertTrue(long.endswith("(shortened)"))
 
+    @mock.patch.dict("os.environ", {"PATCHNOTES_HIDDEN_WORDS": "moonpath"})
+    def test_work_for_staff_is_left_out_but_staff_weapons_are_not(self) -> None:
+        for subject in ("Let staff list stowed items", "feat(gui): staff can skip it", "Add an admin menu",
+                        "Staff panel opens faster", "Add a body edit command for staff", "Mage staff-only test weapon",
+                        "Staff can give a Mage Staff into a chest", "Let staff edit weapon damage"):
+            self.assertEqual(weekly_run.commit_detail(f"{subject}\n\nBody."), "", subject)
+            commit = {"commits": [{"commit": {"message": subject}}]}
+            self.assertEqual(weekly_run.commit_subjects("A", "1", "2", lambda _path: commit), [], subject)
+        for subject in ("fix: Mage Staff now keeps its rune", "feat(magic): staff damage scales with Wisdom",
+                        "Staff of Embers recipe added", "Mages only staff weapons count"):
+            commit = {"commits": [{"commit": {"message": subject}}]}
+            self.assertEqual(len(weekly_run.commit_subjects("A", "1", "2", lambda _path: commit)), 1, subject)
+        kept = "A Mage Staff holds four runes.\n\nOnly the Mage staff is two-handed."
+        self.assertEqual(weekly_run.commit_detail(f"Mage paths\n\n{kept}"), " ".join(kept.split()))
+
+    def test_facts_of_a_huge_week_still_fit_the_api(self) -> None:
+        facts = {"files": [{"entries": [{"details": ["x" * 100] * 60}, {"details": ["y"]}]}]}
+        self.assertEqual(len(weekly_run._fit(facts)["files"][0]["entries"][0]["details"]), 60)
+        entries = weekly_run._fit(facts, 2000)["files"][0]["entries"]
+        self.assertEqual(len(entries[0]["details"]), 16)
+        self.assertEqual((entries[0]["details"][-1], entries[1]["details"]), ("and more changed values", ["y"]))
+
     @mock.patch.dict("os.environ", {}, clear=True)
     def test_no_details_without_the_hidden_words(self) -> None:
         self.assertEqual(weekly_run.commit_detail("Subject\n\nBody"), "")

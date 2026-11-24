@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import uuid
 from contextlib import contextmanager
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from unittest import mock
 from zoneinfo import ZoneInfo
 
@@ -459,6 +459,53 @@ def test_stale_jobs_expire_and_the_expiry_sticks_when_a_new_job_is_refused(notes
     # The refused create still commits the expiry it found.
     [row] = _sql("SELECT status, error FROM patchnote_jobs WHERE id = %s", (running["id"],))
     assert (row["status"], row["error"]) == ("failed", "The rewrite took too long.")
+
+
+def test_the_friday_post_may_run_longer_and_wait_for_another_try(notes):
+    job = db.create_job(WEEK, "compose", requester="weekly")
+    assert db.claim_job()["id"] == job["id"]
+    _sql("UPDATE patchnote_jobs SET claimed_at = now() - interval '50 minutes'")
+    assert db.get_job(job["id"])["status"] == "running"
+    later = datetime.now(timezone.utc) + timedelta(hours=1)
+    waiting = db.requeue_job(job["id"], later)
+    assert (waiting["status"], waiting["not_before"], waiting["claimed_at"]) == ("queued", later, None)
+    with pytest.raises(db.JobNotRunning):
+        db.requeue_job(job["id"], later)
+    _sql("UPDATE patchnote_jobs SET created_at = now() - interval '2 hours'")
+    assert db.claim_job() is None
+    assert db.get_job(job["id"])["status"] == "queued"
+    with pytest.raises(db.JobActive):
+        db.create_job(WEEK, "compose", requester="weekly")
+    _sql("UPDATE patchnote_jobs SET not_before = now() - interval '1 minute'")
+    assert db.claim_job()["id"] == job["id"]
+    with pytest.raises(db.JobActive):
+        db.create_job(WEEK, "compose", requester="42")
+    # Staff can take over a run that only waits.
+    db.requeue_job(job["id"], later)
+    assert db.create_job(WEEK, "compose", requester="42")["requester"] == "42"
+    assert db.get_job(job["id"])["error"] == "Staff started it by hand."
+
+
+def test_friday_is_local(monkeypatch):
+    monkeypatch.setenv("PATCHNOTES_TZ", "Europe/Berlin")
+    assert db.friday("2026-W41", 15, 15).astimezone(timezone.utc) == datetime(2026, 10, 9, 13, 15, tzinfo=timezone.utc)
+
+
+def test_a_replaced_post_can_be_swapped_back(notes):
+    assert db.restore_post(WEEK) is None
+    report = {"writer": "claude:a", "checks": 2, "unconfirmed": []}
+    first = db.save_post(WEEK, ["Ours"], "writer", report)
+    assert (first["report"], first["has_previous"]) == (report, False)
+    assert db.restore_post(WEEK) is None
+    db.approve_post(WEEK)
+    db.save_post(WEEK, ["Test"], "fallback")
+    # Saving the same text again does not lose the version before it.
+    assert db.save_post(WEEK, ["Test"], "fallback")["has_previous"]
+    back = db.restore_post(WEEK)
+    assert (back["messages"], back["source"], back["report"], back["status"]) == (["Ours"], "writer", report, "draft")
+    again = db.restore_post(WEEK)
+    assert (again["messages"], again["source"], again["report"]) == (["Test"], "fallback", None)
+    assert db.get_post(WEEK)["has_previous"]
 
 
 def test_jobs_remember_who_asked(notes):

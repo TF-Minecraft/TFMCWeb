@@ -620,6 +620,72 @@ class CancelPostTest(unittest.IsolatedAsyncioTestCase):
         self.assertIn(("WeekCancelConfirmView", "2026-W44"), attached)
         self.assertIn(("WeekUndoCancelView", WEEK), attached)
 
+    async def test_the_review_waits_for_a_writer_that_is_out_of_usage(self) -> None:
+        cog = _cog({"postponed": False, "deferred_to": None})
+        cog.review_channel_id = 5
+        lines = []
+
+        async def post_week_review(week, **_):
+            lines.append(week)
+
+        cog.post_week_review = post_week_review
+        waiting = {"messages": [], "job": {"status": "queued", "retry_at": "2026-11-06T12:10:00Z"}}
+        at_one, at_three, at_five = (
+            datetime(2026, 11, 6, hour, 30, tzinfo=timezone.utc) for hour in (12, 14, 16)
+        )
+        for post, now, due in (
+            (waiting, at_one, False), (waiting, at_three, False), (waiting, at_five, True),
+            ({"messages": [], "job": {"status": "running", "retry_at": None}}, at_one, True), (None, at_one, True),
+        ):
+            async def fetch_post(_week, found=post):
+                return found
+
+            cog.fetch_post = fetch_post
+            lines.clear()
+            self.assertEqual(await cog.post_due_review(WEEK, ping=False, now=now), due)
+            self.assertEqual(lines, [WEEK] if due else [])
+
+    async def test_a_posted_week_is_only_written_again_when_asked(self) -> None:
+        cog = _cog({"postponed": False, "deferred_to": None}, posts={WEEK: [7]})
+        written = []
+
+        async def write_post(week, requester):
+            written.append((week, requester))
+            return {"label": "5.7", "messages": ["a"], "has_previous": True,
+                    "report": {"writer": "codex:x", "checks": 1}}
+
+        cog.write_post = write_post
+        interaction = _Interaction()
+        interaction.response = SimpleNamespace(defer=mock.AsyncMock())
+        command = pn.PatchNotes.write_post_cmd.callback
+        await command(cog, interaction, WEEK)
+        self.assertEqual(written, [])
+        self.assertIn("already in #updates", interaction.said[-1])
+        await command(cog, interaction, WEEK, True)
+        self.assertEqual(written, [(WEEK, 42)])
+        self.assertIn("Written by Codex, checked once.", interaction.said[-1])
+        self.assertIn("undo-write", interaction.said[-1])
+        cog.config.week_post_messages = _Value({})
+        await command(cog, interaction, WEEK)
+        self.assertEqual(len(written), 2)
+
+    async def test_a_write_can_be_undone(self) -> None:
+        cog = _cog({"postponed": False, "deferred_to": None})
+        answers = [(200, "", {"label": "5.7", "messages": ["a"]}), (404, "", {"detail": "There is no earlier version"})]
+        calls = []
+
+        async def api_request(method, path, payload=None):
+            calls.append((method, path))
+            return answers[len(calls) - 1]
+
+        cog.api_request = api_request
+        interaction = _Interaction()
+        interaction.response = SimpleNamespace(defer=mock.AsyncMock())
+        for expected in ("Put back the earlier version of Update 5.7", "There is no earlier version"):
+            await pn.PatchNotes.undo_write_cmd.callback(cog, interaction, WEEK)
+            self.assertIn(expected, interaction.said[-1])
+        self.assertEqual(set(calls), {("POST", f"/patchnotes/staff/weeks/{WEEK}/post/restore")})
+
     async def test_buttons_have_unique_persistent_ids(self) -> None:
         cog = _cog({"postponed": False, "deferred_to": None})
         views = (

@@ -32,7 +32,8 @@ DISCORD_LIMIT = 2000
 # The bot puts the role ping in front of the first message.
 FIRST_LIMIT = 1900
 # The writer aims for TARGET_MESSAGES. A busy week may run longer, up to MAX_MESSAGES.
-TARGET_MESSAGES = 8
+TARGET_MESSAGES = 6
+TARGET_WORDS = 1400
 MAX_MESSAGES = 15
 _FACTS_BUDGET = 240_000
 _MENTION = re.compile(r"@(everyone|here)|<@[!&]?\d+>")
@@ -90,8 +91,14 @@ Rules:
 - When many values moved by the same share, say the share once and give the old and new numbers of the ones players
   know best. Put several changes to one class or item into one bullet.
 - Write numbers as `Old --> New`. Use only numbers that appear in the facts. Never invent a number or a reason.
+  Say what a number is: "cooldown 20 --> 17 s". When a whole list is cooldowns, one sentence above it can say so.
+- Give a number when it changed or when players need it to act. Other settings, such as a radius or a timer of
+  something new, are better in words.
+- Say who an effect reaches exactly as the facts do: you, your allies, or both. What several classes or items share
+  belongs to all of them, never to one.
   When you do not understand what a value means, describe the change in words without the number. A raw modifier
-  players never see, such as `-55% --> -50%` damage, is better as "hits harder".
+  players never see, such as `-55% --> -50%` damage or `0.01 --> 0.02` upkeep, is better as "hits harder" or "twice as
+  much". A share that a whole class gains or loses, such as 15% less magic damage, is fine as a number.
 - The config changes compare the start of the week with its end, so they are the only full picture: a value that moved
   several times shows as one step. Write that one step and mention each change once.
 - Commits, developer descriptions and staff notes are listed oldest first and can hold a value, name or plan that
@@ -109,15 +116,17 @@ Rules:
 - Never use an em dash or emojis.
 - Write only about changes general players notice and care about. Leave out single players, admin and
   staff commands, the world border, edge-case fixes and technical cleanup.
-- Never give drop chances, roll counts, resource costs of hidden systems or creature stats. Say "more",
+- Never give drop chances, roll counts, resource costs of hidden systems or creature stats, and never the caps and
+  exceptions that stop farming, such as an hourly limit or a creature that gives nothing. Say "more",
   "less", "stronger" or "weaker" instead. Never name new traits or creature tricks.
 - A passive or effect that only appears in class config may be internal. Describe what players feel, not its name,
   unless a plugin update line also mentions it.
 - Features players cannot use yet stay out. If the facts do not show that something is usable, leave it out.
 - Before answering, check every number, name and behaviour against the facts once more, and delete
   any line the facts do not clearly support. A shorter post is better than a wrong line.
-- Keep the whole post to at most {target} messages. On a busy week, fold small related changes into
-  one short line each and leave minor ones to the website instead of listing everything.
+- Keep the whole post to at most {target} messages and about {words} words, however busy the week is. Fold small related
+  changes into one short line each, use at most three bullets or sentences on anything few players touch, and leave
+  minor ones to the website instead of listing everything.
 - Split the post into Discord messages in order. Each message must stay under 1900 characters.
   Start a new message at a heading, never in the middle of a list.
 - Section headings are fixed. Leave a section out only when nothing belongs in it.
@@ -130,6 +139,9 @@ _GLOSSARY = """Reading the facts:
 - `damage-reduction`, `physical-damage`, `projectile_damage`, `critical_strike_chance` and `weapon_damage`
   are percentages. `health-regeneration` is health per second. `max-mana` and `mana-regeneration` work the same way.
 - A skill's `level` in a class is the class level that unlocks it.
+- `at level 1` is what players see on a skill at level 1. Those numbers are final. A skill's plain `base` is its value
+  at level 1 too, and `per-level` is added per skill level.
+- One line can list many names that all changed the same way.
 - `time_modifier(N)` adds N percent to production time, so lower is faster. `prestige(N)` and `upkeep(N)`
   are Dowsing node values.
 - `required-class` lists the classes that may use an item.
@@ -208,8 +220,10 @@ _FILE_RANKS = (
     ("ArmourShop/", 4),
     ("ItemsAdder/", 4),
 )
-_FILE_BUDGET = 20_000
-_ENTRY_DETAILS = 30
+_FILE_BUDGET = 30_000
+_ENTRY_DETAILS = 80
+_GROUP_FROM = 3
+_GROUP_NAMES = 15
 
 
 def _file_rank(path: str) -> int:
@@ -219,15 +233,33 @@ def _file_rank(path: str) -> int:
     return 2
 
 
+def _grouped(entries: list[Any]) -> list[tuple[list[str], str, list[str]]]:
+    """Entries as names, kind and details. Entries that changed the same way become one."""
+    groups: dict[tuple[str, tuple[str, ...]], list[str]] = {}
+    for entry in entries:
+        if isinstance(entry, dict):
+            details = tuple(str(detail) for detail in entry.get("details") or [])
+            groups.setdefault((str(entry.get("kind")), details), []).append(str(entry.get("name")))
+    found: list[tuple[list[str], str, list[str]]] = []
+    for (kind, details), names in groups.items():
+        if len(names) >= _GROUP_FROM and details:
+            found.append((names, kind, list(details)))
+        else:
+            found += [([name], kind, list(details)) for name in names]
+    return found
+
+
 def _render_file(item: dict[str, Any]) -> str:
     lines = [f"## {item.get('path')} ({item.get('kind')})"]
-    for entry in item.get("entries") or []:
-        if not isinstance(entry, dict):
-            continue
-        details = [str(detail) for detail in entry.get("details") or []]
+    for names, kind, details in _grouped(item.get("entries") or []):
         if len(details) > _ENTRY_DETAILS:
             details = details[:_ENTRY_DETAILS] + [f"and {len(details) - _ENTRY_DETAILS} more"]
-        head = f"- {entry.get('name')} ({entry.get('kind')})"
+        shown = ", ".join(names[:_GROUP_NAMES])
+        if len(names) > 1:
+            more = f" and {len(names) - _GROUP_NAMES} more" if len(names) > _GROUP_NAMES else ""
+            head = f"- {len(names)} of them ({kind}): {shown}{more}"
+        else:
+            head = f"- {shown} ({kind})"
         lines.append(head + (": " + "; ".join(details) if details else ""))
     text = "\n".join(lines)
     if len(text) > _FILE_BUDGET:
@@ -284,6 +316,7 @@ def compose_prompt(
         week_line=week_line(week),
         page_url=f"{page_url.rstrip('/')}/{week}",
         target=TARGET_MESSAGES,
+        words=TARGET_WORDS,
     )
     parts = [guide, _GLOSSARY, _ACT_SYSTEM]
     if examples:
@@ -339,8 +372,31 @@ def feedback_review_prompt(previous: list[str], feedback: str) -> str:
     ])
 
 
+def improve_prompt(prompt: str) -> str:
+    """The second pass: what is missing and how it reads. The worker puts the draft after it."""
+    return "\n\n".join([
+        prompt,
+        "The message above was the writing task, and a draft was written for it. Read the draft below as a player and "
+        "as the staff member who signs it, and return a better version in the same JSON form:\n"
+        "- Go through the staff notes, the plugin updates and the config changes one by one. Add every change players "
+        "would notice that the draft misses, such as a new thing they can do, how something they use now works, or a "
+        "new stat of a class. Fold small ones into a line that is already there.\n"
+        "- Say why where the notes, a developer description or an earlier post give the reason and the draft leaves "
+        "it out. Most big changes should have one short reason.\n"
+        "- Make every line clear to someone who has not followed the week. A number says what it is, such as a "
+        "cooldown. Cut settings players never think about and lines that only a few would care about.\n"
+        "- Rewrite a sentence that only repeats the bullets below it, gives a reason nothing supports, or sounds like "
+        "a generated list. Vary bullets that all follow one pattern. Match the voice of the earlier posts.\n"
+        f"- Count the words. When it is over about {TARGET_WORDS}, shorten: cut what few players would miss, such as "
+        "small extras of a new feature, before anything that changes how people play. "
+        f"At most {TARGET_MESSAGES} messages.\n"
+        "- Keep what is already good, and use only what the facts and notes support.",
+        "Draft:",
+    ])
+
+
 def review_prompt(prompt: str) -> str:
-    """Instructions for a second pass. The worker puts the draft after them."""
+    """The last pass: is every line right. The worker puts the draft after it."""
     return "\n\n".join([
         prompt,
         "The message above was the writing task, and a draft was written for it. Check the draft below now and "
@@ -351,11 +407,8 @@ def review_prompt(prompt: str) -> str:
         "- Compare every `Old --> New` with the earlier posts. The old number is what players were last told or had at "
         "the start of the week, and the new number is the one at the end of the week. Remove anything already "
         "announced and any step in between.\n"
+        "- Check who each effect reaches, and that a stat several classes or items share is not given to one of them.\n"
         "- Apply every rule again: nothing hidden, nothing staff-only, no chances, roll counts or creature stats.\n"
-        "- Go through the plugin updates and add any clear change players would notice that the draft missed, "
-        "such as a new thing they can do or how something they use now works.\n"
-        "- Rewrite a sentence that only repeats the bullets below it, gives a reason nothing supports, or sounds like "
-        "a generated list.\n"
         "- Keep the wording of every line that is already right. Keep the order and the message limits.",
         "Draft:",
     ])
@@ -409,12 +462,27 @@ def fit_messages(messages: list[str]) -> list[str]:
     return fitted
 
 
-def messages_from_response(payload: dict[str, Any]) -> list[str]:
+def pack_messages(messages: list[str]) -> list[str]:
+    """Join short neighbours, so the post takes as few Discord messages as its text needs."""
+    packed: list[str] = []
+    for message in messages:
+        limit = FIRST_LIMIT if len(packed) < 2 else DISCORD_LIMIT - 50
+        if packed and len(packed[-1]) + 2 + len(message) <= limit:
+            packed[-1] += "\n\n" + message
+        else:
+            packed.append(message)
+    return packed
+
+
+def messages_from_response(payload: dict[str, Any], *, pack: bool = False) -> list[str]:
+    """The post's messages. `pack` joins short ones, which would undo a split staff asked for."""
     raw = payload.get("messages")
     if not isinstance(raw, list):
         raise FeedbackError("The writer did not return any messages.")
     cleaned = [clean_message(item) for item in raw if isinstance(item, str)]
     messages = fit_messages([item for item in cleaned if item])
+    if pack:
+        messages = pack_messages(messages)
     if not messages:
         raise FeedbackError("The writer returned an empty post.")
     if len(messages) > MAX_MESSAGES:
