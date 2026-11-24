@@ -34,6 +34,9 @@ review rounds, hidden features or staff work.
   (root, mode 600) with `CLAUDE_CODE_OAUTH_TOKEN` from `claude setup-token`, which lasts a year, or
   `PATCHNOTES_ANTHROPIC_API_KEY` from the Console. Remove the file and restart the worker to stop using it. It runs
   with no tools and an empty home.
+- **Who Claude answers:** it runs on one person's own login, so it only writes the Friday post and answers
+  `PATCHNOTES_CLAUDE_OWNER`, that person's Discord id, in the same file. The bot sends the id of whoever pressed Deny
+  or ran a command. Everyone else's rewrites, and those from the website, go to Codex.
 - **Codex:** root's Codex login.
 
 `PATCHNOTES_HIDDEN_WORDS` in `/etc/tfmc/patchnotes.env` is a comma-separated list of names players must not learn, kept
@@ -74,7 +77,7 @@ From a TFMCWeb checkout, as root:
 ```bash
 install -m 600 /dev/null /etc/tfmc/patchnotes.env   # then set STAFF_KEY=..., API_BASE_URL=... and PATCHNOTES_HIDDEN_WORDS=...
 useradd --system --no-create-home --home-dir /nonexistent --shell /usr/sbin/nologin tfmc-patchnotes
-install -m 600 /dev/null /etc/tfmc/patchnotes-claude.env   # then set CLAUDE_CODE_OAUTH_TOKEN=...
+install -m 600 /dev/null /etc/tfmc/patchnotes-claude.env   # then set CLAUDE_CODE_OAUTH_TOKEN=... and PATCHNOTES_CLAUDE_OWNER=...
 npm install -g @anthropic-ai/claude-code@<version>
 install -m 755 scripts/patchnotes-update.py /usr/local/sbin/tfmc-patchnotes-update
 cp scripts/tfmc-patchnotes-*.service scripts/tfmc-patchnotes-*.timer /etc/systemd/system/

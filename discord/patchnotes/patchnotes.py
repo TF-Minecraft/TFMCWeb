@@ -1060,10 +1060,11 @@ class PatchNotes(commands.Cog):
         await self.config.post_review_messages.set(reviews)
         logger.info("Posted the %s post review with %s messages", week, len(sent) - 2)
 
-    async def submit_post_feedback(self, week: str, feedback: str) -> dict:
+    async def submit_post_feedback(self, week: str, feedback: str, requester_id: int) -> dict:
         """Rewrite the whole post from feedback and return the new post."""
         status, text, data = await self.api_request(
-            "POST", f"/patchnotes/staff/weeks/{week}/post/feedback", {"feedback": feedback}
+            "POST", f"/patchnotes/staff/weeks/{week}/post/feedback",
+            {"feedback": feedback, "requester_id": str(requester_id)},
         )
         if status == 409:
             raise RuntimeError(_api_detail(data, text))
@@ -1071,9 +1072,11 @@ class PatchNotes(commands.Cog):
             raise RuntimeError(_api_detail(data, text))
         return await self._wait_for_post(week, str(data["job"].get("id") or ""))
 
-    async def write_post(self, week: str) -> dict:
+    async def write_post(self, week: str, requester_id: int) -> dict:
         """Write the post again from the week's server changes."""
-        status, text, data = await self.api_request("POST", f"/patchnotes/staff/weeks/{week}/post/compose")
+        status, text, data = await self.api_request(
+            "POST", f"/patchnotes/staff/weeks/{week}/post/compose", {"requester_id": str(requester_id)}
+        )
         if status != 202 or not isinstance(data, dict) or not isinstance(data.get("job"), dict):
             raise RuntimeError(_api_detail(data, text))
         return await self._wait_for_post(week, str(data["job"].get("id") or ""))
@@ -1587,7 +1590,7 @@ class PatchNotes(commands.Cog):
     ) -> None:
         """Rewrite the whole test note from feedback. The week is not postponed."""
         try:
-            result = await self.submit_feedback(week, feedback)
+            result = await self.submit_feedback(week, feedback, interaction.user.id)
         except Exception as exc:
             await interaction.followup.send(
                 f"Could not rewrite the note: {exc}",
@@ -1629,12 +1632,12 @@ class PatchNotes(commands.Cog):
                 return None
             await asyncio.sleep(min(3, remaining))
 
-    async def submit_feedback(self, week: str, feedback: str) -> dict:
+    async def submit_feedback(self, week: str, feedback: str, requester_id: int) -> dict:
         """Queue feedback and return its completed job response."""
         status, text, data = await self.api_request(
             "POST",
             f"/patchnotes/staff/weeks/{week}/feedback",
-            {"feedback": feedback},
+            {"feedback": feedback, "requester_id": str(requester_id)},
         )
         if status == 409:
             raise RuntimeError("A rewrite is already running for this week.")
@@ -1654,11 +1657,12 @@ class PatchNotes(commands.Cog):
         result["changed"] = job.get("changed")
         return result
 
-    async def sort_week(self, week: str) -> str:
-        """Queue a sort, wait for its result, and return its outcome."""
+    async def sort_week(self, week: str, requester_id: Optional[int] = None) -> str:
+        """Queue a sort, wait for its result, and return its outcome. Without a requester it is the Friday run."""
+        asked = {"automatic": True} if requester_id is None else {"requester_id": str(requester_id)}
         try:
             status, text, data = await self.api_request(
-                "POST", f"/patchnotes/staff/weeks/{week}/sort"
+                "POST", f"/patchnotes/staff/weeks/{week}/sort", asked
             )
         except Exception:
             logger.exception("Could not start sort for %s; posting the review anyway", week)
@@ -1799,7 +1803,7 @@ class PatchNotes(commands.Cog):
             await self.post_post_denial(interaction, week, feedback)
             return
         try:
-            data = await self.submit_feedback(week, feedback)
+            data = await self.submit_feedback(week, feedback, interaction.user.id)
         except Exception as exc:
             await interaction.followup.send(
                 f"Could not rewrite the note: {exc}",
@@ -1844,7 +1848,7 @@ class PatchNotes(commands.Cog):
     async def post_post_denial(self, interaction: discord.Interaction, week: str, feedback: str) -> None:
         """Rewrite the weekly post from feedback and show the new version for review."""
         try:
-            post = await self.submit_post_feedback(week, feedback)
+            post = await self.submit_post_feedback(week, feedback, interaction.user.id)
         except Exception as exc:
             await interaction.followup.send(f"Could not rewrite the post: {exc}", ephemeral=True)
             return
@@ -2755,7 +2759,7 @@ class PatchNotes(commands.Cog):
         await interaction.response.defer(ephemeral=True)
         try:
             week = await self.unreleased_week()
-            outcome = await self.sort_week(week)
+            outcome = await self.sort_week(week, interaction.user.id)
             await self.retire_review_message(week)
             await self.post_week_review(week, ping=False)
         except Exception as exc:
@@ -2853,7 +2857,7 @@ class PatchNotes(commands.Cog):
         await interaction.response.defer(ephemeral=True)
         try:
             week = await self._command_week(week)
-            post = await self.write_post(week)
+            post = await self.write_post(week, interaction.user.id)
         except Exception as exc:
             await interaction.followup.send(f"Could not write the post: {exc}"[:300], ephemeral=True)
             return

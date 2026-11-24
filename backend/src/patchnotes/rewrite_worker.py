@@ -79,12 +79,19 @@ class WriterError(RuntimeError):
         self.limit = limit
 
 
-def writers() -> list[tuple[str, str]]:
+def claude_allowed(requester: str | None) -> bool:
+    """Claude runs on one person's own login, so it only answers the Friday run and that person."""
+    owner = os.environ.get("PATCHNOTES_CLAUDE_OWNER", "").strip()
+    return requester == "weekly" or bool(owner and requester == owner)
+
+
+def writers(requester: str | None = "weekly") -> list[tuple[str, str]]:
     found = []
     for item in os.environ.get("PATCHNOTES_WRITERS", _DEFAULT_WRITERS).split(","):
         cli, _, model = item.strip().partition(":")
         if cli in _RUNNERS and model:
-            found.append((cli, model))
+            if cli != "claude" or claude_allowed(requester):
+                found.append((cli, model))
         elif item.strip():
             logger.warning("Ignoring unknown writer %r", item.strip())
     return found
@@ -252,11 +259,17 @@ def _checked(
     return draft
 
 
-def run_job(prompt: str, schema: dict, review: str | None = None, week: str | None = None) -> dict:
+def run_job(
+    prompt: str,
+    schema: dict,
+    review: str | None = None,
+    week: str | None = None,
+    requester: str | None = "weekly",
+) -> dict:
     """Try each writer in its own empty directory. Returns an output or a short failure."""
     limited = False
     deadline = time.monotonic() + _TOTAL_SECONDS
-    order = writers()
+    order = writers(requester)
     for index, (cli, model) in enumerate(order):
         remaining = deadline - time.monotonic()
         last = index == len(order) - 1
@@ -286,7 +299,7 @@ def work_once(api_base: str, staff_key: str) -> bool:
     try:
         # Staff feedback says what is true, so a rewrite after it needs no lookups.
         week = None if job.get("feedback") else job.get("week")
-        result = run_job(claimed["prompt"], claimed["schema"], claimed.get("review"), week)
+        result = run_job(claimed["prompt"], claimed["schema"], claimed.get("review"), week, claimed.get("requester"))
     except Exception:
         logger.exception("Could not process rewrite job")
         result = _failure("")

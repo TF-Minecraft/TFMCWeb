@@ -401,6 +401,7 @@ def migrate() -> None:
                 CHECK (kind IN ('feedback', 'sort', 'compose'))
             """
         )
+        cur.execute("ALTER TABLE patchnote_jobs ADD COLUMN IF NOT EXISTS requester TEXT")
         cur.execute("DROP INDEX IF EXISTS patchnote_jobs_active_week_idx")
         cur.execute(
             """
@@ -1145,7 +1146,7 @@ class BulletNotOpen(RuntimeError):
 
 
 _JOB_COLUMNS = (
-    "id, week, kind, feedback, status, error, changed, line_ids, "
+    "id, week, kind, feedback, requester, status, error, changed, line_ids, "
     "created_at, claimed_at, finished_at"
 )
 
@@ -1171,7 +1172,10 @@ LINE_JOB_KINDS = ("feedback", "sort")
 POST_JOB_KINDS = ("compose",)
 
 
-def create_job(week: str, kind: str, feedback: str | None = None) -> dict[str, Any]:
+def create_job(
+    week: str, kind: str, feedback: str | None = None, *, requester: str | None = None
+) -> dict[str, Any]:
+    """Queue a job. `requester` is `weekly` for the Friday run, or the Discord id of who asked."""
     week_key = parse_week(week)
     if kind not in {*LINE_JOB_KINDS, *POST_JOB_KINDS}:
         raise ValueError("Invalid job kind")
@@ -1179,12 +1183,12 @@ def create_job(week: str, kind: str, feedback: str | None = None) -> dict[str, A
         _expire_jobs(cur)
         cur.execute(
             f"""
-            INSERT INTO patchnote_jobs (week, kind, feedback)
-            VALUES (%s, %s, %s)
+            INSERT INTO patchnote_jobs (week, kind, feedback, requester)
+            VALUES (%s, %s, %s, %s)
             ON CONFLICT (week, (kind = 'compose')) WHERE status IN ('queued', 'running') DO NOTHING
             RETURNING {_JOB_COLUMNS}
             """,
-            (week_key, kind, feedback),
+            (week_key, kind, feedback, requester),
         )
         row = cur.fetchone()
     if row is None:

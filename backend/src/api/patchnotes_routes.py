@@ -150,6 +150,9 @@ def _client_detail(exc: Exception) -> str:
     return "Patch notes request failed. Check server logs."
 
 
+WEEKLY_REQUESTER = "weekly"
+
+
 def _iso(value: Any) -> str | None:
     if value is None:
         return None
@@ -225,8 +228,20 @@ class CreateBulletBody(BaseModel):
         return text
 
 
+class RequesterBody(BaseModel):
+    """Who asked for a job: the Discord id of the staff member, or the bot's own Friday run."""
+
+    requester_id: str | None = Field(default=None, pattern=r"^\d{1,20}$")
+    automatic: bool = False
+
+    @property
+    def requester(self) -> str | None:
+        return self.requester_id or (WEEKLY_REQUESTER if self.automatic else None)
+
+
 class FeedbackBody(BaseModel):
     feedback: str = Field(..., min_length=1, max_length=1000)
+    requester_id: str | None = Field(default=None, pattern=r"^\d{1,20}$")
 
     @field_validator("feedback")
     @classmethod
@@ -837,7 +852,7 @@ def _job_payload(row: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def _queue_job(week: str, kind: str, feedback: str | None = None):
+def _queue_job(week: str, kind: str, feedback: str | None = None, requester: str | None = None):
     week_key = _week_or_400(week)
     try:
         migrate()
@@ -846,7 +861,7 @@ def _queue_job(week: str, kind: str, feedback: str | None = None):
             raise JobActive(week_key)
         if not list_open_bullets(week_key):
             raise HTTPException(status_code=422, detail="Nothing to rewrite for this week.")
-        row = create_job(week_key, kind, feedback)
+        row = create_job(week_key, kind, feedback, requester=requester)
     except JobActive as e:
         raise HTTPException(status_code=409, detail="A rewrite is already running for this week.") from e
     except (PatchnotesDBError, PatchnotesConfigError, database.Error) as e:
@@ -857,12 +872,12 @@ def _queue_job(week: str, kind: str, feedback: str | None = None):
 
 @patchnotes_router.post("/staff/weeks/{week}/feedback", status_code=202, dependencies=[Depends(_staff_guard)])
 def staff_week_feedback(week: str, body: FeedbackBody):
-    return _queue_job(week, "feedback", body.feedback)
+    return _queue_job(week, "feedback", body.feedback, body.requester_id)
 
 
 @patchnotes_router.post("/staff/weeks/{week}/sort", status_code=202, dependencies=[Depends(_staff_guard)])
-def staff_week_sort(week: str):
-    return _queue_job(week, "sort")
+def staff_week_sort(week: str, body: RequesterBody | None = None):
+    return _queue_job(week, "sort", requester=body.requester if body else None)
 
 
 @patchnotes_router.get("/staff/weeks", dependencies=[Depends(_staff_guard)])
@@ -931,14 +946,19 @@ def staff_claim_job():
             return {"job": None}
         if job["kind"] == "compose":
             prompt, review = _post_prompts(job)
-            return {"job": _job_payload(job), "prompt": prompt, "schema": POST_SCHEMA, "review": review}
+            return {
+                "job": _job_payload(job), "prompt": prompt, "schema": POST_SCHEMA, "review": review,
+                "requester": job.get("requester"),
+            }
         lines = _job_lines(job)
         if job["kind"] == "feedback":
             prompt = feedback_prompt(lines, job.get("feedback") or "")
             schema = FEEDBACK_SCHEMA
         else:
             prompt, schema = sort_prompt(lines), SORT_SCHEMA
-        return {"job": _job_payload(job), "prompt": prompt, "schema": schema}
+        return {
+            "job": _job_payload(job), "prompt": prompt, "schema": schema, "requester": job.get("requester"),
+        }
     except (PatchnotesDBError, PatchnotesConfigError, database.Error) as e:
         logger.exception("staff_claim_job failed")
         raise HTTPException(status_code=502, detail=_client_detail(e)) from e
@@ -1134,9 +1154,9 @@ def _post_payload(week: str, post: dict[str, Any] | None, job: dict[str, Any] | 
     }
 
 
-def _start_post_job(week: str, feedback: str | None) -> dict[str, Any]:
+def _start_post_job(week: str, feedback: str | None, requester: str | None) -> dict[str, Any]:
     try:
-        return create_job(week, "compose", feedback)
+        return create_job(week, "compose", feedback, requester=requester)
     except JobActive as e:
         raise HTTPException(status_code=409, detail="The post is already being written.") from e
 
@@ -1159,7 +1179,7 @@ def staff_week_facts(week: str, body: FactsBody):
         migrate()
         save_facts(week_key, body.facts)
         try:
-            job = create_job(week_key, "compose")
+            job = create_job(week_key, "compose", requester=WEEKLY_REQUESTER)
         except JobActive:
             job = None
     except (PatchnotesDBError, PatchnotesConfigError, database.Error) as e:
@@ -1211,7 +1231,7 @@ def staff_week_post_feedback(week: str, body: FeedbackBody):
         migrate()
         if get_post(week_key) is None:
             raise HTTPException(status_code=409, detail="This week has no post to rewrite yet.")
-        job = _start_post_job(week_key, body.feedback)
+        job = _start_post_job(week_key, body.feedback, body.requester_id)
     except (PatchnotesDBError, PatchnotesConfigError, database.Error) as e:
         logger.exception("staff_week_post_feedback failed")
         raise HTTPException(status_code=502, detail=_client_detail(e)) from e
@@ -1221,14 +1241,14 @@ def staff_week_post_feedback(week: str, body: FeedbackBody):
 @patchnotes_router.post(
     "/staff/weeks/{week}/post/compose", status_code=202, dependencies=[Depends(_staff_guard)]
 )
-def staff_week_post_compose(week: str):
+def staff_week_post_compose(week: str, body: RequesterBody | None = None):
     """Write the post again from the facts, without the earlier feedback."""
     week_key = _week_or_400(week)
     try:
         migrate()
         if get_facts(week_key) is None:
             raise HTTPException(status_code=404, detail="No weekly comparison for this week yet.")
-        job = _start_post_job(week_key, None)
+        job = _start_post_job(week_key, None, body.requester_id if body else None)
     except (PatchnotesDBError, PatchnotesConfigError, database.Error) as e:
         logger.exception("staff_week_post_compose failed")
         raise HTTPException(status_code=502, detail=_client_detail(e)) from e

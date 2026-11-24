@@ -126,7 +126,7 @@ class PostRoutesTest(unittest.TestCase):
             )
         self.assertEqual(response.status_code, 200)
         save.assert_called_once_with("2026-W41", _FACTS)
-        create.assert_called_once_with("2026-W41", "compose")
+        create.assert_called_once_with("2026-W41", "compose", requester="weekly")
         self.assertEqual(response.json()["job"]["kind"], "compose")
 
     def test_facts_while_the_writer_runs_only_replace_the_facts(self) -> None:
@@ -188,7 +188,32 @@ class PostRoutesTest(unittest.TestCase):
         ) as create:
             response = self.client.post(url, json={"feedback": "Shorter"}, headers=_HEADERS)
         self.assertEqual(response.status_code, 202)
-        create.assert_called_once_with("2026-W41", "compose", "Shorter")
+        create.assert_called_once_with("2026-W41", "compose", "Shorter", requester=None)
+
+    def test_jobs_carry_who_asked(self) -> None:
+        base = "/patchnotes/staff/weeks/2026-W41/post"
+        with mock.patch(f"{_ROUTES}.get_post", return_value=_post()), mock.patch(
+            f"{_ROUTES}.get_facts", return_value={"facts": _FACTS}
+        ), mock.patch(f"{_ROUTES}.create_job", return_value=_job()) as create:
+            self.client.post(f"{base}/feedback", json={"feedback": "Shorter", "requester_id": "42"}, headers=_HEADERS)
+            create.assert_called_with("2026-W41", "compose", "Shorter", requester="42")
+            self.client.post(f"{base}/compose", json={"requester_id": "42"}, headers=_HEADERS)
+            create.assert_called_with("2026-W41", "compose", None, requester="42")
+            # Asking for a rewrite by hand never counts as the Friday run.
+            self.client.post(f"{base}/compose", json={"automatic": True}, headers=_HEADERS)
+            create.assert_called_with("2026-W41", "compose", None, requester=None)
+            self.client.post(f"{base}/compose", headers=_HEADERS)
+            create.assert_called_with("2026-W41", "compose", None, requester=None)
+            for bad in ("weekly", "", "4 2"):
+                response = self.client.post(
+                    f"{base}/feedback", json={"feedback": "x", "requester_id": bad}, headers=_HEADERS
+                )
+                self.assertEqual(response.status_code, 422)
+        with mock.patch(f"{_ROUTES}.claim_job", return_value=_job(requester="42")), mock.patch(
+            f"{_ROUTES}.get_facts", return_value={"facts": _FACTS}
+        ):
+            claimed = self.client.post("/patchnotes/staff/jobs/claim", headers=_HEADERS).json()
+        self.assertEqual(claimed["requester"], "42")
 
     def test_approve_and_act(self) -> None:
         with mock.patch(f"{_ROUTES}.approve_post", return_value=True):

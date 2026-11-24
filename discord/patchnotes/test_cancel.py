@@ -80,6 +80,7 @@ class _Interaction:
     def __init__(self):
         self.said: list[str] = []
         self.message = _Message(1)
+        self.user = SimpleNamespace(id=42)
 
         async def send(text, **_):
             self.said.append(text)
@@ -340,7 +341,8 @@ class CancelPostTest(unittest.IsolatedAsyncioTestCase):
         cog = _cog({"postponed": False, "deferred_to": None}, posts={WEEK: [11]})
         cog.config.cancelled_weeks.value = [WEEK]
 
-        async def rewritten(_week, _feedback):
+        async def rewritten(_week, _feedback, requester_id):
+            self.assertEqual(requester_id, 42)
             return {"messages": ["# Update 5.7 (rewritten)"], "source": "writer"}
 
         async def nothing(*_args, **_kwargs):

@@ -453,12 +453,18 @@ def test_stale_jobs_expire_and_the_expiry_sticks_when_a_new_job_is_refused(notes
     db.create_job(WEEK, "feedback", "y")
     running = db.claim_job()
     db.create_job(WEEK, "compose")
-    _sql("UPDATE patchnote_jobs SET claimed_at = now() - interval '11 minutes' WHERE id = %s", (running["id"],))
+    _sql("UPDATE patchnote_jobs SET claimed_at = now() - interval '21 minutes' WHERE id = %s", (running["id"],))
     with pytest.raises(db.JobActive):
         db.create_job(WEEK, "compose")
     # The refused create still commits the expiry it found.
     [row] = _sql("SELECT status, error FROM patchnote_jobs WHERE id = %s", (running["id"],))
     assert (row["status"], row["error"]) == ("failed", "The rewrite took too long.")
+
+
+def test_jobs_remember_who_asked(notes):
+    assert db.create_job(WEEK, "sort")["requester"] is None
+    db.create_job(WEEK, "compose", requester="weekly")
+    assert {db.claim_job()["requester"], db.claim_job()["requester"]} == {None, "weekly"}
 
 
 def test_latest_job_tracks_line_and_post_jobs_apart(notes):

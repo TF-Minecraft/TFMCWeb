@@ -116,7 +116,26 @@ class WritersTest(unittest.TestCase):
                 {"job": {"id": "j", "week": "2026-W41", "feedback": feedback}, "prompt": "p", "schema": {}}, {},
             ]
             worker.work_once("http://api", "key")
-            self.assertEqual(run_job.call_args.args[-1], week)
+            self.assertEqual(run_job.call_args.args[-2:], (week, None))
+
+    def test_claude_only_answers_the_friday_run_and_its_owner(self) -> None:
+        env = {**_CLAUDE, "PATCHNOTES_CLAUDE_OWNER": "42"}
+        for requester, allowed in (("weekly", True), ("42", True), ("7", False), ("", False), (None, False)):
+            with self.subTest(requester), mock.patch.dict("os.environ", env, clear=True):
+                self.assertEqual(worker.claude_allowed(requester), allowed)
+                expected = ["claude", "claude", "codex"] if allowed else ["codex"]
+                self.assertEqual([cli for cli, _ in worker.writers(requester)], expected)
+        with mock.patch.dict("os.environ", _CLAUDE, clear=True):
+            self.assertTrue(worker.claude_allowed("weekly"))
+            self.assertFalse(worker.claude_allowed(""))
+            self.assertFalse(worker.claude_allowed("42"))
+
+    @mock.patch("patchnotes.rewrite_worker._request")
+    @mock.patch("patchnotes.rewrite_worker.run_job", return_value={"output": "{}"})
+    def test_the_requester_reaches_the_writers(self, run_job, request) -> None:
+        request.side_effect = [{"job": {"id": "j"}, "prompt": "p", "schema": {}, "requester": "42"}, {}]
+        worker.work_once("http://api", "key")
+        self.assertEqual(run_job.call_args.args[-1], "42")
 
     def test_a_failed_check_keeps_the_draft(self) -> None:
         draft = _claude_reply(structured_output={"lines": ["draft"]})

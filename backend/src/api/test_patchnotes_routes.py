@@ -683,7 +683,12 @@ class ReviewRoutesTest(unittest.TestCase):
             res = self.client.post(f"/patchnotes/staff/weeks/2026-W39/{kind}", headers=_HEADERS, **args)
             self.assertEqual(res.status_code, 202)
             self.assertEqual(res.json()["job"]["status"], "queued")
-            create.assert_called_with("2026-W39", kind, "Shorten it." if kind == "feedback" else None)
+            create.assert_called_with(
+                "2026-W39", kind, "Shorten it." if kind == "feedback" else None, requester=None
+            )
+        for body, requester in (({"automatic": True}, "weekly"), ({"requester_id": "42", "automatic": True}, "42")):
+            self.client.post("/patchnotes/staff/weeks/2026-W39/sort", headers=_HEADERS, json=body)
+            create.assert_called_with("2026-W39", "sort", None, requester=requester)
 
     @mock.patch("src.api.patchnotes_routes.latest_job")
     @mock.patch("src.api.patchnotes_routes.create_job")
