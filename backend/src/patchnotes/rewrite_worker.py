@@ -351,7 +351,8 @@ def run_job(
     out of usage asks for another try later instead of handing the post to the next CLI.
     """
     limited = claude_limited = False
-    weekly = requester == "weekly" and bool(review)  # Line jobs of the Friday run have no second look.
+    # Line jobs have no `improve`, and neither has an older API, which ends every job after 20 minutes.
+    weekly = requester == "weekly" and bool(improve)
     seconds = _WEEKLY_WRITER_SECONDS if weekly else _WRITER_SECONDS
     deadline = time.monotonic() + (_WEEKLY_TOTAL_SECONDS if weekly else _TOTAL_SECONDS)
     order = writers(requester)

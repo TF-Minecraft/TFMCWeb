@@ -122,7 +122,7 @@ class CompareTest(unittest.TestCase):
 display: {name: Templar}
 skills:
   A: {cooldown: {base: 21.0, per-level: -1, max: 20.0}, heal: {base: 3, per-level: 1}}
-  B: {cooldown: {base: 12, max: 10}}
+  B: {cooldown: {base: 12, per-level: -1, max: 10}, range: {base: 12, max: 10}}
   C: {duration: {base: 1, min: 2}}
 """
         new = old.replace("21.0", "18.0").replace("max: 20.0", "max: 17.0").replace("base: 3,", "base: 4,")

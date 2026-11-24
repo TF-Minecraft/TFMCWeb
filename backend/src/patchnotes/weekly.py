@@ -263,6 +263,7 @@ _BOOKKEEPING = frozenset({"revision-id"})
 _CLASS_MENU = frozenset({
     "skill-slots", "exp-curve", "exp-table", "main-exp-sources", "cast-particle", "options", "key-combos",
 })
+_TOP_LEVEL = 30  # Past the last act's class cap.
 _VALUE_KEYS = frozenset({"base", "per-level", "min", "max"})
 
 
@@ -276,7 +277,11 @@ def _level_one(node: Any) -> float | None:
         return None
     if any(isinstance(value, bool) or not isinstance(value, (int, float)) for value in node.values()):
         return None
-    value = node["base"]
+    return _at_level(node, 1)
+
+
+def _at_level(node: dict, level: int) -> float:
+    value = node["base"] + node.get("per-level", 0) * (level - 1)
     if "max" in node:
         value = min(value, node["max"])
     if "min" in node:
@@ -289,11 +294,13 @@ def _limited(node: Any) -> bool:
     return _level_one(node) is not None and bool({"min", "max"} & set(node))
 
 
-def _value_change(path: str, before: dict, after: dict) -> str:
-    old, new = _level_one(before), _level_one(after)
-    if old == new:
-        return f"{path}: still {new:g} at level 1, changed at higher levels"
-    return f"{path} at level 1: {old:g} --> {new:g}"
+def _value_change(path: str, before: dict, after: dict) -> list[str]:
+    old, new = _at_level(before, 1), _at_level(after, 1)
+    if old != new:
+        return [f"{path} at level 1: {old:g} --> {new:g}"]
+    if any(_at_level(before, level) != _at_level(after, level) for level in range(2, _TOP_LEVEL + 1)):
+        return [f"{path}: still {new:g} at level 1, changed at higher levels"]
+    return []
 
 
 def _brief(node: dict, levels: bool = False) -> str:
@@ -337,7 +344,7 @@ def _leaf_changes(
                 elif a is None and isinstance(b, dict):
                     out.append(f"{child}: removed")
                 elif levels and _level_one(b) is not None and _level_one(a) is not None and (_limited(b) or _limited(a)):
-                    out.append(_value_change(child, b, a))
+                    out.extend(_value_change(child, b, a))
                 else:
                     walk(b, a, child)
             return

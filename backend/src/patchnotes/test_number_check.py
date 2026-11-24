@@ -37,6 +37,13 @@ class NumberCheckTest(unittest.TestCase):
             ("- Challenge 21 --> 18 s", "21 --> 18"), ("- Bash 9 --> 7 s, Challenge 20 --> 17 s", "9 --> 7"),
         ])
 
+    def test_a_change_an_earlier_post_started_goes_on_from_there(self) -> None:
+        prompt = 'Rules\n\n["- Bash 18 --> 15 s\\\\n- Dash 9 --> 7 s"]\n\nFacts:\n\n- cooldown: 18 --> 11; x: 5 --> 4'
+        self.assertEqual(unconfirmed(["- Bash 15 --> 11 s"], prompt), [])
+        # Only the same change counts, and one that is only in an earlier post does not.
+        self.assertEqual([found for _, found in unconfirmed(["- 15 --> 4\n- 7 --> 11\n- 9 --> 7"], prompt)],
+                         ["15 --> 4", "7 --> 11", "9 --> 7"])
+
     def test_pairs_need_a_number_on_both_sides(self) -> None:
         self.assertEqual(pairs("none --> 5; 3 --> removed; 0.15 --> 0.2 per second"), {(0.15, 0.2)})
 

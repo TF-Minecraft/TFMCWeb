@@ -50,11 +50,10 @@ _HIDDEN_WORK = re.compile(
 )
 # Work for the staff team. A staff is also a weapon, so only the first words always mean the team.
 _STAFF_WORK = re.compile(
-    r"\badmins?\b|\bstaff[ -](?:only|members?|team|commands?|ranks?|permissions?|menus?|panel)\b", re.IGNORECASE
+    r"\badmins?\b|\bstaff[ -](?:only|members?|team|chat|commands?|ranks?|permissions?|menus?|panel)\b", re.IGNORECASE
 )
 _STAFF_MENTION = re.compile(
-    r"^(?:\w+(?:\([^)]*\))?: )?staff\b|\b(?:lets?|allows?|only|by|for) staff\b|\bstaff (?:can|may|tools?|side|now|lists?)\b",
-    re.IGNORECASE,
+    r"\b(?:lets?|allows?|only|by|for) staff\b|\bstaff (?:can|may|tools?|side|now|lists?)\b", re.IGNORECASE
 )
 _STAFF_WEAPON = re.compile(r"\bmages? staff\b|\bstaff (?:of|weapons?|damage|runes?)\b", re.IGNORECASE)
 _HIDDEN_SUBJECT = re.compile(r"\b(hidden|secrets?|dev-only)\b|\(dev\)", re.IGNORECASE)
@@ -196,7 +195,7 @@ def commit_subjects(
 
 
 def _fit(facts: dict[str, Any], limit: int = _MAX_FACTS_BYTES) -> dict[str, Any]:
-    """Shorten the entries of an unusually large week, so the API takes the facts."""
+    """Shorten the entries of an unusually large week, then their text, so the API takes the facts."""
     for keep in (40, 15, 5, 1):
         if len(json.dumps(facts)) <= limit:
             break
@@ -204,6 +203,10 @@ def _fit(facts: dict[str, Any], limit: int = _MAX_FACTS_BYTES) -> dict[str, Any]
             for entry in item["entries"]:
                 if len(entry["details"]) > keep:
                     entry["details"] = entry["details"][:keep] + ["and more changed values"]
+    if len(json.dumps(facts)) > limit:
+        for item in facts["files"]:
+            for entry in item["entries"]:
+                entry["details"] = [detail[:120] for detail in entry["details"]]
     return facts
 
 

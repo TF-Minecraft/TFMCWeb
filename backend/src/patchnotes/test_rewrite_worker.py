@@ -63,8 +63,10 @@ class WritersTest(unittest.TestCase):
         self.assertTrue(calls[1][1]["input"].startswith("Improve:"))
         self.assertIn('"draft"', calls[1][1]["input"])
         self.assertIn('"better"', calls[2][1]["input"])
-        # Nobody waits for the Friday run. A Discord command ends before its reply runs out.
+        # Nobody waits for the Friday run, but an older API does. A Discord command ends before its reply runs out.
         self.assertEqual(calls[0][1]["timeout"], 600)
+        _, calls = self._run(_CLAUDE, replies, "Check:")
+        self.assertEqual(calls[0][1]["timeout"], 390)
         _, calls = self._run({**_CLAUDE, "PATCHNOTES_CLAUDE_OWNER": "42"}, replies, "Check:", requester="42")
         self.assertEqual(calls[0][1]["timeout"], 390)
 
@@ -231,7 +233,7 @@ class WritersTest(unittest.TestCase):
                 self.assertEqual(json.loads(result["output"]), {"lines": ["draft"]})
                 self.assertEqual(len(calls), 2)
 
-    @mock.patch("patchnotes.rewrite_worker.time.monotonic", side_effect=[0, 0, 0, 2650])
+    @mock.patch("patchnotes.rewrite_worker.time.monotonic", side_effect=[0, 0, 0, 800])
     def test_no_check_without_enough_time(self, _clock) -> None:
         _, calls = self._run(_CLAUDE, [_claude_reply(structured_output={"lines": []})], "Check:")
         self.assertEqual(len(calls), 1)

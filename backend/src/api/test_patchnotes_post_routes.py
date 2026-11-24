@@ -257,7 +257,7 @@ class PostRoutesTest(unittest.TestCase):
     def test_staff_learn_who_wrote_it_and_which_numbers_to_check(self) -> None:
         messages = ["# Update 5.3", "- Bash 9 --> 7 s"]
         body = {"output": json.dumps({"messages": messages}), "writer": "claude:claude-opus-5-5", "checks": 2,
-                "unconfirmed": [["- Bash 9 --> 7 s", "9 --> 7"], ["- Removed 2 --> 1 s", "2 --> 1"]]}
+                "unconfirmed": [["- Bash 9 --> 7 s \u2694\ufe0f", "9 --> 7"], ["- Removed 2 --> 1 s", "2 --> 1"]]}
         report = {"writer": "claude:claude-opus-5-5", "checks": 2, "unconfirmed": [["- Bash 9 --> 7 s", "9 --> 7"]]}
         url = "/patchnotes/staff/jobs/22222222-2222-2222-2222-222222222222/result"
         # A rewrite after feedback keeps the messages as staff asked for them.

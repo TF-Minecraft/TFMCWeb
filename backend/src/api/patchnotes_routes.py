@@ -20,6 +20,7 @@ from src import database
 from src.api.map_access import require_site_staff
 from src.patchnotes.compose import (
     POST_SCHEMA,
+    clean_message,
     compose_prompt,
     feedback_review_prompt,
     review_prompt,
@@ -1144,7 +1145,8 @@ def _post_report(body: JobResultBody, messages: list[str]) -> dict[str, Any] | N
     if not body.writer:
         return None
     text = "\n".join(messages)
-    lines = [[line, numbers] for line, numbers in body.unconfirmed if line.strip() and line in text]
+    cleaned = [[clean_message(line), numbers] for line, numbers in body.unconfirmed]
+    lines = [item for item in cleaned if item[0] and item[0] in text]
     return {"writer": body.writer, "checks": body.checks, "unconfirmed": lines[:_MAX_UNCONFIRMED]}
 
 
