@@ -25,13 +25,35 @@ from pathlib import Path
 from typing import Any, Callable
 from zoneinfo import ZoneInfo
 
-from .summarize import _SKIP_KINDS, _split_conventional, github_org, player_text
+from .safety import hidden_knowledge_warning, hidden_words
+from .summarize import (
+    _EXPLOIT,
+    _PERMISSION,
+    _SECRET,
+    _SKIP_KINDS,
+    _XYZ,
+    _split_conventional,
+    github_org,
+    player_text,
+)
 from .weekly import compare, snapshot_from_zip
 
 _BACKUP = re.compile(r"^(\d{8})-(\d{6})-[0-9a-f]+\.zip$")
 _CUTOFF_HOUR = 12
 _LATE_LIMIT = timedelta(days=3)
 _MAX_COMMITS = 25
+_MAX_DETAIL = 1800
+_HIDDEN_WORK = re.compile(
+    r"\b(hidden|secrets?|codex|lore|dungeons?|dev-only|staff|admins?)\b",
+    re.IGNORECASE,
+)
+_REVIEW_WORK = re.compile(
+    r"^(address|apply|review|fix review|merge|resolve|bump|release|test|tests|ci|docs|refactor|rename|format|keep)\b",
+    re.IGNORECASE,
+)
+# Also catches coordinates that end a sentence.
+_PLACE = re.compile(r"(?<![\w.])-?\d{3,6}\s*,\s*-?\d{1,4}\s*,\s*-?\d{3,6}(?!\w)")
+_TRAILER = re.compile(r"(?im)^(co-authored-by|signed-off-by):.*$")
 _MERGE = re.compile(r"^Merge (pull request|branch|remote-tracking)\b", re.IGNORECASE)
 
 
@@ -87,10 +109,46 @@ def _github(path: str) -> Any:
         return json.loads(response.read().decode() or "null")
 
 
+def _unsafe_detail(text: str, words: re.Pattern[str]) -> bool:
+    return bool(
+        words.search(text) or _HIDDEN_WORK.search(text) or _SECRET.search(text) or _EXPLOIT.search(text)
+        or _PERMISSION.search(text) or _PLACE.search(text) or _XYZ.search(text)
+        or hidden_knowledge_warning(text)
+    )
+
+
+def commit_detail(message: str) -> str:
+    """What a commit's description says changed, without review rounds or anything hidden."""
+    words = hidden_words()
+    subject, _, body = message.strip().partition("\n")
+    if words is None or _unsafe_detail(subject, words):
+        return ""
+    parts: list[str] = []
+    # A squash merge lists its commits as `* subject` blocks.
+    for block in re.split(r"(?m)^\* ", _TRAILER.sub("", body)):
+        if _REVIEW_WORK.match(block.strip()):
+            continue
+        for paragraph in re.split(r"\n\s*\n", block):
+            text = " ".join(paragraph.split())
+            if text and not _unsafe_detail(text, words):
+                parts.append(text)
+    detail = " ".join(parts)
+    if len(detail) > _MAX_DETAIL:
+        detail = detail[:_MAX_DETAIL].rsplit(" ", 1)[0] + " (shortened)"
+    return detail
+
+
 def commit_subjects(
-    repo: str, old: str, new: str, fetch: Callable[[str], Any] | None = None
+    repo: str,
+    old: str,
+    new: str,
+    fetch: Callable[[str], Any] | None = None,
+    details: dict[str, str] | None = None,
 ) -> list[str]:
-    """Player-safe subjects of the commits between two released versions."""
+    """Player-safe subjects of the commits between two released versions.
+
+    `details`, when given, collects each kept subject's description.
+    """
     fetch = fetch or _github
     org = urllib.parse.quote(github_org())
     name = urllib.parse.quote(repo)
@@ -113,6 +171,9 @@ def commit_subjects(
             cleaned = player_text(subject)
             if cleaned and cleaned not in subjects:
                 subjects.append(cleaned)
+                detail = commit_detail(message)
+                if details is not None and detail:
+                    details[cleaned] = detail
         return subjects[-_MAX_COMMITS:]
     return []
 
@@ -128,7 +189,11 @@ def build_facts(
     facts = compare(snapshot_from_zip(base[1]), snapshot_from_zip(current[1]))
     for update in facts["plugins"]:
         if update.get("repo") and update.get("old") and update.get("new"):
-            update["commits"] = commit_subjects(update["repo"], update["old"], update["new"], fetch)
+            details: dict[str, str] = {}
+            update["commits"] = commit_subjects(update["repo"], update["old"], update["new"], fetch, details)
+            kept = {subject: details[subject] for subject in update["commits"] if subject in details}
+            if kept:
+                update["details"] = kept
     facts.update(
         {
             "week": week,

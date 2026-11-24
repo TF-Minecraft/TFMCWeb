@@ -97,6 +97,39 @@ class CommitSubjectsTest(unittest.TestCase):
         self.assertTrue(calls[1].endswith("/compare/2.11.0...2.12.6"))
 
 
+    @mock.patch.dict("os.environ", {"PATCHNOTES_HIDDEN_WORDS": "moonpath"})
+    def test_details_keep_what_changed_and_drop_reviews_and_hidden_work(self) -> None:
+        message = (
+            "Upkeep-only vehicles (#247)\n\n* Pay vehicle upkeep from the bank\n\n"
+            "The leader moves vehicles in, up to three\nper member.\n\n"
+            "The hidden dungeon gets a new vehicle.\n\nMoonpath users pay less.\n\nThe chest is at 1200, 64, -900.\n\n"
+            "Co-Authored-By: A <a@example.net>\n\n* Address review round 1\n\nGuild rows use the incarnation.\n"
+        )
+        self.assertEqual(
+            weekly_run.commit_detail(message),
+            "Pay vehicle upkeep from the bank The leader moves vehicles in, up to three per member.",
+        )
+        self.assertEqual(weekly_run.commit_detail("Add the hidden path\n\nBody"), "")
+        self.assertEqual(weekly_run.commit_detail("Only a subject"), "")
+        long = weekly_run.commit_detail("Subject\n\n" + "word " * 2000)
+        self.assertLess(len(long), 1830)
+        self.assertTrue(long.endswith("(shortened)"))
+
+    @mock.patch.dict("os.environ", {}, clear=True)
+    def test_no_details_without_the_hidden_words(self) -> None:
+        self.assertEqual(weekly_run.commit_detail("Subject\n\nBody"), "")
+
+    @mock.patch.dict("os.environ", {"PATCHNOTES_HIDDEN_WORDS": "moonpath"})
+    def test_details_belong_to_kept_subjects(self) -> None:
+        details: dict[str, str] = {}
+        weekly_run.commit_subjects(
+            "RPCharacters", "1", "2",
+            lambda _path: {"commits": [{"commit": {"message": "Make armour take time to put on (#72)\n\nFive seconds."}}]},
+            details,
+        )
+        self.assertEqual(details, {"Make armour take time to put on": "Five seconds."})
+
+
 class RunTest(unittest.TestCase):
     def setUp(self) -> None:
         self.directory = tempfile.TemporaryDirectory()

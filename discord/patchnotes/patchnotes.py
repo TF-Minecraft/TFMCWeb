@@ -18,6 +18,7 @@ import os
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Optional
+from urllib.parse import quote
 
 import aiohttp
 import discord
@@ -69,7 +70,7 @@ _CANCELLED_REPLY = "This week's post is cancelled. Use Undo cancel to take it ba
 # requests. A hung API must not hold the week lock (and a staff click) for aiohttp's 5 minutes.
 _API_TIMEOUT = aiohttp.ClientTimeout(total=60)
 # How long Deny waits for the writer to rewrite the post.
-_POST_JOB_SECONDS = 540
+_POST_JOB_SECONDS = 870
 
 
 def _clamp_poll(value: int) -> int:
@@ -2861,6 +2862,72 @@ class PatchNotes(commands.Cog):
             "Use `/patchnotes test-post` to read it. A review that is already posted is not replaced.",
             ephemeral=True,
         )
+
+    @patchnotes.command(name="note", description="Add a line for the next update post. The writer treats it as true.")
+    @app_commands.describe(
+        text="What changed for players and why, such as: Horses run faster because trips took too long.",
+        week="ISO week, such as 2026-W41. Defaults to the week that is still open.",
+    )
+    @app_commands.check(_has_staff)
+    @app_commands.guild_only()
+    async def note_cmd(
+        self, interaction: discord.Interaction, text: app_commands.Range[str, 1, 600], week: Optional[str] = None
+    ):
+        await interaction.response.defer(ephemeral=True)
+        payload: dict[str, Any] = {"body": text, "author": interaction.user.display_name[:60]}
+        if week:
+            payload["week"] = week
+        try:
+            status, body, data = await self.api_request("POST", "/patchnotes/staff/player-notes", payload)
+        except Exception as exc:
+            await interaction.followup.send(str(exc)[:300], ephemeral=True)
+            return
+        if status != 201 or not isinstance(data, dict) or not isinstance(data.get("note"), dict):
+            await interaction.followup.send(f"Could not add the note: {_api_detail(data, body)}", ephemeral=True)
+            return
+        note = data["note"]
+        await interaction.followup.send(
+            f"Added note #{note.get('id')} for {week_label(str(note.get('week')))}. "
+            "If its post is already written, use Deny instead.",
+            ephemeral=True,
+        )
+
+    @patchnotes.command(name="notes", description="List the staff notes for an update post.")
+    @app_commands.describe(week="ISO week, such as 2026-W41. Defaults to the week that is still open.")
+    @app_commands.check(_has_staff)
+    @app_commands.guild_only()
+    async def notes_cmd(self, interaction: discord.Interaction, week: Optional[str] = None):
+        await interaction.response.defer(ephemeral=True)
+        path = "/patchnotes/staff/player-notes" + (f"?week={quote(week)}" if week else "")
+        try:
+            status, body, data = await self.api_request("GET", path)
+        except Exception as exc:
+            await interaction.followup.send(str(exc)[:300], ephemeral=True)
+            return
+        if status != 200 or not isinstance(data, dict):
+            await interaction.followup.send(f"Could not load the notes: {_api_detail(data, body)}", ephemeral=True)
+            return
+        lines = [f"#{note.get('id')} {note.get('body')} ({note.get('author') or 'unknown'})" for note in data["notes"]]
+        shown = f"Notes for {week_label(str(data.get('week')))}:\n" + ("\n".join(lines) or "None yet.")
+        if len(shown) > 1900:
+            shown = shown[:1900].rsplit("\n", 1)[0] + "\nand more"
+        await interaction.followup.send(shown, ephemeral=True, allowed_mentions=discord.AllowedMentions.none())
+
+    @patchnotes.command(name="remove-note", description="Remove a staff note by its number.")
+    @app_commands.describe(number="The number /patchnotes notes shows.")
+    @app_commands.check(_has_staff)
+    @app_commands.guild_only()
+    async def remove_note_cmd(self, interaction: discord.Interaction, number: int):
+        await interaction.response.defer(ephemeral=True)
+        try:
+            status, body, data = await self.api_request("DELETE", f"/patchnotes/staff/player-notes/{number}")
+        except Exception as exc:
+            await interaction.followup.send(str(exc)[:300], ephemeral=True)
+            return
+        if status != 200:
+            await interaction.followup.send(f"Could not remove the note: {_api_detail(data, body)}", ephemeral=True)
+            return
+        await interaction.followup.send(f"Removed note #{number}.", ephemeral=True)
 
     @patchnotes.command(name="act", description="Title a week's update post with an act, on act change weeks.")
     @app_commands.describe(

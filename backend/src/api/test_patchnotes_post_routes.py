@@ -72,7 +72,7 @@ def _post(**overrides):
 class PostRoutesTest(unittest.TestCase):
     def setUp(self) -> None:
         self.client = TestClient(app)
-        for name, value in (("migrate", None), ("patch_label", "5.3"), ("get_act", None)):
+        for name, value in (("migrate", None), ("patch_label", "5.3"), ("get_act", None), ("recent_posts", []), ("list_player_notes", [])):
             patcher = mock.patch(f"{_ROUTES}.{name}", return_value=value)
             self.addCleanup(patcher.stop)
             patcher.start()
@@ -86,6 +86,36 @@ class PostRoutesTest(unittest.TestCase):
             self.client.post("/patchnotes/staff/weeks/2026-W41/facts", json={"facts": {}}).status_code, 401
         )
         self.assertEqual(self.client.put("/patchnotes/staff/weeks/2026-W41/meta", json={}).status_code, 401)
+
+    def test_player_notes_can_be_added_listed_and_removed(self) -> None:
+        note = {"id": 4, "week": "2026-W41", "body": "Horses are faster.", "author": "staff", "created_at": _UPDATED}
+        with mock.patch(f"{_ROUTES}.add_player_note", return_value=note) as add:
+            response = self.client.post(
+                "/patchnotes/staff/player-notes", json={"body": "Horses are faster.", "author": "staff"}, headers=_HEADERS
+            )
+        self.assertEqual((response.status_code, response.json()["note"]["id"]), (201, 4))
+        add.assert_called_once_with("Horses are faster.", author="staff", week=None)
+        with mock.patch(f"{_ROUTES}.list_player_notes", return_value=[note]) as listing:
+            response = self.client.get("/patchnotes/staff/player-notes?week=2026-W41", headers=_HEADERS)
+        self.assertEqual(response.json()["notes"][0]["body"], "Horses are faster.")
+        listing.assert_called_once_with("2026-W41")
+        with mock.patch(f"{_ROUTES}.remove_player_note", side_effect=[True, False]):
+            self.assertEqual(
+                [self.client.delete("/patchnotes/staff/player-notes/4", headers=_HEADERS).status_code for _ in "ab"],
+                [200, 404],
+            )
+        self.assertEqual(self.client.post("/patchnotes/staff/player-notes", json={"body": "x"}).status_code, 401)
+        self.assertEqual(self.client.get("/patchnotes/staff/player-notes").status_code, 401)
+        self.assertEqual(self.client.delete("/patchnotes/staff/player-notes/4").status_code, 401)
+
+    def test_the_writer_gets_the_notes_and_a_check(self) -> None:
+        job = _job()
+        with mock.patch(f"{_ROUTES}.claim_job", return_value=job), mock.patch(
+            f"{_ROUTES}.get_facts", return_value={"facts": _FACTS}
+        ), mock.patch(f"{_ROUTES}.list_player_notes", return_value=[{"body": "Horses are faster."}]):
+            data = self.client.post("/patchnotes/staff/jobs/claim", headers=_HEADERS).json()
+        self.assertIn("- Horses are faster.", data["prompt"])
+        self.assertTrue(data["review"].startswith(data["prompt"]))
 
     def test_facts_are_stored_and_start_the_writer(self) -> None:
         with mock.patch(f"{_ROUTES}.save_facts") as save, mock.patch(

@@ -21,6 +21,8 @@ from src.api.map_access import require_site_staff
 from src.patchnotes.compose import (
     POST_SCHEMA,
     compose_prompt,
+    feedback_review_prompt,
+    review_prompt,
     fallback_messages,
     messages_from_response,
 )
@@ -37,6 +39,7 @@ from src.patchnotes.db import (
     WeekNotPostponed,
     WeekPostponed,
     add_folder_rule,
+    add_player_note,
     apply_feedback,
     apply_sort,
     approve_bullet,
@@ -83,6 +86,9 @@ from src.patchnotes.db import (
     restore_bullet,
     revise_denied_bullet,
     save_facts,
+    list_player_notes,
+    recent_posts,
+    remove_player_note,
     save_post,
     set_act,
     undo_postpone,
@@ -924,7 +930,8 @@ def staff_claim_job():
         if job is None:
             return {"job": None}
         if job["kind"] == "compose":
-            return {"job": _job_payload(job), "prompt": _post_prompt(job), "schema": POST_SCHEMA}
+            prompt, review = _post_prompts(job)
+            return {"job": _job_payload(job), "prompt": prompt, "schema": POST_SCHEMA, "review": review}
         lines = _job_lines(job)
         if job["kind"] == "feedback":
             prompt = feedback_prompt(lines, job.get("feedback") or "")
@@ -1058,7 +1065,12 @@ def _page_url() -> str:
     return os.environ.get("PATCHNOTES_PAGE_URL", "").strip() or _DEFAULT_PAGE_URL
 
 
-def _post_prompt(job: dict[str, Any]) -> str:
+def _note_lines(week: str) -> list[str]:
+    return [note["body"] for note in list_player_notes(week)]
+
+
+def _post_prompts(job: dict[str, Any]) -> tuple[str, str]:
+    """The writing prompt and the one for checking its draft."""
     week = job["week"]
     stored = get_facts(week)
     feedback = (job.get("feedback") or "").strip() or None
@@ -1066,7 +1078,7 @@ def _post_prompt(job: dict[str, Any]) -> str:
     if feedback:
         post = get_post(week)
         previous = list(post["messages"]) if post else None
-    return compose_prompt(
+    prompt = compose_prompt(
         stored["facts"] if stored else {},
         week=week,
         label=patch_label(week),
@@ -1074,7 +1086,12 @@ def _post_prompt(job: dict[str, Any]) -> str:
         page_url=_page_url(),
         previous=previous,
         feedback=feedback,
+        examples=recent_posts(week),
+        notes=_note_lines(week),
     )
+    if previous and feedback:
+        return prompt, feedback_review_prompt(previous, feedback)
+    return prompt, review_prompt(prompt)
 
 
 def _save_fallback(week: str) -> dict[str, Any] | None:
@@ -1082,7 +1099,8 @@ def _save_fallback(week: str) -> dict[str, Any] | None:
     if stored is None:
         return None
     messages = fallback_messages(
-        stored["facts"], week=week, label=patch_label(week), act=get_act(week), page_url=_page_url()
+        stored["facts"], week=week, label=patch_label(week), act=get_act(week), page_url=_page_url(),
+        notes=_note_lines(week),
     )
     return save_post(week, messages, "fallback")
 
@@ -1215,6 +1233,55 @@ def staff_week_post_compose(week: str):
         logger.exception("staff_week_post_compose failed")
         raise HTTPException(status_code=502, detail=_client_detail(e)) from e
     return {"job": _job_payload(job)}
+
+
+class PlayerNoteBody(BaseModel):
+    body: str = Field(..., min_length=1, max_length=600)
+    author: str = Field(default="", max_length=60)
+    week: str | None = None
+
+
+def _note_payload(note: dict[str, Any]) -> dict[str, Any]:
+    return {**note, "created_at": _iso(note.get("created_at"))}
+
+
+@patchnotes_router.post("/staff/player-notes", status_code=201, dependencies=[Depends(_staff_guard)])
+def staff_add_player_note(body: PlayerNoteBody):
+    """Keep a line for the week's post. Without a week it goes to the one still open."""
+    week_key = _week_or_400(body.week) if body.week else None
+    try:
+        migrate()
+        return {"note": _note_payload(add_player_note(body.body, author=body.author, week=week_key))}
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e)) from e
+    except (PatchnotesDBError, PatchnotesConfigError, database.Error) as e:
+        logger.exception("staff_add_player_note failed")
+        raise HTTPException(status_code=502, detail=_client_detail(e)) from e
+
+
+@patchnotes_router.get("/staff/player-notes", dependencies=[Depends(_staff_guard)])
+def staff_player_notes(week: str | None = None):
+    week_key = _week_or_400(week) if week else None
+    try:
+        migrate()
+        week_key = week_key or current_week()
+        return {"week": week_key, "notes": [_note_payload(note) for note in list_player_notes(week_key)]}
+    except (PatchnotesDBError, PatchnotesConfigError, database.Error) as e:
+        logger.exception("staff_player_notes failed")
+        raise HTTPException(status_code=502, detail=_client_detail(e)) from e
+
+
+@patchnotes_router.delete("/staff/player-notes/{note_id}", dependencies=[Depends(_staff_guard)])
+def staff_remove_player_note(note_id: int):
+    try:
+        migrate()
+        removed = remove_player_note(note_id)
+    except (PatchnotesDBError, PatchnotesConfigError, database.Error) as e:
+        logger.exception("staff_remove_player_note failed")
+        raise HTTPException(status_code=502, detail=_client_detail(e)) from e
+    if not removed:
+        raise HTTPException(status_code=404, detail="Note not found")
+    return {"removed": note_id}
 
 
 @patchnotes_router.post("/staff/weeks/{week}/post/approve", dependencies=[Depends(_staff_guard)])

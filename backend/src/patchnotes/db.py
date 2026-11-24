@@ -438,6 +438,18 @@ def migrate() -> None:
             )
             """
         )
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS patchnote_player_notes (
+                id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+                week TEXT NOT NULL,
+                body TEXT NOT NULL,
+                author TEXT NOT NULL DEFAULT '',
+                created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+                UNIQUE (week, body)
+            )
+            """
+        )
     _MIGRATED = True
     logger.info("Patch notes DB migrated")
 
@@ -1150,7 +1162,7 @@ def _expire_jobs(cur) -> None:
                AND NOT EXISTS (
                    SELECT 1 FROM patchnote_jobs active WHERE active.status = 'running'
                ))
-           OR (status = 'running' AND claimed_at < now() - interval '10 minutes')
+           OR (status = 'running' AND claimed_at < now() - interval '20 minutes')
         """
     )
 
@@ -1424,12 +1436,58 @@ def get_post(week: str) -> dict[str, Any] | None:
         return dict(row) if row else None
 
 
+def recent_posts(week: str, limit: int = 2) -> list[list[str]]:
+    """The newest written posts before `week`, newest first, as style examples."""
+    with _connect() as conn, _cursor(conn) as cur:
+        cur.execute(
+            "SELECT messages FROM patchnote_posts WHERE week < %s AND source = 'writer' "
+            "ORDER BY week DESC LIMIT %s",
+            (parse_week(week), limit),
+        )
+        return [list(row["messages"]) for row in cur.fetchall()]
+
+
 def approve_post(week: str) -> bool:
     with _connect() as conn, _cursor(conn) as cur:
         cur.execute(
             "UPDATE patchnote_posts SET status = 'approved', updated_at = now() WHERE week = %s",
             (parse_week(week),),
         )
+        return cur.rowcount > 0
+
+
+MAX_PLAYER_NOTE = 600
+
+
+def add_player_note(body: str, *, author: str = "", week: str | None = None) -> dict[str, Any]:
+    """Keep a line staff want in the week's post. The same line twice is kept once."""
+    text = " ".join(body.split())
+    if not text or len(text) > MAX_PLAYER_NOTE:
+        raise ValueError(f"A note needs 1 to {MAX_PLAYER_NOTE} characters")
+    with _connect() as conn, _cursor(conn) as cur:
+        cur.execute(
+            """
+            INSERT INTO patchnote_player_notes (week, body, author) VALUES (%s, %s, %s)
+            ON CONFLICT (week, body) DO UPDATE SET author = EXCLUDED.author
+            RETURNING id, week, body, author, created_at
+            """,
+            (parse_week(week) if week else current_week(), text, " ".join(author.split())[:60]),
+        )
+        return dict(cur.fetchone())
+
+
+def list_player_notes(week: str) -> list[dict[str, Any]]:
+    with _connect() as conn, _cursor(conn) as cur:
+        cur.execute(
+            "SELECT id, week, body, author, created_at FROM patchnote_player_notes WHERE week = %s ORDER BY id",
+            (parse_week(week),),
+        )
+        return [dict(row) for row in cur.fetchall()]
+
+
+def remove_player_note(note_id: int) -> bool:
+    with _connect() as conn, _cursor(conn) as cur:
+        cur.execute("DELETE FROM patchnote_player_notes WHERE id = %s", (note_id,))
         return cur.rowcount > 0
 
 

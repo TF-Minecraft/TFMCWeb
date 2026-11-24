@@ -34,7 +34,7 @@ FIRST_LIMIT = 1900
 # The writer aims for TARGET_MESSAGES. A busy week may run longer, up to MAX_MESSAGES.
 TARGET_MESSAGES = 8
 MAX_MESSAGES = 15
-_FACTS_BUDGET = 60_000
+_FACTS_BUDGET = 240_000
 _MENTION = re.compile(r"@(everyone|here)|<@[!&]?\d+>")
 # Emoji only: pictographs, any symbol asking for emoji style (U+FE0F), the symbols
 # that always show as emoji, and leftover joiners. Plain symbols such as arrows,
@@ -88,6 +88,15 @@ Rules:
   exact crafting recipes or hit counts, coordinates, commands, permissions or exploits.
 - Never write @everyone, @here or any mention. The bot adds the role ping itself.
 - Never use an em dash or emojis.
+- Write only about changes general players notice and care about. Leave out single players, admin and
+  staff commands, the world border, edge-case fixes and technical cleanup.
+- Never give drop chances, roll counts, resource costs of hidden systems or creature stats. Say "more",
+  "less", "stronger" or "weaker" instead. Never name new traits or creature tricks.
+- A passive or effect that only appears in class config may be internal. Describe what players feel, not its name,
+  unless a plugin update line also mentions it.
+- Features players cannot use yet stay out. If the facts do not show that something is usable, leave it out.
+- Before answering, check every number, name and behaviour against the facts once more, and delete
+  any line the facts do not clearly support. A shorter post is better than a wrong line.
 - Keep the whole post to at most {target} messages. On a busy week, fold small related changes into
   one short line each and leave minor ones to the website instead of listing everything.
 - Split the post into Discord messages in order. Each message must stay under 1900 characters.
@@ -105,8 +114,9 @@ _GLOSSARY = """Reading the facts:
 - `time_modifier(N)` adds N percent to production time, so lower is faster. `prestige(N)` and `upkeep(N)`
   are Dowsing node values.
 - `required-class` lists the classes that may use an item.
-- Plugin updates list the subjects of the code changes behind them. Use them to explain new mechanics
-  and fixes in plain words.
+- Plugin updates list the code changes behind them, some with a developer description. Use them to explain
+  new mechanics and fixes in plain words. A description may cover internal work, earlier drafts and staff
+  tools: use only what a player can see or do.
 """
 
 _ACT_SYSTEM = """The Act System:
@@ -179,8 +189,8 @@ _FILE_RANKS = (
     ("ArmourShop/", 4),
     ("ItemsAdder/", 4),
 )
-_FILE_BUDGET = 2500
-_ENTRY_DETAILS = 10
+_FILE_BUDGET = 20_000
+_ENTRY_DETAILS = 30
 
 
 def _file_rank(path: str) -> int:
@@ -219,6 +229,9 @@ def render_facts(facts: dict[str, Any], budget: int = _FACTS_BUDGET) -> str:
             lines.append(f"- {item.get('plugin')}: {old} --> {new}")
             for subject in item.get("commits") or []:
                 lines.append(f"  - {subject}")
+                detail = (item.get("details") or {}).get(subject)
+                if detail:
+                    lines.append(f"    Developer description: {detail}")
     files = [item for item in facts.get("files") or [] if isinstance(item, dict)]
     if files:
         lines.append("Config changes, start of week --> end of week:")
@@ -244,6 +257,8 @@ def compose_prompt(
     page_url: str,
     previous: list[str] | None = None,
     feedback: str | None = None,
+    examples: list[list[str]] | None = None,
+    notes: list[str] | None = None,
 ) -> str:
     guide = _GUIDE.format(
         title_rule=_title_rule(label, act),
@@ -251,16 +266,73 @@ def compose_prompt(
         page_url=f"{page_url.rstrip('/')}/{week}",
         target=TARGET_MESSAGES,
     )
-    parts = [guide, _GLOSSARY, _ACT_SYSTEM, "Facts:", render_facts(facts)]
+    parts = [guide, _GLOSSARY, _ACT_SYSTEM]
+    if examples:
+        parts.append(
+            "Earlier posts, newest first. Use them for tone and layout, and for what players were already told. "
+            "The facts can overlap with them: never announce a change again. When an earlier post already announced "
+            "part of a number change, start from its final value: if it said `18 --> 15` and the facts say "
+            "`18 --> 11`, write `15 --> 11`. If it already gave the final value, leave the change out:"
+        )
+        parts += [json.dumps(example, ensure_ascii=False) for example in examples]
+    if notes:
+        parts.append(
+            "Staff notes for this week. Staff wrote them for players while shipping the changes, so they are true, "
+            "they say why, and they win over the facts. Every note belongs in the post unless an earlier post already "
+            "told players. Use the facts for the numbers around them, and fit the wording to the rest:"
+        )
+        parts.append("\n".join(f"- {note}" for note in notes))
+    parts += ["Facts:", render_facts(facts)]
     if previous and feedback:
         parts += [
             "Current post:",
             json.dumps(previous, ensure_ascii=False),
             "Staff feedback on the current post. It is an instruction, not new wording, unless staff clearly "
-            "give a sentence to publish. Rewrite the whole post with every point of the feedback applied:",
+            "give a sentence to publish. Apply every point of it. Staff know the server: what they state is true "
+            "even when the facts do not show it, and it wins over the facts and the rules on length, structure "
+            "and what to leave out. The rules on mentions, hidden things and message size still apply. Keep every line "
+            "the feedback is not about exactly as it is in the current post:",
             feedback,
         ]
     return "\n\n".join(parts)
+
+
+def feedback_review_prompt(previous: list[str], feedback: str) -> str:
+    """The second pass of a rewrite after staff feedback. The worker puts the draft after it.
+
+    It leaves the facts out: staff decide what is true here, and the call stays small.
+    """
+    return "\n\n".join([
+        "Answer from this message only. A weekly update post was rewritten after staff feedback. Check the draft "
+        'below and return the corrected post as one JSON object and nothing else: {"messages": ["first", "second"]}\n'
+        "- Every point of the staff feedback is applied, everywhere it fits. What staff state counts as true.\n"
+        "- Every line of the current post that the feedback is not about is still there, word for word.\n"
+        "- A number is the same as in the current post, unless the feedback is about it or asks for new details.\n"
+        "- Each message stays under 1900 characters, with no mentions, emojis or em dashes.\n"
+        "Change nothing else.",
+        "Current post:",
+        json.dumps(previous, ensure_ascii=False),
+        "Staff feedback:",
+        feedback,
+        "Draft:",
+    ])
+
+
+def review_prompt(prompt: str) -> str:
+    """Instructions for a second pass. The worker puts the draft after them."""
+    return "\n\n".join([
+        prompt,
+        "The message above was the writing task, and a draft was written for it. Check the draft below now and "
+        "return the corrected post in the same JSON form:\n"
+        "- Compare every number, name and behaviour with the staff notes and the facts. Correct or delete what "
+        "neither supports. Every staff note is in the post, unless an earlier post already told players.\n"
+        "- Compare every `Old --> New` with the earlier posts and remove anything already announced.\n"
+        "- Apply every rule again: nothing hidden, nothing staff-only, no chances, roll counts or creature stats.\n"
+        "- Go through the plugin updates and add any clear change players would notice that the draft missed, "
+        "such as a new thing they can do or how something they use now works.\n"
+        "- Keep the wording of every line that is already right. Keep the order and the message limits.",
+        "Draft:",
+    ])
 
 
 def unsafe_line(line: str) -> bool:
@@ -347,8 +419,16 @@ def _readable(detail: str) -> str:
     return f"{name}: {change}" if change else detail
 
 
-def fallback_messages(facts: dict[str, Any], *, week: str, label: str, act: str | None, page_url: str) -> list[str]:
-    """A plain post straight from the facts, for when the writer is unavailable."""
+def fallback_messages(
+    facts: dict[str, Any],
+    *,
+    week: str,
+    label: str,
+    act: str | None,
+    page_url: str,
+    notes: list[str] | None = None,
+) -> list[str]:
+    """A plain post from the staff notes and the facts, for when the writer is unavailable."""
     lines = title_lines(label, act) + [f"-# {week_line(week)}", "", "Here is what changed on the server this week."]
     plugins = [item for item in facts.get("plugins") or [] if isinstance(item, dict)]
     subjects = [
@@ -357,6 +437,8 @@ def fallback_messages(facts: dict[str, Any], *, week: str, label: str, act: str 
         for subject in item.get("commits") or []
         if _plain_subject(str(subject))
     ]
+    if notes:
+        lines += ["", "## This week"] + [f"- {note}" for note in notes]
     if subjects:
         lines += ["", "## Changes"]
         lines += [f"- {subject}" for subject in subjects[:25]]
