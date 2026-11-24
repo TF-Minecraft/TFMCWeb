@@ -25,8 +25,8 @@ from .folders import REPO_FOLDERS, excluded_relative, rule_matches, skip_directo
 from .substance import _canon, _plain, _skip_key, _title
 
 MAX_FILE_BYTES = 1_000_000
-MAX_DETAILS = 30
-MAX_ENTRIES = 40
+MAX_DETAILS = 80
+MAX_ENTRIES = 400
 _ZIP_ROOTS = ("plugins/", "Minecraft/plugins/")
 
 # Runtime state, player submissions and staff tools. Their edits are not news.
@@ -42,6 +42,8 @@ IGNORED = (
     "CompanionPets/estates/**",
     "CoreProtect/**",
     "Essentials/**",
+    "MMOCore/classes/test.yml",
+    "MMOItems/item/helper_*.yml",
     "LuckPerms/**",
     "TFMCWeb/**",
     "VotingPlugin/**",
@@ -255,17 +257,74 @@ def _list_change(before: list, after: list) -> str:
     return "; ".join(parts) or "reordered"
 
 
-def _brief(node: dict) -> str:
+# Bookkeeping that comes with other changes.
+_BOOKKEEPING = frozenset({"revision-id"})
+# Menu and levelling parts of a class file, which say nothing about a new class.
+_CLASS_MENU = frozenset({
+    "skill-slots", "exp-curve", "exp-table", "main-exp-sources", "cast-particle", "options", "key-combos",
+})
+_TOP_LEVEL = 30  # Past the last act's class cap.
+_VALUE_KEYS = frozenset({"base", "per-level", "min", "max"})
+
+
+def _skipped(key: object) -> bool:
+    return _skip_key(key) or str(key) in _BOOKKEEPING
+
+
+def _level_one(node: Any) -> float | None:
+    """What a `base`, `per-level`, `min` and `max` value is at level 1, or None for anything else."""
+    if not isinstance(node, dict) or "base" not in node or not set(map(str, node)) <= _VALUE_KEYS:
+        return None
+    if any(isinstance(value, bool) or not isinstance(value, (int, float)) for value in node.values()):
+        return None
+    return _at_level(node, 1)
+
+
+def _at_level(node: dict, level: int) -> float:
+    value = node["base"] + node.get("per-level", 0) * (level - 1)
+    if "max" in node:
+        value = min(value, node["max"])
+    if "min" in node:
+        value = max(value, node["min"])
+    return float(value)
+
+
+def _limited(node: Any) -> bool:
+    """A value whose `base` is not always what players see, because a limit can cut it."""
+    return _level_one(node) is not None and bool({"min", "max"} & set(node))
+
+
+def _value_change(path: str, before: dict, after: dict) -> list[str]:
+    old, new = _at_level(before, 1), _at_level(after, 1)
+    if old != new:
+        return [f"{path} at level 1: {old:g} --> {new:g}"]
+    if any(_at_level(before, level) != _at_level(after, level) for level in range(2, _TOP_LEVEL + 1)):
+        return [f"{path}: still {new:g} at level 1, changed at higher levels"]
+    return []
+
+
+def _brief(node: dict, levels: bool = False) -> str:
+    if levels and _limited(node):
+        return f"{_level_one(node):g} at level 1"
     parts = []
     for key, value in node.items():
-        if _skip_key(key) or isinstance(value, (dict, list)):
+        if _skipped(key):
             continue
-        parts.append(f"{key}={_fmt(value, 40)}")
+        first = _level_one(value) if levels else None
+        if first is not None:
+            parts.append(f"{key}={first:g}")
+        elif not isinstance(value, (dict, list)):
+            parts.append(f"{key}={_fmt(value, 40)}")
     return ", ".join(parts) or f"{len(node)} keys"
 
 
-def _leaf_changes(old: Any, new: Any, names: dict[str, str], prefix: str = "") -> list[str]:
-    """`path: old --> new` for every value that differs, final values only."""
+def _leaf_changes(
+    old: Any, new: Any, names: dict[str, str], prefix: str = "", *, levels: bool = False
+) -> list[str]:
+    """`path: old --> new` for every value that differs, final values only.
+
+    `levels` is for classes, whose numbers can grow per level up to a limit.
+    """
     out: list[str] = []
 
     def walk(before: Any, after: Any, path: str) -> None:
@@ -273,7 +332,7 @@ def _leaf_changes(old: Any, new: Any, names: dict[str, str], prefix: str = "") -
             return
         if isinstance(before, dict) and isinstance(after, dict):
             for key in sorted(set(before) | set(after), key=str):
-                if _skip_key(key):
+                if _skipped(key):
                     continue
                 b, a = before.get(key), after.get(key)
                 if _canon(b) == _canon(a):
@@ -281,9 +340,11 @@ def _leaf_changes(old: Any, new: Any, names: dict[str, str], prefix: str = "") -
                 label = _segment(key, names)
                 child = f"{path}.{label}" if path else label
                 if b is None and isinstance(a, dict):
-                    out.append(f"{child}: added ({_brief(a)})")
+                    out.append(f"{child}: added ({_brief(a, levels)})")
                 elif a is None and isinstance(b, dict):
                     out.append(f"{child}: removed")
+                elif levels and _level_one(b) is not None and _level_one(a) is not None and (_limited(b) or _limited(a)):
+                    out.extend(_value_change(child, b, a))
                 else:
                     walk(b, a, child)
             return
@@ -299,16 +360,19 @@ def _leaf_changes(old: Any, new: Any, names: dict[str, str], prefix: str = "") -
     return out
 
 
-def _summary(node: Any, names: dict[str, str]) -> list[str]:
-    """The values of something new, flattened to a few lines."""
+def _summary(node: Any, names: dict[str, str], *, levels: bool = False) -> list[str]:
+    """The values of something new, flattened to a few lines. `levels` is for classes."""
     out: list[str] = []
 
     def walk(value: Any, path: str, depth: int) -> None:
         if len(out) >= MAX_DETAILS:
             return
+        if levels and _limited(value):
+            out.append(f"{path} at level 1: {_level_one(value):g}")
+            return
         if isinstance(value, dict) and depth < 4:
             for key, item in value.items():
-                if _skip_key(key):
+                if _skipped(key) or (levels and depth == 0 and str(key) in _CLASS_MENU):
                     continue
                 label = _segment(key, names)
                 walk(item, f"{path}.{label}" if path else label, depth + 1)
@@ -346,10 +410,11 @@ def file_entries(old: Any, new: Any, names: dict[str, str]) -> list[EntryChange]
     root = _root_name(new) or _root_name(old)
     if root:
         if kind == "added":
-            return [EntryChange(root, kind, _summary(new, names))]
+            return [EntryChange(root, kind, _summary(new, names, levels=True))]
         if kind == "removed":
             return [EntryChange(root, kind)]
-        return [EntryChange(root, kind, _leaf_changes(old, new, names))]
+        details = _leaf_changes(old, new, names, levels=True)
+        return [EntryChange(root, kind, details)] if details else []
     if not isinstance(old, dict) or not isinstance(new, dict):
         return [EntryChange("file", "changed", [f"value: {_fmt(old)} --> {_fmt(new)}"])]
     entries: list[EntryChange] = []
@@ -367,7 +432,9 @@ def file_entries(old: Any, new: Any, names: dict[str, str]) -> list[EntryChange]
             elif after is None:
                 entries.append(EntryChange(name, "removed"))
             else:
-                entries.append(EntryChange(name, "changed", _leaf_changes(before, after, names)))
+                details = _leaf_changes(before, after, names)
+                if details:
+                    entries.append(EntryChange(name, "changed", details))
         else:
             settings.append(f"{_segment(key, names)}: {_fmt(before)} --> {_fmt(after)}")
     if settings:

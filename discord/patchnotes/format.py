@@ -355,6 +355,37 @@ def post_messages(post: dict, mention: str | None = None) -> list[str]:
     return messages
 
 
+_WRITER_NAMES = {"opus": "Claude Opus", "sonnet": "Claude Sonnet", "haiku": "Claude Haiku"}
+
+
+def writer_name(writer: str) -> str:
+    """`claude:claude-opus-5-5` as `Claude Opus`, and `codex:...` as `Codex`."""
+    cli, _, model = writer.partition(":")
+    if cli == "claude":
+        return next((name for part, name in _WRITER_NAMES.items() if part in model), "Claude")
+    return cli.capitalize()
+
+
+def writer_lines(post: dict, *, rewritten: bool = False) -> list[str]:
+    """Who wrote the post, how it was checked and what staff should look at."""
+    report = post.get("report")
+    if not isinstance(report, dict) or not report.get("writer"):
+        return []
+    writer, checks = str(report["writer"]), int(report.get("checks") or 0)
+    times = {0: "not checked", 1: "checked once"}.get(checks, f"checked {checks} times")
+    line = f"{'Rewritten' if rewritten else 'Written'} by {writer_name(writer)}, {times}."
+    if not checks or (not rewritten and not writer.startswith("claude:")):
+        line += " Please read it more closely than usual."
+    lines = [line]
+    doubtful = [item for item in report.get("unconfirmed") or [] if isinstance(item, list) and len(item) == 2]
+    if doubtful:
+        lines.append("These numbers match no change in the server files, so check them:")
+        for text, numbers in doubtful:
+            short = str(text).lstrip("- ")
+            lines.append(f"- {numbers} in: {short[:100] + '…' if len(short) > 100 else short}")
+    return lines
+
+
 def post_review_notice(
     week: str,
     post: dict,
@@ -372,6 +403,7 @@ def post_review_notice(
     else:
         lines.append(f"**{title}** for {week_label(week)} is ready to review.")
     lines.append("Below is exactly what goes to #updates at 18:00, ping included.")
+    lines += writer_lines(post, rewritten=rewritten)
     if post.get("source") == "fallback":
         lines.append(
             "The writer did not finish, so this is a plain list from the server changes. "
@@ -398,11 +430,12 @@ def post_test_notice(week: str, post: dict) -> str:
         f"Draft for {week_label(week)}, for staff to read before approving.",
         "Nothing was posted to #updates and nobody was pinged. This copy has no buttons.",
     ]
+    lines += writer_lines(post)
     if post.get("source") == "fallback":
         lines.append("The writer did not finish, so this is the plain list from the server changes.")
     if str(post.get("status") or "") == "approved":
         lines.append("This post is already approved.")
-    return "\n".join(lines)
+    return "\n".join(lines)[:DISCORD_LIMIT]
 
 
 def post_test_end() -> str:

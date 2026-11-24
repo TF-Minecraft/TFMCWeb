@@ -55,6 +55,8 @@ class TrackedFilesTest(unittest.TestCase):
         self.assertFalse(weekly.tracked_config("Archaeo/ownership/journals/17948.yml"))
         self.assertFalse(weekly.tracked_config("CompanionPets/estates/345f77c2-0.yml"))
         self.assertFalse(weekly.tracked_config("config.yml"))
+        self.assertFalse(weekly.tracked_config("MMOItems/item/helper_miscellanea.yml"))
+        self.assertTrue(weekly.tracked_config("MMOItems/item/staff.yml"))
 
     def test_hidden_words_never_reach_the_facts(self) -> None:
         facts = {
@@ -114,6 +116,57 @@ class CompareTest(unittest.TestCase):
         current = _snapshot({"MMOCore/classes/juggernaut.yml": new, "MythicLib/skill/tfmc.yml": _SKILLS})
         details = weekly.compare(base, current)["files"][0]["entries"][0]["details"]
         self.assertEqual(details, ["skills.Unbroken: added (level=2)"])
+
+    def test_limited_skill_values_show_what_players_see_at_level_one(self) -> None:
+        old = """
+display: {name: Templar}
+skills:
+  A: {cooldown: {base: 21.0, per-level: -1, max: 20.0}, heal: {base: 3, per-level: 1}}
+  B: {cooldown: {base: 12, per-level: -1, max: 10}, range: {base: 12, max: 10}}
+  C: {duration: {base: 1, min: 2}}
+"""
+        new = old.replace("21.0", "18.0").replace("max: 20.0", "max: 17.0").replace("base: 3,", "base: 4,")
+        new = new.replace("base: 12", "base: 11").replace("min: 2", "min: 2.5")
+        new += "  D: {level: 3, heal: {base: 9, max: 8}, mana: {base: 5}}\n  E: {base: 4, max: 3}\n"
+        path = "MMOCore/classes/templar.yml"
+        details = weekly.compare(_snapshot({path: old}), _snapshot({path: new}))["files"][0]["entries"][0]["details"]
+        self.assertEqual(details, [
+            "skills.A.cooldown at level 1: 20 --> 17",
+            "skills.A.heal.base: 3 --> 4",
+            "skills.B.cooldown: still 10 at level 1, changed at higher levels",
+            "skills.C.duration at level 1: 2 --> 2.5",
+            "skills.D: added (level=3, heal=8, mana=5)",
+            "skills.E: added (3 at level 1)",
+        ])
+        self.assertIsNone(weekly._level_one({"base": True, "max": 2}))
+
+    def test_only_classes_have_levels_and_menus(self) -> None:
+        old, new = ("A: {x: 1}\nB:\n  speed: {base: %s, max: 5}\n" % base for base in (6, 7))
+        new += "C: {options: {slow: 2}, speed: {base: 6, max: 5}}\n"
+        path = "VehicleFramework/a.yml"
+        entries = weekly.compare(_snapshot({path: old}), _snapshot({path: new}))["files"][0]["entries"]
+        self.assertEqual([entry["details"] for entry in entries], [
+            ["speed.base: 6 --> 7"], ["options.slow: 2", "speed.base: 6", "speed.max: 5"],
+        ])
+
+    def test_a_new_class_shows_its_stats_and_not_its_menus(self) -> None:
+        slots = "\n".join(f"  {n}: {{name: Slot {n}, unlocked-by-default: false}}" for n in range(1, 40))
+        new = f"display: {{name: Conjurer}}\nskill-slots:\n{slots}\nexp-table: x\nattributes:\n" \
+              "  cooldown-reduction: {base: 10}\n  speed: {base: 4, max: 3}\n"
+        facts = weekly.compare(_snapshot({}), _snapshot({"MMOCore/classes/conjurer.yml": new}))
+        self.assertEqual(facts["files"][0]["entries"][0]["details"], [
+            "display.name: Conjurer", "attributes.cooldown-reduction.base: 10", "attributes.speed at level 1: 3",
+        ])
+
+    def test_a_new_revision_alone_is_not_a_change(self) -> None:
+        old = "ROBE:\n  base: {name: Robe, armor: 1}\nHAT:\n  base: {name: Hat, armor: 1}\n"
+        new = "ROBE:\n  base: {name: Robe, armor: 1, revision-id: 2}\nHAT:\n  base: {name: Hat, armor: 2, revision-id: 2}\n"
+        path = "MMOItems/item/robes.yml"
+        entries = weekly.compare(_snapshot({path: old}), _snapshot({path: new}))["files"][0]["entries"]
+        self.assertEqual([(entry["name"], entry["details"]) for entry in entries], [("Hat", ["base.armor: 1 --> 2"])])
+        self.assertEqual(weekly.file_entries(
+            {"display": {"name": "Mage"}, "a": {"revision-id": 1}},
+            {"display": {"name": "Mage"}, "a": {"revision-id": 2}}, {}), [])
 
     def test_reformatting_alone_is_not_a_change(self) -> None:
         base = _snapshot({"Cooking/config.yml": "a: 1\nb: 2\n"})

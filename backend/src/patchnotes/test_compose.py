@@ -118,6 +118,17 @@ class PromptTest(unittest.TestCase):
         facts = {"plugins": [{"plugin": "p", "old": "1", "new": "2", "commits": ["A", "B"], "details": {"A": "More."}}]}
         self.assertIn("  - A\n    Developer description: More.\n  - B", compose.render_facts(facts))
 
+    def test_entries_that_changed_the_same_way_share_a_line(self) -> None:
+        def entry(name, *details):
+            return {"name": name, "kind": "changed", "details": list(details)}
+
+        same = [entry(f"Robe {n}", "class: [Mage] --> [Invoker]") for n in range(20)]
+        text = compose.render_facts({"files": [{"path": "a.yml", "kind": "changed", "entries": [
+            *same, entry("Hat", "armor: 1 --> 2"), entry("Mask", "armor: 1 --> 2"), entry("Cape")]}]})
+        self.assertIn("- 20 of them (changed): Robe 0, Robe 1,", text)
+        self.assertIn("Robe 14 and 5 more: class: [Mage] --> [Invoker]", text)
+        self.assertIn("- Hat (changed): armor: 1 --> 2\n- Mask (changed): armor: 1 --> 2\n- Cape (changed)", text)
+
     def test_feedback_wins_over_the_facts_in_both_passes(self) -> None:
         prompt = compose.compose_prompt(
             _FACTS, week="2026-W41", label="5.3", act=None, page_url="x",
@@ -131,9 +142,10 @@ class PromptTest(unittest.TestCase):
         self.assertTrue(review.endswith("Draft:"))
 
     def test_the_review_carries_the_whole_task(self) -> None:
-        review = compose.review_prompt("The task and facts")
-        self.assertTrue(review.startswith("The task and facts"))
-        self.assertTrue(review.endswith("Draft:"))
+        for build in (compose.improve_prompt, compose.review_prompt):
+            review = build("The task and facts")
+            self.assertTrue(review.startswith("The task and facts"))
+            self.assertTrue(review.endswith("Draft:"))
 
     def test_facts_are_trimmed_to_the_budget(self) -> None:
         text = compose.render_facts(_FACTS, budget=80)
@@ -181,11 +193,21 @@ class MessagesTest(unittest.TestCase):
     def test_busy_weeks_may_run_past_the_target_but_not_the_cap(self) -> None:
         prompt = compose.compose_prompt(_FACTS, week="2026-W41", label="5.3", act=None, page_url="x")
         self.assertIn(f"at most {compose.TARGET_MESSAGES} messages", prompt)
+        self.assertIn(f"about {compose.TARGET_WORDS} words", prompt)
         twelve = [f"# Part {n}\n- line" for n in range(12)]
         self.assertEqual(len(compose.messages_from_response({"messages": twelve})), 12)
+        self.assertEqual(len(compose.messages_from_response({"messages": twelve}, pack=True)), 1)
         too_many = [f"# Part {n}\n- line" for n in range(compose.MAX_MESSAGES + 1)]
         with self.assertRaises(FeedbackError):
             compose.messages_from_response({"messages": too_many})
+
+    def test_short_messages_are_joined_without_passing_a_limit(self) -> None:
+        sizes = (1000, 890, 900, 100, 1949, 50)
+        packed = compose.pack_messages(["x" * size for size in sizes])
+        self.assertEqual([len(message) for message in packed], [1892, 1002, 1949, 50])
+        self.assertLessEqual(len(packed[0]), compose.FIRST_LIMIT)
+        self.assertEqual("".join(packed).replace("\n", ""), "x" * sum(sizes))
+        self.assertEqual(compose.pack_messages([]), [])
 
     def test_empty_or_missing_posts_fail(self) -> None:
         with self.assertRaises(FeedbackError):

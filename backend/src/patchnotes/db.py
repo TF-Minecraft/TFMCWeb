@@ -192,6 +192,13 @@ def _local_now(now: datetime | None = None) -> datetime:
     return moment.astimezone(_zone())
 
 
+def friday(week: str, hour: int, minute: int = 0) -> datetime:
+    """Friday of an ISO week at a local time in PATCHNOTES_TZ."""
+    year, number = parse_week(week).split("-W")
+    day = datetime.fromisocalendar(int(year), int(number), 5)
+    return day.replace(hour=hour, minute=minute, tzinfo=_zone())
+
+
 def next_week(week: str) -> str:
     """The ISO week after `week`."""
     week_key = parse_week(week)
@@ -402,6 +409,7 @@ def migrate() -> None:
             """
         )
         cur.execute("ALTER TABLE patchnote_jobs ADD COLUMN IF NOT EXISTS requester TEXT")
+        cur.execute("ALTER TABLE patchnote_jobs ADD COLUMN IF NOT EXISTS not_before TIMESTAMPTZ")
         cur.execute("DROP INDEX IF EXISTS patchnote_jobs_active_week_idx")
         cur.execute(
             """
@@ -430,6 +438,9 @@ def migrate() -> None:
             )
             """
         )
+        # Who wrote the post and what to look at, and the version it replaced.
+        cur.execute("ALTER TABLE patchnote_posts ADD COLUMN IF NOT EXISTS report JSONB")
+        cur.execute("ALTER TABLE patchnote_posts ADD COLUMN IF NOT EXISTS previous JSONB")
         cur.execute(
             """
             CREATE TABLE IF NOT EXISTS patchnote_week_meta (
@@ -1147,11 +1158,12 @@ class BulletNotOpen(RuntimeError):
 
 _JOB_COLUMNS = (
     "id, week, kind, feedback, requester, status, error, changed, line_ids, "
-    "created_at, claimed_at, finished_at"
+    "created_at, claimed_at, finished_at, not_before"
 )
 
 
 def _expire_jobs(cur) -> None:
+    """Fail jobs nobody picked up or finished. The Friday post has more time, it is written in three passes."""
     cur.execute(
         """
         UPDATE patchnote_jobs
@@ -1159,17 +1171,19 @@ def _expire_jobs(cur) -> None:
             error = CASE WHEN status = 'queued'
                 THEN 'The rewrite agent is not running.'
                 ELSE 'The rewrite took too long.' END
-        WHERE (status = 'queued' AND created_at < now() - interval '90 seconds'
+        WHERE (status = 'queued' AND GREATEST(created_at, not_before) < now() - interval '90 seconds'
                AND NOT EXISTS (
                    SELECT 1 FROM patchnote_jobs active WHERE active.status = 'running'
                ))
-           OR (status = 'running' AND claimed_at < now() - interval '20 minutes')
+           OR (status = 'running' AND claimed_at < now() - CASE
+                   WHEN requester = 'weekly' AND kind = 'compose' THEN interval '60 minutes' ELSE interval '20 minutes' END)
         """
     )
 
 
 LINE_JOB_KINDS = ("feedback", "sort")
 POST_JOB_KINDS = ("compose",)
+WEEKLY_REQUESTER = "weekly"
 
 
 def create_job(
@@ -1181,6 +1195,15 @@ def create_job(
         raise ValueError("Invalid job kind")
     with _connect() as conn, _cursor(conn) as cur:
         _expire_jobs(cur)
+        if kind in POST_JOB_KINDS and requester != WEEKLY_REQUESTER:
+            # Staff do not have to wait for a Friday run that is only waiting for its next try.
+            cur.execute(
+                """
+                UPDATE patchnote_jobs SET status = 'failed', finished_at = now(), error = 'Staff started it by hand.'
+                WHERE week = %s AND kind = ANY(%s) AND status = 'queued' AND not_before > now()
+                """,
+                (week_key, list(POST_JOB_KINDS)),
+            )
         cur.execute(
             f"""
             INSERT INTO patchnote_jobs (week, kind, feedback, requester)
@@ -1202,7 +1225,8 @@ def claim_job() -> dict[str, Any] | None:
         cur.execute(
             f"""
             SELECT {_JOB_COLUMNS} FROM patchnote_jobs
-            WHERE status = 'queued' ORDER BY created_at ASC, id ASC
+            WHERE status = 'queued' AND (not_before IS NULL OR not_before <= now())
+            ORDER BY created_at ASC, id ASC
             LIMIT 1 FOR UPDATE SKIP LOCKED
             """
         )
@@ -1238,6 +1262,22 @@ def finish_job(job_id: str, *, changed: int | None = None, error: str | None = N
             """,
             ("failed" if error is not None else "done", changed,
              error[:300] if error is not None else None, job_id),
+        )
+        row = cur.fetchone()
+        if row is None:
+            raise JobNotRunning(job_id)
+        return dict(row)
+
+
+def requeue_job(job_id: str, not_before: datetime) -> dict[str, Any]:
+    """Put a running job back in the queue for later."""
+    with _connect() as conn, _cursor(conn) as cur:
+        cur.execute(
+            f"""
+            UPDATE patchnote_jobs SET status = 'queued', claimed_at = NULL, not_before = %s
+            WHERE id = %s AND status = 'running' RETURNING {_JOB_COLUMNS}
+            """,
+            (not_before, job_id),
         )
         row = cur.fetchone()
         if row is None:
@@ -1413,29 +1453,57 @@ def get_facts(week: str) -> dict[str, Any] | None:
         return dict(row) if row else None
 
 
-def save_post(week: str, messages: list[str], source: str) -> dict[str, Any]:
-    """Store the week's Discord post as a draft. A rewrite needs approving again."""
+_POST_COLUMNS = "week, messages, source, status, updated_at, report, previous IS NOT NULL AS has_previous"
+_POST_VERSION = (
+    "jsonb_build_object('messages', patchnote_posts.messages, 'source', patchnote_posts.source, "
+    "'report', patchnote_posts.report)"
+)
+
+
+def save_post(
+    week: str, messages: list[str], source: str, report: dict[str, Any] | None = None
+) -> dict[str, Any]:
+    """Store the week's Discord post as a draft and keep the version it replaces.
+
+    A rewrite needs approving again. `report` says who wrote it, for staff.
+    """
     if source not in {"writer", "fallback"}:
         raise ValueError("Invalid post source")
     with _connect() as conn, _cursor(conn) as cur:
         cur.execute(
-            """
-            INSERT INTO patchnote_posts (week, messages, source, status) VALUES (%s, %s, %s, 'draft')
+            f"""
+            INSERT INTO patchnote_posts (week, messages, source, status, report) VALUES (%s, %s, %s, 'draft', %s)
             ON CONFLICT (week) DO UPDATE SET messages = EXCLUDED.messages, source = EXCLUDED.source,
-                status = 'draft', updated_at = now()
-            RETURNING week, messages, source, status, updated_at
+                report = EXCLUDED.report, status = 'draft', updated_at = now(),
+                previous = CASE WHEN patchnote_posts.messages = EXCLUDED.messages
+                    THEN patchnote_posts.previous ELSE {_POST_VERSION} END
+            RETURNING {_POST_COLUMNS}
             """,
-            (parse_week(week), Jsonb(messages), source),
+            (parse_week(week), Jsonb(messages), source, Jsonb(report) if report else None),
         )
         return dict(cur.fetchone())
 
 
-def get_post(week: str) -> dict[str, Any] | None:
+def restore_post(week: str) -> dict[str, Any] | None:
+    """Swap the post with the version it replaced. Doing it again swaps back."""
     with _connect() as conn, _cursor(conn) as cur:
         cur.execute(
-            "SELECT week, messages, source, status, updated_at FROM patchnote_posts WHERE week = %s",
+            f"""
+            UPDATE patchnote_posts SET messages = previous->'messages', source = previous->>'source',
+                report = NULLIF(previous->'report', 'null'::jsonb), previous = {_POST_VERSION},
+                status = 'draft', updated_at = now()
+            WHERE week = %s AND previous IS NOT NULL
+            RETURNING {_POST_COLUMNS}
+            """,
             (parse_week(week),),
         )
+        row = cur.fetchone()
+        return dict(row) if row else None
+
+
+def get_post(week: str) -> dict[str, Any] | None:
+    with _connect() as conn, _cursor(conn) as cur:
+        cur.execute(f"SELECT {_POST_COLUMNS} FROM patchnote_posts WHERE week = %s", (parse_week(week),))
         row = cur.fetchone()
         return dict(row) if row else None
 

@@ -22,7 +22,8 @@ os.environ.setdefault("SKINS_DEV", "1")
 from fastapi.testclient import TestClient  # noqa: E402
 
 from server import app  # noqa: E402
-from src.patchnotes.db import JobActive  # noqa: E402
+from src.api import patchnotes_routes as routes  # noqa: E402
+from src.patchnotes.db import JobActive, PatchnotesDBError  # noqa: E402
 
 _HEADERS = {"X-Staff-Key": "dev-staff-key"}
 _ROUTES = "src.api.patchnotes_routes"
@@ -116,6 +117,8 @@ class PostRoutesTest(unittest.TestCase):
             data = self.client.post("/patchnotes/staff/jobs/claim", headers=_HEADERS).json()
         self.assertIn("- Horses are faster.", data["prompt"])
         self.assertTrue(data["review"].startswith(data["prompt"]))
+        self.assertTrue(data["improve"].startswith(data["prompt"]))
+        self.assertFalse(data["may_wait"])
 
     def test_facts_are_stored_and_start_the_writer(self) -> None:
         with mock.patch(f"{_ROUTES}.save_facts") as save, mock.patch(
@@ -247,8 +250,64 @@ class PostRoutesTest(unittest.TestCase):
                 headers=_HEADERS,
             )
         self.assertEqual(response.status_code, 200)
-        save.assert_called_once_with("2026-W41", ["# Update 5.3\nHi", "# Fixes\n- Fixed knockouts"], "writer")
-        finish.assert_called_once_with("22222222-2222-2222-2222-222222222222", changed=2)
+        # Short messages are joined, and an older worker does not say who wrote it.
+        save.assert_called_once_with("2026-W41", ["# Update 5.3\nHi\n\n# Fixes\n- Fixed knockouts"], "writer", None)
+        finish.assert_called_once_with("22222222-2222-2222-2222-222222222222", changed=1)
+
+    def test_staff_learn_who_wrote_it_and_which_numbers_to_check(self) -> None:
+        messages = ["# Update 5.3", "- Bash 9 --> 7 s"]
+        body = {"output": json.dumps({"messages": messages}), "writer": "claude:claude-opus-5-5", "checks": 2,
+                "unconfirmed": [["- Bash 9 --> 7 s \u2694\ufe0f", "9 --> 7"], ["- Removed 2 --> 1 s", "2 --> 1"]]}
+        report = {"writer": "claude:claude-opus-5-5", "checks": 2, "unconfirmed": [["- Bash 9 --> 7 s", "9 --> 7"]]}
+        url = "/patchnotes/staff/jobs/22222222-2222-2222-2222-222222222222/result"
+        # A rewrite after feedback keeps the messages as staff asked for them.
+        for feedback, stored in ((None, ["# Update 5.3\n\n- Bash 9 --> 7 s"]), ("Split it", messages)):
+            with mock.patch(f"{_ROUTES}.get_job", return_value=_job(status="running", feedback=feedback)), mock.patch(
+                f"{_ROUTES}.save_post"
+            ) as save, mock.patch(f"{_ROUTES}.finish_job", return_value=_job(status="done")):
+                self.assertEqual(self.client.post(url, json=body, headers=_HEADERS).status_code, 200)
+            save.assert_called_once_with("2026-W41", stored, "writer", report)
+        with mock.patch(f"{_ROUTES}.get_post", return_value=_post(report=report, has_previous=True)), mock.patch(
+            f"{_ROUTES}.latest_job", return_value=_job(status="done")
+        ):
+            post = self.client.get("/patchnotes/staff/weeks/2026-W41/post", headers=_HEADERS).json()
+        self.assertEqual((post["report"], post["has_previous"], post["job"]["retry_at"]), (report, True, None))
+
+    def test_a_friday_run_out_of_usage_is_tried_again_while_there_is_time(self) -> None:
+        url = "/patchnotes/staff/jobs/22222222-2222-2222-2222-222222222222/result"
+        early = datetime(2026, 10, 9, 10, 10, tzinfo=timezone.utc)  # 12:10 in Berlin
+        late = datetime(2026, 10, 9, 12, 20, tzinfo=timezone.utc)
+        weekly = _job(status="running", requester="weekly")
+        self.assertEqual(routes._retry_at(weekly, early), datetime(2026, 10, 9, 11, 10, tzinfo=timezone.utc))
+        self.assertIsNone(routes._retry_at(weekly, late))
+        self.assertIsNone(routes._retry_at(_job(requester="42"), early))
+        self.assertIsNone(routes._retry_at(_job(requester="weekly", kind="sort"), early))
+        for job, moment, requeued in ((weekly, early, True), (weekly, None, True), (_job(status="running"), None, False)):
+            with mock.patch(f"{_ROUTES}.get_job", return_value=job), mock.patch(
+                f"{_ROUTES}._retry_at", return_value=moment
+            ), mock.patch(f"{_ROUTES}.requeue_job", return_value=_job(not_before=early)) as requeue, mock.patch(
+                f"{_ROUTES}.finish_job", return_value=_job(status="failed")
+            ) as finish, mock.patch(f"{_ROUTES}.get_post", return_value=_post()):
+                body = self.client.post(url, json={"retry": True}, headers=_HEADERS).json()
+            self.assertEqual((requeue.called, finish.called), (requeued, not requeued))
+            self.assertEqual(body["job"]["retry_at"] is not None, requeued)
+            if requeued:
+                self.assertLessEqual(requeue.call_args.args[1], moment or datetime.now(timezone.utc))
+
+    def test_the_replaced_version_can_be_put_back(self) -> None:
+        url = "/patchnotes/staff/weeks/2026-W41/post/restore"
+        self.assertEqual(self.client.post(url).status_code, 401)
+        for job, post, status in (
+            (_job(status="running"), _post(), 409), (None, None, 404), (_job(status="done"), _post(), 200),
+        ):
+            with mock.patch(f"{_ROUTES}.latest_job", return_value=job), mock.patch(
+                f"{_ROUTES}.restore_post", return_value=post
+            ):
+                response = self.client.post(url, headers=_HEADERS)
+            self.assertEqual(response.status_code, status)
+        self.assertEqual(response.json()["messages"], ["# Update 5.3\nHello"])
+        with mock.patch(f"{_ROUTES}.latest_job", side_effect=PatchnotesDBError("down")):
+            self.assertEqual(self.client.post(url, headers=_HEADERS).status_code, 502)
 
     def test_writer_failure_keeps_a_plain_post(self) -> None:
         with mock.patch(f"{_ROUTES}.get_job", return_value=_job(status="running")), mock.patch(

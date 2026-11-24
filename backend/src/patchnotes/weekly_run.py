@@ -43,10 +43,19 @@ _CUTOFF_HOUR = 12
 _LATE_LIMIT = timedelta(days=3)
 _MAX_COMMITS = 25
 _MAX_DETAIL = 1800
+_MAX_FACTS_BYTES = 1_500_000  # The API refuses 2 MB.
 _HIDDEN_WORK = re.compile(
-    r"\b(hidden|secrets?|codex|lore|dungeons?|dev-only|staff|admins?)\b",
+    r"\b(hidden|secrets?|codex|lore|dungeons?|dev-only|admins?)\b",
     re.IGNORECASE,
 )
+# Work for the staff team. A staff is also a weapon, so only the first words always mean the team.
+_STAFF_WORK = re.compile(
+    r"\badmins?\b|\bstaff[ -](?:only|members?|team|chat|commands?|ranks?|permissions?|menus?|panel)\b", re.IGNORECASE
+)
+_STAFF_MENTION = re.compile(
+    r"\b(?:lets?|allows?|only|by|for) staff\b|\bstaff (?:can|may|tools?|side|now|lists?)\b", re.IGNORECASE
+)
+_STAFF_WEAPON = re.compile(r"\bmages? staff\b|\bstaff (?:of|weapons?|damage|runes?)\b", re.IGNORECASE)
 _HIDDEN_SUBJECT = re.compile(r"\b(hidden|secrets?|dev-only)\b|\(dev\)", re.IGNORECASE)
 _REVIEW_WORK = re.compile(
     r"^(address|apply|review|fix review|merge|resolve|bump|release|test|tests|ci|docs|refactor|rename|format|keep)\b",
@@ -110,9 +119,13 @@ def _github(path: str) -> Any:
         return json.loads(response.read().decode() or "null")
 
 
+def _staff_work(text: str) -> bool:
+    return bool(_STAFF_WORK.search(text) or _STAFF_MENTION.search(_STAFF_WEAPON.sub("weapon", text)))
+
+
 def _unsafe_detail(text: str, words: re.Pattern[str]) -> bool:
     return bool(
-        words.search(text) or _HIDDEN_WORK.search(text) or _SECRET.search(text) or _EXPLOIT.search(text)
+        words.search(text) or _HIDDEN_WORK.search(text) or _staff_work(text) or _SECRET.search(text) or _EXPLOIT.search(text)
         or _PERMISSION.search(text) or _PLACE.search(text) or _XYZ.search(text)
         or hidden_knowledge_warning(text)
     )
@@ -166,6 +179,8 @@ def commit_subjects(
             subject = message.strip().splitlines()[0].strip() if message.strip() else ""
             if not subject or _MERGE.match(subject) or _HIDDEN_SUBJECT.search(subject):
                 continue
+            if _staff_work(subject):
+                continue
             kind, _ = _split_conventional(subject)
             if kind in _SKIP_KINDS:
                 continue
@@ -177,6 +192,22 @@ def commit_subjects(
                     details[cleaned] = detail
         return subjects[-_MAX_COMMITS:]
     return []
+
+
+def _fit(facts: dict[str, Any], limit: int = _MAX_FACTS_BYTES) -> dict[str, Any]:
+    """Shorten the entries of an unusually large week, then their text, so the API takes the facts."""
+    for keep in (40, 15, 5, 1):
+        if len(json.dumps(facts)) <= limit:
+            break
+        for item in facts["files"]:
+            for entry in item["entries"]:
+                if len(entry["details"]) > keep:
+                    entry["details"] = entry["details"][:keep] + ["and more changed values"]
+    if len(json.dumps(facts)) > limit:
+        for item in facts["files"]:
+            for entry in item["entries"]:
+                entry["details"] = [detail[:120] for detail in entry["details"]]
+    return facts
 
 
 def build_facts(
@@ -206,7 +237,7 @@ def build_facts(
             "partial": partial,
         }
     )
-    return facts
+    return _fit(facts)
 
 
 def _api(api_base: str, staff_key: str, method: str, path: str, payload: dict | None = None) -> tuple[int, Any]:

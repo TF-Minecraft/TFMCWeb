@@ -27,7 +27,7 @@ def _claude_reply(**fields) -> str:
 
 
 class WritersTest(unittest.TestCase):
-    def _run(self, env, outcomes, review=None, week=None):
+    def _run(self, env, outcomes, review=None, week=None, **options):
         calls = []
 
         def run(command, **kwargs):
@@ -44,7 +44,7 @@ class WritersTest(unittest.TestCase):
 
         with mock.patch.dict("os.environ", env, clear=True), \
                 mock.patch("patchnotes.rewrite_worker.subprocess.run", side_effect=run):
-            result = worker.run_job("Sort", _SCHEMA, review, week)
+            result = worker.run_job("Sort", _SCHEMA, review, week, **options)
         return result, calls
 
     def test_the_writer_checks_its_own_draft(self) -> None:
@@ -54,6 +54,59 @@ class WritersTest(unittest.TestCase):
         self.assertEqual(json.loads(result["output"]), fixed)
         self.assertTrue(calls[1][1]["input"].startswith("Check:"))
         self.assertIn('"draft"', calls[1][1]["input"])
+
+    def test_a_post_is_written_improved_and_then_checked(self) -> None:
+        replies = [_claude_reply(structured_output={"lines": [text]}) for text in ("draft", "better", "fixed")]
+        result, calls = self._run(_CLAUDE, replies, "Check:", improve="Improve:")
+        self.assertEqual(json.loads(result["output"]), {"lines": ["fixed"]})
+        self.assertEqual((result["writer"], result["checks"]), ("claude:a", 2))
+        self.assertTrue(calls[1][1]["input"].startswith("Improve:"))
+        self.assertIn('"draft"', calls[1][1]["input"])
+        self.assertIn('"better"', calls[2][1]["input"])
+        # Nobody waits for the Friday run, but an older API does. A Discord command ends before its reply runs out.
+        self.assertEqual(calls[0][1]["timeout"], 600)
+        _, calls = self._run(_CLAUDE, replies, "Check:")
+        self.assertEqual(calls[0][1]["timeout"], 390)
+        _, calls = self._run({**_CLAUDE, "PATCHNOTES_CLAUDE_OWNER": "42"}, replies, "Check:", requester="42")
+        self.assertEqual(calls[0][1]["timeout"], 390)
+
+    def test_a_failed_improvement_keeps_the_draft_for_the_check(self) -> None:
+        replies = [_claude_reply(structured_output={"lines": ["draft"]}), subprocess.TimeoutExpired("claude", 1),
+                   _claude_reply(structured_output={"lines": ["fixed"]})]
+        result, calls = self._run(_CLAUDE, replies, "Check:", improve="Improve:")
+        self.assertEqual((json.loads(result["output"]), result["checks"]), ({"lines": ["fixed"]}, 1))
+        self.assertIn('"draft"', calls[2][1]["input"])
+
+    @mock.patch("patchnotes.rewrite_worker.time.monotonic", side_effect=[0, 0, 0, 2400, 2400, 2400])
+    def test_no_improvement_without_time_for_the_check(self, _clock) -> None:
+        replies = [_claude_reply(structured_output={"lines": [text]}) for text in ("draft", "fixed")]
+        result, calls = self._run(_CLAUDE, replies, "Check:", improve="Improve:")
+        self.assertEqual((len(calls), result["checks"]), (2, 1))
+        self.assertTrue(calls[1][1]["input"].startswith("Check:"))
+
+    def test_numbers_without_a_change_reach_the_check_and_staff(self) -> None:
+        schema = {"required": ["messages"], "properties": {"messages": {"type": "array"}}}
+        draft, fixed = ({"messages": [text]} for text in ("- Bash 9 --> 7 s\n- Dash 5 --> 4 s", "- Dash 5 --> 4 s"))
+        replies = [_claude_reply(structured_output=value) for value in (draft, draft, fixed)]
+        with mock.patch(f"{__name__}._SCHEMA", schema):
+            result, calls = self._run(_CLAUDE, replies, "Check:", improve="Improve:")
+            self.assertIn("- 9 --> 7: - Bash 9 --> 7 s", calls[2][1]["input"])
+            self.assertEqual(result["unconfirmed"], [("- Dash 5 --> 4 s", "5 --> 4")])
+            # After staff feedback their numbers stand.
+            result, calls = self._run(_CLAUDE, replies, "Check:")
+        self.assertNotIn("match no change", calls[1][1]["input"])
+        self.assertEqual(result["unconfirmed"], [])
+        self.assertEqual(worker._unconfirmed("[]", ""), [])
+
+    def test_the_friday_run_waits_for_claude_before_codex(self) -> None:
+        limited = subprocess.CompletedProcess([], 1, _claude_reply(is_error=True, result="5-hour limit reached"), "")
+        broken = subprocess.CompletedProcess([], 1, "", "Please run /login")
+        result, calls = self._run(_CLAUDE, [limited, limited], may_wait=True)
+        self.assertEqual((result, len(calls)), ({"retry": True}, 2))
+        # Without time left to wait, or when waiting does not help, Codex writes it.
+        for outcomes, may_wait in (([limited, limited], False), ([broken, broken], True)):
+            result, calls = self._run(_CLAUDE, [*outcomes, '{"lines":[]}'], may_wait=may_wait)
+            self.assertEqual((result["writer"], len(calls)), ("codex:c", 3))
 
     def _run_with_configs(self, outcomes, **patches):
         env = {**_CLAUDE, "PATCHNOTES_CLAUDE_USER": "tfmc-patchnotes", "PATCHNOTES_CONFIGS_DIR": "/configs"}
@@ -100,7 +153,7 @@ class WritersTest(unittest.TestCase):
         env = {**_CLAUDE, "PATCHNOTES_CLAUDE_USER": "nobody-here"}
         with mock.patch.dict("sys.modules", {"pwd": types.SimpleNamespace(getpwnam=missing)}):
             result, calls = self._run(env, ['{"lines":[]}'])
-        self.assertEqual(result, {"output": '{"lines":[]}'})
+        self.assertEqual(result["output"], '{"lines":[]}')
         self.assertEqual([call[0][0] for call in calls], ["codex"])
 
     def test_configs_that_cannot_be_prepared_are_skipped(self) -> None:
@@ -127,6 +180,7 @@ class WritersTest(unittest.TestCase):
             ]
             worker.work_once("http://api", "key")
             self.assertEqual(run_job.call_args.args[-2:], (week, None))
+            self.assertEqual(run_job.call_args.kwargs, {"improve": None, "may_wait": False})
 
     def test_claude_only_answers_the_friday_run_and_its_owner(self) -> None:
         env = {**_CLAUDE, "PATCHNOTES_CLAUDE_OWNER": "42"}
@@ -215,14 +269,14 @@ class WritersTest(unittest.TestCase):
         for name, failure in failures.items():
             with self.subTest(name):
                 result, calls = self._run(_CLAUDE, [failure, failure, '{"lines":[]}'])
-                self.assertEqual(result, {"output": '{"lines":[]}'})
+                self.assertEqual((result["output"], result["writer"]), ('{"lines":[]}', "codex:c"))
                 self.assertEqual([call[0][0] for call in calls], ["claude", "claude", "codex"])
                 self.assertNotIn("CLAUDE_CODE_OAUTH_TOKEN", calls[2][1]["env"])
                 self.assertNotIn("STAFF_KEY", calls[2][1]["env"])
 
     def test_without_a_claude_login_codex_runs_first(self) -> None:
         result, calls = self._run({}, ['{"lines":[]}'])
-        self.assertEqual(result, {"output": '{"lines":[]}'})
+        self.assertEqual(result["output"], '{"lines":[]}')
         self.assertEqual([call[0][0] for call in calls], ["codex"])
 
     def test_all_writers_out_of_usage_says_so(self) -> None:
@@ -244,7 +298,7 @@ class WritersTest(unittest.TestCase):
     @mock.patch("patchnotes.rewrite_worker.time.monotonic", side_effect=[0, 0, 0, 670, 680, 680])
     def test_slow_writers_leave_time_for_the_last_one(self, _clock) -> None:
         result, calls = self._run(_CLAUDE, [subprocess.TimeoutExpired("claude", 390), '{"lines":[]}'])
-        self.assertEqual(result, {"output": '{"lines":[]}'})
+        self.assertEqual(result["output"], '{"lines":[]}')
         self.assertEqual([(call[0][0], call[1]["timeout"]) for call in calls], [("claude", 390.0), ("codex", 160.0)])
 
 
@@ -285,7 +339,9 @@ class RewriteWorkerTest(unittest.TestCase):
         self.assertEqual(requests[0].full_url, "http://api/patchnotes/staff/jobs/claim")
         self.assertEqual(requests[0].get_header("X-staff-key"), "staff-key")
         self.assertEqual(requests[1].full_url, "http://api/patchnotes/staff/jobs/job-1/result")
-        self.assertEqual(json.loads(requests[1].data), {"output": '{"lines":[]}'})
+        self.assertEqual(json.loads(requests[1].data), {
+            "output": '{"lines":[]}', "writer": "codex:gpt-6.1-sol", "checks": 0, "unconfirmed": [],
+        })
         self.assertFalse(directories[0].exists())
 
     @mock.patch("patchnotes.rewrite_worker._request")
