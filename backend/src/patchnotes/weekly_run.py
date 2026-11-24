@@ -53,7 +53,7 @@ _REVIEW_WORK = re.compile(
     re.IGNORECASE,
 )
 # Also catches coordinates that end a sentence.
-_PLACE = re.compile(r"(?<![\w.])-?\d{3,6}\s*,\s*-?\d{1,4}\s*,\s*-?\d{3,6}(?!\w)")
+_PLACE = re.compile(r"(?<![\w.])-?\d{2,6}\s*,\s*-?\d{1,4}\s*,\s*-?\d{2,6}(?!\w)")
 _TRAILER = re.compile(r"(?im)^(co-authored-by|signed-off-by):.*$")
 _MERGE = re.compile(r"^Merge (pull request|branch|remote-tracking)\b", re.IGNORECASE)
 
@@ -222,6 +222,20 @@ def _api(api_base: str, staff_key: str, method: str, path: str, payload: dict | 
         return exc.code, None
 
 
+def _keep_configs(backup: Path, week: str) -> None:
+    """Leave the week's configs for the writer's check. A failure only means a check without them."""
+    directory = os.environ.get("PATCHNOTES_CONFIGS_DIR", "").strip()
+    if not directory:
+        return
+    try:
+        from .config_pack import keep_pack
+
+        count = keep_pack(backup, week, Path(directory))
+        print(json.dumps({"configs": count}), flush=True)
+    except Exception as exc:
+        print(json.dumps({"configs": type(exc).__name__}), flush=True)
+
+
 def run(args: argparse.Namespace, now: datetime | None = None) -> str:
     """Return what happened, as one line for the cron log."""
     tz = zone()
@@ -249,6 +263,7 @@ def run(args: argparse.Namespace, now: datetime | None = None) -> str:
         json.dump(facts, sys.stdout, indent=1, ensure_ascii=False)
         sys.stdout.write("\n")
         return f"{week}: dry run"
+    _keep_configs(current[1], week)
     status, body = _api(
         args.api_base, args.staff_key, "POST", f"/patchnotes/staff/weeks/{week}/facts", {"facts": facts}
     )

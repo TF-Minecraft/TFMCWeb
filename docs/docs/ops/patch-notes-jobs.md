@@ -26,11 +26,13 @@ signed in, out of usage or too slow is skipped, so the post is still written whe
 names the writer of each job and why earlier ones failed.
 
 After writing the weekly post, the writer gets its draft back once with the facts to correct it. Claude may then also
-read Main's gameplay configs from the backup the facts end with. `config_pack.py` lists which plugin folders, and leaves
-out discoveries, lore, player data and logins. If the check fails or time is short, the draft is used. The facts include the descriptions of the commits behind each plugin update, without
-review rounds, hidden features or staff work.
+read Main's gameplay configs from the backup the facts end with. The weekly job keeps
+them in `/var/lib/private/tfmc-patchnotes-configs/<week>`, so neither the worker nor Codex sees the backups.
+`config_pack.py` lists which plugin folders, and leaves out discoveries, lore, player data and logins. If the check
+fails or time is short, the draft is used. The facts include the descriptions of the commits behind each plugin update,
+without review rounds, hidden features or staff work.
 
-- **Claude:** `npm install -g @anthropic-ai/claude-code@<version>` as root, and `/etc/tfmc/patchnotes-claude.env`
+- **Claude:** `npm install -g --prefix /usr/local @anthropic-ai/claude-code@<version>` as root, and `/etc/tfmc/patchnotes-claude.env`
   (root, mode 600) with `CLAUDE_CODE_OAUTH_TOKEN` from `claude setup-token`, which lasts a year, or
   `PATCHNOTES_ANTHROPIC_API_KEY` from the Console. Remove the file and restart the worker to stop using it. It runs
   with no tools and an empty home.
@@ -41,7 +43,7 @@ review rounds, hidden features or staff work.
 
 `PATCHNOTES_HIDDEN_WORDS` in `/etc/tfmc/patchnotes.env` is a comma-separated list of names players must not learn, kept
 on the host because this repository is public. Files, entries and commits named after one are left out of the facts, and
-any line of the Friday post that still names one is dropped. Commit descriptions and configs that contain one are left
+any line of a post or rewrite that still names one is dropped. Commit descriptions and configs that contain one are left
 out too, and without the list neither is used at all.
 
 Staff notes are lines written for players when a change ships. The writer puts every one in the post. When the configs
@@ -80,7 +82,7 @@ From a TFMCWeb checkout, as root:
 install -m 600 /dev/null /etc/tfmc/patchnotes.env   # then set STAFF_KEY=..., API_BASE_URL=... and PATCHNOTES_HIDDEN_WORDS=...
 useradd --system --no-create-home --home-dir /nonexistent --shell /usr/sbin/nologin tfmc-patchnotes
 install -m 600 /dev/null /etc/tfmc/patchnotes-claude.env   # then set CLAUDE_CODE_OAUTH_TOKEN=... and PATCHNOTES_CLAUDE_OWNER=...
-npm install -g @anthropic-ai/claude-code@<version>
+npm install -g --prefix /usr/local @anthropic-ai/claude-code@<version>
 install -m 755 scripts/patchnotes-update.py /usr/local/sbin/tfmc-patchnotes-update
 cp scripts/tfmc-patchnotes-*.service scripts/tfmc-patchnotes-*.timer /etc/systemd/system/
 systemctl daemon-reload

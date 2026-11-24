@@ -12,6 +12,7 @@ import json
 import logging
 import os
 import re
+import shutil
 import subprocess
 import tempfile
 import time
@@ -200,36 +201,54 @@ def _usable(output: str, schema: dict) -> bool:
         value = json.loads(output)
     except ValueError:
         return False
-    return isinstance(value, dict) and all(value.get(key) is not None for key in schema.get("required", ()))
+    if not isinstance(value, dict):
+        return False
+    properties = schema.get("properties") or {}
+    for key in schema.get("required", ()):
+        item = value.get(key)
+        if item is None or ((properties.get(key) or {}).get("type") == "array" and not isinstance(item, list)):
+            return False
+        # A post needs text. An empty list of line edits is a normal answer.
+        if key == "messages" and not any(isinstance(message, str) and message.strip() for message in item):
+            return False
+    return True
 
 
 def _fill_lookup(directory: str, week: str) -> bool:
     """Put the week's configs in the working directory. A failure only means a check without them."""
-    source = os.environ.get("PATCHNOTES_BACKUPS_DIR", "").strip()
-    if not source:
+    root = os.environ.get("PATCHNOTES_CONFIGS_DIR", "").strip()
+    if not root or not re.fullmatch(r"\d{4}-W\d{2}", week):
         return False
     try:
-        from .config_pack import is_current, write_pack
-
-        return is_current(week) and write_pack(week, Path(source), Path(directory)) > 0
+        source = Path(root) / week
+        if not source.is_dir():
+            logger.warning("No configs are kept for %s", week)
+            return False
+        shutil.copytree(source, directory, dirs_exist_ok=True)
+        return True
     except Exception:
         logger.exception("Could not prepare the configs for %s", week)
         return False
 
 
 def _without_hidden(output: str) -> str:
-    """The post without any line that names one of the server's hidden words."""
+    """The answer without any post line or line edit that names one of the server's hidden words."""
     words = hidden_words()
     if words is None:
         return output
-    post = json.loads(output)
-    if not isinstance(post.get("messages"), list):
-        return output
-    post["messages"] = [
-        "\n".join(line for line in str(message).splitlines() if not words.search(line))
-        for message in post["messages"]
-    ]
-    return json.dumps(post, ensure_ascii=False)
+    answer = json.loads(output)
+    if isinstance(answer.get("messages"), list):
+        answer["messages"] = [
+            "\n".join(line for line in str(message).splitlines() if not words.search(line))
+            for message in answer["messages"]
+        ]
+    for key in ("lines", "add"):
+        if isinstance(answer.get(key), list):
+            answer[key] = [
+                item for item in answer[key]
+                if not (isinstance(item, dict) and words.search(str(item.get("body") or "")))
+            ]
+    return json.dumps(answer, ensure_ascii=False)
 
 
 def _attempt(cli: str, model: str, prompt: str, schema: dict, timeout: float, week: str | None = None) -> str:
@@ -299,7 +318,10 @@ def run_job(
             logger.info("Writer %s:%s finished the job", cli, model)
             if review:
                 output = _checked(cli, model, review, output, schema, deadline, week)
-            return {"output": _without_hidden(output) if week else output}
+            output = _without_hidden(output)
+            if not _usable(output, schema):
+                raise WriterError("only hidden lines were written")
+            return {"output": output}
         except WriterError as exc:
             limited = limited or exc.limit
             logger.warning("Writer %s:%s failed: %s%s", cli, model, exc, " (usage limit)" if exc.limit else "")

@@ -8,7 +8,6 @@ import sys
 import tempfile
 import unittest
 import zipfile
-from datetime import datetime, timezone
 from pathlib import Path
 from unittest import mock
 
@@ -38,33 +37,43 @@ class ConfigPackTest(unittest.TestCase):
         ):
             self.assertFalse(config_pack.allowed(relative, _WORDS), relative)
 
-    def test_logins_and_links_are_removed(self) -> None:
-        text = "cooldown: 5\n  password: hunter2\nmysql-host: 1.2.3.4\nsite: https://example.net/a?b\nclass: Moonpath\n"
-        self.assertEqual(config_pack.cleaned(text, _WORDS), "cooldown: 5\nsite: (removed)\n")
+    def test_links_and_hidden_words_are_removed(self) -> None:
+        text = "cooldown: 5 # seconds\nsite: https://example.net/a?b\nclass: Moonpath\npassives: 2\n# password: x\n"
+        self.assertEqual(
+            config_pack.cleaned(text, _WORDS), "cooldown: 5 # seconds\nsite: (removed)\npassives: 2\n"
+        )
 
-    def test_the_pack_is_the_backup_the_facts_end_with(self) -> None:
+    def test_whole_login_values_are_removed(self) -> None:
+        for secret in (
+            '"password": hunter2', "password: |\n  hunter2\n  hunter2", "db: {dbPassword: hunter2, cooldown: 5}",
+            "list:\n- token: hunter2", "api-key:\n- hunter2", "mysql:\n  a: hunter2", "authToken: >-\n  hunter2",
+        ):
+            text = config_pack.cleaned(f"cooldown: 5\npassives: 2\n{secret}\n", _WORDS)
+            self.assertNotIn("hunter2", text, secret)
+            self.assertIn("cooldown: 5\npassives: 2\n", text, secret)
+        self.assertIsNone(config_pack.cleaned("a: [password: x", _WORDS))
+
+    def test_the_pack_holds_only_this_backups_gameplay_configs(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            for stamp, value in (("20261008-060200", 1), ("20261009-060200", 2), ("20261010-060200", 3)):
-                with zipfile.ZipFile(root / f"{stamp}-ab12.zip", "w") as archive:
-                    archive.writestr("Minecraft/plugins/MMOCore/classes/mage.yml", f"health: {value}\n")
-                    archive.writestr(
-                        "Minecraft/plugins/SimpleFactions/owners.yml", "a: 069a79f4-44e9-4726-a5be-fca90e38aaf5"
-                    )
-                    archive.writestr("Minecraft/plugins/LuckPerms/config.yml", "password: x\n")
-                    archive.writestr("Minecraft/plugins/MMOCore/../../evil.yml", "x: 1\n")
-            target = root / "pack"
-            self.assertEqual(config_pack.write_pack("2026-W41", root, target), 1)
-            self.assertEqual((target / "MMOCore/classes/mage.yml").read_text(), "health: 2\n")
+            backup = root / "20261009-060200-ab12.zip"
+            with zipfile.ZipFile(backup, "w") as archive:
+                archive.writestr("Minecraft/plugins/MMOCore/classes/mage.yml", "health: 2\n")
+                archive.writestr("Minecraft/plugins/MMOCore/classes/broken.yml", "a: [\n")
+                archive.writestr(
+                    "Minecraft/plugins/SimpleFactions/owners.yml", "a: 069a79f4-44e9-4726-a5be-fca90e38aaf5"
+                )
+                archive.writestr("Minecraft/plugins/LuckPerms/config.yml", "password: x\n")
+                archive.writestr("Minecraft/plugins/MMOCore/../../evil.yml", "x: 1\n")
+            kept = root / "kept"
+            (kept / "2026-W40").mkdir(parents=True)
+            self.assertEqual(config_pack.keep_pack(backup, "2026-W41", kept), 1)
+            self.assertEqual((kept / "2026-W41/MMOCore/classes/mage.yml").read_text(), "health: 2\n")
+            self.assertEqual([path.name for path in kept.iterdir()], ["2026-W41"])
             self.assertFalse((root / "evil.yml").exists())
-            self.assertEqual(config_pack.write_pack("2026-W30", root, root / "none"), 0)
             with mock.patch.dict(os.environ, {"PATCHNOTES_HIDDEN_WORDS": " , "}):
-                self.assertEqual(config_pack.write_pack("2026-W41", root, root / "unset"), 0)
-
-    def test_an_open_week_has_no_final_backup(self) -> None:
-        now = datetime(2026, 10, 9, 9, 0, tzinfo=timezone.utc)
-        self.assertFalse(config_pack.is_current("2026-W41", now))
-        self.assertTrue(config_pack.is_current("2026-W40", now))
+                self.assertEqual(config_pack.keep_pack(backup, "2026-W41", kept), 0)
+            self.assertEqual(list(kept.iterdir()), [])
 
 
 if __name__ == "__main__":

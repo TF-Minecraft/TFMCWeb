@@ -445,6 +445,39 @@ def _readable(detail: str) -> str:
     return f"{name}: {change}" if change else detail
 
 
+_NUMBER = re.compile(r"\d+(?:\.\d+)?")
+
+
+def _numbers(text: str) -> set[float]:
+    return {float(number) for number in _NUMBER.findall(text)}
+
+
+def _unsettled(note: str, facts: dict[str, Any]) -> bool:
+    """A note with another number than the configs end on for something it names.
+
+    The plain post has no writer to settle that, so it leaves the note out.
+    """
+    stated = _numbers(note)
+    if not stated:
+        return False
+    found: dict[str, set[float]] = {}
+    for item in facts.get("files") or []:
+        for entry in (item or {}).get("entries") or []:
+            if not isinstance(entry, dict):
+                continue
+            for detail in entry.get("details") or []:
+                path, _, change = str(detail).partition(": ")
+                # A skill inside a class is a capitalised part of the path.
+                names = [str(entry.get("name") or ""), *(part for part in path.split(".") if part[:1].isupper())]
+                for name in names:
+                    if len(name) > 2:
+                        found.setdefault(name, set()).update(_numbers(change))
+    return any(
+        numbers and not stated <= numbers and re.search(rf"(?i)\b{re.escape(name)}", note)
+        for name, numbers in found.items()
+    )
+
+
 def fallback_messages(
     facts: dict[str, Any],
     *,
@@ -463,6 +496,7 @@ def fallback_messages(
         for subject in item.get("commits") or []
         if _plain_subject(str(subject))
     ]
+    notes = [note for note in notes or [] if not _unsettled(note, facts)]
     if notes:
         lines += ["", "## This week"] + [f"- {note}" for note in notes]
     if subjects:

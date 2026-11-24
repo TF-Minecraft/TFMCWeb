@@ -21,7 +21,8 @@ Environment=HOME=/root
 Environment=PYTHONPATH=/usr/local/lib/tfmc-patchnotes/current
 Environment=PATCHNOTES_CLAUDE_BIN=/usr/local/bin/claude
 Environment=PATCHNOTES_CLAUDE_USER=tfmc-patchnotes
-Environment=PATCHNOTES_BACKUPS_DIR=/root/backups
+# The filtered configs tfmc-patchnotes-weekly keeps. The worker and Codex never see the backups.
+Environment=PATCHNOTES_CONFIGS_DIR=/var/lib/private/tfmc-patchnotes-configs
 Environment=PATCHNOTES_CODEX_BIN=/root/.npm-global/bin/codex
 Environment=PATH=/root/.npm-global/bin:/usr/local/bin:/usr/bin:/bin
 WorkingDirectory=/
@@ -31,7 +32,7 @@ RestartSec=5
 
 # Claude runs as tfmc-patchnotes, which cannot enter /root, so it reaches neither
 # the Codex login nor the backups. For the final check the worker copies the
-# gameplay configs of Friday's backup into Claude's own working directory.
+# gameplay configs that the weekly job took from Friday's backup into Claude's own working directory.
 # The model reads commit subjects, which are untrusted text. The Codex login
 # belongs to root, so the service stays root, but it runs the root-owned copy
 # that tfmc-patchnotes-update installs, sees an empty /home and /root apart from
@@ -43,7 +44,7 @@ ProtectKernelTunables=true
 ProtectControlGroups=true
 ProtectProc=invisible
 TemporaryFileSystem=/home:ro /root:ro,mode=0700 /etc/tfmc:ro
-BindReadOnlyPaths=/root/.npm-global -/home/amp/.ampdata/instances/TFMCMain01/Backups:/root/backups
+BindReadOnlyPaths=/root/.npm-global
 BindPaths=/root/.codex
 InaccessiblePaths=-/run/docker.sock -/run/containerd -/var/lib/docker -/var/lib/tfmc -/var/log -/opt -/srv -/mnt -/media
 

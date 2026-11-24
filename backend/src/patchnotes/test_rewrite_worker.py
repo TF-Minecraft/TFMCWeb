@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import subprocess
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 from unittest import mock
@@ -55,7 +56,7 @@ class WritersTest(unittest.TestCase):
         self.assertIn('"draft"', calls[1][1]["input"])
 
     def _run_with_configs(self, outcomes, **patches):
-        env = {**_CLAUDE, "PATCHNOTES_CLAUDE_USER": "tfmc-patchnotes", "PATCHNOTES_BACKUPS_DIR": "/backups"}
+        env = {**_CLAUDE, "PATCHNOTES_CLAUDE_USER": "tfmc-patchnotes", "PATCHNOTES_CONFIGS_DIR": "/configs"}
         identity = {"user": 1, "group": 2, "extra_groups": []}
         with mock.patch("patchnotes.rewrite_worker._claude_user", return_value=identity), \
                 mock.patch("patchnotes.rewrite_worker.os.chown", create=True), \
@@ -105,8 +106,17 @@ class WritersTest(unittest.TestCase):
     def test_configs_that_cannot_be_prepared_are_skipped(self) -> None:
         with mock.patch.dict("os.environ", {}, clear=True):
             self.assertFalse(worker._fill_lookup("/tmp", "2026-W41"))
-        with mock.patch.dict("os.environ", {"PATCHNOTES_BACKUPS_DIR": "/does/not/exist"}, clear=True):
-            self.assertFalse(worker._fill_lookup("/tmp", "2026-W41"))
+        with tempfile.TemporaryDirectory() as directory:
+            kept, work = Path(directory, "kept"), Path(directory, "work")
+            (kept / "2026-W41").mkdir(parents=True)
+            (kept / "2026-W41/a.yml").write_text("a: 1")
+            work.mkdir()
+            with mock.patch.dict("os.environ", {"PATCHNOTES_CONFIGS_DIR": str(kept)}, clear=True):
+                self.assertFalse(worker._fill_lookup(str(work), "2026-W40"))
+                self.assertFalse(worker._fill_lookup(str(work), "../kept"))
+                self.assertEqual(list(work.iterdir()), [])
+                self.assertTrue(worker._fill_lookup(str(work), "2026-W41"))
+            self.assertEqual((work / "a.yml").read_text(), "a: 1")
 
     @mock.patch("patchnotes.rewrite_worker._request")
     @mock.patch("patchnotes.rewrite_worker.run_job", return_value={"output": "{}"})
@@ -141,7 +151,25 @@ class WritersTest(unittest.TestCase):
     def test_hidden_words_never_reach_the_post(self) -> None:
         post = json.dumps({"messages": ["Mages change\n- The Moonpath opens", "Food"]})
         self.assertEqual(json.loads(worker._without_hidden(post)), {"messages": ["Mages change", "Food"]})
-        self.assertEqual(worker._without_hidden('{"lines": ["moonpath"]}'), '{"lines": ["moonpath"]}')
+        edits = {"lines": [{"n": 1, "action": "rewrite", "body": "The moonpath opens"}, {"n": 2, "action": "drop"}],
+                 "add": [{"body": "Moonpath"}, {"body": "Food"}]}
+        self.assertEqual(json.loads(worker._without_hidden(json.dumps(edits))),
+                         {"lines": [{"n": 2, "action": "drop"}], "add": [{"body": "Food"}]})
+
+    def test_a_feedback_rewrite_never_returns_hidden_words(self) -> None:
+        edits = {"lines": [{"n": 1, "action": "rewrite", "body": "The moonpath opens"}], "add": []}
+        env = {**_CLAUDE, "PATCHNOTES_HIDDEN_WORDS": "moonpath"}
+        result, _ = self._run(env, [_claude_reply(structured_output=edits)])
+        self.assertEqual(json.loads(result["output"]), {"lines": [], "add": []})
+
+    def test_a_post_without_text_goes_to_the_next_writer(self) -> None:
+        schema = {"required": ["messages"], "properties": {"messages": {"type": "array"}}}
+        env = {**_CLAUDE, "PATCHNOTES_HIDDEN_WORDS": "moonpath"}
+        for bad in ({"messages": []}, {"messages": "text"}, {"messages": [" "]}, {"messages": ["Moonpath"]}):
+            replies = [_claude_reply(structured_output=value) for value in (bad, {"messages": ["Food"]})]
+            with mock.patch(f"{__name__}._SCHEMA", schema):
+                result, calls = self._run(env, replies)
+            self.assertEqual((json.loads(result["output"]), len(calls)), ({"messages": ["Food"]}, 2), bad)
 
     def test_a_failed_check_keeps_the_draft(self) -> None:
         draft = _claude_reply(structured_output={"lines": ["draft"]})

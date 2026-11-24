@@ -105,6 +105,7 @@ class CommitSubjectsTest(unittest.TestCase):
             "Upkeep-only vehicles (#247)\n\n* Pay vehicle upkeep from the bank\n\n"
             "The leader moves vehicles in, up to three\nper member.\n\n"
             "The hidden dungeon gets a new vehicle.\n\nMoonpath users pay less.\n\nThe chest is at 1200, 64, -900.\n\n"
+            "Another is at 12, 64, -34.\n\n"
             "Co-Authored-By: A <a@example.net>\n\n* Address review round 1\n\nGuild rows use the incarnation.\n"
         )
         self.assertEqual(
@@ -163,6 +164,23 @@ class RunTest(unittest.TestCase):
         self.assertEqual(facts["until"], "2026-10-09T06:02:00+00:00")
         self.assertFalse(facts["partial"])
         self.assertEqual(facts["plugins"][0]["old"], "2.11.0")
+
+    def test_keeps_the_configs_of_the_closing_backup_first(self) -> None:
+        kept = Path(self.directory.name, "kept")
+        kept.mkdir()
+        env = {"PATCHNOTES_CONFIGS_DIR": str(kept), "PATCHNOTES_HIDDEN_WORDS": "moonpath"}
+
+        def api(_base, _key, method, _path, payload=None):
+            if method == "POST":
+                self.assertEqual([path.name for path in kept.iterdir()], ["2026-W41"])
+            return (404 if method == "GET" else 200), {}
+
+        with mock.patch.dict("os.environ", env), mock.patch.object(weekly_run, "_api", side_effect=api) as called:
+            weekly_run.run(_args(self.directory.name), now=self.now)
+            self.assertEqual(called.call_count, 2)
+        env["PATCHNOTES_CONFIGS_DIR"] = str(kept / "gone")
+        with mock.patch.dict("os.environ", env), mock.patch.object(weekly_run, "_api", side_effect=api):
+            self.assertIn("sent", weekly_run.run(_args(self.directory.name), now=self.now))
 
     def test_skips_a_week_the_api_already_has(self) -> None:
         with mock.patch.object(weekly_run, "_api", return_value=(200, {})) as api:

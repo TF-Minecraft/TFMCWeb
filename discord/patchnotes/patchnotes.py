@@ -28,6 +28,7 @@ from redbot.core.bot import Red
 
 from .format import (
     folders_message,
+    note_pages,
     post_messages,
     post_review_controls,
     post_review_notice,
@@ -2912,10 +2913,8 @@ class PatchNotes(commands.Cog):
             await interaction.followup.send(f"Could not load the notes: {_api_detail(data, body)}", ephemeral=True)
             return
         lines = [f"#{note.get('id')} {note.get('body')} ({note.get('author') or 'unknown'})" for note in data["notes"]]
-        shown = f"Notes for {week_label(str(data.get('week')))}:\n" + ("\n".join(lines) or "None yet.")
-        if len(shown) > 1900:
-            shown = shown[:1900].rsplit("\n", 1)[0] + "\nand more"
-        await interaction.followup.send(shown, ephemeral=True, allowed_mentions=discord.AllowedMentions.none())
+        for page in note_pages(f"Notes for {week_label(str(data.get('week')))}:", lines):
+            await interaction.followup.send(page, ephemeral=True, allowed_mentions=discord.AllowedMentions.none())
 
     @patchnotes.command(name="remove-note", description="Remove a staff note by its number.")
     @app_commands.describe(number="The number /patchnotes notes shows.")
