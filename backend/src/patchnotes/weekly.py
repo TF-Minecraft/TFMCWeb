@@ -37,7 +37,9 @@ IGNORED = (
     "ArmourShop/Categories/ps_items.yml",
     "BreweryX/recipes.yml",
     "DrinkBuilder/**",
+    "Archaeo/ownership/**",
     "BirdMessenger/**",
+    "CompanionPets/estates/**",
     "CoreProtect/**",
     "Essentials/**",
     "LuckPerms/**",
@@ -418,6 +420,33 @@ def compare(base: Snapshot, current: Snapshot) -> dict[str, Any]:
             }
         )
     return {"files": files, "hidden": hidden, "plugins": plugin_updates(base, current)}
+
+
+def hide(facts: dict[str, Any], words: re.Pattern[str]) -> dict[str, Any]:
+    """The facts without anything that carries one of the server's hidden words.
+
+    A file or entry named after one is only counted, a plugin commit is dropped,
+    and inside any other value the word itself becomes `(hidden)`.
+    """
+    word = re.compile(rf"\w*(?:{words.pattern})\w*", words.flags)
+    hidden = dict(facts.get("hidden") or {})
+    files: list[dict[str, Any]] = []
+    for item in facts.get("files") or []:
+        entries = []
+        for entry in item["entries"]:
+            if words.search(item["path"]) or words.search(entry["name"]):
+                hidden[item["plugin"]] = hidden.get(item["plugin"], 0) + 1
+            else:
+                entries.append({**entry, "details": [word.sub("(hidden)", detail) for detail in entry["details"]]})
+        if entries:
+            files.append({**item, "entries": entries})
+    plugins = []
+    for update in facts.get("plugins") or []:
+        kept = dict(update)
+        if "commits" in kept:
+            kept["commits"] = [subject for subject in kept["commits"] if not words.search(subject)]
+        plugins.append(kept)
+    return {**facts, "files": files, "hidden": hidden, "plugins": plugins}
 
 
 def plugin_updates(base: Snapshot, current: Snapshot) -> list[dict[str, Any]]:

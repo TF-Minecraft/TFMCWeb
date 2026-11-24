@@ -137,6 +137,12 @@ class WritersTest(unittest.TestCase):
         worker.work_once("http://api", "key")
         self.assertEqual(run_job.call_args.args[-1], "42")
 
+    @mock.patch.dict("os.environ", {"PATCHNOTES_HIDDEN_WORDS": "moonpath"})
+    def test_hidden_words_never_reach_the_post(self) -> None:
+        post = json.dumps({"messages": ["Mages change\n- The Moonpath opens", "Food"]})
+        self.assertEqual(json.loads(worker._without_hidden(post)), {"messages": ["Mages change", "Food"]})
+        self.assertEqual(worker._without_hidden('{"lines": ["moonpath"]}'), '{"lines": ["moonpath"]}')
+
     def test_a_failed_check_keeps_the_draft(self) -> None:
         draft = _claude_reply(structured_output={"lines": ["draft"]})
         for failure in (subprocess.TimeoutExpired("claude", 1), _claude_reply(is_error=True), RuntimeError("boom")):

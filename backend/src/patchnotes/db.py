@@ -1440,12 +1440,17 @@ def get_post(week: str) -> dict[str, Any] | None:
         return dict(row) if row else None
 
 
-def recent_posts(week: str, limit: int = 2) -> list[list[str]]:
-    """The newest written posts before `week`, newest first, as style examples."""
+def recent_posts(week: str, limit: int = 4) -> list[list[str]]:
+    """The newest written posts before `week`, newest first, for style and for what players know.
+
+    A postponed week was never posted.
+    """
     with _connect() as conn, _cursor(conn) as cur:
         cur.execute(
-            "SELECT messages FROM patchnote_posts WHERE week < %s AND source = 'writer' "
-            "ORDER BY week DESC LIMIT %s",
+            "SELECT posts.messages FROM patchnote_posts AS posts "
+            "LEFT JOIN patchnote_week_status AS state ON state.week = posts.week "
+            "WHERE posts.week < %s AND posts.source = 'writer' AND NOT COALESCE(state.postponed, FALSE) "
+            "ORDER BY posts.week DESC LIMIT %s",
             (parse_week(week), limit),
         )
         return [list(row["messages"]) for row in cur.fetchall()]

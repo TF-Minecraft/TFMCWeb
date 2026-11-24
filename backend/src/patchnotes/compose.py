@@ -57,12 +57,21 @@ _MONTHS = (
 _GUIDE = """Answer from this message only. Do not run commands or read files.
 You write the weekly update post for TFMC, a roleplay Minecraft server, in the voice of its staff.
 Players read it in Discord. Write for a normal player: plain words, no file names, config keys,
-plugin names, class ids or programming terms. Sound human and friendly, like staff talking to players.
+plugin names, class ids or programming terms.
+The goal: a player who read the last post learns what is different now, from what they knew to how it is today.
+
+Voice: a staff member who plays here, telling the community what changed this week.
+- Short plain sentences and contractions. Vary them, so groups and bullets don't all follow one pattern.
+- Say the problem and what changes for the player: "A staff holds four runes and a wand only two, so nearly
+  every Mage carried a staff." Tell them what to do when they have to do something: "Pick your path with `/class`".
+- A reason must come from the notes, a developer description or an earlier post. With no reason, go straight to the
+  bullets. Never fill in a sentence that only repeats the bullets below it.
+- No hype, no marketing words, no "we are excited", nothing that reads like a changelog or a generated list.
 
 Structure, in this order:
 1. Title. {title_rule} Then `-# {week_line}` on its own line.
    Add a `## ` subtitle naming the biggest change only when one change clearly stands out. Most weeks need none.
-   Then one or two sentences introducing the week.
+   Then one or two sentences with the three or four things players will talk about, named concretely.
 2. `# <act> Changes`, for example `# Act 2 Changes`: only when an act starts this week, meaning an act
    change week or a week whose facts show a class cap rising to the next act's cap. It holds the act
    changes described in "The Act System" below. Leave it out on every other week.
@@ -76,13 +85,23 @@ Structure, in this order:
 Rules:
 - Use `## ` and `### ` subheadings inside a section to group related changes, bullets with `- `, and
   **bold** for the thing that changed. `-# ` is small text for side notes.
-- Start every subheading's group with one short sentence explaining why it changed or what it means for players.
+- Group changes by what a player does with them, the biggest first. A subheading can start with a sentence when
+  there is a reason or something to know.
+- When many values moved by the same share, say the share once and give the old and new numbers of the ones players
+  know best. Put several changes to one class or item into one bullet.
 - Write numbers as `Old --> New`. Use only numbers that appear in the facts. Never invent a number or a reason.
-  When you do not understand what a value means, describe the change in words without the number.
-- The facts already compare the start of the week with its end, so every number is the final value.
-  Mention each change once.
+  When you do not understand what a value means, describe the change in words without the number. A raw modifier
+  players never see, such as `-55% --> -50%` damage, is better as "hits harder".
+- The config changes compare the start of the week with its end, so they are the only full picture: a value that moved
+  several times shows as one step. Write that one step and mention each change once.
+- Commits, developer descriptions and staff notes are listed oldest first and can hold a value, name or plan that
+  changed again later that week. When they disagree with the config changes, the config changes are right. When two of
+  them disagree, the later one is right. Something added and taken back in the same week is not in the post.
+- Plugin updates and configs come from many developers, and most changes have no staff note. Judge every change by
+  the facts: a change without a note matters as much as one with a note.
 - Something marked added is new this week: describe it as it is now, not as a change.
 - Leave out runtime data, staff-only tools, logging, performance work and anything technical.
+- `(hidden)` stands for a name players must not learn. Leave out what it belongs to.
 - Never name or describe anything under hidden. You may say there are new things to discover.
 - Never reveal lore items, codex or research entries, dungeon names or details, hidden magic schools,
   exact crafting recipes or hit counts, coordinates, commands, permissions or exploits.
@@ -271,15 +290,17 @@ def compose_prompt(
         parts.append(
             "Earlier posts, newest first. Use them for tone and layout, and for what players were already told. "
             "The facts can overlap with them: never announce a change again. When an earlier post already announced "
-            "part of a number change, start from its final value: if it said `18 --> 15` and the facts say "
+            "part of a number change, start from the newest post's final value: if it said `18 --> 15` and the facts say "
             "`18 --> 11`, write `15 --> 11`. If it already gave the final value, leave the change out:"
         )
         parts += [json.dumps(example, ensure_ascii=False) for example in examples]
     if notes:
         parts.append(
-            "Staff notes for this week. Staff wrote them for players while shipping the changes, so they are true, "
-            "they say why, and they win over the facts. Every note belongs in the post unless an earlier post already "
-            "told players. Use the facts for the numbers around them, and fit the wording to the rest:"
+            "Staff notes for this week, oldest first. Staff wrote them for players while shipping the changes, and they "
+            "say why. They cover only part of the week. Every note belongs in the post unless an earlier post already "
+            "told players or a later change undid it. A note wins over the developer descriptions, but when the config "
+            "changes end on another number, that final number is right and the note only gives the reason. Fit the "
+            "wording to the rest:"
         )
         parts.append("\n".join(f"- {note}" for note in notes))
     parts += ["Facts:", render_facts(facts)]
@@ -325,11 +346,16 @@ def review_prompt(prompt: str) -> str:
         "The message above was the writing task, and a draft was written for it. Check the draft below now and "
         "return the corrected post in the same JSON form:\n"
         "- Compare every number, name and behaviour with the staff notes and the facts. Correct or delete what "
-        "neither supports. Every staff note is in the post, unless an earlier post already told players.\n"
-        "- Compare every `Old --> New` with the earlier posts and remove anything already announced.\n"
+        "neither supports. Every staff note is in the post, unless an earlier post already told players or a later "
+        "change undid it.\n"
+        "- Compare every `Old --> New` with the earlier posts. The old number is what players were last told or had at "
+        "the start of the week, and the new number is the one at the end of the week. Remove anything already "
+        "announced and any step in between.\n"
         "- Apply every rule again: nothing hidden, nothing staff-only, no chances, roll counts or creature stats.\n"
         "- Go through the plugin updates and add any clear change players would notice that the draft missed, "
         "such as a new thing they can do or how something they use now works.\n"
+        "- Rewrite a sentence that only repeats the bullets below it, gives a reason nothing supports, or sounds like "
+        "a generated list.\n"
         "- Keep the wording of every line that is already right. Keep the order and the message limits.",
         "Draft:",
     ])

@@ -19,6 +19,8 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
+from .safety import hidden_words
+
 logger = logging.getLogger("patchnotes.rewrite_worker")
 _USAGE_LIMIT = re.compile(r"usage[\s_-]*limit|hit.{0,30}limit|quota.{0,30}exceed", re.IGNORECASE)
 
@@ -215,6 +217,21 @@ def _fill_lookup(directory: str, week: str) -> bool:
         return False
 
 
+def _without_hidden(output: str) -> str:
+    """The post without any line that names one of the server's hidden words."""
+    words = hidden_words()
+    if words is None:
+        return output
+    post = json.loads(output)
+    if not isinstance(post.get("messages"), list):
+        return output
+    post["messages"] = [
+        "\n".join(line for line in str(message).splitlines() if not words.search(line))
+        for message in post["messages"]
+    ]
+    return json.dumps(post, ensure_ascii=False)
+
+
 def _attempt(cli: str, model: str, prompt: str, schema: dict, timeout: float, week: str | None = None) -> str:
     with tempfile.TemporaryDirectory(prefix="patchnotes-rewrite-", ignore_cleanup_errors=True) as directory:
         started = time.monotonic()
@@ -282,7 +299,7 @@ def run_job(
             logger.info("Writer %s:%s finished the job", cli, model)
             if review:
                 output = _checked(cli, model, review, output, schema, deadline, week)
-            return {"output": output}
+            return {"output": _without_hidden(output) if week else output}
         except WriterError as exc:
             limited = limited or exc.limit
             logger.warning("Writer %s:%s failed: %s%s", cli, model, exc, " (usage limit)" if exc.limit else "")

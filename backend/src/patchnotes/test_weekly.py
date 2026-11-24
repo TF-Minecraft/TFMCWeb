@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 import sys
 import tempfile
 import unittest
@@ -51,7 +52,32 @@ class TrackedFilesTest(unittest.TestCase):
         self.assertFalse(weekly.tracked_config("ItemsAdder/contents/tfmc_submissions/configs/hat.yml"))
         self.assertFalse(weekly.tracked_config("Archaeo/sites/345f77c2-c1e1-4931-b183-9410ab7ef362.yml"))
         self.assertFalse(weekly.tracked_config("Cooking/data/animals.yml"))
+        self.assertFalse(weekly.tracked_config("Archaeo/ownership/journals/17948.yml"))
+        self.assertFalse(weekly.tracked_config("CompanionPets/estates/345f77c2-0.yml"))
         self.assertFalse(weekly.tracked_config("config.yml"))
+
+    def test_hidden_words_never_reach_the_facts(self) -> None:
+        facts = {
+            "files": [
+                {"path": "Magic/moonpath/pool.yml", "plugin": "Magic", "kind": "added",
+                 "entries": [{"name": "pool", "kind": "added", "details": []}]},
+                {"path": "MMOItems/item/robes.yml", "plugin": "MMOItems", "kind": "changed", "entries": [
+                    {"name": "Moonpath Robes", "kind": "added", "details": []},
+                    {"name": "Mage Robes", "kind": "changed",
+                     "details": ["required-class: [Mage] --> [Invoker, Moonpathers]"]},
+                ]},
+            ],
+            "plugins": [{"plugin": "Magic", "commits": ["Add the moonpath", "Cheaper casts"]},
+                        {"plugin": "Paper", "old": "1", "new": "2"}],
+            "hidden": {"Magic": 2},
+        }
+        hidden = weekly.hide(facts, re.compile("moonpath", re.IGNORECASE))
+        self.assertEqual(hidden["hidden"], {"Magic": 3, "MMOItems": 1})
+        self.assertEqual([item["path"] for item in hidden["files"]], ["MMOItems/item/robes.yml"])
+        self.assertEqual(hidden["files"][0]["entries"], [
+            {"name": "Mage Robes", "kind": "changed", "details": ["required-class: [Mage] --> [Invoker, (hidden)]"]},
+        ])
+        self.assertEqual([item.get("commits") for item in hidden["plugins"]], [["Cheaper casts"], None])
 
     def test_discoveries_are_hidden(self) -> None:
         self.assertTrue(weekly.hidden_config("Codex/categories/poi.yml"))

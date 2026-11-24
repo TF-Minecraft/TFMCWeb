@@ -88,6 +88,8 @@ class CommitSubjectsTest(unittest.TestCase):
                     {"commit": {"message": "Make armour take time to put on (#72)\n\nBody"}},
                     {"commit": {"message": "Merge pull request #9 from x/y"}},
                     {"commit": {"message": "Rotate staff_key: hunter2"}},
+                    {"commit": {"message": "Add a hidden path"}},
+                    {"commit": {"message": "Mage paths (Dev)"}},
                 ]
             }
 

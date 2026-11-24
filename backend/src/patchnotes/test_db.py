@@ -512,6 +512,10 @@ def test_facts_post_and_act_are_stored_per_week(notes):
     db.save_post(WEEK, ["Hello", "again"], "writer")
     assert db.recent_posts(NEXT) == [["Hello", "again"]]
     assert db.recent_posts(WEEK) == []
+    db.postpone_week(WEEK)
+    assert db.recent_posts(NEXT) == []
+    db.undo_postpone(WEEK)
+    assert db.recent_posts(NEXT) == [["Hello", "again"]]
     with pytest.raises(ValueError):
         db.save_post(WEEK, [], "someone")
 

@@ -40,11 +40,13 @@ review rounds, hidden features or staff work.
 - **Codex:** root's Codex login.
 
 `PATCHNOTES_HIDDEN_WORDS` in `/etc/tfmc/patchnotes.env` is a comma-separated list of names players must not learn, kept
-on the host because this repository is public. Commit descriptions and configs that contain one are left out, and
-without the list neither is used at all.
+on the host because this repository is public. Files, entries and commits named after one are left out of the facts, and
+any line of the Friday post that still names one is dropped. Commit descriptions and configs that contain one are left
+out too, and without the list neither is used at all.
 
-Staff notes are lines written for players when a change ships. The writer treats them as true and puts every one in the
-post. Staff add them with `/patchnotes note` in Discord, or on the host:
+Staff notes are lines written for players when a change ships. The writer puts every one in the post. When the configs
+end the week on another number, that final number is used and the note only gives the reason. Staff add them with
+`/patchnotes note` in Discord, or on the host:
 
 ```bash
 ps-compose main exec -T backend python -m src.patchnotes.player_note add --author staff "Horses run faster."

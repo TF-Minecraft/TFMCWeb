@@ -36,7 +36,7 @@ from .summarize import (
     github_org,
     player_text,
 )
-from .weekly import compare, snapshot_from_zip
+from .weekly import compare, hide, snapshot_from_zip
 
 _BACKUP = re.compile(r"^(\d{8})-(\d{6})-[0-9a-f]+\.zip$")
 _CUTOFF_HOUR = 12
@@ -47,6 +47,7 @@ _HIDDEN_WORK = re.compile(
     r"\b(hidden|secrets?|codex|lore|dungeons?|dev-only|staff|admins?)\b",
     re.IGNORECASE,
 )
+_HIDDEN_SUBJECT = re.compile(r"\b(hidden|secrets?|dev-only)\b|\(dev\)", re.IGNORECASE)
 _REVIEW_WORK = re.compile(
     r"^(address|apply|review|fix review|merge|resolve|bump|release|test|tests|ci|docs|refactor|rename|format|keep)\b",
     re.IGNORECASE,
@@ -163,7 +164,7 @@ def commit_subjects(
         for commit in data["commits"]:
             message = str(((commit or {}).get("commit") or {}).get("message") or "")
             subject = message.strip().splitlines()[0].strip() if message.strip() else ""
-            if not subject or _MERGE.match(subject):
+            if not subject or _MERGE.match(subject) or _HIDDEN_SUBJECT.search(subject):
                 continue
             kind, _ = _split_conventional(subject)
             if kind in _SKIP_KINDS:
@@ -194,6 +195,9 @@ def build_facts(
             kept = {subject: details[subject] for subject in update["commits"] if subject in details}
             if kept:
                 update["details"] = kept
+    words = hidden_words()
+    if words is not None:
+        facts = hide(facts, words)
     facts.update(
         {
             "week": week,
