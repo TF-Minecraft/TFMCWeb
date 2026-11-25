@@ -2,7 +2,7 @@
 
 import LoadingSkeleton from "@/app/components/shared/LoadingSkeleton";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import {
   createSubmission,
   getCatalog,
@@ -121,6 +121,7 @@ export default function BrewForm({ session, renewSession, onSubmitted }: Props) 
     };
   }, [session.session_token]);
 
+  const loaded = useRef(false);
   useEffect(() => {
     let cancelled = false;
     async function load() {
@@ -134,8 +135,10 @@ export default function BrewForm({ session, renewSession, onSubmitted }: Props) 
           const tex = await getTextures(session.session_token);
           if (!cancelled) setTextures(tex);
         }
+        loaded.current = true;
       } catch (err) {
-        if (cancelled) return;
+        // Once it has loaded, a failed reload leaves the form the player filled in.
+        if (cancelled || loaded.current) return;
         setLoadError(
           err instanceof DrinksApiError ? err.message : err instanceof Error ? err.message : "Failed to load catalog",
         );

@@ -1085,6 +1085,27 @@ it("opens a skin's address in the tab, and a submit shows the new skin in the ed
   expect(window.location.search).toBe("?tab=skins");
 });
 
+it("keeps the editor open when its Profile session ends, and takes up the newer one after", async () => {
+  vi.mocked(getAccount).mockResolvedValue(account({ minecraft: linked() }));
+  vi.mocked(getProfileDashboard).mockResolvedValue(wardrobe({ skins: [SKIN] }));
+  vi.mocked(getSubmission).mockReturnValue(new Promise(() => undefined));
+  setSkinsSession({ ...SKIN_CODE, from_profile: true });
+  visit("skins", "new");
+  render(<ProfilePanel />);
+  const submit = await screen.findByRole("button", { name: "Submit skin" });
+  vi.mocked(getProfileDashboard).mockImplementation(async (token) => {
+    if (token === "linked-token") throw new ProfileApiError("expired", 401);
+    return wardrobe({ skins: [SKIN] });
+  });
+  fireEvent(document, new Event("visibilitychange"));
+  expect(getProfileDashboard).toHaveBeenCalledTimes(1);
+  setSession({ ...getSession()!, session_token: "newer-token" }, true);
+  fireEvent.click(submit);
+  await vi.waitFor(() => expect(getProfileDashboard).toHaveBeenLastCalledWith("newer-token"));
+  expect(screen.getByRole("tab", { name: "Skins" }).getAttribute("aria-selected")).toBe("true");
+  expect(window.location.search).toBe("?tab=skins&skin=sub-2");
+});
+
 it("sends the editor's address back to the wardrobe without a session for it", async () => {
   vi.mocked(getAccount).mockResolvedValue(account({ minecraft: linked() }));
   vi.mocked(getProfileDashboard).mockResolvedValue(wardrobe({ skins: [SKIN] }));

@@ -12,7 +12,7 @@ function sessionEnded(noun: StartNoun, staff?: boolean): Error {
   return new Error(
     staff
       ? "Your code’s session has ended. Go back and enter your code again."
-      : `Your ${noun} session has ended. Sign in to Profile in another tab with the same account, then press Submit again.`,
+      : `Your ${noun} session has ended. Sign in with Discord in another tab, as the same player, then press Submit again.`,
   );
 }
 
