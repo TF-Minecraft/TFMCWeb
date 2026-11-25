@@ -50,6 +50,7 @@ class TrackedFilesTest(unittest.TestCase):
         self.assertFalse(weekly.tracked_config("TFMCCore/tfmc-cooldowns.yml"))
         self.assertFalse(weekly.tracked_config("activity/reward-lock.yml"))
         self.assertFalse(weekly.tracked_config("ItemsAdder/contents/tfmc_submissions/configs/hat.yml"))
+        self.assertFalse(weekly.tracked_config("ArmourShop/Categories/ps_armor.yml"))
         self.assertFalse(weekly.tracked_config("Archaeo/sites/345f77c2-c1e1-4931-b183-9410ab7ef362.yml"))
         self.assertFalse(weekly.tracked_config("Cooking/data/animals.yml"))
         self.assertFalse(weekly.tracked_config("Archaeo/ownership/journals/17948.yml"))
@@ -57,6 +58,13 @@ class TrackedFilesTest(unittest.TestCase):
         self.assertFalse(weekly.tracked_config("config.yml"))
         self.assertFalse(weekly.tracked_config("MMOItems/item/helper_miscellanea.yml"))
         self.assertTrue(weekly.tracked_config("MMOItems/item/staff.yml"))
+
+    def test_player_gun_skins_are_left_out_of_the_shared_file(self) -> None:
+        path, staff = "GunsAndGadgets/skins.yml", "rifle_arclock:\n  carry: stone_hoe.27\n"
+        player = "alice_rifle:\n  carry: ia.tfmc_submissions:alice_rifle_carry\n  types: [rifle]\n"
+        self.assertEqual(weekly.compare(_snapshot({path: staff}), _snapshot({path: staff + player}))["files"], [])
+        changed = weekly.compare(_snapshot({path: player}), _snapshot({path: staff + player}))["files"]
+        self.assertEqual([entry["kind"] for entry in changed[0]["entries"]], ["added"])
 
     def test_hidden_words_never_reach_the_facts(self) -> None:
         facts = {

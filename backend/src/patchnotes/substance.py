@@ -1,8 +1,8 @@
 """Turn a plugin file diff into a player-facing line, or nothing.
 
 A hash change is not a patch note. The previous and current text are compared.
-Whitespace, comments, key order, player saves, coordinates, and lore do not
-count. If the remaining change cannot be named, it is dropped.
+Whitespace, comments, key order, player saves, player skins, coordinates, and
+lore do not count. If the remaining change cannot be named, it is dropped.
 """
 
 from __future__ import annotations
@@ -50,6 +50,7 @@ _SKIP_KEYS = frozenset(
         "userdata",
     }
 )
+_PLAYER_SKINS = "tfmc_submissions"  # The ItemsAdder namespace of submitted skins.
 _NAME_KEYS = ("name", "display", "display-name", "displayname", "displayed-type", "title")
 _LABELS = {
     "attack-damage": "attack damage",
@@ -166,7 +167,22 @@ def _load(text: str | None):
         loaded = yaml.safe_load(stripped)
     except yaml.YAMLError:
         return None
-    return loaded
+    return without_player_skins(loaded)
+
+
+def without_player_skins(node: object) -> object:
+    """The config without skins players submitted. Files such as GunsAndGadgets' skins.yml also hold staff skins."""
+    if isinstance(node, list):
+        return [without_player_skins(value) for value in node if not _is_player_skin(value)]
+    if isinstance(node, dict):
+        return {key: without_player_skins(value) for key, value in node.items() if not _is_player_skin(value)}
+    return node
+
+
+def _is_player_skin(value: object) -> bool:
+    """A player skin's item or model, or the entry that uses one."""
+    texts = value.values() if isinstance(value, dict) else [value]
+    return any(isinstance(text, str) and _PLAYER_SKINS in text for text in texts)
 
 
 def _plain(value: str) -> str:

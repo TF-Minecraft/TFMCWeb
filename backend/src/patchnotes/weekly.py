@@ -22,7 +22,7 @@ from typing import Any
 import yaml
 
 from .folders import REPO_FOLDERS, excluded_relative, rule_matches, skip_directory
-from .substance import _canon, _plain, _skip_key, _title
+from .substance import _canon, _plain, _skip_key, _title, without_player_skins
 
 MAX_FILE_BYTES = 1_000_000
 MAX_DETAILS = 80
@@ -34,7 +34,6 @@ IGNORED = (
     "ItemsAdder/contents/tfmc_submissions/**",
     "ItemsAdder/storage/**",
     "ItemsAdder/contents/tfmc_drinks/**",
-    "ArmourShop/Categories/ps_items.yml",
     "BreweryX/recipes.yml",
     "DrinkBuilder/**",
     "Archaeo/ownership/**",
@@ -185,7 +184,7 @@ def _load(text: str | None) -> Any:
     if text is None or not text.strip():
         return {}
     try:
-        return yaml.safe_load(text)
+        return without_player_skins(yaml.safe_load(text))
     except yaml.YAMLError:
         return None
 

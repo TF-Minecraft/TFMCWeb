@@ -80,7 +80,7 @@ Structure, in this order:
    matter in a fight (damage, health, armour, cooldowns, weapon stats). Act changes never go here.
 4. `# Gameplay Changes`: anything that changes how an existing system works, such as a node producing
    faster, something dropping more, a new mechanic, crafting, professions, farming, animals, factions, trade.
-5. `# Fixes`: only the fixes players will notice most, as short bullets.
+5. `# Fixes`: only the fixes players will notice most, as short bullets. Never a corrected spelling or name.
 6. End with exactly this line: `-# Smaller and technical changes are on the website: <{page_url}>`
 
 Rules:
@@ -116,6 +116,8 @@ Rules:
 - Never use an em dash or emojis.
 - Write only about changes general players notice and care about. Leave out single players, admin and
   staff commands, the world border, edge-case fixes and technical cleanup.
+- Never mention a skin a player made, even when a commit or a note does. A new way for players to
+  make or upload skins is fine.
 - Never give drop chances, roll counts, resource costs of hidden systems or creature stats, and never the caps and
   exceptions that stop farming, such as an hourly limit or a creature that gives nothing. Say "more",
   "less", "stronger" or "weaker" instead. Never name new traits or creature tricks.
