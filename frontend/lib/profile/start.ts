@@ -60,3 +60,20 @@ export function timeUntil(iso: string, now = Date.now()): string {
   if (hours < 48) return hours === 1 ? "1 hour" : `${hours} hours`;
   return `${Math.round(hours / 24)} days`;
 }
+
+export type StartNoun = "skin" | "drink";
+
+export function refusalText(noun: StartNoun, reason: StartRefusal, nextAt: string | null): string {
+  switch (reason) {
+    case "cooldown":
+      return nextAt ? `Next ${noun} in ${timeUntil(nextAt)}` : `Your next ${noun} isn’t ready yet`;
+    case "rank":
+      return `Your rank can’t make ${noun}s`;
+    case "join_server":
+      return "Join the server once first";
+    case "discord":
+      return "Link Discord in game first";
+    case "used":
+      return "Code used";
+  }
+}

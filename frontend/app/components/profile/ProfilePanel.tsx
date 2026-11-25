@@ -185,7 +185,7 @@ export default function ProfilePanel({
   const [load, setLoad] = useState<Load>(uiDev ? { kind: "signed_out" } : { kind: "loading" });
   const [session, setSessionState] = useState<ProfileSession | null>(uiDev ? uiDevSession() : null);
   const [sessionChecked, setSessionChecked] = useState(uiDev);
-  // Bumped once when the server refuses a stored Discord session, so a fresh one is asked for.
+  // Bumped when the server refuses a session, to take up a newer stored one or ask for a fresh one once.
   const [sessionAttempt, setSessionAttempt] = useState(0);
   const sessionRetried = useRef(false);
   const [dashboard, setDashboard] = useState<ProfileDashboard | null>(uiDev ? uiDevDashboard() : null);
@@ -204,6 +204,9 @@ export default function ProfilePanel({
   const tab = profileTab(searchParams.get("tab"));
   const param = itemParam(tab);
   const item = param ? searchParams.get(param) : null;
+  // An open editor holds unsaved work, so nothing refreshes behind it: an ended session would drop it.
+  const editing = (tab === "skins" || tab === "drinks") && item === "new";
+  const editingRef = useRef(editing);
   const view = tab === "characters" && item ? characterView(searchParams.get("view")) : null;
   // Set once this page has pushed an item's address, so ← goes back to the wardrobe entry.
   const openedHere = useRef(false);
@@ -264,14 +267,19 @@ export default function ProfilePanel({
       setLoadError(null);
       try {
         setDashboard(await getProfileDashboard(token));
+        sessionRetried.current = false;
       } catch (err) {
         if (err instanceof ProfileApiError && err.status === 401) {
+          // A load from before the editor opened; closing it loads again.
+          if (editingRef.current) return;
           const stored = getSession();
-          const linked = stored?.source === "discord" && stored.session_token === token;
-          clearSession();
+          // Another tab, or a renewed upload, already holds a newer session.
+          const replaced = Boolean(stored && stored.session_token !== token);
+          const retry = replaced || (stored?.source === "discord" && !sessionRetried.current);
+          if (!replaced) clearSession();
           setSessionState(null);
           setDashboard(null);
-          if (linked && !sessionRetried.current) {
+          if (retry) {
             sessionRetried.current = true;
             setSessionChecked(false);
             setSessionAttempt((n) => n + 1);
@@ -288,6 +296,10 @@ export default function ProfilePanel({
   );
 
   const token = session?.session_token ?? null;
+  const tokenRef = useRef(token);
+  useEffect(() => {
+    tokenRef.current = token;
+  }, [token]);
   useEffect(() => {
     if (uiDev) return;
     setDashboard(null);
@@ -306,20 +318,27 @@ export default function ProfilePanel({
   }, [token, uiDev]);
 
   useEffect(() => {
-    if (uiDev || !token || !hasPending(dashboard)) return;
+    if (uiDev || !token || editing || !hasPending(dashboard)) return;
     const id = window.setInterval(() => void loadDashboard(token, { quiet: true }), PENDING_POLL_MS);
     return () => window.clearInterval(id);
-  }, [dashboard, loadDashboard, token, uiDev]);
+  }, [dashboard, editing, loadDashboard, token, uiDev]);
 
   // Back from the game, characters and slots may have changed.
   useEffect(() => {
-    if (uiDev || !token) return;
+    if (uiDev || !token || editing) return;
     function onVisible() {
       if (document.visibilityState === "visible") void loadDashboard(token!, { quiet: true });
     }
     document.addEventListener("visibilitychange", onVisible);
     return () => document.removeEventListener("visibilitychange", onVisible);
-  }, [loadDashboard, token, uiDev]);
+  }, [editing, loadDashboard, token, uiDev]);
+
+  // The wardrobe catches up once the editor closes, by a submit or by leaving it.
+  useEffect(() => {
+    const closed = editingRef.current && !editing;
+    editingRef.current = editing;
+    if (closed && tokenRef.current) void loadDashboard(tokenRef.current, { quiet: true });
+  }, [editing, loadDashboard]);
 
   // The linked player's rank and time on the server. Both are optional.
   useEffect(() => {
@@ -382,10 +401,6 @@ export default function ProfilePanel({
     go(id, null, false);
   }
 
-  const tokenRef = useRef(token);
-  useEffect(() => {
-    tokenRef.current = token;
-  }, [token]);
   const itemNav = useCallback(
     (next: ProfileTab) => ({
       onOpen: (id: string) => {
@@ -400,13 +415,10 @@ export default function ProfilePanel({
       },
       // Nothing to show (no session for it): back to the wardrobe in place, safe to repeat.
       onLeave: () => go(next, null, false),
-      // After a submit: the new item replaces the editor's entry, and the wardrobe catches up.
-      onShow: (id: string) => {
-        go(next, id, false);
-        if (tokenRef.current) void loadDashboard(tokenRef.current, { quiet: true });
-      },
+      // After a submit: the new item replaces the editor's entry.
+      onShow: (id: string) => go(next, id, false),
     }),
-    [dropCodes, go, loadDashboard],
+    [dropCodes, go],
   );
   // Where the list was scrolled when each character was opened from it, for coming back.
   const listScroll = useRef(new Map<string, number>());

@@ -9,6 +9,7 @@ import unittest
 from pathlib import Path
 
 import pytest
+from fastapi import HTTPException
 
 from src import database
 
@@ -23,7 +24,7 @@ if str(_BACKEND_SRC) not in sys.path:
 
 os.environ.setdefault("SKINS_DEV", "1")
 
-from src.api.map_access import get_skin_session
+from src.api.skins_routes import _skin_session_from_auth
 from src.auth.testing import execute, rows
 from src.skins.testing import link
 
@@ -178,14 +179,19 @@ class CharactersLoreCustomiseTest(unittest.TestCase):
             ],
         )
 
-    def test_get_skin_session_accepts_skin_scope(self) -> None:
-        row = get_skin_session(f"Bearer {self.skin_session['session_token']}")
-        self.assertIsNotNone(row)
+    def test_skin_routes_accept_skin_scope(self) -> None:
+        row = _skin_session_from_auth(f"Bearer {self.skin_session['session_token']}")
         self.assertEqual("skin", row["scope"])
 
-    def test_get_skin_session_rejects_profile(self) -> None:
-        row = get_skin_session(f"Bearer {self.profile_session['session_token']}")
-        self.assertIsNone(row)
+    def test_skin_routes_reject_profile_scope(self) -> None:
+        with self.assertRaises(HTTPException) as caught:
+            _skin_session_from_auth(f"Bearer {self.profile_session['session_token']}")
+        self.assertEqual(403, caught.exception.status_code)
+
+    def test_skin_routes_say_an_ended_session_is_unauthorized(self) -> None:
+        with self.assertRaises(HTTPException) as caught:
+            _skin_session_from_auth("Bearer ended")
+        self.assertEqual(401, caught.exception.status_code)
 
     def test_customise_name_lore_profile_only(self) -> None:
         from src.characters.lore_items import customise_lore_item

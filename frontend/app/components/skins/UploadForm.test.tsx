@@ -21,8 +21,12 @@ vi.mock("./ArmorPreview", () => ({
 
 afterEach(cleanup);
 
+const noRenewal = () => Promise.reject(new Error("not expected"));
+
 function renderForm(skinKinds: string[] | null) {
-  return render(<UploadForm sessionToken="t" skinKinds={skinKinds} onSubmitted={() => undefined} />);
+  return render(
+    <UploadForm sessionToken="t" renewSession={noRenewal} skinKinds={skinKinds} onSubmitted={() => undefined} />,
+  );
 }
 
 describe("UploadForm item-first flow", () => {
@@ -90,12 +94,18 @@ describe("UploadForm item-first flow", () => {
   });
 
   it("re-picks the style when rank perks change after the item was chosen", () => {
-    const view = render(<UploadForm sessionToken="t" skinKinds={["armor_set"]} onSubmitted={() => undefined} />);
+    const view = render(
+      <UploadForm sessionToken="t" renewSession={noRenewal} skinKinds={["armor_set"]} onSubmitted={() => undefined} />,
+    );
     fireEvent.click(screen.getByRole("radio", { name: /^Steel/ }));
     expect(screen.getByRole("group", { name: "Set types" })).toBeTruthy();
-    view.rerender(<UploadForm sessionToken="t" skinKinds={[]} onSubmitted={() => undefined} />);
+    view.rerender(
+      <UploadForm sessionToken="t" renewSession={noRenewal} skinKinds={[]} onSubmitted={() => undefined} />,
+    );
     expect(screen.queryByRole("group", { name: "Set types" })).toBeNull();
-    view.rerender(<UploadForm sessionToken="t" skinKinds={["armor_set"]} onSubmitted={() => undefined} />);
+    view.rerender(
+      <UploadForm sessionToken="t" renewSession={noRenewal} skinKinds={["armor_set"]} onSubmitted={() => undefined} />,
+    );
     expect(screen.getByRole("group", { name: "Set types" })).toBeTruthy();
   });
 });

@@ -10,7 +10,6 @@ from fastapi.responses import FileResponse, Response
 from pydantic import BaseModel, Field
 from starlette.concurrency import run_in_threadpool
 
-from src.api.map_access import get_skin_session
 from src.api.staff_access import require_staff_account
 from src.api.path_safety import is_safe_filename, is_safe_segment, resolve_within
 from src.skins.auth import (
@@ -23,6 +22,7 @@ from src.skins.auth import (
 )
 from src.skins.codes import (
     CodeError,
+    REDEEMABLE_SKIN_SCOPES,
     get_cosmetic_mint_status,
     get_session,
     inspect_code,
@@ -234,13 +234,9 @@ def _session_from_auth(authorization: str | None):
 
 
 def _skin_session_from_auth(authorization: str | None):
-    if not authorization or not authorization.lower().startswith("bearer "):
-        raise HTTPException(
-            status_code=401,
-            detail="Missing or invalid Authorization Bearer token",
-        )
-    row = get_skin_session(authorization)
-    if row is None:
+    # 401 once the session is gone, so the upload form can tell that from a wrong kind of code.
+    row = _session_from_auth(authorization)
+    if row["scope"] not in REDEEMABLE_SKIN_SCOPES:
         raise HTTPException(
             status_code=403,
             detail="Skin session required (scope=skin or skin_staff)",

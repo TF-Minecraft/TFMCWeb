@@ -227,6 +227,12 @@ code that expires without a submission stops counting once no session from it ca
 still upload, whether Profile or `/token create` made it, so a code that lapses
 unused costs nothing. A used code keeps counting after it expires. Source: [`codes.py`](../../../backend/src/skins/codes.py).
 
+A skin or drink session, started here or from a code, ends when its code does. If it
+has ended by the time the player submits, the API answers 401 and the form starts it
+again from Profile and submits once more, keeping what they entered
+([`renewUpload.ts`](../../../frontend/lib/profile/renewUpload.ts)). That needs the same
+player to be signed in, and never applies to a staff code.
+
 Sessions started here are marked `from_profile` in the browser. Signing out or
 unlinking under Linked accounts revokes them; sessions from codes stay.
 

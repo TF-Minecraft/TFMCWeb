@@ -9,6 +9,7 @@ import { createSubmission, checkSubmissionConflict, getCatalog, SkinsApiError } 
 import type { SkinsCatalog } from "../../../lib/skins/catalog";
 import { filterStaffCategories } from "../../../lib/skins/catalog";
 import { DEV_CATALOG_ENTITLEMENTS, DEV_SESSION_SKIN_KINDS } from "../../../lib/skins/entitlementsDev";
+import { withRenewal } from "../../../lib/profile/renewUpload";
 import { setLastSubmissionId } from "../../../lib/skins/session";
 import {
   ARMOR_SINGLE_SETS,
@@ -66,6 +67,8 @@ function isFlatPreviewKind(kind: SkinKind): boolean {
 
 type Props = {
   sessionToken: string;
+  /** Starts the session again after it ended and resolves to its new token. */
+  renewSession: () => Promise<string>;
   /** Staff curated lane — category/scroll required. */
   staff?: boolean;
   /** From redeem / player meta (fallback: catalog defaults). */
@@ -161,6 +164,7 @@ function newTier(type: string): TierEntry {
 
 export default function UploadForm({
   sessionToken,
+  renewSession,
   staff = false,
   nameColourStops,
   max3dPairBytes,
@@ -533,10 +537,9 @@ export default function UploadForm({
 
     setLoading(true);
     try {
-      const check = await checkSubmissionConflict({
-        sessionToken,
-        display_name: name,
-      });
+      const check = await withRenewal(sessionToken, renewSession, (token) =>
+        checkSubmissionConflict({ sessionToken: token, display_name: name }).then((found) => ({ ...found, token })),
+      );
       if (!check.ok) {
         const reasons = new Set(check.conflicts.flatMap((c) => c.reasons || []));
         if (reasons.has("display_name")) {
@@ -548,8 +551,7 @@ export default function UploadForm({
         return;
       }
 
-      const result = await createSubmission({
-        sessionToken,
+      const submission = {
         kind,
         display_name: name,
         base_set: isArmor ? null : baseSet,
@@ -567,7 +569,10 @@ export default function UploadForm({
         tier_scrolls:
           staff && isArmor ? Object.fromEntries(tiers.map((entry) => [tierId(entry), entry.scroll.trim()])) : undefined,
         files: uploadFiles,
-      });
+      };
+      const result = await withRenewal(check.token, renewSession, (token) =>
+        createSubmission({ ...submission, sessionToken: token }),
+      );
       setLastSubmissionId(result.id);
       onSubmitted(result.id);
     } catch (err) {
