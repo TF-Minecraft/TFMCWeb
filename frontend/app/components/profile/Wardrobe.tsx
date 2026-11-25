@@ -1,7 +1,13 @@
 "use client";
 
 import { useId, useState, type MouseEvent, type ReactNode } from "react";
-import { StartRefusedError, timeUntil, type StartAllowance, type StartRefusal } from "../../../lib/profile/start";
+import {
+  refusalText,
+  StartRefusedError,
+  timeUntil,
+  type StartAllowance,
+  type StartNoun,
+} from "../../../lib/profile/start";
 
 export type WardrobeItem = {
   id: string;
@@ -13,10 +19,8 @@ export type WardrobeItem = {
   picture: ReactNode;
 };
 
-type Noun = "skin" | "drink";
-
 type Props = {
-  noun: Noun;
+  noun: StartNoun;
   items: WardrobeItem[];
   /** Undefined when the API can't start one from Profile; codes still work. */
   allowance?: StartAllowance;
@@ -63,21 +67,6 @@ function Chip({ status }: { status: string }) {
       {chip.label}
     </span>
   );
-}
-
-function refusalText(noun: Noun, reason: StartRefusal, nextAt: string | null): string {
-  switch (reason) {
-    case "cooldown":
-      return nextAt ? `Next ${noun} in ${timeUntil(nextAt)}` : `Your next ${noun} isn’t ready yet`;
-    case "rank":
-      return `Your rank can’t make ${noun}s`;
-    case "join_server":
-      return "Join the server once first";
-    case "discord":
-      return "Link Discord in game first";
-    case "used":
-      return "Code used";
-  }
 }
 
 /** A hanger, for things with no picture yet. */

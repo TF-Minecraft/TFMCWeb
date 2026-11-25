@@ -105,6 +105,16 @@ class SiteStartTest(_CodesDb):
         self.assertEqual(row["minted_via"], "site")
         self.assertIsNone(row["code_plaintext"])
 
+    def test_a_session_ends_with_its_code(self) -> None:
+        created = datetime.now(timezone.utc) - timedelta(hours=40)
+        for scope in ("skin", "drink"):
+            self.add_code(scope, created)
+            out = self.codes.start_site_session(PLAYER, "main", scope)
+            self.assertEqual(out["expires_at"], _iso(created + timedelta(hours=48)))
+            issued = self.codes.issue_code(PLAYER, scope)
+            redeem = self.codes.redeem_code if scope == "skin" else self.codes.redeem_drink_code
+            self.assertEqual(redeem(issued["code"])["expires_at"], issued["expires_at"])
+
     def test_starting_again_reuses_the_unused_code(self) -> None:
         first = self.codes.start_site_session(PLAYER, "main", "skin")
         second = self.codes.start_site_session(PLAYER, "main", "skin")

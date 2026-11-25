@@ -10,6 +10,7 @@ from datetime import datetime, timedelta, timezone
 
 from src import database
 
+# Profile sessions; a skin or drink session ends with its code instead.
 SESSION_TTL_HOURS = 8
 CHARACTER_REMEMBER_TTL_DAYS = 30
 ALLOWED_SCOPES = frozenset({"skin", "drink", "profile", "skin_staff"})
@@ -216,9 +217,8 @@ MINTED_VIA_SITE = "site"
 MINTED_VIA_STAFF_VIEW = "staff_view"
 
 # Codes that lapsed unused never started anything, so they don't hold the clock,
-# whether Profile or /token create made them. A session outlives its code by up to
-# SESSION_TTL_HOURS and can still submit, so the code keeps counting until that
-# session ends too.
+# whether Profile or /token create made them. A session normally ends with its code;
+# while one outlives it, the code keeps counting.
 _COUNTS_TOWARD_COOLDOWN = """
     NOT (
         c.expires_at <= %(now)s
@@ -575,7 +575,7 @@ def redeem_code(plaintext: str) -> dict:
         now = _prepare_skin_drink_redeem(conn, row["id"], row["expires_at"])
 
         session_token = secrets.token_urlsafe(32)
-        session_expires_at = _iso(now + timedelta(hours=SESSION_TTL_HOURS))
+        session_expires_at = _iso(row["expires_at"])
 
         conn.execute(
             """
@@ -830,7 +830,7 @@ def redeem_drink_code(plaintext: str) -> dict:
         now = _prepare_skin_drink_redeem(conn, row["id"], row["expires_at"])
 
         session_token = secrets.token_urlsafe(32)
-        session_expires_at = _iso(now + timedelta(hours=SESSION_TTL_HOURS))
+        session_expires_at = _iso(row["expires_at"])
 
         conn.execute(
             """
@@ -1010,7 +1010,7 @@ def start_site_session(player_uuid: str, realm_id: str | None, scope: str) -> di
         try:
             with conn.transaction():
                 now = _prepare_skin_drink_redeem(conn, row["id"], row["expires_at"])
-                session_expires_at = _iso(now + timedelta(hours=SESSION_TTL_HOURS))
+                session_expires_at = _iso(row["expires_at"])
                 conn.execute(
                     """
                     INSERT INTO code_sessions (token_hash, code_id, player_uuid, expires_at, created_at)

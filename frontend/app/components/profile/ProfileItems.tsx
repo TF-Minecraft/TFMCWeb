@@ -7,11 +7,17 @@ import UploadForm from "../skins/UploadForm";
 import BrewForm from "../drinks/BrewForm";
 import DrinkShowcase from "./DrinkShowcase";
 import SkinShowcase from "./SkinShowcase";
-import { getPlayerMeta, getSubmission as getSkin, type SubmissionPublic } from "../../../lib/skins/api";
+import {
+  getPlayerMeta,
+  getSubmission as getSkin,
+  startSkinFromProfile,
+  type SubmissionPublic,
+} from "../../../lib/skins/api";
 import * as skins from "../../../lib/skins/session";
-import { getSubmission as getDrink, type DrinkSubmissionPublic } from "../../../lib/drinks/api";
+import { getSubmission as getDrink, startDrinkFromProfile, type DrinkSubmissionPublic } from "../../../lib/drinks/api";
 import * as drinks from "../../../lib/drinks/session";
 import { profileHref } from "../../../lib/profile/paths";
+import { renewUpload } from "../../../lib/profile/renewUpload";
 import { resolveOwnerToken, type WardrobeSessionStore } from "../../../lib/profile/session";
 
 type Props = {
@@ -121,11 +127,22 @@ function NewSkin({ onBack, onLeave, onShow }: Omit<Props, "id">) {
     };
   }, [token]);
 
+  async function renew(current: skins.SkinsSession): Promise<string> {
+    const next = {
+      ...skins.skinsSessionFrom(await renewUpload("skin", current, startSkinFromProfile)),
+      from_profile: true,
+    };
+    skins.setSession(next);
+    setSessionState(next);
+    return next.session_token;
+  }
+
   return (
     <ItemFrame tab="skins" title="New skin" onBack={onBack}>
       {session ? (
         <UploadForm
           sessionToken={session.session_token}
+          renewSession={() => renew(session)}
           staff={session.staff === true}
           nameColourStops={session.name_colour_stops}
           max3dPairBytes={session.max_3d_pair_bytes}
@@ -165,9 +182,19 @@ function NewDrink({ onBack, onLeave, onShow }: Omit<Props, "id">) {
     setSessionState(existing);
   }, [onLeave, onShow]);
 
+  async function renew(current: drinks.DrinksSession): Promise<string> {
+    const next = {
+      ...drinks.drinksSessionFrom(await renewUpload("drink", current, startDrinkFromProfile)),
+      from_profile: true,
+    };
+    drinks.setSession(next);
+    setSessionState(next);
+    return next.session_token;
+  }
+
   return (
     <ItemFrame tab="drinks" title="New drink" onBack={onBack}>
-      {session ? <BrewForm session={session} onSubmitted={onShow} /> : <Loading />}
+      {session ? <BrewForm session={session} renewSession={() => renew(session)} onSubmitted={onShow} /> : <Loading />}
     </ItemFrame>
   );
 }

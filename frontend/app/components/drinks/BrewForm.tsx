@@ -20,6 +20,7 @@ import {
   WOOD_OPTIONS,
   effectLabel,
 } from "../../../lib/drinks/constants";
+import { withRenewal } from "../../../lib/profile/renewUpload";
 import { setLastSubmissionId, setSession, type DrinksSession } from "../../../lib/drinks/session";
 import NameColourPicker from "../shared/NameColourPicker";
 import LoreLinesEditor from "../shared/LoreLinesEditor";
@@ -34,6 +35,8 @@ type EffectRow = { type: string; level: number; duration: number };
 
 type Props = {
   session: DrinksSession;
+  /** Starts the session again after it ended and resolves to its new token. */
+  renewSession: () => Promise<string>;
   /** Shows the new drink once it's in. */
   onSubmitted: (id: string) => void;
 };
@@ -44,7 +47,7 @@ const fieldClass =
 const btnGhost = "text-xs text-[var(--tfmc-accent)] hover:underline disabled:opacity-50";
 const btnDanger = "text-xs text-[#e8a0a0] hover:underline";
 
-export default function BrewForm({ session, onSubmitted }: Props) {
+export default function BrewForm({ session, renewSession, onSubmitted }: Props) {
   const [allowTexture, setAllowTexture] = useState(session.allow_drink_texture === true);
   const [allowDrinkMessage, setAllowDrinkMessage] = useState(session.allow_drink_message === true);
   const [colourStops, setColourStops] = useState(Math.max(0, Math.floor(session.name_colour_stops ?? 0)));
@@ -260,12 +263,14 @@ export default function BrewForm({ session, onSubmitted }: Props) {
 
     setSubmitting(true);
     try {
-      const created = await createSubmission({
-        sessionToken: session.session_token,
-        recipe,
-        texture: appearance === "upload" ? textureFile : null,
-        existingTextureId: appearance === "reuse" ? existingTextureId.trim() : null,
-      });
+      const created = await withRenewal(session.session_token, renewSession, (token) =>
+        createSubmission({
+          sessionToken: token,
+          recipe,
+          texture: appearance === "upload" ? textureFile : null,
+          existingTextureId: appearance === "reuse" ? existingTextureId.trim() : null,
+        }),
+      );
       setLastSubmissionId(created.id);
       onSubmitted(created.id);
     } catch (err) {
@@ -275,7 +280,8 @@ export default function BrewForm({ session, onSubmitted }: Props) {
     }
   }
 
-  if (loadingCatalog) {
+  // A renewed session reloads the catalog behind the form the player filled in.
+  if (loadingCatalog && !catalog) {
     return <LoadingSkeleton variant="form" className="mt-8" />;
   }
 

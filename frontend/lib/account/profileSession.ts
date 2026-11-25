@@ -6,7 +6,7 @@ import { startLinkedProfileSession } from "./api";
 /** Reuse a stored session with at least this long left before asking for a new one. */
 const MIN_LEFT_MS = 5 * 60_000;
 
-function sameUuid(a: string, b: string): boolean {
+export function sameUuid(a: string, b: string): boolean {
   return a.replace(/-/g, "").toLowerCase() === b.replace(/-/g, "").toLowerCase();
 }
 

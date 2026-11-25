@@ -8,7 +8,7 @@ from fastapi import HTTPException
 
 from src.api.map_registry import MapEntry, get_map_entry, list_map_entries
 from src.characters.web_entitlements import has_map_staff_access
-from src.skins.codes import REDEEMABLE_SKIN_SCOPES, get_session
+from src.skins.codes import get_session
 
 STAFF_MAP_FORBIDDEN_DETAIL = "Staff map access required"
 STAFF_MAP_PERMISSION_DETAIL = "Staff map permission required"
@@ -43,20 +43,6 @@ def parse_bearer(authorization: str | None) -> str | None:
         return None
     token = authorization[7:].strip()
     return token or None
-
-
-def get_skin_session(header_value: str | None) -> dict | None:
-    """Bearer skin or skin_staff session from X-Skin-Session (or Authorization-shaped value)."""
-    token = parse_bearer(header_value)
-    if not token:
-        return None
-    row = get_session(token)
-    if row is None:
-        return None
-    scope = str(row.get("scope") or "").strip().lower()
-    if scope not in REDEEMABLE_SKIN_SCOPES:
-        return None
-    return row
 
 
 def get_profile_session(authorization: str | None) -> dict | None:
