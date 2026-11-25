@@ -47,7 +47,7 @@ class RuleMatchTest(unittest.TestCase):
 
     def test_skins_players_submitted_are_never_tracked(self) -> None:
         for relative in ("Categories/ps_armor.yml", "ArmourShop/Categories/ps_items.yml", "custom-masks.yml",
-                         "VehicleFramework/player-skins.yml"):
+                         "VehicleFramework/player-skins.yml", "contents/tfmc_submissions_dev/configs/hat.yml"):
             self.assertTrue(excluded_relative(relative), relative)
         self.assertFalse(excluded_relative("ArmourShop/Categories/a_medieval.yml"))
 

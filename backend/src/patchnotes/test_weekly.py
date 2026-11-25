@@ -65,6 +65,8 @@ class TrackedFilesTest(unittest.TestCase):
         self.assertEqual(weekly.compare(_snapshot({path: staff}), _snapshot({path: staff + player}))["files"], [])
         changed = weekly.compare(_snapshot({path: player}), _snapshot({path: staff + player}))["files"]
         self.assertEqual([entry["kind"] for entry in changed[0]["entries"]], ["added"])
+        keyed = staff + "tfmc_submissions:alice_rifle:\n  name: Alice\n"
+        self.assertEqual(weekly.compare(_snapshot({path: staff}), _snapshot({path: keyed}))["files"], [])
 
     def test_hidden_words_never_reach_the_facts(self) -> None:
         facts = {

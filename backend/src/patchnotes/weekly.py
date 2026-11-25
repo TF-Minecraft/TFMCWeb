@@ -31,7 +31,6 @@ _ZIP_ROOTS = ("plugins/", "Minecraft/plugins/")
 
 # Runtime state, player submissions and staff tools. Their edits are not news.
 IGNORED = (
-    "ItemsAdder/contents/tfmc_submissions/**",
     "ItemsAdder/storage/**",
     "ItemsAdder/contents/tfmc_drinks/**",
     "BreweryX/recipes.yml",

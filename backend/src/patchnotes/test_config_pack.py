@@ -43,6 +43,10 @@ class ConfigPackTest(unittest.TestCase):
             config_pack.cleaned(text, _WORDS), "cooldown: 5 # seconds\nsite: (removed)\npassives: 2\n"
         )
 
+    def test_player_skins_are_removed(self) -> None:
+        text = "rifle:\n  carry: stone_hoe.27\nalice_rifle:\n  carry: ia.tfmc_submissions:alice_rifle\n"
+        self.assertEqual(config_pack.cleaned(text, _WORDS), "rifle:\n  carry: stone_hoe.27\n")
+
     def test_whole_login_values_are_removed(self) -> None:
         for secret in (
             '"password": hunter2', "password: |\n  hunter2\n  hunter2", "db: {dbPassword: hunter2, cooldown: 5}",

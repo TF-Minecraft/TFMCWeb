@@ -17,6 +17,7 @@ from typing import Any
 import yaml
 
 from .safety import hidden_words
+from .substance import without_player_skins
 from .weekly import hidden_config, snapshot_from_zip
 
 FOLDERS = frozenset({
@@ -58,14 +59,14 @@ def _without_logins(node: Any) -> Any:
 
 
 def cleaned(text: str, words: re.Pattern[str]) -> str | None:
-    """The text without logins, links and hidden words, or None when it cannot be read safely.
+    """The text without logins, links, player skins and hidden words, or None when it cannot be read safely.
 
-    A value can span lines, so a file with a login is written again from its parsed
+    A value can span lines, so a file with a login or player skin is written again from its parsed
     form. The line check then covers comments and text inside values.
     """
     try:
         loaded = yaml.safe_load(text)
-        pruned = _without_logins(loaded)
+        pruned = _without_logins(without_player_skins(loaded))
         if pruned != loaded:
             text = yaml.safe_dump(pruned, sort_keys=False, allow_unicode=True)
     except (yaml.YAMLError, RecursionError):

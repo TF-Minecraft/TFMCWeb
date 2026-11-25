@@ -16,6 +16,7 @@ import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from .substance import PLAYER_SKINS
 from .summarize import player_text
 
 _NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,60}$")
@@ -239,7 +240,7 @@ def excluded_relative(relative: str) -> bool:
     path = Path(relative)
     if path.is_absolute() or ".." in path.parts:
         return True
-    if any(part in HARD_DIRS or part.startswith(".") for part in path.parts):
+    if any(part in HARD_DIRS or part.startswith((".", PLAYER_SKINS)) for part in path.parts):
         return True
     if any(_LORE_PART.search(part) for part in path.parts):
         return True
