@@ -27,6 +27,7 @@ from zoneinfo import ZoneInfo
 
 from .safety import hidden_knowledge_warning, hidden_words
 from .summarize import (
+    HIDDEN_SUBJECT,
     _EXPLOIT,
     _PERMISSION,
     _SECRET,
@@ -56,7 +57,6 @@ _STAFF_MENTION = re.compile(
     r"\b(?:lets?|allows?|only|by|for) staff\b|\bstaff (?:can|may|tools?|side|now|lists?)\b", re.IGNORECASE
 )
 _STAFF_WEAPON = re.compile(r"\bmages? staff\b|\bstaff (?:of|weapons?|damage|runes?)\b", re.IGNORECASE)
-_HIDDEN_SUBJECT = re.compile(r"\b(hidden|secrets?|dev-only)\b|\(dev\)", re.IGNORECASE)
 _REVIEW_WORK = re.compile(
     r"^(address|apply|review|fix review|merge|resolve|bump|release|test|tests|ci|docs|refactor|rename|format|keep)\b",
     re.IGNORECASE,
@@ -177,7 +177,7 @@ def commit_subjects(
         for commit in data["commits"]:
             message = str(((commit or {}).get("commit") or {}).get("message") or "")
             subject = message.strip().splitlines()[0].strip() if message.strip() else ""
-            if not subject or _MERGE.match(subject) or _HIDDEN_SUBJECT.search(subject):
+            if not subject or _MERGE.match(subject) or HIDDEN_SUBJECT.search(subject):
                 continue
             if _staff_work(subject):
                 continue

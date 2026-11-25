@@ -48,7 +48,13 @@ without review rounds, hidden features or staff work.
 `PATCHNOTES_HIDDEN_WORDS` in `/etc/tfmc/patchnotes.env` is a comma-separated list of names players must not learn, kept
 on the host because this repository is public. Files, entries and commits named after one are left out of the facts, and
 any line of a post or rewrite that still names one is dropped. Commit descriptions and configs that contain one are left
-out too, and without the list neither is used at all.
+out too, and without the list neither is used at all. A space or `_` in a name also matches `-` or
+nothing.
+
+www needs the same list in `backend/.env`: the website then leaves out every line that names one, also older lines, and
+automatic lines that do are never stored. Change both lists together, then restart the rewrite worker and the backend.
+Pushes with a subject that says hidden, secret or dev-only are never stored. Skins players submit are left out of
+everything.
 
 Staff notes are lines written for players when a change ships. The writer puts every one in the post. When the configs
 end the week on another number, that final number is used and the note only gives the reason. Staff add them with

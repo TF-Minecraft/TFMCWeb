@@ -96,6 +96,7 @@ _SECRET = re.compile(
     r"|discord(?:app)?\.com/api/webhooks/\S+"
 )
 _DIFF = re.compile(r"(?m)^(diff --git |@@ |--- a/|\+\+\+ b/)")
+HIDDEN_SUBJECT = re.compile(r"\b(hidden|secrets?|dev[ -]only)\b|\(dev\)", re.IGNORECASE)
 _EXPLOIT = re.compile(
     r"\b(how to (dupe|duplicate|exploit|crash)|steps to (dupe|exploit)|"
     r"permission bypass|reproduce the exploit)\b",
@@ -199,7 +200,7 @@ def _draft_commit(full_name: str, label: str, commit: object) -> tuple[Draft | N
         return None, True
     kind, text = _split_conventional(subject)
     cleaned = player_text(text)
-    if cleaned is None:
+    if cleaned is None or HIDDEN_SUBJECT.search(subject):
         return None, False
     if kind in _SKIP_KINDS or _BUMP.match(cleaned):
         return None, True
