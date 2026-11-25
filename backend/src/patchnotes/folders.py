@@ -16,6 +16,7 @@ import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from .substance import PLAYER_SKINS
 from .summarize import player_text
 
 _NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,60}$")
@@ -59,7 +60,9 @@ HARD_SUFFIXES = (
     ".zip",
     ".lock",
 )
-SKIP_FILE_NAMES = frozenset(
+# ArmourShop writes the skins players submit to these.
+PLAYER_SKIN_FILES = frozenset({"ps_armor.yml", "ps_items.yml", "custom-masks.yml", "player-skins.yml"})
+SKIP_FILE_NAMES = PLAYER_SKIN_FILES | frozenset(
     {
         "permissions.yml",
         "plugin.yml",
@@ -233,11 +236,11 @@ def skip_directory(name: str) -> bool:
 
 
 def excluded_relative(relative: str) -> bool:
-    """Player data, databases, logs, lore, and secrets are never tracked."""
+    """Player data, player skins, databases, logs, lore, and secrets are never tracked."""
     path = Path(relative)
     if path.is_absolute() or ".." in path.parts:
         return True
-    if any(part in HARD_DIRS or part.startswith(".") for part in path.parts):
+    if any(part in HARD_DIRS or part.startswith((".", PLAYER_SKINS)) for part in path.parts):
         return True
     if any(_LORE_PART.search(part) for part in path.parts):
         return True

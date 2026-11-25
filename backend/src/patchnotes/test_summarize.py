@@ -7,6 +7,7 @@ import hmac
 import sys
 import unittest
 from pathlib import Path
+from unittest import mock
 
 _BACKEND_SRC = Path(__file__).resolve().parents[1]
 if str(_BACKEND_SRC) not in sys.path:
@@ -49,7 +50,7 @@ class SummarizePushTest(unittest.TestCase):
                     "default_branch": "main",
                 },
                 "commits": [
-                    {"id": "1" * 40, "message": "feat: Added a hidden grove", "distinct": True},
+                    {"id": "1" * 40, "message": "feat: Added a quiet grove", "distinct": True},
                     {"id": "2" * 40, "message": "fix: Fixed a node crash", "distinct": True},
                     {"id": "3" * 40, "message": "balance: Lowered the resin price", "distinct": True},
                     {"id": "4" * 40, "message": "refactor: Split the storage layer", "distinct": True},
@@ -60,13 +61,20 @@ class SummarizePushTest(unittest.TestCase):
         self.assertEqual(
             [(draft.section, draft.body) for draft in notes.drafts],
             [
-                ("new", "Gathering: Added a hidden grove"),
+                ("new", "Gathering: Added a quiet grove"),
                 ("fixed", "Gathering: Fixed a node crash"),
                 ("adjusted", "Gathering: Lowered the resin price"),
                 ("technical", "Gathering: Split the storage layer"),
             ],
         )
         self.assertEqual(notes.withheld, 0)
+
+    def test_hidden_work_and_hidden_names_are_withheld(self) -> None:
+        with mock.patch.dict("os.environ", {"PATCHNOTES_HIDDEN_WORDS": "moon path"}):
+            for subject in ("feat: Add hidden class unlocks", "Staff lore panel (dev only)", "balance: Weaker Moonpath spells"):
+                notes = summarize_push(_push(subject))
+                self.assertEqual((notes.drafts, notes.withheld), ([], 1), subject)
+            self.assertEqual(len(summarize_push(_push("balance: Weaker moon spells")).drafts), 1)
 
     def test_ignores_other_branches_and_other_orgs(self) -> None:
         self.assertFalse(summarize_push(_push("feat: Added a grove", ref="refs/heads/dev")).accepted)

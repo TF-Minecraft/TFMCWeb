@@ -13,6 +13,7 @@ if str(_BACKEND_SRC) not in sys.path:
 from patchnotes.folders import (  # noqa: E402
     classify_tree,
     diff_tracked,
+    excluded_relative,
     note_text,
     plugin_folder,
     rule_matches,
@@ -43,6 +44,12 @@ class RuleMatchTest(unittest.TestCase):
         }
         tracked = tracked_files(files, rules)
         self.assertEqual(set(tracked), {"config.yml", "item/sword.yml"})
+
+    def test_skins_players_submitted_are_never_tracked(self) -> None:
+        for relative in ("Categories/ps_armor.yml", "ArmourShop/Categories/ps_items.yml", "custom-masks.yml",
+                         "VehicleFramework/player-skins.yml", "contents/tfmc_submissions_dev/configs/hat.yml"):
+            self.assertTrue(excluded_relative(relative), relative)
+        self.assertFalse(excluded_relative("ArmourShop/Categories/a_medieval.yml"))
 
     def test_safe_rule_rejects_player_data(self) -> None:
         with self.assertRaises(ValueError):

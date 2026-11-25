@@ -111,7 +111,7 @@ from src.patchnotes.feedback import (
     sort_prompt,
 )
 from src.patchnotes.folders import catalog_entries, clean_folder_name, safe_rule
-from src.patchnotes.safety import hidden_knowledge_warning
+from src.patchnotes.safety import hidden_knowledge_warning, names_hidden
 from src.patchnotes.summarize import player_text, signature_ok, strip_pr_numbers, summarize_push
 from src.skins.auth import HEADER_STAFF_KEY, require_staff_key
 
@@ -192,6 +192,11 @@ def _serialize(row: dict[str, Any], *, public: bool) -> dict[str, Any]:
     if note:
         payload["revision_note"] = note
     return payload
+
+
+def _public_bullets(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """The lines players may see. Older lines can name something that was hidden later."""
+    return [_serialize(row, public=True) for row in rows if not names_hidden(str(row.get("body") or ""))]
 
 
 def _week_or_400(week: str) -> str:
@@ -310,7 +315,7 @@ def published_notes(limit: int = 8, before: str | None = None):
         "weeks": [
             {
                 "week": week["week"],
-                "bullets": [_serialize(row, public=True) for row in week["bullets"]],
+                "bullets": _public_bullets(week["bullets"]),
             }
             for week in weeks
         ],
@@ -340,7 +345,7 @@ def published_week(week: str):
     except (PatchnotesDBError, PatchnotesConfigError) as e:
         logger.exception("published_week failed")
         raise HTTPException(status_code=502, detail=_client_detail(e)) from e
-    return {"week": week_key, "bullets": [_serialize(row, public=True) for row in bullets]}
+    return {"week": week_key, "bullets": _public_bullets(bullets)}
 
 
 _WEBHOOK_MAX_BYTES = 1_000_000
@@ -412,6 +417,8 @@ def staff_create_bullet(body: CreateBulletBody):
         migrate()
         if body.source_key:
             source_key = body.source_key
+            if names_hidden(body.body):
+                return {"withheld": True, "source_key": source_key}
             # One server-edit note per plugin per week. The watcher omits the week.
             if source_key.startswith("watch:") and source_key.count(":") == 1:
                 source_key = f"{source_key}:{current_week()}"

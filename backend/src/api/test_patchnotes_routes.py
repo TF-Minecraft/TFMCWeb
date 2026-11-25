@@ -322,6 +322,25 @@ class PatchnotesRoutesTest(unittest.TestCase):
         self.assertTrue(body["has_more"])
         mock_notes.assert_called_once_with(limit=1, before="2026-W40")
 
+    @mock.patch.dict("os.environ", {"PATCHNOTES_HIDDEN_WORDS": "moonpath"})
+    def test_lines_with_a_hidden_name_are_not_public(self) -> None:
+        rows = [_row(status="approved", body="Added the Moonpath"), _row(status="approved")]
+        weeks = [{"week": "2026-W39", "bullets": rows}]
+        with mock.patch("src.api.patchnotes_routes.list_published_notes", return_value=(weeks, False)):
+            found = self.client.get("/patchnotes").json()["weeks"]
+        self.assertEqual([bullet["body"] for bullet in found[0]["bullets"]], ["Added a station"])
+        with mock.patch("src.api.patchnotes_routes.list_approved", return_value=rows):
+            found = self.client.get("/patchnotes/weeks/2026-W39").json()["bullets"]
+        self.assertEqual([bullet["body"] for bullet in found], ["Added a station"])
+
+    @mock.patch.dict("os.environ", {"PATCHNOTES_HIDDEN_WORDS": "moonpath"})
+    @mock.patch("src.api.patchnotes_routes.insert_sourced_bullet")
+    def test_an_automatic_line_with_a_hidden_name_is_not_stored(self, mock_insert) -> None:
+        line = {"section": "new", "body": "Added the Moonpath", "source_key": "watch:Magic"}
+        res = self.client.post("/patchnotes/staff/bullets", json=line, headers=_HEADERS)
+        self.assertTrue(res.json()["withheld"])
+        mock_insert.assert_not_called()
+
     def test_published_notes_reject_an_unbounded_limit(self) -> None:
         res = self.client.get("/patchnotes?limit=1000", headers=_HEADERS)
         self.assertEqual(res.status_code, 400)
