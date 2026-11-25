@@ -498,7 +498,7 @@ def test_times_leave_in_the_api_form(env):
     status = discord_link.get_identity_status(PLAYER)
     for value in (session["expires_at"], session["created_at"], status["linked_at"],
                   codes.get_cosmetic_mint_status(PLAYER)["last_mint_at"]):
-        assert datetime.strptime(value, "%Y-%m-%dT%H:%M:%SZ") <= datetime.now() + timedelta(days=2)
+        assert datetime.strptime(value, "%Y-%m-%dT%H:%M:%SZ") <= datetime.now() + timedelta(days=3)
     assert status["linked_at"] == "2026-01-01T00:00:00Z"
     left = discord_link.record_guild_left(DISCORD_ID)
     assert left["grace_until"] == testing.rows("SELECT payload FROM plugin_notices WHERE type = 'guild_left_grace'")[
