@@ -1,16 +1,19 @@
 /** @vitest-environment jsdom */
 import { afterEach, expect, it, vi } from "vitest";
 import { getAccount, startLinkedProfileSession } from "../account/api";
+import { logoutCharacter } from "../characters/api";
 import { SkinsApiError } from "../skins/api";
 import { renewUpload, withRenewal } from "./renewUpload";
 import { setSession } from "./session";
 import { StartRefusedError } from "./start";
 
+vi.mock("../characters/api", () => ({ logoutCharacter: vi.fn(async () => undefined) }));
 vi.mock("../account/api", () => ({ getAccount: vi.fn(), startLinkedProfileSession: vi.fn() }));
 afterEach(() => {
   localStorage.clear();
   sessionStorage.clear();
   vi.resetAllMocks();
+  vi.mocked(logoutCharacter).mockResolvedValue(undefined);
 });
 
 const UPLOAD = { player_uuid: "p", realm_id: "main" };
@@ -55,12 +58,22 @@ it.each([
   ["signed out", () => void vi.mocked(getAccount).mockResolvedValue(null), UPLOAD],
   ["another player", () => void (setSession(profile("q"), true), signedInAs("q")), UPLOAD],
   ["another realm", () => setSession(profile("p"), true), { ...UPLOAD, realm_id: "dev" }],
+  ["an unknown realm", () => setSession({ ...profile("p"), realm_id: undefined }, true), UPLOAD],
   ["a staff code", () => setSession(profile("p"), true), { ...UPLOAD, staff: true }],
 ])("never starts for %s", async (_case, arrange, upload) => {
   arrange();
   const start = vi.fn();
   await expect(renewUpload("skin", upload, start)).rejects.toThrow("session has ended");
   expect(start).not.toHaveBeenCalled();
+});
+
+it("never uses a session for another player", async () => {
+  signedInAs("p");
+  vi.mocked(startLinkedProfileSession).mockResolvedValue(profile("q"));
+  const start = vi.fn();
+  await expect(renewUpload("skin", UPLOAD, start)).rejects.toThrow("has changed");
+  expect(start).not.toHaveBeenCalled();
+  expect(localStorage.length).toBe(0);
 });
 
 it("says why when the start is refused", async () => {

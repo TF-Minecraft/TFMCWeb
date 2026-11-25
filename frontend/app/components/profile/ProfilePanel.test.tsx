@@ -1085,6 +1085,18 @@ it("opens a skin's address in the tab, and a submit shows the new skin in the ed
   expect(window.location.search).toBe("?tab=skins");
 });
 
+it("keeps the editor open when a load from before it opened is refused", async () => {
+  vi.mocked(getAccount).mockResolvedValue(null);
+  setSession({ session_token: "code-token", player_uuid: UUID, expires_at: "2099-01-01T00:00:00Z", scope: "profile" });
+  vi.mocked(getProfileDashboard).mockRejectedValue(new ProfileApiError("expired", 401));
+  setSkinsSession({ ...SKIN_CODE, from_profile: true });
+  visit("skins", "new");
+  render(<ProfilePanel />);
+  expect(await screen.findByRole("button", { name: "Submit skin" })).toBeTruthy();
+  expect(getProfileDashboard).toHaveBeenCalledTimes(1);
+  expect(getSession()?.session_token).toBe("code-token");
+});
+
 it("keeps the editor open when its Profile session ends, and takes up the newer one after", async () => {
   vi.mocked(getAccount).mockResolvedValue(account({ minecraft: linked() }));
   vi.mocked(getProfileDashboard).mockResolvedValue(wardrobe({ skins: [SKIN] }));

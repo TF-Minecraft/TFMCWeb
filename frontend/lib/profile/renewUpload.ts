@@ -35,7 +35,7 @@ export async function renewUpload<R>(
   start: (profileToken: string) => Promise<R>,
 ): Promise<R> {
   const profile = session.staff ? null : await profileOf(session.player_uuid);
-  if (!profile || (session.realm_id && profile.realm_id && session.realm_id !== profile.realm_id)) {
+  if (!profile || !session.realm_id || session.realm_id !== profile.realm_id) {
     throw sessionEnded(noun, session.staff);
   }
   try {

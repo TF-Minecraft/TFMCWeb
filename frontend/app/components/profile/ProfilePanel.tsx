@@ -206,6 +206,7 @@ export default function ProfilePanel({
   const item = param ? searchParams.get(param) : null;
   // An open editor holds unsaved work, so nothing refreshes behind it: an ended session would drop it.
   const editing = (tab === "skins" || tab === "drinks") && item === "new";
+  const editingRef = useRef(editing);
   const view = tab === "characters" && item ? characterView(searchParams.get("view")) : null;
   // Set once this page has pushed an item's address, so ← goes back to the wardrobe entry.
   const openedHere = useRef(false);
@@ -269,6 +270,8 @@ export default function ProfilePanel({
         sessionRetried.current = false;
       } catch (err) {
         if (err instanceof ProfileApiError && err.status === 401) {
+          // A load from before the editor opened; closing it loads again.
+          if (editingRef.current) return;
           const stored = getSession();
           // Another tab, or a renewed upload, already holds a newer session.
           const replaced = Boolean(stored && stored.session_token !== token);
@@ -331,10 +334,9 @@ export default function ProfilePanel({
   }, [editing, loadDashboard, token, uiDev]);
 
   // The wardrobe catches up once the editor closes, by a submit or by leaving it.
-  const wasEditing = useRef(editing);
   useEffect(() => {
-    const closed = wasEditing.current && !editing;
-    wasEditing.current = editing;
+    const closed = editingRef.current && !editing;
+    editingRef.current = editing;
     if (closed && tokenRef.current) void loadDashboard(tokenRef.current, { quiet: true });
   }, [editing, loadDashboard]);
 

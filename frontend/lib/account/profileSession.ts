@@ -24,6 +24,11 @@ export async function linkedProfileSession(playerUuid: string): Promise<ProfileS
     return existing;
   }
   const fresh = await startLinkedProfileSession();
+  if (!sameUuid(fresh.player_uuid, playerUuid)) {
+    // The link changed meanwhile; the session expires on its own if this fails.
+    void logoutCharacter(fresh.session_token).catch(() => undefined);
+    throw new Error("Your linked Minecraft account has changed. Please reload the page.");
+  }
   const session: ProfileSession = { ...fresh, source: "discord" };
   setSession(session, true);
   return session;

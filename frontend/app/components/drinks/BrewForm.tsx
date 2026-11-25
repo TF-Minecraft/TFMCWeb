@@ -131,13 +131,13 @@ export default function BrewForm({ session, renewSession, onSubmitted }: Props) 
         const cat = await getCatalog();
         if (cancelled) return;
         setCatalog(cat);
+        loaded.current = true;
         if (allowTexture) {
           const tex = await getTextures(session.session_token);
           if (!cancelled) setTextures(tex);
         }
-        loaded.current = true;
       } catch (err) {
-        // Once it has loaded, a failed reload leaves the form the player filled in.
+        // Once the form shows, a failed texture load or reload leaves the form the player filled in.
         if (cancelled || loaded.current) return;
         setLoadError(
           err instanceof DrinksApiError ? err.message : err instanceof Error ? err.message : "Failed to load catalog",
